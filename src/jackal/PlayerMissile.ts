@@ -17,16 +17,17 @@ export class PlayerMissile extends GameElement {
     this.power = 0;
     this.enemies = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_PlayerMissile(...args);
+    const argCount = arguments.length;
+    this.__construct_PlayerMissile(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_PlayerMissile(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let angleLocal = args[2];
-        let powerLocal = args[3];
+  private __construct_PlayerMissile(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let angleLocal = arg2;
+        let powerLocal = arg3;
             this.x = xLocal;
                 this.y = yLocal;
                 this.angle = angleLocal;
@@ -46,7 +47,7 @@ export class PlayerMissile extends GameElement {
                 this.main.playSound(this.main.missileSound);
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly DISTANCE: number = 360;

@@ -18,16 +18,17 @@ export class TileDebris extends GameElement {
     this.vy = 0;
     this.scale = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_TileDebris(...args);
+    const argCount = arguments.length;
+    this.__construct_TileDebris(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_TileDebris(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let tileLocal = args[2];
-        let typeLocal = args[3];
+  private __construct_TileDebris(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let tileLocal = arg2;
+        let typeLocal = arg3;
             this.X = xLocal;
                 this.Y = yLocal;
                 this.x = (xLocal << 5) + 16;
@@ -43,7 +44,7 @@ export class TileDebris extends GameElement {
                 this.delay++;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly GRAVITY: number = 0.2;

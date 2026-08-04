@@ -15,15 +15,16 @@ export class CannonTruck extends Enemy {
     this.fires = 0;
     this.ready = false;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_CannonTruck(...args);
+    const argCount = arguments.length;
+    this.__construct_CannonTruck(argCount, arg0, arg1, arg2);
   }
-  private __construct_CannonTruck(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let rightLocal = args[2];
+  private __construct_CannonTruck(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let rightLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.right = rightLocal;
@@ -33,7 +34,7 @@ export class CannonTruck extends Enemy {
                 this.explosionY = 48;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly STATE_SLEEPING: number = 0;

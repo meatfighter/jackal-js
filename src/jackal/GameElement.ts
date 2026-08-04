@@ -7,11 +7,12 @@ import { Main } from "./Main.js";
 export abstract class GameElement {
   protected __initializeJavaSubclassDefaults(): void {
   }
-  public constructor(...args: any[]) {
-    this.__construct_GameElement(...args);
+  public constructor() {
+    const argCount = arguments.length;
+    this.__construct_GameElement(argCount);
   }
-  private __construct_GameElement(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_GameElement(argCount: number): void {
+    if (argCount === 0) {
             this.main = Main.mainInstance;
                 this.gameMode = Main.gameMode;
     
@@ -22,7 +23,7 @@ export abstract class GameElement {
                 this.gameMode.add(this);
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public main: any = null as any;

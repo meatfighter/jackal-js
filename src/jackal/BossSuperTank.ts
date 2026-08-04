@@ -29,14 +29,15 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     this.exploding = 0;
     this.superFire = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any) {
     super();
-    this.__construct_BossSuperTank(...args);
+    const argCount = arguments.length;
+    this.__construct_BossSuperTank(argCount, arg0, arg1);
   }
-  private __construct_BossSuperTank(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
+  private __construct_BossSuperTank(argCount: number, arg0?: any, arg1?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
             this.x = xLocal;
                 this.y = yLocal;
                 this.player = this.gameMode.player;
@@ -46,7 +47,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                 new BossSuperTankGun(this);
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_APPEARING: number = 0;

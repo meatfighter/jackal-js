@@ -21,20 +21,21 @@ export class FloorGun extends Enemy {
     this.mask = null as any;
     this.panel = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_FloorGun(...args);
+    const argCount = arguments.length;
+    this.__construct_FloorGun(argCount, arg0, arg1, arg2);
   }
-  private __construct_FloorGun(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-            this.__construct_FloorGun(xLocal2, yLocal2, false);
+  private __construct_FloorGun(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+            this.__construct_FloorGun(3, xLocal2, yLocal2, false);
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let plain = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let plain = arg2;
             this.x = xLocal;
                 this.y = yLocal; 
                 if (plain) {
@@ -46,7 +47,7 @@ export class FloorGun extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_CLOSED: number = 0;

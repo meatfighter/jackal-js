@@ -28,13 +28,14 @@ export class EnemyHelicopter extends Enemy {
     this.v = 0;
     this.shootDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any) {
     super();
-    this.__construct_EnemyHelicopter(...args);
+    const argCount = arguments.length;
+    this.__construct_EnemyHelicopter(argCount, arg0);
   }
-  private __construct_EnemyHelicopter(...args: any[]): void {
-    if (args.length === 1 && typeof args[0] === "boolean") {
-        let downLocal = args[0];
+  private __construct_EnemyHelicopter(argCount: number, arg0?: any): void {
+    if (argCount === 1 && typeof arg0 === "boolean") {
+        let downLocal = arg0;
             this.x = this.gameMode.player.x 
                     + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE);
                 if (this.x - 96 < this.gameMode.cameraX) {
@@ -60,7 +61,7 @@ export class EnemyHelicopter extends Enemy {
                 this.player = this.gameMode.player;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly APPEAR_DISTANCE: number = 192;

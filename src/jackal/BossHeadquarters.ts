@@ -21,19 +21,20 @@ export class BossHeadquarters extends Enemy {
     this.bossHeadquartersManager = null as any;
     this.player = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any) {
     super();
-    this.__construct_BossHeadquarters(...args);
+    const argCount = arguments.length;
+    this.__construct_BossHeadquarters(argCount, arg0);
   }
-  private __construct_BossHeadquarters(...args: any[]): void {
-    if (args.length === 1) {
-        let bossHeadquartersManagerLocal = args[0];
+  private __construct_BossHeadquarters(argCount: number, arg0?: any): void {
+    if (argCount === 1) {
+        let bossHeadquartersManagerLocal = arg0;
             this.x = 896;
                 this.y = 96;
                 this.bossHeadquartersManager = bossHeadquartersManagerLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly STATE_FLASHING: number = 0;

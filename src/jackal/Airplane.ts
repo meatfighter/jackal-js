@@ -13,29 +13,30 @@ export class Airplane extends Enemy {
     this.up = false;
     this.orientationIndex = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_Airplane(...args);
+    const argCount = arguments.length;
+    this.__construct_Airplane(argCount, arg0, arg1, arg2);
   }
-  private __construct_Airplane(...args: any[]): void {
-    if (args.length === 1 && typeof args[0] === "boolean") {
-        let leftLandingPort = args[0];
+  private __construct_Airplane(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 1 && typeof arg0 === "boolean") {
+        let leftLandingPort = arg0;
             this.x = this.gameMode.player.x 
                     + (leftLandingPort ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
     
                 this.y = this.gameMode.cameraY - 124;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let upLocal = args[2];
-            this.__construct_Airplane(xLocal2, yLocal2);
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let upLocal = arg2;
+            this.__construct_Airplane(2, xLocal2, yLocal2);
                 this.up = upLocal;
                 this.orientationIndex = 1;
         return;
-    } else     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
+    } else     if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
             this.x = this.gameMode.player.x 
                     + (this.main.random.nextBoolean() ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
                 if (this.x - 96 < this.gameMode.cameraX) {
@@ -47,7 +48,7 @@ export class Airplane extends Enemy {
                 this.y = yLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly SPEED: number = 5;

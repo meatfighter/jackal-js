@@ -12,15 +12,16 @@ export class LandingPort extends GameElement {
     this.redIndex = 0;
     this.blueIndex = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_LandingPort(...args);
+    const argCount = arguments.length;
+    this.__construct_LandingPort(argCount, arg0, arg1, arg2);
   }
-  private __construct_LandingPort(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let typeLocal = args[2];
+  private __construct_LandingPort(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let typeLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = typeLocal;
@@ -38,7 +39,7 @@ export class LandingPort extends GameElement {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly TYPE_LEFT: number = 0;

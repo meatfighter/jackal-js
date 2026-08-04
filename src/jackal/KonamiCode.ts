@@ -4,17 +4,18 @@
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 export enum KonamiCodeKeys { UP, DOWN, LEFT, RIGHT, GRENADE, GUN }
-export class KonamiCode {  public constructor(...args: any[]) {
-    this.__construct_KonamiCode(...args);
+export class KonamiCode {  public constructor(arg0?: any) {
+    const argCount = arguments.length;
+    this.__construct_KonamiCode(argCount, arg0);
   }
-  private __construct_KonamiCode(...args: any[]): void {
-    if (args.length === 1) {
-        let mainLocal = args[0];
+  private __construct_KonamiCode(argCount: number, arg0?: any): void {
+    if (argCount === 1) {
+        let mainLocal = arg0;
             this.main = mainLocal;
                 this.input = mainLocal.input;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   // Try the following sequence on the title screen :)

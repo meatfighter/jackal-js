@@ -563,17 +563,33 @@ function convertConstructors(text, className) {
     const helperName = constructorHelperName(className);
     let superCall = hasExtends ? "super();" : "";
     const branches = [];
+    const constructorParamLists = constructors.map((ctor) => parseParams(ctor.params));
+    const maxArity = constructorParamLists.reduce((max, params) => {
+        const fixedCount = params.filter((param) => !param.varargs).length;
+        return Math.max(max, fixedCount);
+    }, 0);
+    const argNames = Array.from({ length: maxArity }, (_value, index) => `arg${index}`);
+    const signatureParams = argNames.map((name) => `${name}?: any`).join(", ");
+    const helperParams = ["argCount: number", ...argNames.map((name) => `${name}?: any`)].join(", ");
+    const helperArgs = ["argCount", ...argNames].join(", ");
     for (let index = 0; index < constructors.length; index++) {
         const ctor = constructors[index];
-        const params = parseParams(ctor.params);
+        const params = constructorParamLists[index];
         let body = ctor.body
-            .replace(/^\s*this\s*\(/m, `this.${helperName}(`)
+            .replace(/^(\s*)this\s*\(([^;]*)\);/m, (_match, leadingWhitespace, args) => {
+                const trimmedArgs = args.trim();
+                const delegatedArity = trimmedArgs === ""
+                    ? 0
+                    : splitTopLevel(trimmedArgs, ",").filter((arg) => arg.trim().length > 0).length;
+                const delegatedArgs = trimmedArgs === "" ? "" : `, ${trimmedArgs}`;
+                return `${leadingWhitespace}this.${helperName}(${delegatedArity}${delegatedArgs});`;
+            })
             .replace(/^\s*super\s*\(([^;]*)\);\s*/m, (_match, args) => {
                 superCall = `super(${args});`;
                 return "";
             });
         body = indent(body.trim(), 12);
-        branches.push(buildConstructorBranch(params, body, index));
+        branches.push(buildConstructorBranch(params, body, index, argNames));
     }
 
     let stripped = text;
@@ -584,14 +600,15 @@ function convertConstructors(text, className) {
     const insertAt = stripped.indexOf("{", classDecl?.index ?? 0) + 1;
     const dispatch = [
         "",
-        "  public constructor(...args: any[]) {",
+        `  public constructor(${signatureParams}) {`,
         superCall ? `    ${superCall}` : "",
-        `    this.${helperName}(...args);`,
+        "    const argCount = arguments.length;",
+        `    this.${helperName}(${helperArgs});`,
         "  }",
         "",
-        `  private ${helperName}(...args: any[]): void {`,
+        `  private ${helperName}(${helperParams}): void {`,
         branches.join(" else "),
-        "    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);",
+        "    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);",
         "  }",
         ""
     ].filter((line) => line !== "").join("\n");
@@ -620,21 +637,22 @@ function findConstructors(text, className) {
     return constructors;
 }
 
-function buildConstructorBranch(params, body, index) {
+function buildConstructorBranch(params, body, index, argNames) {
     const fixedParams = params.filter((param) => !param.varargs);
     const minimumLength = fixedParams.length;
     const lengthCheck = params.some((param) => param.varargs)
-        ? `args.length >= ${minimumLength}`
-        : `args.length === ${params.length}`;
+        ? `argCount >= ${minimumLength}`
+        : `argCount === ${params.length}`;
     const guards = fixedParams
-        .map((param, paramIndex) => primitiveGuard(param.type, paramIndex))
+        .map((param, paramIndex) => primitiveGuard(param.type, argNames[paramIndex] ?? `arguments[${paramIndex + 1}]`))
         .filter(Boolean);
     const condition = [lengthCheck, ...guards].join(" && ");
     const declarations = params.map((param, paramIndex) => {
         if (param.varargs) {
-            return `let ${param.name} = args.slice(${paramIndex});`;
+            const values = argNames.slice(paramIndex).join(", ");
+            return `let ${param.name} = [${values}].slice(0, Math.max(0, argCount - ${paramIndex}));`;
         }
-        return `let ${param.name} = args[${paramIndex}];`;
+        return `let ${param.name} = ${argNames[paramIndex]};`;
     });
     return [
         `    if (${condition}) {`,
@@ -645,16 +663,16 @@ function buildConstructorBranch(params, body, index) {
     ].filter(Boolean).join("\n");
 }
 
-function primitiveGuard(type, index) {
+function primitiveGuard(type, argExpression) {
     const normalized = normalizeType(type);
     if (numericTypes.has(normalized)) {
-        return `typeof args[${index}] === "number"`;
+        return `typeof ${argExpression} === "number"`;
     }
     if (booleanTypes.has(normalized)) {
-        return `typeof args[${index}] === "boolean"`;
+        return `typeof ${argExpression} === "boolean"`;
     }
     if (stringTypes.has(normalized)) {
-        return `(args[${index}] === null || typeof args[${index}] === "string")`;
+        return `(${argExpression} === null || typeof ${argExpression} === "string")`;
     }
     return "";
 }
@@ -1541,44 +1559,50 @@ function buildMethodDispatcher(group, overloadMetadata, className) {
     const first = group[0];
     const staticText = first.static ? " static" : "";
     const receiver = first.static ? className : "this";
+    const arities = group.map((method) => splitTopLevel(method.params, ",").filter((param) => param.trim().length > 0).length);
+    const maxArity = Math.max(...arities);
+    const argNames = Array.from({ length: maxArity }, (_value, index) => `arg${index}`);
+    const signatureParams = argNames.map((name) => `${name}?: any`).join(", ");
     const lines = [
-        `  ${first.access}${staticText} ${first.name}(...args: any[]): any {`
+        `  ${first.access}${staticText} ${first.name}(${signatureParams}): any {`,
+        "    const argCount = arguments.length;"
     ];
     for (let i = 0; i < group.length; i++) {
         const method = group[i];
         const params = splitTopLevel(method.params, ",").filter((param) => param.trim().length > 0);
         const metaParams = overloadMetadata[i]?.params ?? [];
-        const guards = buildOverloadGuards(metaParams);
-        const condition = [`args.length === ${params.length}`, ...guards].join(" && ");
-        const callArgs = params.map((_param, index) => `args[${index}]`).join(", ");
+        const guards = buildOverloadGuards(metaParams, argNames);
+        const condition = [`argCount === ${params.length}`, ...guards].join(" && ");
+        const callArgs = argNames.slice(0, params.length).join(", ");
         lines.push(`    if (${condition}) {`);
         lines.push(`      return ${receiver}.${first.name}__overload${i}(${callArgs});`);
         lines.push("    }");
     }
-    lines.push(`    throw new Error(\`No Java method overload matched ${first.name}: \${args.length}\`);`);
+    lines.push(`    throw new Error(\`No Java method overload matched ${first.name}: \${argCount}\`);`);
     lines.push("  }");
     lines.push("");
     return `${lines.join("\n")}`;
 }
 
-function buildOverloadGuards(types) {
+function buildOverloadGuards(types, argNames) {
     return types.map((type, index) => {
+        const arg = argNames[index] ?? `arguments[${index}]`;
         const normalized = normalizeType(type);
         if (numericTypes.has(normalized)) {
-            return `typeof args[${index}] === "number"`;
+            return `typeof ${arg} === "number"`;
         }
         if (normalized === "boolean") {
-            return `typeof args[${index}] === "boolean"`;
+            return `typeof ${arg} === "boolean"`;
         }
         if (normalized === "String") {
-            return `typeof args[${index}] === "string"`;
+            return `typeof ${arg} === "string"`;
         }
         if (normalized.endsWith("[]")) {
-            return `Array.isArray(args[${index}])`;
+            return `Array.isArray(${arg})`;
         }
         const bare = normalized.replace(/<.*>/g, "");
         if (classNameSet.has(bare) || slickImports.includes(bare)) {
-            return `(args[${index}] === null || args[${index}] instanceof ${bare})`;
+            return `(${arg} === null || ${arg} instanceof ${bare})`;
         }
         return "";
     }).filter(Boolean);

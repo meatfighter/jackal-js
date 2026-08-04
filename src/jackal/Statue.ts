@@ -16,15 +16,16 @@ export class Statue extends Enemy {
     this.delay = 0;
     this.eyesVisible = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_Statue(...args);
+    const argCount = arguments.length;
+    this.__construct_Statue(argCount, arg0, arg1, arg2);
   }
-  private __construct_Statue(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let typeLocal = args[2];
+  private __construct_Statue(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let typeLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = typeLocal;
@@ -39,7 +40,7 @@ export class Statue extends Enemy {
                 this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly PAUSE_TIME: number = 91;

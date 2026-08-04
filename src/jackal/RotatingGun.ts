@@ -21,16 +21,17 @@ export class RotatingGun extends Enemy {
     this.type = 0;
     this.sprites = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_RotatingGun(...args);
+    const argCount = arguments.length;
+    this.__construct_RotatingGun(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_RotatingGun(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "boolean") {
-        let xLocal3 = args[0];
-        let yLocal3 = args[1];
-        let bossGarageManagerLocal = args[2];
-        let whiteLocal2 = args[3];
+  private __construct_RotatingGun(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
+        let xLocal3 = arg0;
+        let yLocal3 = arg1;
+        let bossGarageManagerLocal = arg2;
+        let whiteLocal2 = arg3;
             this.x = xLocal3;
                 this.y = yLocal3;    
                 this.white = whiteLocal2;
@@ -38,19 +39,19 @@ export class RotatingGun extends Enemy {
                 this.groupSize = 2;
                 this.sprites = this.main.grayGuns;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let whiteLocal = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let whiteLocal = arg2;
             this.x = xLocal2;
                 this.y = yLocal2;    
                 this.white = whiteLocal;
                 this.sprites = this.main.grayGuns;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let typeLocal = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let typeLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = typeLocal;
@@ -70,7 +71,7 @@ export class RotatingGun extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly TYPE_GRAY: number = 0;

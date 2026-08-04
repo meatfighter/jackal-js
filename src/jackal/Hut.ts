@@ -17,16 +17,17 @@ export class Hut extends Enemy {
     this.shack = false;
     this.tank = false;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_Hut(...args);
+    const argCount = arguments.length;
+    this.__construct_Hut(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_Hut(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let shackLocal = args[2];
-        let tankLocal = args[3];
+  private __construct_Hut(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let shackLocal = arg2;
+        let tankLocal = arg3;
             this.x = xLocal;
                 this.y = yLocal;
                 this.shack = shackLocal;
@@ -48,7 +49,7 @@ export class Hut extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
 

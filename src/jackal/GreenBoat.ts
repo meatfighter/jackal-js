@@ -14,19 +14,20 @@ export class GreenBoat extends Enemy {
     this.bulletDelay = 0;
     this.movementDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any) {
     super();
-    this.__construct_GreenBoat(...args);
+    const argCount = arguments.length;
+    this.__construct_GreenBoat(argCount, arg0, arg1);
   }
-  private __construct_GreenBoat(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
+  private __construct_GreenBoat(argCount: number, arg0?: any, arg1?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
             this.x = xLocal;
                 this.y = yLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly SPRITE_TOGGLE_FRAMES: number = 12;

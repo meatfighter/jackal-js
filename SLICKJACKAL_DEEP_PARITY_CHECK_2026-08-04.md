@@ -268,19 +268,23 @@ This is intentional:
 
 No new Slick2D TS correctness bug was found in `BinaryReader.readLong()` for this pass. It must return BigInt for Java `long` parity.
 
-One Slick2D TS performance issue was found:
+One Slick2D TS performance issue was found at the time of this pass:
 
 - `C:\js-projects\slick2d-ts\src\slick\support\JavaRandom.ts` uses BigInt in the hot RNG path.
 - Jackal calls `main.random.nextInt(...)`, `nextFloat()`, and `nextBoolean()` frequently during gameplay.
 - This is correct behaviorally but undesirable for a high-performance browser game.
 
-Separate handoff file created:
+This item was later fixed in `slick2d-ts` and the separate handoff file was removed:
 
 - `SLICK2D_TS_RANDOM_PERFORMANCE_ISSUE_2026-08-04.md`
 
-The earlier audio handoff remains separate and still relevant:
+The earlier audio handoff was later superseded after checking original Java Slick2D sound-volume behavior:
 
 - `SLICK2D_TS_AUDIO_ISSUES_2026-08-04.md`
+
+The current `slick2d-ts` bug inventory is:
+
+- `SLICK2D_TS_CURRENT_BUGS_2026-08-04.md`
 
 ## Verification Commands Run
 
@@ -290,4 +294,3 @@ The earlier audio handoff remains separate and still relevant:
 - `rg` raw-pattern sweeps for stale Java numeric and packed-long conversion patterns
 
 Final lint/typecheck/build verification is recorded in the assistant response for this pass.
-

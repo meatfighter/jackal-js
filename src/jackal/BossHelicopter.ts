@@ -32,16 +32,17 @@ export class BossHelicopter extends Enemy {
     this.soldiers = 0;
     this.bulletDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_BossHelicopter(...args);
+    const argCount = arguments.length;
+    this.__construct_BossHelicopter(argCount);
   }
-  private __construct_BossHelicopter(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_BossHelicopter(argCount: number): void {
+    if (argCount === 0) {
             this.randomizeLocation();
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_ENTERING: number = 0;

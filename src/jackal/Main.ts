@@ -54,15 +54,16 @@ import { Triggers } from "./Triggers.js";
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-export class Main extends BasicGame {  public constructor(...args: any[]) {
+export class Main extends BasicGame {  public constructor() {
     super("Jackal");
-    this.__construct_Main(...args);
+    const argCount = arguments.length;
+    this.__construct_Main(argCount);
   }
-  private __construct_Main(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_Main(argCount: number): void {
+    if (argCount === 0) {
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly DISPLAY_WIDTH: number = 1024;
@@ -568,14 +569,15 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
     this.fadeListener = null;
   }
   
-    public drawString(...args: any[]): any {
-    if (args.length === 5 && typeof args[0] === "string" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.drawString__overload0(args[0], args[1], args[2], args[3], args[4]);
+    public drawString(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 5 && typeof arg0 === "string" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.drawString__overload0(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 4 && typeof args[0] === "string" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawString__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && typeof arg0 === "string" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawString__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched drawString: ${args.length}`);
+    throw new Error(`No Java method overload matched drawString: ${argCount}`);
   }
 public drawString__overload0(string: any, length: any, x: any, y: any, color: any): void {
     let font = this.fonts[color];
@@ -603,17 +605,18 @@ public drawString__overload0(string: any, length: any, x: any, y: any, color: an
     }
   }  
   
-    public draw(...args: any[]): any {
-    if (args.length === 3 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number") {
-      return this.draw__overload0(args[0], args[1], args[2]);
+    public draw(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
+      return this.draw__overload0(arg0, arg1, arg2);
     }
-    if (args.length === 4 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.draw__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.draw__overload1(arg0, arg1, arg2, arg3);
     }
-    if (args.length === 5 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.draw__overload2(args[0], args[1], args[2], args[3], args[4]);
+    if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.draw__overload2(arg0, arg1, arg2, arg3, arg4);
     }
-    throw new Error(`No Java method overload matched draw: ${args.length}`);
+    throw new Error(`No Java method overload matched draw: ${argCount}`);
   }
 public draw__overload0(image: any, x: any, y: any): void {
     image.draw(x, y);
@@ -642,14 +645,15 @@ public draw__overload0(image: any, x: any, y: any): void {
     return sound.playing();
   }
   
-    public playSound(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Sound)) {
-      return this.playSound__overload0(args[0]);
+    public playSound(arg0?: any, arg1?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
+      return this.playSound__overload0(arg0);
     }
-    if (args.length === 2 && (args[0] === null || args[0] instanceof Sound) && typeof args[1] === "number") {
-      return this.playSound__overload1(args[0], args[1]);
+    if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
+      return this.playSound__overload1(arg0, arg1);
     }
-    throw new Error(`No Java method overload matched playSound: ${args.length}`);
+    throw new Error(`No Java method overload matched playSound: ${argCount}`);
   }
 public playSound__overload0(sound: any): void {
     if (this.closeRequestedFlag) {
@@ -682,14 +686,15 @@ public playSound__overload0(sound: any): void {
     }
   }
   
-    public playSoundIfNotPlaying(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Sound)) {
-      return this.playSoundIfNotPlaying__overload0(args[0]);
+    public playSoundIfNotPlaying(arg0?: any, arg1?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
+      return this.playSoundIfNotPlaying__overload0(arg0);
     }
-    if (args.length === 2 && (args[0] === null || args[0] instanceof Sound) && typeof args[1] === "number") {
-      return this.playSoundIfNotPlaying__overload1(args[0], args[1]);
+    if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
+      return this.playSoundIfNotPlaying__overload1(arg0, arg1);
     }
-    throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${args.length}`);
+    throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${argCount}`);
   }
 public playSoundIfNotPlaying__overload0(sound: any): void {
     if (this.closeRequestedFlag) {
@@ -709,14 +714,15 @@ public playSoundIfNotPlaying__overload0(sound: any): void {
     }
   }
   
-    public stopSong(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Song)) {
-      return this.stopSong__overload0(args[0]);
+    public stopSong(arg0?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Song)) {
+      return this.stopSong__overload0(arg0);
     }
-    if (args.length === 0) {
+    if (argCount === 0) {
       return this.stopSong__overload1();
     }
-    throw new Error(`No Java method overload matched stopSong: ${args.length}`);
+    throw new Error(`No Java method overload matched stopSong: ${argCount}`);
   }
 public stopSong__overload0(song: any): void {
     if (song != null) {
@@ -780,26 +786,27 @@ public stopSong__overload0(song: any): void {
     return this.unitVector;
   }
   
-    public drawRotated(...args: any[]): any {
-    if (args.length === 5 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && Array.isArray(args[3]) && typeof args[4] === "number") {
-      return this.drawRotated__overload0(args[0], args[1], args[2], args[3], args[4]);
+    public drawRotated(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
+      return this.drawRotated__overload0(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 7 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "number" && typeof args[6] === "number") {
-      return this.drawRotated__overload1(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+    if (argCount === 7 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number" && typeof arg6 === "number") {
+      return this.drawRotated__overload1(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
     }
-    if (args.length === 8 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "number" && typeof args[6] === "number" && typeof args[7] === "number") {
-      return this.drawRotated__overload2(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+    if (argCount === 8 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number" && typeof arg6 === "number" && typeof arg7 === "number") {
+      return this.drawRotated__overload2(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
-    if (args.length === 6 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "number") {
-      return this.drawRotated__overload3(args[0], args[1], args[2], args[3], args[4], args[5]);
+    if (argCount === 6 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number") {
+      return this.drawRotated__overload3(arg0, arg1, arg2, arg3, arg4, arg5);
     }
-    if (args.length === 5 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.drawRotated__overload4(args[0], args[1], args[2], args[3], args[4]);
+    if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.drawRotated__overload4(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 4 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawRotated__overload5(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawRotated__overload5(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched drawRotated: ${args.length}`);
+    throw new Error(`No Java method overload matched drawRotated: ${argCount}`);
   }
 public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: any): void {
     GL11.glPushMatrix();    
@@ -809,14 +816,15 @@ public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: a
     GL11.glPopMatrix();
   }
   
-    public drawRotatedScaled(...args: any[]): any {
-    if (args.length === 8 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "number" && typeof args[6] === "number" && typeof args[7] === "number") {
-      return this.drawRotatedScaled__overload0(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+    public drawRotatedScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any, arg8?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 8 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number" && typeof arg6 === "number" && typeof arg7 === "number") {
+      return this.drawRotatedScaled__overload0(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     }
-    if (args.length === 9 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "number" && typeof args[6] === "number" && typeof args[7] === "number" && typeof args[8] === "number") {
-      return this.drawRotatedScaled__overload1(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+    if (argCount === 9 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number" && typeof arg6 === "number" && typeof arg7 === "number" && typeof arg8 === "number") {
+      return this.drawRotatedScaled__overload1(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
-    throw new Error(`No Java method overload matched drawRotatedScaled: ${args.length}`);
+    throw new Error(`No Java method overload matched drawRotatedScaled: ${argCount}`);
   }
 public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any): void {
     GL11.glPushMatrix();    
@@ -881,14 +889,15 @@ public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, ce
     GL11.glTranslatef(x, y, 0);
   }
   
-    public rotateGraphics(...args: any[]): any {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.rotateGraphics__overload0(args[0], args[1], args[2], args[3]);
+    public rotateGraphics(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.rotateGraphics__overload0(arg0, arg1, arg2, arg3);
     }
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-      return this.rotateGraphics__overload1(args[0], args[1], args[2]);
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+      return this.rotateGraphics__overload1(arg0, arg1, arg2);
     }
-    throw new Error(`No Java method overload matched rotateGraphics: ${args.length}`);
+    throw new Error(`No Java method overload matched rotateGraphics: ${argCount}`);
   }
 public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
     GL11.glPushMatrix();    
@@ -949,20 +958,21 @@ public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
     image.setAlpha(1);
   }  
   
-    public drawCentered(...args: any[]): any {
-    if (args.length === 5 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.drawCentered__overload0(args[0], args[1], args[2], args[3], args[4]);
+    public drawCentered(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.drawCentered__overload0(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 4 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawCentered__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawCentered__overload1(arg0, arg1, arg2, arg3);
     }
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Image)) {
-      return this.drawCentered__overload2(args[0]);
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Image)) {
+      return this.drawCentered__overload2(arg0);
     }
-    if (args.length === 3 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number") {
-      return this.drawCentered__overload3(args[0], args[1], args[2]);
+    if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
+      return this.drawCentered__overload3(arg0, arg1, arg2);
     }
-    throw new Error(`No Java method overload matched drawCentered: ${args.length}`);
+    throw new Error(`No Java method overload matched drawCentered: ${argCount}`);
   }
 public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
     image.setAlpha(alpha);
@@ -982,14 +992,15 @@ public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: an
     GL11.glPopMatrix();    
   } 
   
-    public drawOffset(...args: any[]): any {
-    if (args.length === 3 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number") {
-      return this.drawOffset__overload0(args[0], args[1], args[2]);
+    public drawOffset(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
+      return this.drawOffset__overload0(arg0, arg1, arg2);
     }
-    if (args.length === 4 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawOffset__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawOffset__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched drawOffset: ${args.length}`);
+    throw new Error(`No Java method overload matched drawOffset: ${argCount}`);
   }
 public drawOffset__overload0(image: any, x: any, y: any): void {
     image.draw(x, y);
@@ -1012,14 +1023,15 @@ public drawOffset__overload0(image: any, x: any, y: any): void {
     GL11.glPopMatrix();    
   }  
   
-    public drawScaled(...args: any[]): any {
-    if (args.length === 5 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.drawScaled__overload0(args[0], args[1], args[2], args[3], args[4]);
+    public drawScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.drawScaled__overload0(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 4 && (args[0] === null || args[0] instanceof Image) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawScaled__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawScaled__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched drawScaled: ${args.length}`);
+    throw new Error(`No Java method overload matched drawScaled: ${argCount}`);
   }
 public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
     image.setAlpha(alpha);
@@ -1039,17 +1051,18 @@ public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any)
     GL11.glPopMatrix();    
   }
   
-    public drawVehicle(...args: any[]): any {
-    if (args.length === 5 && Array.isArray(args[0]) && typeof args[1] === "number" && typeof args[2] === "number" && Array.isArray(args[3]) && typeof args[4] === "number") {
-      return this.drawVehicle__overload0(args[0], args[1], args[2], args[3], args[4]);
+    public drawVehicle(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 5 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
+      return this.drawVehicle__overload0(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 5 && Array.isArray(args[0]) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-      return this.drawVehicle__overload1(args[0], args[1], args[2], args[3], args[4]);
+    if (argCount === 5 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+      return this.drawVehicle__overload1(arg0, arg1, arg2, arg3, arg4);
     }
-    if (args.length === 4 && Array.isArray(args[0]) && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.drawVehicle__overload2(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.drawVehicle__overload2(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched drawVehicle: ${args.length}`);
+    throw new Error(`No Java method overload matched drawVehicle: ${argCount}`);
   }
 public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle: any): void {
     
@@ -1783,14 +1796,15 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     return new LargeImage(this, tiles, mapLocal, width, height);
   }
   
-    private loadTriggerMap(...args: any[]): any {
-    if (args.length === 4 && typeof args[0] === "number" && Array.isArray(args[1]) && typeof args[2] === "number" && (args[3] === null || args[3] instanceof Stage)) {
-      return this.loadTriggerMap__overload0(args[0], args[1], args[2], args[3]);
+    private loadTriggerMap(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 4 && typeof arg0 === "number" && Array.isArray(arg1) && typeof arg2 === "number" && (arg3 === null || arg3 instanceof Stage)) {
+      return this.loadTriggerMap__overload0(arg0, arg1, arg2, arg3);
     }
-    if (args.length === 5 && typeof args[0] === "number" && Array.isArray(args[1]) && typeof args[2] === "number" && (args[3] === null || args[3] instanceof Stage) && typeof args[4] === "boolean") {
-      return this.loadTriggerMap__overload1(args[0], args[1], args[2], args[3], args[4]);
+    if (argCount === 5 && typeof arg0 === "number" && Array.isArray(arg1) && typeof arg2 === "number" && (arg3 === null || arg3 instanceof Stage) && typeof arg4 === "boolean") {
+      return this.loadTriggerMap__overload1(arg0, arg1, arg2, arg3, arg4);
     }
-    throw new Error(`No Java method overload matched loadTriggerMap: ${args.length}`);
+    throw new Error(`No Java method overload matched loadTriggerMap: ${argCount}`);
   }
 private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any, stage: any): void {
     

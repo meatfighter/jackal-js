@@ -20,14 +20,15 @@ export class StatueSeekerMissile extends Enemy {
     this.player = null as any;
     this.entryDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any) {
     super();
-    this.__construct_StatueSeekerMissile(...args);
+    const argCount = arguments.length;
+    this.__construct_StatueSeekerMissile(argCount, arg0, arg1);
   }
-  private __construct_StatueSeekerMissile(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let statueXLocal = args[0];
-        let statueYLocal = args[1];
+  private __construct_StatueSeekerMissile(argCount: number, arg0?: any, arg1?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let statueXLocal = arg0;
+        let statueYLocal = arg1;
             this.statueX = statueXLocal;
                 this.statueY = statueYLocal;
     
@@ -41,7 +42,7 @@ export class StatueSeekerMissile extends Enemy {
                 this.sprite = this.main.statueMissiles[0];
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly ROTATION_SPEED: number = 0.9;

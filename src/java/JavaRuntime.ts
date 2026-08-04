@@ -199,19 +199,43 @@ export class Point2D {
 }
 
 export function javaArray<T>(length: number, value: T): T[] {
-    return Array.from({ length: Math.trunc(length) }, () => cloneDefault(value));
+    const size = Math.trunc(length);
+    const array = new Array<T>(size);
+    if (Array.isArray(value)) {
+        for (let i = 0; i < size; i++) {
+            array[i] = value.slice() as T;
+        }
+    } else {
+        array.fill(value);
+    }
+    return array;
 }
 
 export function java2DArray<T>(height: number, width: number, value: T): T[][] {
-    return javaArray(height, null as T).map(() => javaArray(width, value));
+    const size = Math.trunc(height);
+    const array = new Array<T[]>(size);
+    for (let i = 0; i < size; i++) {
+        array[i] = javaArray(width, value);
+    }
+    return array;
 }
 
 export function java3DArray<T>(a: number, b: number, c: number, value: T): T[][][] {
-    return javaArray(a, null as T[][]).map(() => java2DArray(b, c, value));
+    const size = Math.trunc(a);
+    const array = new Array<T[][]>(size);
+    for (let i = 0; i < size; i++) {
+        array[i] = java2DArray(b, c, value);
+    }
+    return array;
 }
 
 export function java4DArray<T>(a: number, b: number, c: number, d: number, value: T): T[][][][] {
-    return javaArray(a, null as T[][][]).map(() => java3DArray(b, c, d, value));
+    const size = Math.trunc(a);
+    const array = new Array<T[][][]>(size);
+    for (let i = 0; i < size; i++) {
+        array[i] = java3DArray(b, c, d, value);
+    }
+    return array;
 }
 
 export function javaInt(value: any): number {

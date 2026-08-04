@@ -3,16 +3,17 @@
 // Original Java imports: org.newdawn.slick.Image.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
-export class LargeImage {  public constructor(...args: any[]) {
-    this.__construct_LargeImage(...args);
+export class LargeImage {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
+    const argCount = arguments.length;
+    this.__construct_LargeImage(argCount, arg0, arg1, arg2, arg3, arg4);
   }
-  private __construct_LargeImage(...args: any[]): void {
-    if (args.length === 5 && typeof args[3] === "number" && typeof args[4] === "number") {
-        let mainLocal = args[0];
-        let tilesLocal = args[1];
-        let mapLocal = args[2];
-        let widthLocal = args[3];
-        let heightLocal = args[4];
+  private __construct_LargeImage(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    if (argCount === 5 && typeof arg3 === "number" && typeof arg4 === "number") {
+        let mainLocal = arg0;
+        let tilesLocal = arg1;
+        let mapLocal = arg2;
+        let widthLocal = arg3;
+        let heightLocal = arg4;
             this.main = mainLocal;
                 this.tiles = tilesLocal;
                 this.map = mapLocal;
@@ -20,7 +21,7 @@ export class LargeImage {  public constructor(...args: any[]) {
                 this.height = heightLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   private main: any = null as any;

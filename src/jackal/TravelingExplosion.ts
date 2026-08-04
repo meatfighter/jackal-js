@@ -15,17 +15,18 @@ export class TravelingExplosion extends GameElement {
     this.scale = 0;
     this.enemies = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
     super();
-    this.__construct_TravelingExplosion(...args);
+    const argCount = arguments.length;
+    this.__construct_TravelingExplosion(argCount, arg0, arg1, arg2, arg3, arg4);
   }
-  private __construct_TravelingExplosion(...args: any[]): void {
-    if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let vxLocal = args[2];
-        let vyLocal = args[3];
-        let notifierLocal = args[4];
+  private __construct_TravelingExplosion(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let vxLocal = arg2;
+        let vyLocal = arg3;
+        let notifierLocal = arg4;
             this.x = xLocal;
                 this.y = yLocal;
                 this.notifier = notifierLocal;
@@ -35,7 +36,7 @@ export class TravelingExplosion extends GameElement {
                 this.enemies = this.gameMode.enemies;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly DISTANCE: number = 320;

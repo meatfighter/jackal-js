@@ -17,15 +17,16 @@ export class StatueMissile extends Enemy {
     this.clipX = 0;
     this.explodeDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_StatueMissile(...args);
+    const argCount = arguments.length;
+    this.__construct_StatueMissile(argCount, arg0, arg1, arg2);
   }
-  private __construct_StatueMissile(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let statueXLocal = args[0];
-        let statueYLocal = args[1];
-        let rightLocal = args[2];
+  private __construct_StatueMissile(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let statueXLocal = arg0;
+        let statueYLocal = arg1;
+        let rightLocal = arg2;
             this.statueX = statueXLocal;
                 this.statueY = statueYLocal;
                 this.right = rightLocal;
@@ -48,7 +49,7 @@ export class StatueMissile extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly EXPLODE_DELAY: number = 91;

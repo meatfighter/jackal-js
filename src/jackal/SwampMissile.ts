@@ -19,14 +19,15 @@ export class SwampMissile extends Enemy {
     this.player = null as any;
     this.entryDelay = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any) {
     super();
-    this.__construct_SwampMissile(...args);
+    const argCount = arguments.length;
+    this.__construct_SwampMissile(argCount, arg0, arg1);
   }
-  private __construct_SwampMissile(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let launcherXLocal = args[0];
-        let launcherYLocal = args[1];
+  private __construct_SwampMissile(argCount: number, arg0?: any, arg1?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let launcherXLocal = arg0;
+        let launcherYLocal = arg1;
             this.launcherX = launcherXLocal;
                 this.launcherY = launcherYLocal;
     
@@ -38,7 +39,7 @@ export class SwampMissile extends Enemy {
                 this.vy = -SwampMissile.SPEED;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly ROTATION_SPEED: number = 0.9;

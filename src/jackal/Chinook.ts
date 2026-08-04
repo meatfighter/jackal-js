@@ -19,15 +19,16 @@ export class Chinook extends GameElement {
     this.X = 0;
     this.Y = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_Chinook(...args);
+    const argCount = arguments.length;
+    this.__construct_Chinook(argCount);
   }
-  private __construct_Chinook(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_Chinook(argCount: number): void {
+    if (argCount === 0) {
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly STATE_FOWARDS: number = 0;

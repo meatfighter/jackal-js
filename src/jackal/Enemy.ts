@@ -43,14 +43,15 @@ export abstract class Enemy extends HitElement {
   
   public playSoundOnRemove: boolean = true;
   
-    public isSolid(...args: any[]): any {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.isSolid__overload0(args[0], args[1]);
+    public isSolid(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.isSolid__overload0(arg0, arg1);
     }
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.isSolid__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.isSolid__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched isSolid: ${args.length}`);
+    throw new Error(`No Java method overload matched isSolid: ${argCount}`);
   }
 public isSolid__overload0(px: any, py: any): boolean {
     px -= this.x;
@@ -68,14 +69,15 @@ public isSolid__overload0(px: any, py: any): boolean {
         this.y + this.solidY2);
   }
   
-    public isMine(...args: any[]): any {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.isMine__overload0(args[0], args[1]);
+    public isMine(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.isMine__overload0(arg0, arg1);
     }
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.isMine__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.isMine__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched isMine: ${args.length}`);
+    throw new Error(`No Java method overload matched isMine: ${argCount}`);
   }
 public isMine__overload0(px: any, py: any): boolean {
     px -= this.x;

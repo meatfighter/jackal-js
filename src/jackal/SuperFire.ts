@@ -16,21 +16,22 @@ export class SuperFire extends GameElement {
     this.asterDelay = 0;
     this.bossSuperTank = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_SuperFire(...args);
+    const argCount = arguments.length;
+    this.__construct_SuperFire(argCount, arg0, arg1, arg2);
   }
-  private __construct_SuperFire(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let bossSuperTankLocal = args[2];
+  private __construct_SuperFire(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let bossSuperTankLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.bossSuperTank = bossSuperTankLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_ASTER: number = 0;

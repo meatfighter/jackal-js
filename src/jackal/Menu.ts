@@ -4,18 +4,19 @@
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
-export class Menu {  public constructor(...args: any[]) {
-    this.__construct_Menu(...args);
+export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
+    const argCount = arguments.length;
+    this.__construct_Menu(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
   }
-  private __construct_Menu(...args: any[]): void {
-    if (args.length >= 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let mainLocal = args[2];
-        let selectedIndexLocal = args[3];
-        let iconLocal = args[4];
-        let menuListenerLocal = args[5];
-        let optionsLocal = args.slice(6);
+  private __construct_Menu(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): void {
+    if (argCount >= 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let mainLocal = arg2;
+        let selectedIndexLocal = arg3;
+        let iconLocal = arg4;
+        let menuListenerLocal = arg5;
+        let optionsLocal = [].slice(0, Math.max(0, argCount - 6));
             this.x = xLocal;
                 this.y = yLocal;
                 this.main = mainLocal;      
@@ -30,7 +31,7 @@ export class Menu {  public constructor(...args: any[]) {
                 this.input.clearKeyPressedRecord();
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly ICON_JEEP: number = 0;

@@ -4,12 +4,13 @@
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
-export class JeepYeahPlane {  public constructor(...args: any[]) {
-    this.__construct_JeepYeahPlane(...args);
+export class JeepYeahPlane {  public constructor(arg0?: any) {
+    const argCount = arguments.length;
+    this.__construct_JeepYeahPlane(argCount, arg0);
   }
-  private __construct_JeepYeahPlane(...args: any[]): void {
-    if (args.length === 1 && typeof args[0] === "boolean") {
-        let leftLocal = args[0];
+  private __construct_JeepYeahPlane(argCount: number, arg0?: any): void {
+    if (argCount === 1 && typeof arg0 === "boolean") {
+        let leftLocal = arg0;
             this.left = leftLocal;
     
                 if (leftLocal) {
@@ -24,7 +25,7 @@ export class JeepYeahPlane {  public constructor(...args: any[]) {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly CENTER_X: number = MainConstants.DISPLAY_WIDTH / 2;

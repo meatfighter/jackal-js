@@ -22,18 +22,19 @@ export class Fire extends GameElement {
     this.player = null as any;
     this.enemy = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
     super();
-    this.__construct_Fire(...args);
+    const argCount = arguments.length;
+    this.__construct_Fire(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
   }
-  private __construct_Fire(...args: any[]): void {
-    if (args.length === 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let vxLocal = args[2];
-        let vyLocal = args[3];
-        let angleLocal = args[4];
-        let enemyLocal = args[5];
+  private __construct_Fire(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): void {
+    if (argCount === 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let vxLocal = arg2;
+        let vyLocal = arg3;
+        let angleLocal = arg4;
+        let enemyLocal = arg5;
             this.x = xLocal;
                 this.y = yLocal;
                 this.dx = vxLocal;
@@ -46,7 +47,7 @@ export class Fire extends GameElement {
                 this.enemyBullet = true;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly STATE_GROWING: number = 0;

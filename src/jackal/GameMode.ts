@@ -257,17 +257,18 @@ export class GameMode implements IMode, IFadeListener {
   }
   
   // rotates 90+ degrees, used after a collision
-    public suggestDirection(...args: any[]): any {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.suggestDirection__overload0(args[0], args[1]);
+    public suggestDirection(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.suggestDirection__overload0(arg0, arg1);
     }
-    if (args.length === 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number" && typeof args[5] === "boolean") {
-      return this.suggestDirection__overload1(args[0], args[1], args[2], args[3], args[4], args[5]);
+    if (argCount === 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "boolean") {
+      return this.suggestDirection__overload1(arg0, arg1, arg2, arg3, arg4, arg5);
     }
-    if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "boolean") {
-      return this.suggestDirection__overload2(args[0], args[1], args[2], args[3], args[4]);
+    if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
+      return this.suggestDirection__overload2(arg0, arg1, arg2, arg3, arg4);
     }
-    throw new Error(`No Java method overload matched suggestDirection: ${args.length}`);
+    throw new Error(`No Java method overload matched suggestDirection: ${argCount}`);
   }
 public suggestDirection__overload0(vx: any, vy: any): any {
     
@@ -696,14 +697,15 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     return type == GameMode.TYPE_SOLID || type == GameMode.TYPE_SHIELD;
   }
   
-    public isDriveable(...args: any[]): any {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.isDriveable__overload0(args[0], args[1], args[2], args[3]);
+    public isDriveable(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.isDriveable__overload0(arg0, arg1, arg2, arg3);
     }
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.isDriveable__overload1(args[0], args[1]);
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.isDriveable__overload1(arg0, arg1);
     }
-    throw new Error(`No Java method overload matched isDriveable: ${args.length}`);
+    throw new Error(`No Java method overload matched isDriveable: ${argCount}`);
   }
 public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
     return this.isDriveable(x1, y1) 
@@ -750,14 +752,15 @@ public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_CONVEYOR;
   }
   
-    public isOutsideOfFrame(...args: any[]): any {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.isOutsideOfFrame__overload0(args[0], args[1]);
+    public isOutsideOfFrame(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.isOutsideOfFrame__overload0(arg0, arg1);
     }
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.isOutsideOfFrame__overload1(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.isOutsideOfFrame__overload1(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched isOutsideOfFrame: ${args.length}`);
+    throw new Error(`No Java method overload matched isOutsideOfFrame: ${argCount}`);
   }
 public isOutsideOfFrame__overload0(x: any, y: any): boolean {
     return y > this.cameraY + MainConstants.DISPLAY_HEIGHT || x < this.cameraX || y < this.cameraY
@@ -796,14 +799,15 @@ public isOutsideOfFrame__overload0(x: any, y: any): boolean {
     }
   }
   
-    public destroyAll(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Enemy)) {
-      return this.destroyAll__overload0(args[0]);
+    public destroyAll(arg0?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
+      return this.destroyAll__overload0(arg0);
     }
-    if (args.length === 0) {
+    if (argCount === 0) {
       return this.destroyAll__overload1();
     }
-    throw new Error(`No Java method overload matched destroyAll: ${args.length}`);
+    throw new Error(`No Java method overload matched destroyAll: ${argCount}`);
   }
 public destroyAll__overload0(exceptEnemy: any): void {
     for(let i = this.enemies.size() - 1; i >= 0; i--) {
@@ -876,14 +880,15 @@ public destroyAll__overload0(exceptEnemy: any): void {
     return this.typesMap[Y][X];
   }
   
-    public add(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof Enemy)) {
-      return this.add__overload0(args[0]);
+    public add(arg0?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
+      return this.add__overload0(arg0);
     }
-    if (args.length === 1 && (args[0] === null || args[0] instanceof GameElement)) {
-      return this.add__overload1(args[0]);
+    if (argCount === 1 && (arg0 === null || arg0 instanceof GameElement)) {
+      return this.add__overload1(arg0);
     }
-    throw new Error(`No Java method overload matched add: ${args.length}`);
+    throw new Error(`No Java method overload matched add: ${argCount}`);
   }
 public add__overload0(enemy: any): void {
     this.elements[enemy.layer].add(enemy);

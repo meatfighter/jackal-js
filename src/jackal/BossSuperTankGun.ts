@@ -19,17 +19,18 @@ export class BossSuperTankGun extends Enemy {
     this.recoilIndex = 0;
     this.bossSuperTank = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any) {
     super();
-    this.__construct_BossSuperTankGun(...args);
+    const argCount = arguments.length;
+    this.__construct_BossSuperTankGun(argCount, arg0);
   }
-  private __construct_BossSuperTankGun(...args: any[]): void {
-    if (args.length === 1) {
-        let bossSuperTankLocal = args[0];
+  private __construct_BossSuperTankGun(argCount: number, arg0?: any): void {
+    if (argCount === 1) {
+        let bossSuperTankLocal = arg0;
             this.bossSuperTank = bossSuperTankLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly RECOIL_DURATION: number = 17;

@@ -15,15 +15,16 @@ export class Train extends Enemy {
     this.shootX = 0;
     this.shootY = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_Train(...args);
+    const argCount = arguments.length;
+    this.__construct_Train(argCount, arg0, arg1, arg2);
   }
-  private __construct_Train(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let locomotive = args[2];
+  private __construct_Train(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let locomotive = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.carIndex = locomotive ? 0 : 1;
@@ -31,7 +32,7 @@ export class Train extends Enemy {
                 this.shootY = 64;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly SPEED: number = 3.5;

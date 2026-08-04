@@ -24,15 +24,16 @@ export class BossGarageManager
     this.sparkState = 0;
     this.sparking = false;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_BossGarageManager(...args);
+    const argCount = arguments.length;
+    this.__construct_BossGarageManager(argCount);
   }
-  private __construct_BossGarageManager(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_BossGarageManager(argCount: number): void {
+    if (argCount === 0) {
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly LONG_DELAY: number = 4 * 91;

@@ -22,43 +22,44 @@ export class Explosion extends GameElement {
     this.enemyY = 0;
     this.enemy = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
     super();
-    this.__construct_Explosion(...args);
+    const argCount = arguments.length;
+    this.__construct_Explosion(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
   }
-  private __construct_Explosion(...args: any[]): void {
-    if (args.length === 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let xLocal4 = args[0];
-        let yLocal4 = args[1];
-        let tinyLocal2 = args[2];
-        let delayLocal2 = args[3];
-        let alphaLocal2 = args[4];
-        let enemyLocal = args[5];
-            this.__construct_Explosion(xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
+  private __construct_Explosion(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): void {
+    if (argCount === 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "number" && typeof arg4 === "number") {
+        let xLocal4 = arg0;
+        let yLocal4 = arg1;
+        let tinyLocal2 = arg2;
+        let delayLocal2 = arg3;
+        let alphaLocal2 = arg4;
+        let enemyLocal = arg5;
+            this.__construct_Explosion(5, xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
                 this.enemy = enemyLocal;
                 this.enemyX = enemyLocal.x;
                 this.enemyY = enemyLocal.y;
         return;
-    } else     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let xLocal3 = args[0];
-        let yLocal3 = args[1];
-        let tinyLocal = args[2];
-        let delayLocal = args[3];
-        let alphaLocal = args[4];
-            this.__construct_Explosion(xLocal3, yLocal3, false);
+    } else     if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "number" && typeof arg4 === "number") {
+        let xLocal3 = arg0;
+        let yLocal3 = arg1;
+        let tinyLocal = arg2;
+        let delayLocal = arg3;
+        let alphaLocal = arg4;
+            this.__construct_Explosion(3, xLocal3, yLocal3, false);
                 this.setTiny(tinyLocal);
                 this.setDelayed(delayLocal);
                 this.setAlpha(alphaLocal);
         return;
-    } else     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-            this.__construct_Explosion(xLocal2, yLocal2, false);
+    } else     if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+            this.__construct_Explosion(3, xLocal2, yLocal2, false);
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let playerExplosion = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let playerExplosion = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = playerExplosion 
@@ -67,7 +68,7 @@ export class Explosion extends GameElement {
                 this.enemies = this.gameMode.enemies;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public static readonly GROW_RATE: number = 1.03;

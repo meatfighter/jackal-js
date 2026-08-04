@@ -20,12 +20,13 @@ export class BossShipManager
     this.triggerDelay = 0;
     this.tanks = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_BossShipManager(...args);
+    const argCount = arguments.length;
+    this.__construct_BossShipManager(argCount);
   }
-  private __construct_BossShipManager(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_BossShipManager(argCount: number): void {
+    if (argCount === 0) {
             this.shipGuns.add(new BossShipGun(36 << 5, 8 << 5, this));
                 this.shipGuns.add(new BossShipGun(28 << 5, 10 << 5, this));
                 this.shipGuns.add(new BossShipGun(28 << 5, 6 << 5, this));
@@ -34,7 +35,7 @@ export class BossShipManager
                 this.shipGuns.add(new BossShipGun(13 << 5, 8 << 5, this));
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly MAX_TANKS: number = 5;

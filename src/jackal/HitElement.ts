@@ -15,18 +15,19 @@ export abstract class HitElement extends GameElement {
     this.trail = null as any;
     this.trailIndex = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_HitElement(...args);
+    const argCount = arguments.length;
+    this.__construct_HitElement(argCount);
   }
-  private __construct_HitElement(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_HitElement(argCount: number): void {
+    if (argCount === 0) {
             for(let i = 0; i < 8; i++) {
                   this.trail[i] = -i;
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
 
@@ -52,17 +53,18 @@ export abstract class HitElement extends GameElement {
     return this.hit(h.x, h.y);
   }
   
-    public hit(...args: any[]): any {
-    if (args.length === 1 && (args[0] === null || args[0] instanceof HitElement)) {
-      return this.hit__overload0(args[0]);
+    public hit(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    const argCount = arguments.length;
+    if (argCount === 1 && (arg0 === null || arg0 instanceof HitElement)) {
+      return this.hit__overload0(arg0);
     }
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-      return this.hit__overload1(args[0], args[1]);
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+      return this.hit__overload1(arg0, arg1);
     }
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number") {
-      return this.hit__overload2(args[0], args[1], args[2], args[3]);
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
+      return this.hit__overload2(arg0, arg1, arg2, arg3);
     }
-    throw new Error(`No Java method overload matched hit: ${args.length}`);
+    throw new Error(`No Java method overload matched hit: ${argCount}`);
   }
 public hit__overload0(h: any): boolean {
     return this.overlap(  

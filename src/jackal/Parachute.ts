@@ -18,17 +18,18 @@ export class Parachute extends GameElement {
     this.bossHelicopter = null as any;
     this.left = false;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
     super();
-    this.__construct_Parachute(...args);
+    const argCount = arguments.length;
+    this.__construct_Parachute(argCount, arg0, arg1, arg2, arg3, arg4);
   }
-  private __construct_Parachute(...args: any[]): void {
-    if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let distance = args[2];
-        let leftLocal = args[3];
-        let bossHelicopterLocal = args[4];
+  private __construct_Parachute(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let distance = arg2;
+        let leftLocal = arg3;
+        let bossHelicopterLocal = arg4;
             this.x = xLocal;
                 this.y = yLocal;
                 this.bossHelicopter = bossHelicopterLocal;
@@ -38,7 +39,7 @@ export class Parachute extends GameElement {
                 this.left = leftLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_LAUNCH: number = 0;

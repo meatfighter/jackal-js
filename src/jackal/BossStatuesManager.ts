@@ -18,15 +18,16 @@ export class BossStatuesManager
     this.statues = 0;
     this.tanks = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_BossStatuesManager(...args);
+    const argCount = arguments.length;
+    this.__construct_BossStatuesManager(argCount);
   }
-  private __construct_BossStatuesManager(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_BossStatuesManager(argCount: number): void {
+    if (argCount === 0) {
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly MAX_TANKS: number = 5;

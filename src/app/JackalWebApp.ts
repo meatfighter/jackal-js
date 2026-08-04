@@ -7,7 +7,7 @@ import versionInfo from "../../version.json";
 export class JackalWebApp {
     private readonly root: HTMLElement;
     private container: AppGameContainer | null = null;
-    private volume = 0.8;
+    private volume = 1;
 
     public constructor(root: HTMLElement) {
         this.root = root;

@@ -37,16 +37,17 @@ export class FriendlySoldier extends Enemy {
     this.left = false;
     this.helicopter = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
     super();
-    this.__construct_FriendlySoldier(...args);
+    const argCount = arguments.length;
+    this.__construct_FriendlySoldier(argCount, arg0, arg1, arg2, arg3, arg4);
   }
-  private __construct_FriendlySoldier(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "boolean") {
-        let xLocal3 = args[0];
-        let yLocal3 = args[1];
-        let helicopterLocal = args[2];
-        let colorChangingLocal = args[3];
+  private __construct_FriendlySoldier(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
+        let xLocal3 = arg0;
+        let yLocal3 = arg1;
+        let helicopterLocal = arg2;
+        let colorChangingLocal = arg3;
             this.x = xLocal3;
                 this.y = yLocal3;
                 this.type = FriendlySoldierType.WALKING_TO_HELICOPTER;
@@ -69,10 +70,10 @@ export class FriendlySoldier extends Enemy {
                 this.wobbleScaleX = 0;
                 this.wobbleScaleY = 1;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let typeLocal2 = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let typeLocal2 = arg2;
             this.x = xLocal2;
                 this.y = yLocal2;
                 this.type = typeLocal2;
@@ -83,12 +84,12 @@ export class FriendlySoldier extends Enemy {
     
                 this.startWandering();
         return;
-    } else     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "number" && typeof args[4] === "boolean") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let typeLocal = args[2];
-        let houseCountLocal = args[3];
-        let shack = args[4];
+    } else     if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let typeLocal = arg2;
+        let houseCountLocal = arg3;
+        let shack = arg4;
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = typeLocal;
@@ -146,7 +147,7 @@ export class FriendlySoldier extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly WALK_SPEED: number = 1;

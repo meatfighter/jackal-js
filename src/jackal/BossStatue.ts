@@ -18,16 +18,17 @@ export class BossStatue extends Enemy {
     this.hits = 0;
     this.bossStatuesManager = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_BossStatue(...args);
+    const argCount = arguments.length;
+    this.__construct_BossStatue(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_BossStatue(...args: any[]): void {
-    if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let startDelay = args[2];
-        let bossStatuesManagerLocal = args[3];
+  private __construct_BossStatue(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let startDelay = arg2;
+        let bossStatuesManagerLocal = arg3;
             this.x = xLocal;
                 this.y = yLocal;
                 this.bossStatuesManager = bossStatuesManagerLocal;
@@ -40,7 +41,7 @@ export class BossStatue extends Enemy {
                 this.delay += startDelay;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly PAUSE_TIME: number = 4 * 91;

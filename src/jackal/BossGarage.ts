@@ -23,15 +23,16 @@ export class BossGarage extends Enemy {
     this.delay = 0;
     this.groupIndex = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_BossGarage(...args);
+    const argCount = arguments.length;
+    this.__construct_BossGarage(argCount, arg0, arg1, arg2);
   }
-  private __construct_BossGarage(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let bossGarageManagerLocal = args[2];
+  private __construct_BossGarage(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let bossGarageManagerLocal = arg2;
             this.x = xLocal;
                 this.y = yLocal;
                 this.bossGarageManager = bossGarageManagerLocal;
@@ -42,7 +43,7 @@ export class BossGarage extends Enemy {
                 this.groupIndex = this.gameMode.groupsMap[Y][X];
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_CLOSED: number = 0;

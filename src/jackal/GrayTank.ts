@@ -33,22 +33,23 @@ export class GrayTank extends Enemy {
     this.garage = false;
     this.bossGarageManager = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
     super();
-    this.__construct_GrayTank(...args);
+    const argCount = arguments.length;
+    this.__construct_GrayTank(argCount, arg0, arg1, arg2, arg3);
   }
-  private __construct_GrayTank(...args: any[]): void {
-    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal4 = args[0];
-        let yLocal4 = args[1];
+  private __construct_GrayTank(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal4 = arg0;
+        let yLocal4 = arg1;
             this.x = xLocal4;
                 this.y = yLocal4;
                 this.firstMove = 2 * 91;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal3 = args[0];
-        let yLocal3 = args[1];
-        let shackLocal = args[2];
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal3 = arg0;
+        let yLocal3 = arg1;
+        let shackLocal = arg2;
             this.x = xLocal3;
                 this.y = yLocal3;
                 this.shack = shackLocal;
@@ -56,20 +57,20 @@ export class GrayTank extends Enemy {
                 this.shackY = yLocal3 - 80;
                 this.firstMove = 105;
         return;
-    } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let firstMoveLocal2 = args[2];
-            this.__construct_GrayTank(xLocal2, yLocal2);
+    } else     if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let firstMoveLocal2 = arg2;
+            this.__construct_GrayTank(2, xLocal2, yLocal2);
                 this.firstMove = firstMoveLocal2;
                 this.garage = true;
         return;
-    } else     if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let firstMoveLocal = args[2];
-        let bossGarageManagerLocal = args[3];
-            this.__construct_GrayTank(xLocal, yLocal, firstMoveLocal);
+    } else     if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let firstMoveLocal = arg2;
+        let bossGarageManagerLocal = arg3;
+            this.__construct_GrayTank(3, xLocal, yLocal, firstMoveLocal);
                 this.bossGarageManager = bossGarageManagerLocal;
                 if (bossGarageManagerLocal != null) {
                   bossGarageManagerLocal.tankCreated();
@@ -77,7 +78,7 @@ export class GrayTank extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly SPEED: number = 1.5;

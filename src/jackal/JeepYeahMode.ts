@@ -12,16 +12,17 @@ import { JeepYeahFireLeft } from "./JeepYeahFireLeft.js";
 import { JeepYeahFireRight } from "./JeepYeahFireRight.js";
 import { JeepYeahPlane } from "./JeepYeahPlane.js";
 import { Modes } from "./Modes.js";
-export class JeepYeahMode implements IMode, IFadeListener {  public constructor(...args: any[]) {
-    this.__construct_JeepYeahMode(...args);
+export class JeepYeahMode implements IMode, IFadeListener {  public constructor(arg0?: any) {
+    const argCount = arguments.length;
+    this.__construct_JeepYeahMode(argCount, arg0);
   }
-  private __construct_JeepYeahMode(...args: any[]): void {
-    if (args.length === 1 && typeof args[0] === "boolean") {
-        let yeahLocal = args[0];
+  private __construct_JeepYeahMode(argCount: number, arg0?: any): void {
+    if (argCount === 1 && typeof arg0 === "boolean") {
+        let yeahLocal = arg0;
             this.yeah = yeahLocal;
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly STATE_FADE_IN: number = 0;

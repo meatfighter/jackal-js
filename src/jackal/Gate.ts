@@ -12,28 +12,29 @@ export class Gate extends Enemy {
     this.groupIndex = 0;
     this.bossGarageManager = null as any;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     super();
-    this.__construct_Gate(...args);
+    const argCount = arguments.length;
+    this.__construct_Gate(argCount, arg0, arg1, arg2);
   }
-  private __construct_Gate(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let bossGarageManagerLocal = args[2];
-            this.__construct_Gate(xLocal2, yLocal2);
+  private __construct_Gate(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let bossGarageManagerLocal = arg2;
+            this.__construct_Gate(2, xLocal2, yLocal2);
                 this.bossGarageManager = bossGarageManagerLocal;
         return;
-    } else     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
+    } else     if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
             this.x = xLocal;
                 this.y = yLocal;
         
                 this.groupIndex = this.gameMode.groupsMap[(javaInt(yLocal)) >> 5][((javaInt(xLocal)) >> 5) + 1];
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
 

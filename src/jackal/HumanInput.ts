@@ -4,18 +4,19 @@
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { IInput } from "./IInput.js";
-export class HumanInput implements IInput {  public constructor(...args: any[]) {
-    this.__construct_HumanInput(...args);
+export class HumanInput implements IInput {  public constructor(arg0?: any, arg1?: any) {
+    const argCount = arguments.length;
+    this.__construct_HumanInput(argCount, arg0, arg1);
   }
-  private __construct_HumanInput(...args: any[]): void {
-    if (args.length === 2) {
-        let buttonMappingLocal = args[0];
-        let gc = args[1];
+  private __construct_HumanInput(argCount: number, arg0?: any, arg1?: any): void {
+    if (argCount === 2) {
+        let buttonMappingLocal = arg0;
+        let gc = arg1;
             this.buttonMapping = buttonMappingLocal;
                 this.input = gc.getInput();
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   private buttonMapping: any = null as any;

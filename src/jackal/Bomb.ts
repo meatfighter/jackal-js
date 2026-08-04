@@ -16,23 +16,24 @@ export class Bomb extends Enemy {
     this.t = 0;
     this.airplane = false;
   }
-  public constructor(...args: any[]) {
+  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
     super();
-    this.__construct_Bomb(...args);
+    const argCount = arguments.length;
+    this.__construct_Bomb(argCount, arg0, arg1, arg2, arg3, arg4);
   }
-  private __construct_Bomb(...args: any[]): void {
-    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let xLocal2 = args[0];
-        let yLocal2 = args[1];
-        let airplaneLocal2 = args[2];
-            this.__construct_Bomb(xLocal2, yLocal2, airplaneLocal2, 0, 0);
+  private __construct_Bomb(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
+        let xLocal2 = arg0;
+        let yLocal2 = arg1;
+        let airplaneLocal2 = arg2;
+            this.__construct_Bomb(5, xLocal2, yLocal2, airplaneLocal2, 0, 0);
         return;
-    } else     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let xLocal = args[0];
-        let yLocal = args[1];
-        let airplaneLocal = args[2];
-        let vxLocal = args[3];
-        let vyLocal = args[4];
+    } else     if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "number" && typeof arg4 === "number") {
+        let xLocal = arg0;
+        let yLocal = arg1;
+        let airplaneLocal = arg2;
+        let vxLocal = arg3;
+        let vyLocal = arg4;
             this.x = xLocal;
                 this.y = yLocal;
                 this.airplane = airplaneLocal;
@@ -54,7 +55,7 @@ export class Bomb extends Enemy {
                 }
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
   
   public static readonly CLOSE_MARGIN: number = 128;

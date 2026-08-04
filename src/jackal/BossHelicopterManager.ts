@@ -15,15 +15,16 @@ export class BossHelicopterManager
     this.spawned = 0;
     this.destroyed = 0;
   }
-  public constructor(...args: any[]) {
+  public constructor() {
     super();
-    this.__construct_BossHelicopterManager(...args);
+    const argCount = arguments.length;
+    this.__construct_BossHelicopterManager(argCount);
   }
-  private __construct_BossHelicopterManager(...args: any[]): void {
-    if (args.length === 0) {
+  private __construct_BossHelicopterManager(argCount: number): void {
+    if (argCount === 0) {
         return;
     }
-    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
   public spawnDelay: number = 91;
