@@ -566,6 +566,9 @@ function convertConstructors(text, className) {
     const constructorParamLists = constructors.map((ctor) => parseParams(ctor.params));
     const maxArity = constructorParamLists.reduce((max, params) => {
         const fixedCount = params.filter((param) => !param.varargs).length;
+        if (params.some((param) => param.varargs)) {
+            return Math.max(max, findMaxConstructorCallArity(className), fixedCount);
+        }
         return Math.max(max, fixedCount);
     }, 0);
     const argNames = Array.from({ length: maxArity }, (_value, index) => `arg${index}`);
@@ -635,6 +638,25 @@ function findConstructors(text, className) {
         regex.lastIndex = closeBrace + 1;
     }
     return constructors;
+}
+
+function findMaxConstructorCallArity(className) {
+    let maxArity = 0;
+    const pattern = new RegExp(`\\bnew\\s+${escapeRegExp(className)}\\s*\\(`, "g");
+    for (const source of sourceByClass.values()) {
+        let match;
+        while ((match = pattern.exec(source)) !== null) {
+            const openParen = source.indexOf("(", match.index);
+            const closeParen = findMatchingParen(source, openParen);
+            const args = source.slice(openParen + 1, closeParen).trim();
+            const arity = args === ""
+                ? 0
+                : splitTopLevel(args, ",").filter((arg) => arg.trim().length > 0).length;
+            maxArity = Math.max(maxArity, arity);
+            pattern.lastIndex = closeParen + 1;
+        }
+    }
+    return maxArity;
 }
 
 function buildConstructorBranch(params, body, index, argNames) {

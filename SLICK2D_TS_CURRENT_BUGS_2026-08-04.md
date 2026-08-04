@@ -202,6 +202,7 @@ Evidence:
 - The converter now emits fixed optional constructor parameters plus `const argCount = arguments.length`.
 - The private constructor helper receives `argCount` explicitly, so overload dispatch preserves the public constructor's original arity.
 - Java constructor delegation calls such as `this(x, y)` are rewritten to helper calls with explicit delegated arity, such as `this.__construct_Airplane(2, x, y)`.
+- Java varargs constructors are sized from observed Java `new ClassName(...)` calls, so `Menu(float, float, Main, int, int, IMenuListener, String... options)` captures the title/options menu strings without using a blanket constructor rest array.
 - Regenerated classes no longer contain `constructor(...args: any[])`, `__construct_*(...args: any[])`, `args.length`, or `args[index]`.
 - Example shape: `EnemySoldier` now has `constructor(arg0?: any, arg1?: any, arg2?: any)` and `__construct_EnemySoldier(argCount, arg0, arg1, arg2)`.
 
