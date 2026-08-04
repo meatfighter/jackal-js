@@ -1,0 +1,23 @@
+{
+    "name": "jackal-js",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "convert": "node tools/convert-java-to-ts.mjs",
+        "dev": "vite",
+        "build": "tsc -p tsconfig.json && vite build",
+        "lint": "eslint .",
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "dependencies": {
+        "slick2d-ts": "file:../slick2d-ts"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.8.0",
+        "typescript": "^5.9.0",
+        "typescript-eslint": "^8.65.0",
+        "vite": "^7.0.0"
+    }
+}

@@ -1,0 +1,152 @@
+// @ts-nocheck
+// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SuperFire.java.
+// Original Java imports: none.
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { GameElement } from "./GameElement.js";
+import { Main } from "./Main.js";
+export class SuperFire extends GameElement {  public constructor(...args: any[]) {
+    super();
+    this.__construct(...args);
+  }
+  private __construct(...args: any[]): void {
+    if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
+        let x = args[0];
+        let y = args[1];
+        let bossSuperTank = args[2];
+            this.x = x;
+                this.y = y;
+                this.bossSuperTank = bossSuperTank;
+        return;
+    }
+    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+  }
+  
+  public static readonly STATE_ASTER: number = 0;
+  public static readonly STATE_DIAMOND: number = 1;
+  public static readonly STATE_GROWING: number = 2;
+  public static readonly STATE_MOVING: number = 3;
+  
+  public static readonly ASTER_DELAY: number = 23;
+  public static readonly ASTER_SPINES: number = 5;
+  public static readonly ASTER_RADIUS: number = 128;  
+  public static readonly ASTER_ANGLE: number = (Math.PI);
+  public static readonly ASTER_SPACER_ANGLE: number = (2.0 * Math.PI / SuperFire.ASTER_SPINES);
+  
+  public static readonly ASTERS_XYS: any[] = java3DArray(SuperFire.ASTER_DELAY, SuperFire.ASTER_SPINES, 2, 0);
+  public static readonly ASTER_SCALES: any[] = javaArray(SuperFire.ASTER_DELAY, 0);
+  
+  static {
+    for(let i = 0; i < SuperFire.ASTER_DELAY; i++) {
+      SuperFire.ASTER_SCALES[i] = (i) / (SuperFire.ASTER_DELAY - 1);
+      let radius = (1 - SuperFire.ASTER_SCALES[i]) * SuperFire.ASTER_RADIUS;
+      let angle = SuperFire.ASTER_SCALES[i] * SuperFire.ASTER_ANGLE;
+      for(let j = 0; j < SuperFire.ASTER_SPINES; j++) {
+        let ang = angle + SuperFire.ASTER_SPACER_ANGLE * j;
+        SuperFire.ASTERS_XYS[i][j][0] = radius * Math.cos(ang);
+        SuperFire.ASTERS_XYS[i][j][1] = radius * Math.sin(ang);
+      }
+    }
+  }  
+  
+  public static readonly SPEED: number = 11;
+  
+  public player: any = null as any;
+  public state: number = SuperFire.STATE_ASTER;
+  public length: number = 0;
+  public flickerCounter: number = 0;
+  public flickerIndex: number = 0;
+  public asterDelay: number = 0;
+  public bossSuperTank: any = null as any;
+  
+  
+
+  public init(): void {
+    this.layer = 5;
+    
+    this.player = this.gameMode.player;
+  }
+
+  public update(): void {
+    switch(this.state) {
+      case SuperFire.STATE_ASTER:
+        if (++this.asterDelay == SuperFire.ASTER_DELAY) {
+          this.state = SuperFire.STATE_DIAMOND;
+          this.main.playSound(this.main.fireSound);
+        }
+        break;
+      case SuperFire.STATE_DIAMOND:
+        this.length += SuperFire.SPEED;
+        if (this.length >= 128) {
+          this.state = SuperFire.STATE_GROWING;
+        }
+        break;
+      case SuperFire.STATE_GROWING:
+        this.length += SuperFire.SPEED;
+        if (this.length >= 512) {
+          this.length = 512;
+          this.state = SuperFire.STATE_MOVING;
+        }
+        break;
+      case SuperFire.STATE_MOVING:
+        this.y += SuperFire.SPEED;
+        if (this.y > this.gameMode.cameraY + Main.DISPLAY_HEIGHT + 32) {
+          this.remove();
+        }
+        break;
+    }
+    if (this.state != SuperFire.STATE_ASTER) {
+      this.player.attack(this.x - 40, this.y + 32, this.x + 40, this.y + this.length - 32);
+    }
+    if (this.bossSuperTank.removeFlag) {
+      this.remove();
+    }
+  }
+
+  public render(): void {
+    if (this.flickerCounter >= 2.5) {
+      this.flickerCounter -= 2.5;      
+    } else {
+      this.flickerIndex ^= 1;
+    }
+    this.flickerCounter++;
+    let X = this.x - 48;
+    let halfLength = this.length * 0.5;
+    switch(this.state) {
+      case SuperFire.STATE_ASTER:
+        for(let i = 0; i < SuperFire.ASTER_SPINES; i++) {
+          this.main.drawCentered(this.main.elephantGuns[4], 
+              this.x + SuperFire.ASTERS_XYS[this.asterDelay][i][0],
+              this.y + SuperFire.ASTERS_XYS[this.asterDelay][i][1], 
+              SuperFire.ASTER_SCALES[this.asterDelay],
+              SuperFire.ASTER_SCALES[this.asterDelay]);
+        }
+        break;
+      case SuperFire.STATE_DIAMOND:
+        this.gameMode.g.setWorldClip(X - 1, this.y, 98, halfLength);
+        this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+        this.gameMode.g.setWorldClip(X - 1, this.y + halfLength, 98, halfLength);
+        this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
+        this.gameMode.g.clearWorldClip();
+        break;
+      case SuperFire.STATE_GROWING:
+        this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+        this.gameMode.g.setWorldClip(X - 1, this.y + 64, 98, this.length);
+        for(let i = 1 + (((this.length - 128)) >> 5); i >= 0; i--) {
+          this.main.draw(this.main.superFires[this.flickerIndex][1], X, 
+              this.y + this.length - (i << 5) - 64);
+        } 
+        this.gameMode.g.clearWorldClip();
+        this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
+        break;
+      default:
+      case SuperFire.STATE_MOVING:
+        this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+        for(let i = 0; i < 12; i++) {
+          this.main.draw(this.main.superFires[this.flickerIndex][1], X, this.y + 64 + (i << 5));
+        }
+        this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + 448);
+        break;
+    }    
+  }  
+}

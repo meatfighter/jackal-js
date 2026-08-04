@@ -2,7 +2,9 @@
 
 Date: 2026-08-03
 
-This file records the investigation results for a future 1-to-1 TypeScript browser port of `C:\NetBeansProjects\SlickJackal`. No implementation code was written as part of this audit.
+Status update, 2026-08-04: implementation has now started in this repository. Keep this file as the original pre-conversion research record; use `SLICKJACKAL_CONVERSION_AUDIT_2026-08-03.md` for the current generated port status, verification results, and remaining parity risks.
+
+This file originally recorded the investigation results for a future 1-to-1 TypeScript browser port of `C:\NetBeansProjects\SlickJackal`. No implementation code was written as part of this original audit.
 
 ## Scope
 
@@ -36,7 +38,7 @@ The Java game is small enough to port mechanically, but it is behaviorally dense
 - Original graphics, atlas coordinates, draw order, transform stack behavior, audio sequence logic, and all game mode transitions.
 - PWA requirements: start menu, trusted Start click for Web Audio, volume slider, hamburger return to menu, versioned assets, service worker cache busting, splash dots, retries, and user-visible loading failures.
 
-`C:\js-projects\slick2d-ts` is useful for this port, but it is not a complete file-for-file port of all Slick2D Java source. See `SLICK2D_TS_MISSING_AUDIT.md`.
+`C:\js-projects\slick2d-ts` is useful for this port, but it is not a complete file-for-file port of all Slick2D Java source. The older broad missing-feature audit was superseded for the Jackal browser conversion by `SLICK2D_TS_JACKAL_REAUDIT_2026-08-03_PASS6.md` and `SLICKJACKAL_PRECONVERSION_ANALYSIS_2026-08-03.md`.
 
 ## SlickJackal Project Facts
 
@@ -1620,7 +1622,7 @@ Important browser boundaries:
 - Browser RAF drives the outer loop.
 - Audio streaming is browser-adapted.
 
-Full Slick2D parity is not present; see `SLICK2D_TS_MISSING_AUDIT.md`.
+Full Slick2D parity is not present, but the Jackal-focused browser conversion audit is now tracked by `SLICK2D_TS_JACKAL_REAUDIT_2026-08-03_PASS6.md` and `SLICKJACKAL_PRECONVERSION_ANALYSIS_2026-08-03.md`.
 
 ## Conversion Strategy
 

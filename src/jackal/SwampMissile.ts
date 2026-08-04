@@ -1,0 +1,124 @@
+// @ts-nocheck
+// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SwampMissile.java.
+// Original Java imports: org.newdawn.slick.Color.
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { Enemy } from "./Enemy.js";
+import { Explosion } from "./Explosion.js";
+import { Main } from "./Main.js";
+export class SwampMissile extends Enemy {  public constructor(...args: any[]) {
+    super();
+    this.__construct(...args);
+  }
+  private __construct(...args: any[]): void {
+    if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
+        let launcherX = args[0];
+        let launcherY = args[1];
+            this.launcherX = launcherX;
+                this.launcherY = launcherY;
+    
+                this.player = this.gameMode.player;
+    
+                this.x = launcherX;
+                this.y = launcherY + 32;  
+                this.vx = 0;
+                this.vy = -SwampMissile.SPEED;
+        return;
+    }
+    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
+  }
+  
+  public static readonly ROTATION_SPEED: number = 0.9;
+  public static readonly EXPLODE_DELAY: number = 8 * 91;
+  public static readonly SPEED: number = 4;
+  public static readonly TO_RADIANS: number = (Math.PI / 180);
+  public static readonly EXPLODE_OFFSET: number = 21 / SwampMissile.SPEED; 
+  public static readonly ENTRY_DELAY: number = 45;
+  public static readonly REMOVE_MARGIN: number = 336;
+  
+  public vx: number = 0;
+  public vy: number = 0;  
+  public angle: number = 270;
+  public launcherX: number = 0;
+  public launcherY: number = 0;
+  public clipX: number = 0;
+  public explodeDelay: number = 0; 
+  public player: any = null as any;
+  public entryDelay: number = SwampMissile.ENTRY_DELAY;
+  
+  
+
+  public init(): void {
+    super.init();
+    
+    this.layer = 4;
+    
+    this.bulletHits = 1;
+    
+    this.hitX1 = -26;
+    this.hitY1 = -26;
+    this.hitX2 = 26;
+    this.hitY2 = 26;
+    
+    this.mine = true;
+    this.mineX1 = -8;
+    this.mineY1 = -8;
+    this.mineX2 = 8;
+    this.mineY2 = 8;    
+  }
+
+  public update(): void {
+    
+    if (this.entryDelay > 0) {
+      this.entryDelay--;
+      this.y -= SwampMissile.SPEED;
+    } else {
+      
+      let targetAngle = ((
+          Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180 / Math.PI));
+      let deltaAngle = (targetAngle - this.angle + 180) % 360;
+      if (deltaAngle < 0) {
+        deltaAngle += 180;
+      } else {
+        deltaAngle -= 180;
+      }
+      if (Math.abs(deltaAngle) < SwampMissile.ROTATION_SPEED) {
+        this.angle = targetAngle;
+      } else {
+        if (deltaAngle < 0) {
+          this.angle -= SwampMissile.ROTATION_SPEED;
+        } else {
+          this.angle += SwampMissile.ROTATION_SPEED;
+        }
+      }
+      
+      let ang = SwampMissile.TO_RADIANS * this.angle;
+      this.vx = SwampMissile.SPEED * Math.cos(ang);
+      this.vy = SwampMissile.SPEED * Math.sin(ang);
+      this.x += this.vx;
+      this.y += this.vy;
+    }
+    
+    if (this.y < this.gameMode.cameraY - SwampMissile.REMOVE_MARGIN
+        || this.y > this.gameMode.cameraY + Main.DISPLAY_HEIGHT + SwampMissile.REMOVE_MARGIN
+        || this.x < this.gameMode.cameraX - SwampMissile.REMOVE_MARGIN
+        || this.x > this.gameMode.cameraX + Main.DISPLAY_WIDTH + SwampMissile.REMOVE_MARGIN) {
+      this.playSoundOnRemove = false;
+      this.remove();
+    } else if (++this.explodeDelay == SwampMissile.EXPLODE_DELAY) {
+      this.remove();      
+      new Explosion(this.x + SwampMissile.EXPLODE_OFFSET * this.vx, this.y + SwampMissile.EXPLODE_OFFSET * this.vy)
+          .setTiny(true);
+    }
+  }
+
+  public render(): void { 
+    if (this.entryDelay > 0) {
+      this.gameMode.g.setWorldClip(this.launcherX - 20, this.launcherY - 256, 40, 256);  
+      this.main.drawRotated(this.main.swampMissiles[0], this.x, this.y, this.angle);
+      this.gameMode.g.clearWorldClip();
+    } else {
+      this.main.drawRotated(this.main.swampMissiles[0], this.x, this.y, this.angle);
+    }
+  }
+}
