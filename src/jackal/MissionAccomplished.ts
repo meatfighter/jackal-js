@@ -1,11 +1,19 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/MissionAccomplished.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
-import { Main } from "./Main.js";
 export class MissionAccomplished extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = 0;
+    this.messageIndex = 0;
+    this.messageLength = 0;
+    this.delay = 0;
+  }
+
 
   public static readonly STATE_TYPING: number = 0;
   public static readonly STATE_PAUSED: number = 1;
@@ -21,8 +29,8 @@ export class MissionAccomplished extends GameElement {
   ];
   
   public state: number = MissionAccomplished.STATE_TYPING;
-  public messageIndex: number = 0;
-  public messageLength: number = 0;
+
+
   public delay: number = 1;
 
   public init(): void {
@@ -60,11 +68,11 @@ export class MissionAccomplished extends GameElement {
 
   public render(): void {
     for(let i = this.messageIndex - 1; i >= 0; i--) {
-      this.main.drawString(MissionAccomplished.MESSAGES[i], 832, 736 + (i << 6), Main.FONT_ORANGE);
+      this.main.drawString(MissionAccomplished.MESSAGES[i], 832, 736 + (i << 6), MainConstants.FONT_ORANGE);
     }
     if (this.messageIndex < 3) {
       this.main.drawString(MissionAccomplished.MESSAGES[this.messageIndex], this.messageLength, 832, 
-          736 + (this.messageIndex << 6), Main.FONT_ORANGE);
+          736 + (this.messageIndex << 6), MainConstants.FONT_ORANGE);
     }
   }  
 }

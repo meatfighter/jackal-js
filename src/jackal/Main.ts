@@ -1,8 +1,8 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Main.java.
 // Original Java imports: java.awt.geom.*, org.newdawn.slick.util.*, org.newdawn.slick.*, org.newdawn.slick.opengl.*, org.lwjgl.opengl.*, org.lwjgl.input.*, org.lwjgl.*, java.io.*, java.util.*, java.nio.*, java.net.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { BossHelicopter } from "./BossHelicopter.js";
 import { BossSuperTankGun } from "./BossSuperTankGun.js";
 import { ButtonMapping } from "./ButtonMapping.js";
@@ -56,9 +56,9 @@ import { Triggers } from "./Triggers.js";
  */
 export class Main extends BasicGame {  public constructor(...args: any[]) {
     super("Jackal");
-    this.__construct(...args);
+    this.__construct_Main(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_Main(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -73,7 +73,7 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
   public static readonly FONT_ORANGE: number = 2;  
   public static readonly FONT_ORANGE_GRAY: number = 3; 
   
-  public static readonly ISQRT2: number = (1.0 / Math.sqrt(2));
+  public static readonly ISQRT2: number = javaFloat((1.0 / Math.sqrt(2)));
   public static readonly I_QUARTER_WIDTH: number = 4 / Main.DISPLAY_WIDTH;
   public static readonly I_WIDTH: number = 1 / Main.DISPLAY_WIDTH;
   public static readonly MINIMUM_SOUND_TIME: number = 125;
@@ -86,7 +86,7 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
   
   static {
     for(let i = 0; i < Main.FADES.length; i++) {
-      Main.FADES[i] = new Color(0, 0, 0, 255 * i / (Main.FADES.length - 1)); 
+      Main.FADES[i] = new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1)); 
     }
   }
   
@@ -322,7 +322,7 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
       this.fullScreenToggleCheck(gc); 
       this.input.snap();
       this.mode.update(gc);      
-      this.nextFrameTime += ((Sys.getTimerResolution() * 0.01) + 0.5);
+      this.nextFrameTime += javaInt(((Sys.getTimerResolution() * 0.01) + 0.5));
       if (++count == 8) {
         this.resetNextFrameTime();
         break;
@@ -497,7 +497,7 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
     let before = this.score;
     this.score += points;
     if ((before <20000&&this.score>= 20000) 
-        || ((before - 20000) / 50000 != (this.score - 20000) / 50000)) {
+        || (javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))) {
       this.gainExtraLife();
     } 
     
@@ -547,8 +547,8 @@ export class Main extends BasicGame {  public constructor(...args: any[]) {
   public drawNumber(value: any, digits: any, x: any, y: any, color: any): void {
     let font = this.fonts[color];
     x += (digits - 1) << 5;
-    for(let i = 0; i < digits; i++, x -= 32, value /= 10) {
-      font['0' + (value % 10)].draw(x, y);
+    for(let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {
+      font[String.fromCharCode('0'.charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);
     }
   }
  
@@ -732,8 +732,8 @@ public stopSong__overload0(song: any): void {
 
   public createUnitVector2(angle: any): any {
     
-    this.unitVector[0] = Math.cos(angle);
-    this.unitVector[1] = Math.sin(angle);
+    this.unitVector[0] = javaFloat(Math.cos(angle));
+    this.unitVector[1] = javaFloat(Math.sin(angle));
     
     return this.unitVector;
   }
@@ -1211,6 +1211,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       case '-':
         return "hyphen";
       case '@':
+      case '\u00a9':
         return "copyright";
       case ' ':
         return "space";
@@ -1723,19 +1724,19 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     let width = dis.readShort();
     let height = dis.readShort();
     let tileCount = dis.readShort();
-    let map = java2DArray(width * height, 3, 0);
+    let mapLocal = java2DArray(width * height, 3, 0);
     
     for(let y = 0; y < height; y++) {
       let Y = width * y;
       let y2 = y << 5;
       for(let x = 0; x < width; x++) {
-        let cell = map[Y + x];
+        let cell = mapLocal[Y + x];
         cell[0] = dis.readShort();
         cell[1] = (x << 5);
         cell[2] = y2;
       }
     }
-    Arrays.sort(map, (cell1: any, cell2: any) => cell1[0] - cell2[0]);
+    Arrays.sort(mapLocal, (cell1: any, cell2: any) => cell1[0] - cell2[0]);
     
     let tiles = javaArray(tileCount, null);
     for(let i = 0, j = 0; i < tileCount; i++) {
@@ -1749,7 +1750,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       }
     }
     
-    return new ExtraLargeImage(this, tiles, map);
+    return new ExtraLargeImage(this, tiles, mapLocal);
   }  
   
   private loadLargeImage(name: any, packName: any): any {
@@ -1762,11 +1763,11 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     let width = dis.readShort();
     let height = dis.readShort();
     let tileCount = dis.readShort();
-    let map = java2DArray(height, width, 0);
+    let mapLocal = java2DArray(height, width, 0);
     
     for(let y = 0; y < height; y++) {
       for(let x = 0; x < width; x++) {
-        map[y][x] = dis.readShort();
+        mapLocal[y][x] = dis.readShort();
       }
     }
     
@@ -1779,7 +1780,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i));
     }
     
-    return new LargeImage(this, tiles, map, width, height);
+    return new LargeImage(this, tiles, mapLocal, width, height);
   }
   
     private loadTriggerMap(...args: any[]): any {
@@ -1880,7 +1881,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         for(let k = 0; k < 3; k++) {
           stage.groups[i][j][k] = dis.readShort(); // { x, y, tile }            
         }
-        stage.groupsMap[stage.groups[i][j][1]][stage.groups[i][j][0]] = i;
+        stage.groupsMap[stage.groups[i][j][1]][stage.groups[i][j][0]] = javaByte(i);
       }
     }
     dis.close();  
@@ -2109,18 +2110,18 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
   }
   
   public static rotate(x: any, y: any, angle: any): any {
-    let cos = Math.cos(angle);
-    let sin = Math.sin(angle);
+    let cos = javaFloat(Math.cos(angle));
+    let sin = javaFloat(Math.sin(angle));
     return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
   }  
   
   public static javaMain(args: any): void {
     java.awt.Toolkit.getDefaultToolkit();
     
-    let main = new Main();
+    let mainLocal = new Main();
     
     let appGameContainer = new ApplicationGameContainer(
-        new ScalableGame(main, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true),
+        new ScalableGame(mainLocal, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true),
             Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, false);
     try {
       appGameContainer.setIcon("icons/32x32.png");

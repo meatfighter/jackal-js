@@ -1,41 +1,62 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/EnemyHelicopter.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { BossHelicopter } from "./BossHelicopter.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-import { Main } from "./Main.js";
-export class EnemyHelicopter extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class EnemyHelicopter extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.angle = 0;
+    this.rotorAngle = 0;
+    this.positionDriftTime = 0;
+    this.positionDriftDx = 0;
+    this.positionDriftDy = 0;
+    this.state = 0;
+    this.enteringAcceleration = 0;
+    this.vy = 0;
+    this.delay = 0;
+    this.down = false;
+    this.player = null as any;
+    this.targetAngle = 0;
+    this.targetHalfAngle = 0;
+    this.positiveAngle = false;
+    this.va = 0;
+    this.v = 0;
+    this.shootDelay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_EnemyHelicopter(...args);
+  }
+  private __construct_EnemyHelicopter(...args: any[]): void {
     if (args.length === 1 && typeof args[0] === "boolean") {
-        let down = args[0];
+        let downLocal = args[0];
             this.x = this.gameMode.player.x 
                     + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE);
                 if (this.x - 96 < this.gameMode.cameraX) {
                   this.x = this.gameMode.player.x + EnemyHelicopter.APPEAR_DISTANCE;
-                } else if (this.x + 96 > this.gameMode.cameraX + Main.DISPLAY_WIDTH) {
+                } else if (this.x + 96 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
                   this.x = this.gameMode.player.x - EnemyHelicopter.APPEAR_DISTANCE;
                 }
     
-                if (down) {
+                if (downLocal) {
                   this.angle = 90; 
                   this.y = this.gameMode.cameraY - 60;
                 } else {
                   this.angle = 270;
-                  this.y = this.gameMode.cameraY + Main.DISPLAY_HEIGHT + 60;
+                  this.y = this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 60;
                 }
     
                 this.enteringAcceleration = 2 * (this.y - (this.gameMode.cameraY 
-                        + 0.5 * Main.DISPLAY_HEIGHT)) 
-                    / ((EnemyHelicopter.ENTERING_TIME) * EnemyHelicopter.ENTERING_TIME);    
-                this.vy = -this.enteringAcceleration * EnemyHelicopter.ENTERING_TIME;
+                        + 0.5 * MainConstants.DISPLAY_HEIGHT)) 
+                    / ((javaFloat(EnemyHelicopter.ENTERING_TIME)) * javaFloat(EnemyHelicopter.ENTERING_TIME));    
+                this.vy = -this.enteringAcceleration * javaFloat(EnemyHelicopter.ENTERING_TIME);
     
-                this.down = down;
+                this.down = downLocal;
                 this.player = this.gameMode.player;
         return;
     }
@@ -53,30 +74,29 @@ export class EnemyHelicopter extends Enemy {  public constructor(...args: any[])
   public static readonly ROTATION_TIME: number = 91;
   
   public static readonly ROTATION_ACCELERATION: number = 90 
-      / ((EnemyHelicopter.ROTATION_TIME) *EnemyHelicopter.ROTATION_TIME);  
-  public static readonly TO_RADIANS: number = (Math.PI / 180);
+      / ((javaFloat(EnemyHelicopter.ROTATION_TIME)) *javaFloat(EnemyHelicopter.ROTATION_TIME));  
+  public static readonly TO_RADIANS: number = javaFloat((Math.PI / 180));
   
   public static readonly SHOOT_DELAY: number = 68;
   
   public static readonly BULLET_SPEED: number = 1.75;
   public static readonly BULLET_TRAVEL_TIME: number = 91;  
+
+
+
+
   
-  public angle: number = 0;
-  public rotorAngle: number = 0;
-  public positionDriftTime: number = 0;
-  public positionDriftDx: number = 0;
-  public positionDriftDy: number = 0;  
   public state: number = EnemyHelicopter.STATE_ENTERING;
-  public enteringAcceleration: number = 0;  
-  public vy: number = 0;
-  public delay: number = 0;
-  public down: boolean = false;
-  public player: any = null as any;
-  public targetAngle: number = 0;
-  public targetHalfAngle: number = 0;
-  public positiveAngle: boolean = false;
-  public va: number = 0;
-  public v: number = 0;
+  
+
+
+
+
+
+
+
+
+
   public shootDelay: number = EnemyHelicopter.SHOOT_DELAY;
 
   
@@ -116,7 +136,7 @@ export class EnemyHelicopter extends Enemy {  public constructor(...args: any[])
       this.shootDelay = EnemyHelicopter.SHOOT_DELAY;
       let dx = this.player.x - this.x;
       let dy = this.player.y - this.y;
-      let imag = EnemyHelicopter.BULLET_SPEED / Math.sqrt(dx * dx + dy * dy);
+      let imag = EnemyHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
       dx *= imag;
       dy *= imag;
       
@@ -126,8 +146,8 @@ export class EnemyHelicopter extends Enemy {  public constructor(...args: any[])
     if (--this.positionDriftTime <= 0) {
       this.positionDriftTime = BossHelicopter.POSITION_DRIFT_TIME - 1;
       let driftAngle = BossHelicopter.PI2 * this.main.random.nextFloat();
-      this.positionDriftDx = Math.cos(driftAngle);
-      this.positionDriftDy = Math.sin(driftAngle);
+      this.positionDriftDx = javaFloat(Math.cos(driftAngle));
+      this.positionDriftDy = javaFloat(Math.sin(driftAngle));
     }
     this.x += this.positionDriftDx * BossHelicopter.POSITIONS[this.positionDriftTime];
     this.y += this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime]; 
@@ -196,8 +216,8 @@ export class EnemyHelicopter extends Enemy {  public constructor(...args: any[])
         }
         let ang = EnemyHelicopter.TO_RADIANS * this.angle;
         this.v += this.enteringAcceleration;
-        this.x += this.v * Math.cos(ang);
-        this.y += this.v * Math.sin(ang);
+        this.x += this.v * javaFloat(Math.cos(ang));
+        this.y += this.v * javaFloat(Math.sin(ang));
         if (this.gameMode.isOutsideOfFrame(this.x - 96, this.y - 96, this.x + 96, this.y + 96)) {          
           this.playSoundOnRemove = false;
           this.remove();

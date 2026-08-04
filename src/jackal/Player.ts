@@ -1,8 +1,8 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Player.java.
 // Original Java imports: java.awt.geom.*, java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
@@ -13,9 +13,9 @@ import { Modes } from "./Modes.js";
 import { PlayerBullet } from "./PlayerBullet.js";
 import { PlayerMissile } from "./PlayerMissile.js";
 export class Player {  public constructor(...args: any[]) {
-    this.__construct(...args);
+    this.__construct_Player(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_Player(...args: any[]): void {
     if (args.length === 0) {
             this.main = Main.mainInstance;
                 this.gameMode = Main.gameMode;    
@@ -49,24 +49,24 @@ export class Player {  public constructor(...args: any[]) {
   static {
     let angle = 0;
     for(let i = 0; i < 17; i++) {
-      Player.WAKE_ALPHAS[i] = 0.5 + 0.5 * Math.sin(angle);
-      Player.RUMBLE[i] = 1.6 * Math.sin(angle);
+      Player.WAKE_ALPHAS[i] = 0.5 + 0.5 * javaFloat(Math.sin(angle));
+      Player.RUMBLE[i] = 1.6 * javaFloat(Math.sin(angle));
       angle += 0.74;
     }
     
-    let p0 = Main.rotate(
-        Player.SENSOR_X + Player.SPEED, 0, (Math.PI / 4));
-    let p1 = Main.rotate(
-        Player.SENSOR_X + Player.SPEED, Player.SENSOR_Y, (Math.PI / 4));
-    let p2 = Main.rotate(
-        Player.SENSOR_X + Player.SPEED, -Player.SENSOR_Y, (Math.PI / 4));
+    let p0 = rotatePoint(
+        Player.SENSOR_X + Player.SPEED, 0, javaFloat((Math.PI / 4)));
+    let p1 = rotatePoint(
+        Player.SENSOR_X + Player.SPEED, Player.SENSOR_Y, javaFloat((Math.PI / 4)));
+    let p2 = rotatePoint(
+        Player.SENSOR_X + Player.SPEED, -Player.SENSOR_Y, javaFloat((Math.PI / 4)));
     
-    Player.SENSOR_D_X0 = p0.x;
-    Player.SENSOR_D_Y0 = p0.y;
-    Player.SENSOR_D_X1 = p1.x;
-    Player.SENSOR_D_Y1 = p1.y;
-    Player.SENSOR_D_X2 = p2.x;
-    Player.SENSOR_D_Y2 = p2.y;
+    Player.SENSOR_D_X0 = javaInt(p0.x);
+    Player.SENSOR_D_Y0 = javaInt(p0.y);
+    Player.SENSOR_D_X1 = javaInt(p1.x);
+    Player.SENSOR_D_Y1 = javaInt(p1.y);
+    Player.SENSOR_D_X2 = javaInt(p2.x);
+    Player.SENSOR_D_Y2 = javaInt(p2.y);
   }
   
   private main: any = null as any;
@@ -212,7 +212,7 @@ public attack__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
       if (--this.respawning == 0) {
         if (this.main.extraLives > 0) {
           this.main.loseLife();
-          invincible = Player.INVINCIBLE_DELAY;
+          this.invincible = Player.INVINCIBLE_DELAY;
         } else if (!this.gameMode.stageCompletedFlag) {
           this.main.konamiCode.enabled = false;
           this.main.requestMode(Modes.CONTINUE, this.gameMode.gc);
@@ -418,8 +418,8 @@ public attack__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
       }
     } 
     
-    if (invincible > 0) {
-      invincible--;
+    if (this.invincible > 0) {
+      this.invincible--;
     }
         
     if (this.input.isFire()) { 
@@ -453,7 +453,7 @@ public attack__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
       this.gunArmed = 0;
     }
     
-    let invincible = this.invincible > 0;
+    let invincibleLocal = this.invincible > 0;
     let xMargin = 32;
     let yMargin = 32;
     if (this.angle == 0 || this.angle == 180) {
@@ -464,8 +464,8 @@ public attack__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
     for(let i = this.mines.size() - 1; i >= 0; i--) {
       let mine = this.mines.get(i);
       if (mine.bump(this.x - xMargin, this.y - yMargin, 
-          this.x + xMargin, this.y + yMargin, invincible)) {
-        if (!invincible) {
+          this.x + xMargin, this.y + yMargin, invincibleLocal)) {
+        if (!invincibleLocal) {
           this.explode();
           break;
         }

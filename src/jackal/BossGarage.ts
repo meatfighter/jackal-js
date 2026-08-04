@@ -1,28 +1,43 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossGarage.java.
 // Original Java imports: org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { BrownTank } from "./BrownTank.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { GrayTank } from "./GrayTank.js";
-export class BossGarage extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class BossGarage extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.bossGarageManager = null as any;
+    this.lightIndex = 0;
+    this.state = 0;
+    this.doorY = 0;
+    this.isBrownTank = false;
+    this.vehicle = null as any;
+    this.vehicleY = 0;
+    this.brownTank = null as any;
+    this.grayTank = null as any;
+    this.delay = 0;
+    this.groupIndex = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossGarage(...args);
+  }
+  private __construct_BossGarage(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let bossGarageManager = args[2];
-            this.x = x;
-                this.y = y;
-                this.bossGarageManager = bossGarageManager;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let bossGarageManagerLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.bossGarageManager = bossGarageManagerLocal;
     
-                let X = (x) >> 5;
-                let Y = (y) >> 5;
+                let X = (javaInt(xLocal)) >> 5;
+                let Y = (javaInt(yLocal)) >> 5;
               
                 this.groupIndex = this.gameMode.groupsMap[Y][X];
         return;
@@ -39,18 +54,17 @@ export class BossGarage extends Enemy {  public constructor(...args: any[]) {
   
   public static readonly OPENING_SPEED: number = 2;
   public static readonly OPEN_3_PAUSE: number = 136;
-  
-  public bossGarageManager: any = null as any;
+
   public lightIndex: number = 3;
   public state: number = BossGarage.STATE_CLOSED;
-  public doorY: number = 0;
-  public isBrownTank: boolean = false;
-  public vehicle: any[] = null as any;
-  public vehicleY: number = 0;
-  public brownTank: any = null as any;
-  public grayTank: any = null as any;
-  public delay: number = 0;
-  public groupIndex: number = 0;
+
+
+
+
+
+
+
+
   
   
 

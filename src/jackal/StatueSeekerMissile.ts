@@ -1,26 +1,40 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/StatueSeekerMissile.java.
 // Original Java imports: org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
-export class StatueSeekerMissile extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class StatueSeekerMissile extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.vx = 0;
+    this.vy = 0;
+    this.angle = 0;
+    this.sprite = null as any;
+    this.statueX = 0;
+    this.statueY = 0;
+    this.clipX = 0;
+    this.explodeDelay = 0;
+    this.player = null as any;
+    this.entryDelay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_StatueSeekerMissile(...args);
+  }
+  private __construct_StatueSeekerMissile(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let statueX = args[0];
-        let statueY = args[1];
-            this.statueX = statueX;
-                this.statueY = statueY;
+        let statueXLocal = args[0];
+        let statueYLocal = args[1];
+            this.statueX = statueXLocal;
+                this.statueY = statueYLocal;
     
                 this.player = this.gameMode.player;
     
-                this.x = statueX + 48;
-                this.y = statueY + 86;  
+                this.x = statueXLocal + 48;
+                this.y = statueYLocal + 86;  
                 this.vx = 0;
                 this.vy = StatueSeekerMissile.SPEED;
     
@@ -33,19 +47,18 @@ export class StatueSeekerMissile extends Enemy {  public constructor(...args: an
   public static readonly ROTATION_SPEED: number = 0.9;
   public static readonly EXPLODE_DELAY: number = 8 * 91;
   public static readonly SPEED: number = 3.5;
-  public static readonly TO_RADIANS: number = (Math.PI / 180);
+  public static readonly TO_RADIANS: number = javaFloat((Math.PI / 180));
   public static readonly EXPLODE_OFFSET: number = 18 / StatueSeekerMissile.SPEED; 
   public static readonly ENTRY_DELAY: number = 16;
-  
-  public vx: number = 0;
-  public vy: number = 0;
+
+
   public angle: number = 90;
-  public sprite: any = null as any;
-  public statueX: number = 0;
-  public statueY: number = 0;
-  public clipX: number = 0;
-  public explodeDelay: number = 0; 
-  public player: any = null as any;
+
+
+
+
+ 
+
   public entryDelay: number = StatueSeekerMissile.ENTRY_DELAY;
   
   
@@ -98,8 +111,8 @@ export class StatueSeekerMissile extends Enemy {  public constructor(...args: an
       this.entryDelay--;
       this.y += StatueSeekerMissile.SPEED;
     } else {
-      let targetAngle = ((
-          Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180 / Math.PI));
+      let targetAngle = javaFloat(((
+          Math.atan2(this.player.y - this.y, this.player.x - this.x)) * 180 / Math.PI));
       let deltaAngle = (targetAngle - this.angle + 180) % 360;
       if (deltaAngle < 0) {
         deltaAngle += 180;
@@ -117,8 +130,8 @@ export class StatueSeekerMissile extends Enemy {  public constructor(...args: an
       }
       
       let ang = StatueSeekerMissile.TO_RADIANS * this.angle;
-      this.vx = StatueSeekerMissile.SPEED * Math.cos(ang);
-      this.vy = StatueSeekerMissile.SPEED * Math.sin(ang);
+      this.vx = StatueSeekerMissile.SPEED * javaFloat(Math.cos(ang));
+      this.vy = StatueSeekerMissile.SPEED * javaFloat(Math.sin(ang));
       this.x += this.vx;
       this.y += this.vy;
     }

@@ -1,8 +1,9 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/GameMode.java.
 // Original Java imports: java.util.*, org.lwjgl.opengl.*, org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { Airplane } from "./Airplane.js";
 import { AppearingBrownTank } from "./AppearingBrownTank.js";
 import { AppearingEnemyHelicopter } from "./AppearingEnemyHelicopter.js";
@@ -44,7 +45,6 @@ import { IMode } from "./IMode.js";
 import { InvisibleStar } from "./InvisibleStar.js";
 import { LandingPort } from "./LandingPort.js";
 import { LasersManager } from "./LasersManager.js";
-import { Main } from "./Main.js";
 import { Mine } from "./Mine.js";
 import { Modes } from "./Modes.js";
 import { ParkedBrownTank } from "./ParkedBrownTank.js";
@@ -88,14 +88,14 @@ export class GameMode implements IMode, IFadeListener {
   public static readonly DIR_DOWN_RIGHT: number = 7;  
   
   public static readonly DIRECTION_RADIANS: any[] = [
-    (3.0 * Math.PI / 2.0),
-    (Math.PI / 2.0),
-    (Math.PI),
-    (0.0),
-    (5.0 * Math.PI / 4.0),
-    (7.0 * Math.PI / 4.0),
-    (3.0 * Math.PI / 4.0),
-    (Math.PI / 4.0),
+    javaFloat((3.0 * Math.PI / 2.0)),
+    javaFloat((Math.PI / 2.0)),
+    javaFloat((Math.PI)),
+    javaFloat((0.0)),
+    javaFloat((5.0 * Math.PI / 4.0)),
+    javaFloat((7.0 * Math.PI / 4.0)),
+    javaFloat((3.0 * Math.PI / 4.0)),
+    javaFloat((Math.PI / 4.0)),
   ];
   
   public static readonly DIRECTION_DEGREES: any[] = [
@@ -114,7 +114,7 @@ export class GameMode implements IMode, IFadeListener {
   static {
     for(let i = 0; i < GameMode.WATER_ALPHAS_PERIOD; i++) {
       GameMode.WATER_ALPHAS[i] = 0.5 + 0.5 
-          * Math.sin(2.0 * Math.PI * i / GameMode.WATER_ALPHAS_PERIOD);
+          * javaFloat(Math.sin(2.0 * Math.PI * i / javaDouble(GameMode.WATER_ALPHAS_PERIOD)));
     }
   }
   
@@ -185,7 +185,7 @@ export class GameMode implements IMode, IFadeListener {
     this.cameraY = this.maxCameraY;
 
     this.player = new Player();
-    this.player.y = this.cameraY + 2 * Main.DISPLAY_HEIGHT;        
+    this.player.y = this.cameraY + 2 * MainConstants.DISPLAY_HEIGHT;        
   }
   
   public setStage(stageIndex: any, stage: any, hard: any): void {
@@ -230,8 +230,8 @@ export class GameMode implements IMode, IFadeListener {
   
   public rotate(v: any, angle: any): void {
 
-    let cos = Math.cos(angle);
-    let sin = Math.sin(angle);
+    let cos = javaFloat(Math.cos(angle));
+    let sin = javaFloat(Math.sin(angle));
     
     let x = v[0];
     let y = v[1];
@@ -245,11 +245,11 @@ export class GameMode implements IMode, IFadeListener {
       this.triggedGroups[groupIndex] = true;
       let group = this.groups[groupIndex];
       for(let i = group.length - 1; i >= 0; i--) {
-        let g = group[i];
-        let x = g[0];
-        let y = g[1];
-        let tile = g[2];
-        let type = g[3];
+        let gLocal = group[i];
+        let x = gLocal[0];
+        let y = gLocal[1];
+        let tile = gLocal[2];
+        let type = gLocal[3];
         this.tileMap[y][x] = tile;
         this.typesMap[y][x] = type;
       }
@@ -310,12 +310,12 @@ public suggestDirection__overload0(vx: any, vy: any): any {
   
   public straightDirection(x1: any, y1: any, x2: any, y2: any): any {
     
-    let angle = ((Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI));
+    let angle = javaFloat(((Math.atan2(y2 - y1, x2 - x1)) * 180 / Math.PI));
     if (angle < 0) {
       angle += 360;
     }    
     
-    let ang = 45 * Math.round(angle / 45);
+    let ang = 45 * javaRoundFloat(angle / 45);
     let v =  this.main.createUnitVector(ang);
     v[2] = ang;
     
@@ -326,10 +326,10 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     
     let v: any = null as any;
     
-    let X1 = (x1) >> 7;
-    let Y1 = (y1) >> 7;
-    let X2 = (x2) >> 7;
-    let Y2 = (y2) >> 7;
+    let X1 = (javaInt(x1)) >> 7;
+    let Y1 = (javaInt(y1)) >> 7;
+    let X2 = (javaInt(x2)) >> 7;
+    let Y2 = (javaInt(y2)) >> 7;
     
     if (X1 < 0 || Y1 < 0 
         || X1 >= this.directionsWidth || Y1 >= this.directionsHeight
@@ -339,14 +339,14 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     }
     
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
-    let index = i / 21;
-    let shift = 3 * (i % 21);
+    let index = (i / 21) | 0;
+    let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];
     
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
     }
     
-    let direction = ((this.directions[index] >> shift) & 7);
+    let direction = Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS);
     
     if (addRandomness) {
       let angle = GameMode.DIRECTION_RADIANS[direction] 
@@ -386,10 +386,10 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     
     let v: any = null as any;
     
-    let X1 = (x1) >> 7;
-    let Y1 = (y1) >> 7;
-    let X2 = (x2) >> 7;
-    let Y2 = (y2) >> 7;
+    let X1 = (javaInt(x1)) >> 7;
+    let Y1 = (javaInt(y1)) >> 7;
+    let X2 = (javaInt(x2)) >> 7;
+    let Y2 = (javaInt(y2)) >> 7;
     
     if (X1 < 0 || Y1 < 0 
         || X1 >= this.directionsWidth || Y1 >= this.directionsHeight
@@ -399,14 +399,14 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     }
     
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
-    let index = i / 21;
-    let shift = 3 * (i % 21);
+    let index = (i / 21) | 0;
+    let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];
     
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
     }    
     
-    let direction = ((this.directions[index] >> shift) & 7);
+    let direction = Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS);
     
     if (addRandomness) {
       let angle = GameMode.DIRECTION_RADIANS[direction] 
@@ -429,8 +429,8 @@ public suggestDirection__overload0(vx: any, vy: any): any {
       if (this.cameraX < 0) {
         this.cameraX = 0;
       }
-    } else if (this.cameraX - this.player.x < GameMode.CAMERA_MARGIN_SIDES - Main.DISPLAY_WIDTH) {
-      this.cameraX = this.player.x + GameMode.CAMERA_MARGIN_SIDES - Main.DISPLAY_WIDTH;
+    } else if (this.cameraX - this.player.x < GameMode.CAMERA_MARGIN_SIDES - MainConstants.DISPLAY_WIDTH) {
+      this.cameraX = this.player.x + GameMode.CAMERA_MARGIN_SIDES - MainConstants.DISPLAY_WIDTH;
       if (this.cameraX > this.maxCameraX) {
         this.cameraX = this.maxCameraX;
       }
@@ -441,8 +441,8 @@ public suggestDirection__overload0(vx: any, vy: any): any {
       if (this.cameraY < 0) {
         this.cameraY = 0;
       }
-    } else if (this.cameraY - this.player.y < GameMode.CAMERA_MARGIN_SOUTH - Main.DISPLAY_HEIGHT) {
-      this.cameraY = this.player.y + GameMode.CAMERA_MARGIN_SOUTH - Main.DISPLAY_HEIGHT;
+    } else if (this.cameraY - this.player.y < GameMode.CAMERA_MARGIN_SOUTH - MainConstants.DISPLAY_HEIGHT) {
+      this.cameraY = this.player.y + GameMode.CAMERA_MARGIN_SOUTH - MainConstants.DISPLAY_HEIGHT;
       if (this.cameraY > this.maxCameraY) {
         this.cameraY = this.maxCameraY;
       }
@@ -455,7 +455,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
   }
   
   private processTriggers(): void {
-    let row = ((this.cameraY) >> 5) - 1;
+    let row = ((javaInt(this.cameraY)) >> 5) - 1;
     if (row >= 0) {
       while(this.triggerY > row) {        
         let triggers = this.triggerMap[--this.triggerY];
@@ -486,8 +486,8 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         new BrownTank(x + 32, y + 48);
         break;
       case Triggers.FRIENDLY_HELICOPTER_LANDING:
-        new FriendlyHelicopter(this.cameraX + Main.DISPLAY_WIDTH / 2, 
-            this.cameraY + Main.DISPLAY_HEIGHT + 128, true, false);
+        new FriendlyHelicopter(this.cameraX + MainConstants.DISPLAY_WIDTH / 2, 
+            this.cameraY + MainConstants.DISPLAY_HEIGHT + 128, true, false);
         break;
       case Triggers.YELLOW_GUN:
         new RotatingGun(x + 64, y + 64, false);
@@ -760,27 +760,27 @@ public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
     throw new Error(`No Java method overload matched isOutsideOfFrame: ${args.length}`);
   }
 public isOutsideOfFrame__overload0(x: any, y: any): boolean {
-    return y > this.cameraY + Main.DISPLAY_HEIGHT || x < this.cameraX || y < this.cameraY
-        || x > this.cameraX + Main.DISPLAY_WIDTH;
+    return y > this.cameraY + MainConstants.DISPLAY_HEIGHT || x < this.cameraX || y < this.cameraY
+        || x > this.cameraX + MainConstants.DISPLAY_WIDTH;
   }
   
   public isOutsideOfFrame__overload1(x1: any, y1: any, x2: any, y2: any): boolean {
-    return y1 > this.cameraY + Main.DISPLAY_HEIGHT || x2 < this.cameraX || y2 < this.cameraY
-        || x1 > this.cameraX + Main.DISPLAY_WIDTH;
+    return y1 > this.cameraY + MainConstants.DISPLAY_HEIGHT || x2 < this.cameraX || y2 < this.cameraY
+        || x1 > this.cameraX + MainConstants.DISPLAY_WIDTH;
   }
   
   public distanceOutsideOfFrame(x: any, y: any): number {
     if (y < this.cameraY) {
       return this.cameraY - y;
     }
-    if (y > this.cameraY + Main.DISPLAY_HEIGHT) {
-      return y - (this.cameraY + Main.DISPLAY_HEIGHT);
+    if (y > this.cameraY + MainConstants.DISPLAY_HEIGHT) {
+      return y - (this.cameraY + MainConstants.DISPLAY_HEIGHT);
     }
     if (x < this.cameraX) {
       return this.cameraX - x;
     }
-    if (x > this.cameraX + Main.DISPLAY_WIDTH) {
-      return x - (this.cameraX + Main.DISPLAY_WIDTH);
+    if (x > this.cameraX + MainConstants.DISPLAY_WIDTH) {
+      return x - (this.cameraX + MainConstants.DISPLAY_WIDTH);
     }
     return 0;
   }
@@ -860,8 +860,8 @@ public destroyAll__overload0(exceptEnemy: any): void {
   
   public getTileType(x: any, y: any): number {
     
-    let X = (x) >> 5;
-    let Y = (y) >> 5;
+    let X = (javaInt(x)) >> 5;
+    let Y = (javaInt(y)) >> 5;
     if (X < 0) {
       X = 0;
     } else if (X >= this.mapWidth) {
@@ -942,7 +942,7 @@ public add__overload0(enemy: any): void {
       if (this.conveyorOffset >= 16) {
         this.conveyorOffset -= 16;
       }
-      let conveyorIndex = this.conveyorOffset;
+      let conveyorIndex = javaInt(this.conveyorOffset);
       this.conveyorDelta = conveyorIndex - this.conveyorLastIndex;
       if (this.conveyorDelta < 0) {
         this.conveyorDelta += 16;
@@ -1035,8 +1035,8 @@ public add__overload0(enemy: any): void {
   private drawBackground(): void {
     let xOffset = this.cameraX % 32;
     let yOffset = this.cameraY % 32;
-    let xTile = (this.cameraX / 32);
-    let yTile = (this.cameraY / 32);  
+    let xTile = javaInt((this.cameraX / 32));
+    let yTile = javaInt((this.cameraY / 32));  
     let xStart = 32 + xTile == this.mapWidth ? 31 : 32;
     
     if (this.stageIndex > 0) {
@@ -1126,10 +1126,10 @@ public add__overload0(enemy: any): void {
   }
   
   private drawScore(): void {
-    this.main.drawString("1P", 64, 804, Main.FONT_WHITE);
-    this.main.drawString(this.main.scoreStr, 160, 804, Main.FONT_WHITE);
-    this.main.drawString("P", 176, 868, Main.FONT_WHITE);
-    this.main.drawString(this.main.extraLivesStr, 216, 868, Main.FONT_WHITE);
+    this.main.drawString("1P", 64, 804, MainConstants.FONT_WHITE);
+    this.main.drawString(this.main.scoreStr, 160, 804, MainConstants.FONT_WHITE);
+    this.main.drawString("P", 176, 868, MainConstants.FONT_WHITE);
+    this.main.drawString(this.main.extraLivesStr, 216, 868, MainConstants.FONT_WHITE);
   }
 
   public render(gc: any, g: any): void {

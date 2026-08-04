@@ -1,49 +1,66 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Explosion.java.
 // Original Java imports: java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { GameElement } from "./GameElement.js";
-export class Explosion extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Explosion extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.size = 0;
+    this.spriteIndex = 0;
+    this.scale = 0;
+    this.grenadeExplosion = false;
+    this.damagesEnemies = false;
+    this.enemies = null as any;
+    this.type = 0;
+    this.tiny = false;
+    this.delay = 0;
+    this.alpha = 0;
+    this.enemyX = 0;
+    this.enemyY = 0;
+    this.enemy = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Explosion(...args);
+  }
+  private __construct_Explosion(...args: any[]): void {
     if (args.length === 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let tiny = args[2];
-        let delay = args[3];
-        let alpha = args[4];
-        let enemy = args[5];
-            this.__construct(x, y, tiny, delay, alpha);
-                this.enemy = enemy;
-                this.enemyX = enemy.x;
-                this.enemyY = enemy.y;
+        let xLocal4 = args[0];
+        let yLocal4 = args[1];
+        let tinyLocal2 = args[2];
+        let delayLocal2 = args[3];
+        let alphaLocal2 = args[4];
+        let enemyLocal = args[5];
+            this.__construct_Explosion(xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
+                this.enemy = enemyLocal;
+                this.enemyX = enemyLocal.x;
+                this.enemyY = enemyLocal.y;
         return;
     } else     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let tiny = args[2];
-        let delay = args[3];
-        let alpha = args[4];
-            this.__construct(x, y, false);
-                this.setTiny(tiny);
-                this.setDelayed(delay);
-                this.setAlpha(alpha);
+        let xLocal3 = args[0];
+        let yLocal3 = args[1];
+        let tinyLocal = args[2];
+        let delayLocal = args[3];
+        let alphaLocal = args[4];
+            this.__construct_Explosion(xLocal3, yLocal3, false);
+                this.setTiny(tinyLocal);
+                this.setDelayed(delayLocal);
+                this.setAlpha(alphaLocal);
         return;
     } else     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.__construct(x, y, false);
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+            this.__construct_Explosion(xLocal2, yLocal2, false);
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
+        let xLocal = args[0];
+        let yLocal = args[1];
         let playerExplosion = args[2];
-            this.x = x;
-                this.y = y;
+            this.x = xLocal;
+                this.y = yLocal;
                 this.type = playerExplosion 
                     ? AttackSource.PLAYER_EXPLOSION : AttackSource.EXPLOSION;
     
@@ -56,18 +73,18 @@ export class Explosion extends GameElement {  public constructor(...args: any[])
   public static readonly GROW_RATE: number = 1.03;
   
   public size: number = 32;
-  public spriteIndex: number = 0;
-  public scale: number = 0;
-  public grenadeExplosion: boolean = false;
+
+
+
   public damagesEnemies: boolean = true;
-  public enemies: any = null as any;
-  public type: number = 0;
-  public tiny: boolean = false;
-  public delay: number = 0;
+
+
+
+
   public alpha: number = 1;
-  public enemyX: number = 0;
-  public enemyY: number = 0;
-  public enemy: any = null as any;
+
+
+
   
     
   
@@ -107,9 +124,9 @@ export class Explosion extends GameElement {  public constructor(...args: any[])
   public update(): void {
     if (this.delay > 0) {
       if (--this.delay == 0) {
-        if (enemy != null) {
-          this.x += enemy.x - this.enemyX;
-          this.y += enemy.y - this.enemyY;
+        if (this.enemy != null) {
+          this.x += this.enemy.x - this.enemyX;
+          this.y += this.enemy.y - this.enemyY;
         }
       } else {
         return;
@@ -136,9 +153,9 @@ export class Explosion extends GameElement {  public constructor(...args: any[])
     let y2 = this.y + margin;
     if (this.damagesEnemies && !this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
       for(let i = this.enemies.size() - 1; i >= 0; i--) {
-        let enemy = this.enemies.get(i);
-        if (!enemy.removeFlag) {
-          enemy.attack(x1, y1, x2, y2, this.type);
+        let enemyLocal = this.enemies.get(i);
+        if (!enemyLocal.removeFlag) {
+          enemyLocal.attack(x1, y1, x2, y2, this.type);
         }
       }
     }

@@ -1,23 +1,33 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/CannonTruck.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-export class CannonTruck extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class CannonTruck extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.directionIndex = 0;
+    this.right = false;
+    this.state = 0;
+    this.delay = 0;
+    this.fires = 0;
+    this.ready = false;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_CannonTruck(...args);
+  }
+  private __construct_CannonTruck(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let right = args[2];
-            this.x = x;
-                this.y = y;
-                this.right = right;
-                this.directionIndex = right ? 0 : 1;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let rightLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.right = rightLocal;
+                this.directionIndex = rightLocal ? 0 : 1;
     
                 this.explosionX = 48;
                 this.explosionY = 48;
@@ -38,27 +48,26 @@ export class CannonTruck extends Enemy {  public constructor(...args: any[]) {
   
   public static readonly BULLET_TRAVEL_TIME: number = 137;
   public static readonly BULLET_SPEED: number = 2;
-  public static readonly BULLET_ANGLE: number = ((10) * Math.PI / 180);
+  public static readonly BULLET_ANGLE: number = javaFloat(((10) * Math.PI / 180));
   
   public static readonly DIRS: any[] = [
-    [ [ (CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4)), 
-        (CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4)) ], ],
-    [ [ (CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - CannonTruck.BULLET_ANGLE)),
-        (CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - CannonTruck.BULLET_ANGLE)) ],
-      [ (CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + CannonTruck.BULLET_ANGLE)),
-        (CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + CannonTruck.BULLET_ANGLE)) ], ],
-    [ [ (CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE)),
-        (CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE)) ],
-      [ (CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE)),
-        (CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE)) ], ],    
+    [ [ javaFloat((CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4))), 
+        javaFloat((CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4))) ], ],
+    [ [ javaFloat((CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - CannonTruck.BULLET_ANGLE))),
+        javaFloat((CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - CannonTruck.BULLET_ANGLE))) ],
+      [ javaFloat((CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + CannonTruck.BULLET_ANGLE))),
+        javaFloat((CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + CannonTruck.BULLET_ANGLE))) ], ],
+    [ [ javaFloat((CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE))),
+        javaFloat((CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE))) ],
+      [ javaFloat((CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE))),
+        javaFloat((CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE))) ], ],    
   ];
-  
-  public directionIndex: number = 0;
-  public right: boolean = false;
+
+
   public state: number = CannonTruck.STATE_SLEEPING;
   public delay: number = 1;
-  public fires: number = 0;
-  public ready: boolean = false;
+
+
   
   
 

@@ -1,27 +1,55 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossBlueTank.java.
 // Original Java imports: java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
-export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class BossBlueTank extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.shootDelay = 0;
+    this.shootCount = 0;
+    this.moveSteps = 0;
+    this.targetAngle = 0;
+    this.displayAngle = 0;
+    this.directionX = 0;
+    this.directionY = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.sensorX = 0;
+    this.sensorY = 0;
+    this.lastDx = 0;
+    this.lastDy = 0;
+    this.solids = null as any;
+    this.player = null as any;
+    this.handlingLoop = 0;
+    this.loopTargetX = 0;
+    this.loopTargetY = 0;
+    this.recoilOffset = 0;
+    this.recoilDelay = 0;
+    this.colorOffset = 0;
+    this.introVy = 0;
+    this.introDelay = 0;
+    this.bossBlueTanksManager = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossBlueTank(...args);
+  }
+  private __construct_BossBlueTank(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let bossBlueTanksManager = args[2];
-            this.x = x;
-                this.y = y;
-                this.bossBlueTanksManager = bossBlueTanksManager;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let bossBlueTanksManagerLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.bossBlueTanksManager = bossBlueTanksManagerLocal;
                 this.directionX = 0;
                 this.vx = 0;
-                if (y < 0) {
+                if (yLocal < 0) {
                   this.displayAngle = this.targetAngle = 90;
                   this.directionY = 1;
                   this.vy = this.introVy = BossBlueTank.SPEED;
@@ -54,28 +82,28 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
   
   public shootDelay: number = BossBlueTank.SHOOT_DELAY;
   public shootCount: number = BossBlueTank.SHOOT_COUNT;
-  public moveSteps: number = 0;
+
   public targetAngle: number = 90;
   public displayAngle: number = 90;
-  public directionX: number = 0;
-  public directionY: number = 0;
-  public vx: number = 0;
-  public vy: number = 0;
-  public sensorX: number = 0;
-  public sensorY: number = 0;
-  public lastDx: number = 0;
-  public lastDy: number = 0;
-  public solids: any = null as any;
-  public player: any = null as any;
-  public handlingLoop: number = 0;
-  public loopTargetX: number = 0;
-  public loopTargetY: number = 0; 
-  public recoilOffset: number = 0;
-  public recoilDelay: number = 0;
-  public colorOffset: number = 0;
-  public introVy: number = 0;
-  public introDelay: number = 0;
-  public bossBlueTanksManager: any = null as any;
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
   
   
 
@@ -168,7 +196,7 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
     
     d += 32 * (1 + this.main.random.nextInt(BossBlueTank.MAX_MOVE_SQUARES));
     
-    this.moveSteps = Math.round(d / BossBlueTank.SPEED);
+    this.moveSteps = javaRoundFloat(d / BossBlueTank.SPEED);
   }
   
   private testCorners(nextX: any, nextY: any): void {
@@ -266,9 +294,9 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
       let nextY = this.y + this.introVy;
       
       for(let i = this.solids.size() - 1; i >= 0; i--) {
-        let solid = this.solids.get(i);
-        if (solid != this && solid.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
-            nextX + this.solidX2, nextY + this.solidY2) && !solid.isSolid(
+        let solidLocal2 = this.solids.get(i);
+        if (solidLocal2 != this && solidLocal2.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+            nextX + this.solidX2, nextY + this.solidY2) && !solidLocal2.isSolid(
                 this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)) {
           return;
         }
@@ -324,7 +352,7 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
         this.vy = v[1] * BossBlueTank.SPEED;
         this.directionX = v[0];
         this.directionY = v[1];
-        this.targetAngle = v[2];
+        this.targetAngle = javaInt(v[2]);
         this.sensorX = this.directionX * BossBlueTank.SENSOR_RADIUS;
         this.sensorY = this.directionY * BossBlueTank.SENSOR_RADIUS;
         this.computeMoveSteps();
@@ -341,9 +369,9 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
 
         // avoid bumping into other enemies
         for(let i = this.solids.size() - 1; i >= 0; i--) {
-          let solid = this.solids.get(i);
-          if (solid != this && solid.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
-              nextX + this.solidX2, nextY + this.solidY2) && !solid.isSolid(
+          let solidLocal = this.solids.get(i);
+          if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+              nextX + this.solidX2, nextY + this.solidY2) && !solidLocal.isSolid(
                   this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)) {
             driveable = false;
             break;
@@ -367,8 +395,8 @@ export class BossBlueTank extends Enemy {  public constructor(...args: any[]) {
       let dx = this.player.x - this.x;
       let dy = this.player.y - this.y;
 
-      if (this.moveSteps == 1 && ((this.vy != 0 && (this.player.x) >> 7 == (this.x) >> 7)
-          || (this.vx != 0 && (this.player.y) >> 7 == (this.y) >> 7))) {
+      if (this.moveSteps == 1 && ((this.vy != 0 && (javaInt(this.player.x)) >> 7 == (javaInt(this.x)) >> 7)
+          || (this.vx != 0 && (javaInt(this.player.y)) >> 7 == (javaInt(this.y)) >> 7))) {
         this.moveSteps = 2;
       }      
       if ((this.lastDx * dx <= 0 || this.lastDy * dy <= 0) 

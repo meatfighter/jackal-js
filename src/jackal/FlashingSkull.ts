@@ -1,11 +1,20 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/FlashingSkull.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { MissionAccomplished } from "./MissionAccomplished.js";
 export class FlashingSkull extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = 0;
+    this.delay = 0;
+    this.flashDelay = 0;
+    this.visible = false;
+    this.alpha = 0;
+  }
+
   
   public static readonly STATE_FLASHING: number = 0;
   public static readonly STATE_FADING: number = 1;
@@ -34,13 +43,13 @@ export class FlashingSkull extends GameElement {
     [1024, 864, 303], [1056, 864, 306], [992, 896, 302], [1024, 896, 306],
   ];
   
-  public static readonly INV_FADE_TIME: number = 1 / FlashingSkull.FADE_TIME;
+  public static readonly INV_FADE_TIME: number = 1 / javaFloat(FlashingSkull.FADE_TIME);
   
   public state: number = FlashingSkull.STATE_FLASHING;
   public delay: number = FlashingSkull.FLASHING_TIME;
   public flashDelay: number = 1;
-  public visible: boolean = false;
-  public alpha: number = 0;
+
+
 
   public init(): void {
     this.layer = 0;

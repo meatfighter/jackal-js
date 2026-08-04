@@ -1,23 +1,36 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossHeadquarters.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { BossSuperTank } from "./BossSuperTank.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { TileDebris } from "./TileDebris.js";
-export class BossHeadquarters extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class BossHeadquarters extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.flashing = false;
+    this.flashDelay = 0;
+    this.flashIndex = 0;
+    this.state = 0;
+    this.hits = 0;
+    this.explodeDelay = 0;
+    this.explodeTime = 0;
+    this.bossHeadquartersManager = null as any;
+    this.player = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossHeadquarters(...args);
+  }
+  private __construct_BossHeadquarters(...args: any[]): void {
     if (args.length === 1) {
-        let bossHeadquartersManager = args[0];
+        let bossHeadquartersManagerLocal = args[0];
             this.x = 896;
                 this.y = 96;
-                this.bossHeadquartersManager = bossHeadquartersManager;
+                this.bossHeadquartersManager = bossHeadquartersManagerLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -34,16 +47,15 @@ export class BossHeadquarters extends Enemy {  public constructor(...args: any[]
   
   public static readonly EXPLODE_DELAY: number = 16;
   public static readonly EXPLODE_TIME: number = 5 * 91;
-  
-  public flashing: boolean = false;
+
   public flashDelay: number = BossHeadquarters.FLASH_DELAY;
   public flashIndex: number = -1;  
   public state: number = BossHeadquarters.STATE_FLASHING;
-  public hits: number = 0;
-  public explodeDelay: number = 0;
+
+
   public explodeTime: number = BossHeadquarters.EXPLODE_TIME;
-  public bossHeadquartersManager: any = null as any;
-  public player: any = null as any;
+
+
   
   
 

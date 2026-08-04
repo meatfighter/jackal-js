@@ -1,28 +1,59 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/EnemySoldier.java.
 // Original Java imports: java.util.*, org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { DeadEnemySoldier } from "./DeadEnemySoldier.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import { Explosion } from "./Explosion.js";
 import { Fire } from "./Fire.js";
-export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class EnemySoldier extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.type = null as any;
+    this.state = 0;
+    this.solids = null as any;
+    this.player = null as any;
+    this.targetX = 0;
+    this.targetY = 0;
+    this.targetVx = 0;
+    this.targetVy = 0;
+    this.directionX = 0;
+    this.directionY = 0;
+    this.walking = 0;
+    this.aiming = 0;
+    this.orientation = 0;
+    this.legIndex = 0;
+    this.legFrames = 0;
+    this.walkSteps = 0;
+    this.blink = 0;
+    this.wobbleX = 0;
+    this.wobbleY = 0;
+    this.spriteIndex = 0;
+    this.wobbleScaleX = 0;
+    this.wobbleScaleY = 0;
+    this.shots = 0;
+    this.totalShots = 0;
+    this.inSwamp = false;
+    this.bossHelicopter = null as any;
+    this.fire = false;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_EnemySoldier(...args);
+  }
+  private __construct_EnemySoldier(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let type = args[2];
-            this.x = x;
-                this.y = y;
-                this.type = type;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let typeLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.type = typeLocal;
     
-                switch(type) {
+                switch(typeLocal) {
                   case EnemySoldierType.APPEARING:
                     this.runUpwards();
                     break;
@@ -36,7 +67,7 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
                     this.runLeft();
                     break;
                   case EnemySoldierType.FIRE:
-                    type = EnemySoldierType.STATIONARY;
+                    typeLocal = EnemySoldierType.STATIONARY;
                     this.startAiming();
                     this.fire = true;
                     break;
@@ -76,7 +107,7 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
   public static readonly AIM_RESHOOT: number = 11;
   public static readonly EXTRA_AIMING_TIME: number = 2 * 91;
   public static readonly BULLET_TRAVEL_TIME: number = 1 * 91;  
-  public static readonly TO_DEGREES: number = (180 / Math.PI);
+  public static readonly TO_DEGREES: number = javaFloat((180 / Math.PI));
   
   public static readonly STATE_SEEKING: number = 0;
   public static readonly STATE_AIMING: number = 1;
@@ -89,38 +120,37 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
   public static readonly WOBBLES: any[] = javaArray(EnemySoldier.LEG_FRAMES, 0);  
   static {
     for(let i = EnemySoldier.LEG_FRAMES - 1; i >= 0; i--) {
-      EnemySoldier.WOBBLES[i] = -EnemySoldier.LEG_AMPLITUDE * Math.sin(
-          2.0 * Math.PI * i / EnemySoldier.LEG_FRAMES);      
+      EnemySoldier.WOBBLES[i] = -EnemySoldier.LEG_AMPLITUDE * javaFloat(Math.sin(
+          2.0 * Math.PI * i / javaDouble(EnemySoldier.LEG_FRAMES)));      
     }
   }
-  
-  public type: any = null as any;
+
   public state: number = EnemySoldier.STATE_SEEKING;
-  public solids: any = null as any;
-  public player: any = null as any;
-  public targetX: number = 0;
-  public targetY: number = 0;
-  public targetVx: number = 0;
-  public targetVy: number = 0;
-  public directionX: number = 0;
-  public directionY: number = 0;
-  public walking: number = 0;
-  public aiming: number = 0;
-  public orientation: number = 0;
-  public legIndex: number = 0;
-  public legFrames: number = 0;
-  public walkSteps: number = 0;
-  public blink: number = 0;
-  public wobbleX: number = 0;
-  public wobbleY: number = 0;
-  public spriteIndex: number = 0;
-  public wobbleScaleX: number = 0;
-  public wobbleScaleY: number = 0;
-  public shots: number = 0;
-  public totalShots: number = 0;
-  public inSwamp: boolean = false;
-  public bossHelicopter: any = null as any;
-  public fire: boolean = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   
 
@@ -204,7 +234,7 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
     let r2 = dx * dx + dy * dy;
     if (r2 <16384&&dx*this.directionX+dy*this.directionY> 0) {
       let v = this.main.unitVector;
-      let ir = 1 /  Math.sqrt(r2);
+      let ir = 1 / javaFloat(Math.sqrt(r2));
       v[0] = ir * -dx;
       v[1] = ir * -dy;
       this.gameMode.rotate(v, this.main.random.nextFloat() * 0.3927 - 0.1963);
@@ -259,11 +289,11 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
   }
   
   private shoot(): void {  
-    let imag = 1 / Math.sqrt(this.directionX * this.directionX 
-        + this.directionY * this.directionY);
+    let imag = 1 / javaFloat(Math.sqrt(this.directionX * this.directionX 
+        + this.directionY * this.directionY));
     if (this.fire) {      
       new Fire(this.x, this.y - 30, this.directionX * imag, this.directionY * imag,
-          EnemySoldier.TO_DEGREES * Math.atan2(this.directionY, this.directionX), this);
+          EnemySoldier.TO_DEGREES * javaFloat(Math.atan2(this.directionY, this.directionX)), this);
     } else {      
       new EnemyBullet(this.x, this.y - 30, this.directionX * imag, this.directionY * imag, 
           EnemySoldier.BULLET_TRAVEL_TIME, true);
@@ -341,9 +371,9 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
       
       // avoid bumping into other enemies
       for(let i = this.solids.size() - 1; i >= 0; i--) {
-        let solid = this.solids.get(i);
-        if (solid != this && solid.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
-            nextX + this.solidX2, nextY + this.solidY2) && !solid.isSolid(
+        let solidLocal = this.solids.get(i);
+        if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+            nextX + this.solidX2, nextY + this.solidY2) && !solidLocal.isSolid(
                 this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)) {
           walkable = false;
           break;
@@ -380,9 +410,9 @@ export class EnemySoldier extends Enemy {  public constructor(...args: any[]) {
 
         // avoid bumping into other enemies
         for(let i = this.solids.size() - 1; i >= 0; i--) {
-          let solid = this.solids.get(i);
-          if (solid != this && solid.isSolid(this.x + this.solidX1, nextY + this.solidY1, 
-              this.x + this.solidX2, nextY + this.solidY2) && !solid.isSolid(
+          let solidLocal = this.solids.get(i);
+          if (solidLocal != this && solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, 
+              this.x + this.solidX2, nextY + this.solidY2) && !solidLocal.isSolid(
                   this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)) {
             walkable = false;
             break;

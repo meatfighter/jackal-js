@@ -1,21 +1,31 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Train.java.
 // Original Java imports: java.util.ArrayList.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-export class Train extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Train extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.mines = null as any;
+    this.player = null as any;
+    this.carIndex = 0;
+    this.shootDelay = 0;
+    this.shootX = 0;
+    this.shootY = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Train(...args);
+  }
+  private __construct_Train(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
+        let xLocal = args[0];
+        let yLocal = args[1];
         let locomotive = args[2];
-            this.x = x;
-                this.y = y;
+            this.x = xLocal;
+                this.y = yLocal;
                 this.carIndex = locomotive ? 0 : 1;
                 this.shootX = locomotive ? 28 : 24;
                 this.shootY = 64;
@@ -28,13 +38,12 @@ export class Train extends Enemy {  public constructor(...args: any[]) {
   public static readonly SHOOT_DELAY: number = 3 * 91;
   public static readonly BULLET_SPEED: number = 1.5;
   public static readonly BULLET_TRAVEL_TIME: number = 4 * 91;
+
   
-  public mines: any = null as any;
-  public player: any = null as any;  
-  public carIndex: number = 0;
+
   public shootDelay: number = this.main.random.nextInt(Train.SHOOT_DELAY);
-  public shootX: number = 0;
-  public shootY: number = 0;
+
+
   
   
 
@@ -90,10 +99,10 @@ export class Train extends Enemy {  public constructor(...args: any[]) {
             Train.BULLET_TRAVEL_TIME, false);
       }
       for(let i = this.mines.size() - 1; i >= 0; i--) {
-        let mine = this.mines.get(i);
-        if (mine != this && mine.isMine(this.x + this.mineX1, this.y + this.mineY1, 
+        let mineLocal = this.mines.get(i);
+        if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, 
             this.x + this.mineX2, this.y + this.mineY2)) {
-          mine.flatten();
+          mineLocal.flatten();
         }
       }
     }

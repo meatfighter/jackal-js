@@ -1,31 +1,31 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Menu.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
-import { Main } from "./Main.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 export class Menu {  public constructor(...args: any[]) {
-    this.__construct(...args);
+    this.__construct_Menu(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_Menu(...args: any[]): void {
     if (args.length >= 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let main = args[2];
-        let selectedIndex = args[3];
-        let icon = args[4];
-        let menuListener = args[5];
-        let options = args.slice(6);
-            this.x = x;
-                this.y = y;
-                this.main = main;      
-                this.selectedIndex = selectedIndex;
-                this.icon = icon;
-                this.menuListener = menuListener;
-                this.options = options;          
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let mainLocal = args[2];
+        let selectedIndexLocal = args[3];
+        let iconLocal = args[4];
+        let menuListenerLocal = args[5];
+        let optionsLocal = args.slice(6);
+            this.x = xLocal;
+                this.y = yLocal;
+                this.main = mainLocal;      
+                this.selectedIndex = selectedIndexLocal;
+                this.icon = iconLocal;
+                this.menuListener = menuListenerLocal;
+                this.options = optionsLocal;          
     
-                this.input = main.input;    
-                this.iconY = 16 + (selectedIndex << 6);
+                this.input = mainLocal.input;    
+                this.iconY = 16 + (selectedIndexLocal << 6);
     
                 this.input.clearKeyPressedRecord();
         return;
@@ -169,7 +169,7 @@ export class Menu {  public constructor(...args: any[]) {
   public render(): void {
     this.main.translateGraphics(this.x, this.y);
     for(let i = this.options.length - 1; i >= 0; i--) {
-      this.main.drawString(this.options[i], 0, i << 6, Main.FONT_GRAY);
+      this.main.drawString(this.options[i], 0, i << 6, MainConstants.FONT_GRAY);
     }
     
     switch(this.icon) {

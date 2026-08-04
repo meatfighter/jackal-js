@@ -1,11 +1,11 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/IntroMapMode.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMode } from "./IMode.js";
-import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 export class IntroMapMode implements IMode, IFadeListener {
 
@@ -49,7 +49,7 @@ export class IntroMapMode implements IMode, IFadeListener {
 
   public render(gc: any, g: any): void {
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     if (this.state == IntroMapMode.STATE_DONE) {
       return;
@@ -57,9 +57,9 @@ export class IntroMapMode implements IMode, IFadeListener {
     
     this.main.map.draw(124, 92);
     
-    this.main.drawString("This battle will", 416, 224, Main.FONT_GRAY);
-    this.main.drawString("make your blood", 416, 288, Main.FONT_GRAY);
-    this.main.drawString("boil.", 416, 352, Main.FONT_GRAY);
-    this.main.drawString("Good luck!", 480, 416, Main.FONT_GRAY);
+    this.main.drawString("This battle will", 416, 224, MainConstants.FONT_GRAY);
+    this.main.drawString("make your blood", 416, 288, MainConstants.FONT_GRAY);
+    this.main.drawString("boil.", 416, 352, MainConstants.FONT_GRAY);
+    this.main.drawString("Good luck!", 480, 416, MainConstants.FONT_GRAY);
   }  
 }

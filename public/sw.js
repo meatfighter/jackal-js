@@ -1,5 +1,5 @@
-const APP_VERSION = "0.1.0";
-const BUILD_STAMP = "20260803T000000Z";
+const APP_VERSION = "0.1.1";
+const BUILD_STAMP = "20260804T000000Z";
 const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
 const APP_SHELL = [
     "/",
@@ -27,20 +27,35 @@ self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") {
         return;
     }
-    event.respondWith(cacheFirstWithRetry(event.request));
+    event.respondWith(networkFirstWithRetry(event.request));
 });
 
-async function cacheFirstWithRetry(request) {
+async function networkFirstWithRetry(request) {
     const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    if (cached) {
-        return cached;
+    try {
+        const response = await fetchWithRetry(request);
+        if (response.ok && shouldCache(request, response)) {
+            await cache.put(request, response.clone());
+        }
+        return response;
+    } catch (error) {
+        const cached = await cache.match(request);
+        if (cached) {
+            return cached;
+        }
+        throw error;
     }
-    const response = await fetchWithRetry(request);
-    if (response.ok) {
-        cache.put(request, response.clone());
+}
+
+function shouldCache(request, response) {
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) {
+        return false;
     }
-    return response;
+    if (url.pathname === "/sw.js" || url.pathname.startsWith("/src/") || url.pathname.startsWith("/@vite") || url.pathname.includes("/node_modules/")) {
+        return false;
+    }
+    return response.type === "basic" || response.type === "default";
 }
 
 async function fetchWithRetry(request) {

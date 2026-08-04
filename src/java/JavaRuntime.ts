@@ -1,5 +1,36 @@
 import { BinaryReader, JavaRandom, ResourceLoader } from "slick2d-ts";
 
+const JAVA_INT_MIN = -2147483648;
+const JAVA_INT_MAX = 2147483647;
+const JAVA_LONG_MIN = -(1n << 63n);
+const JAVA_LONG_MAX = (1n << 63n) - 1n;
+const JAVA_FLOAT_HALF = Math.fround(0.5);
+
+export const JAVA_LONG_LOW_3_BITS = 7n;
+export const JAVA_LONG_PACKED_3BIT_SHIFTS: readonly bigint[] = [
+    0n,
+    3n,
+    6n,
+    9n,
+    12n,
+    15n,
+    18n,
+    21n,
+    24n,
+    27n,
+    30n,
+    33n,
+    36n,
+    39n,
+    42n,
+    45n,
+    48n,
+    51n,
+    54n,
+    57n,
+    60n
+];
+
 export class ArrayList<T> {
     private readonly values: T[];
 
@@ -102,7 +133,17 @@ export class Integer {
     }
 }
 
+export class Character {
+    public static toLowerCase(value: string): string {
+        return String(value).charAt(0).toLowerCase();
+    }
+}
+
 export class JavaString {
+    public static valueOf(value: any): string {
+        return String(value);
+    }
+
     public static format(format: string, ...args: any[]): string {
         let index = 0;
         return format.replace(/%([0]?)(\d+)?([sd])/g, (_match, zero: string, width: string, type: string) => {
@@ -173,8 +214,93 @@ export function java4DArray<T>(a: number, b: number, c: number, d: number, value
     return javaArray(a, null as T[][][]).map(() => java3DArray(b, c, d, value));
 }
 
+export function javaInt(value: any): number {
+    if (typeof value === "bigint") {
+        return Number(BigInt.asIntN(32, value));
+    }
+    const number = Number(value);
+    if (Number.isNaN(number)) {
+        return 0;
+    }
+    if (number <= JAVA_INT_MIN) {
+        return JAVA_INT_MIN;
+    }
+    if (number >= JAVA_INT_MAX) {
+        return JAVA_INT_MAX;
+    }
+    return number < 0 ? Math.ceil(number) : Math.floor(number);
+}
+
+export function javaIntDiv(dividend: any, divisor: any): number {
+    const left = javaInt(dividend);
+    const right = javaInt(divisor);
+    if (right === 0) {
+        throw new Error("/ by zero");
+    }
+    if (left === JAVA_INT_MIN && right === -1) {
+        return JAVA_INT_MIN;
+    }
+    return Math.trunc(left / right);
+}
+
+export function javaRoundFloat(value: any): number {
+    return javaInt(Math.floor(Math.fround(Math.fround(Number(value)) + JAVA_FLOAT_HALF)));
+}
+
+export function javaByte(value: any): number {
+    if (typeof value === "bigint") {
+        return Number(BigInt.asIntN(8, value));
+    }
+    return (javaInt(value) << 24) >> 24;
+}
+
+export function javaShort(value: any): number {
+    if (typeof value === "bigint") {
+        return Number(BigInt.asIntN(16, value));
+    }
+    return (javaInt(value) << 16) >> 16;
+}
+
+export function javaChar(value: any): number {
+    if (typeof value === "bigint") {
+        return Number(BigInt.asUintN(16, value));
+    }
+    return javaInt(value) & 0xffff;
+}
+
+export function javaFloat(value: any): number {
+    return Math.fround(Number(value));
+}
+
+export function javaDouble(value: any): number {
+    return Number(value);
+}
+
+export function javaLong(value: any): bigint {
+    if (typeof value === "bigint") {
+        return BigInt.asIntN(64, value);
+    }
+    const number = Number(value);
+    if (Number.isNaN(number)) {
+        return 0n;
+    }
+    if (number <= Number(JAVA_LONG_MIN)) {
+        return JAVA_LONG_MIN;
+    }
+    if (number >= Number(JAVA_LONG_MAX)) {
+        return JAVA_LONG_MAX;
+    }
+    return BigInt(number < 0 ? Math.ceil(number) : Math.floor(number));
+}
+
 export function resourceStream(ref: string): ArrayBuffer | null {
     return ResourceLoader.getResourceAsStream(ref);
+}
+
+export function rotatePoint(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
 }
 
 function cloneDefault<T>(value: T): T {

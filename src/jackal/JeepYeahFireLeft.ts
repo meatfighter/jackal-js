@@ -1,12 +1,12 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/JeepYeahFireLeft.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 export class JeepYeahFireLeft {  public constructor(...args: any[]) {
-    this.__construct(...args);
+    this.__construct_JeepYeahFireLeft(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_JeepYeahFireLeft(...args: any[]): void {
     if (args.length === 0) {
             for(let i = 0; i < 7; i++) {
                   this.update();
@@ -25,13 +25,13 @@ export class JeepYeahFireLeft {  public constructor(...args: any[]) {
   
   public static readonly ANGLE: number = -62;
   public static readonly RADIANS: number = ((JeepYeahFireLeft.ANGLE) * Math.PI / 180);
-  public static readonly rx: number = Math.cos(JeepYeahFireLeft.RADIANS);
-  public static readonly ry: number = Math.sin(JeepYeahFireLeft.RADIANS);
+  public static readonly rx: number = javaFloat(Math.cos(JeepYeahFireLeft.RADIANS));
+  public static readonly ry: number = javaFloat(Math.sin(JeepYeahFireLeft.RADIANS));
   public static readonly vx: number = JeepYeahFireLeft.SPEED * JeepYeahFireLeft.rx;
   public static readonly vy: number = JeepYeahFireLeft.SPEED * JeepYeahFireLeft.ry;
   
   public static readonly MOVE_TIME: number = 1;
-  public static readonly SHRINK_STEPS: number = (63 / JeepYeahFireLeft.SPEED);
+  public static readonly SHRINK_STEPS: number = javaInt((63 / JeepYeahFireLeft.SPEED));
   public static readonly PAUSE_TIME: number = 3;
   
   public static readonly I_SHRINK_STEPS: number = 1 / JeepYeahFireLeft.SHRINK_STEPS;

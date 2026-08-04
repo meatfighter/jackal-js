@@ -1,20 +1,30 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossShipManager.java.
 // Original Java imports: java.util.ArrayList.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { BossShipGun } from "./BossShipGun.js";
 import { BrownTank } from "./BrownTank.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
-import { Main } from "./Main.js";
 export class BossShipManager 
-    extends GameElement implements ICameraPanListener, ITankTracker {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+    extends GameElement implements ICameraPanListener, ITankTracker {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.ready = false;
+    this.brownTankDelay = 0;
+    this.shipGuns = null as any;
+    this.gunIndex = 0;
+    this.triggerDelay = 0;
+    this.tanks = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossShipManager(...args);
+  }
+  private __construct_BossShipManager(...args: any[]): void {
     if (args.length === 0) {
             this.shipGuns.add(new BossShipGun(36 << 5, 8 << 5, this));
                 this.shipGuns.add(new BossShipGun(28 << 5, 10 << 5, this));
@@ -29,13 +39,12 @@ export class BossShipManager
   
   public static readonly MAX_TANKS: number = 5;
   public static readonly TRIGGER_DELAY: number = 4 * 91;
-  
-  public ready: boolean = false;
+
   public brownTankDelay: number = 45;
   public shipGuns: any = new ArrayList<BossShipGun>();
-  public gunIndex: number = 0;  
+  
   public triggerDelay: number = 1;
-  public tanks: number = 0;
+
   
   
 
@@ -70,13 +79,13 @@ export class BossShipManager
         this.brownTankDelay = 91;
       } else {
         this.brownTankDelay = 10 * 91;
-        let x = this.gameMode.cameraX + this.main.random.nextInt(Main.DISPLAY_WIDTH);
-        if (x < 320) {
-          x = 320;
-        } else if (x > 1472) {
-          x = 1472;
+        let xLocal = this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH);
+        if (xLocal < 320) {
+          xLocal = 320;
+        } else if (xLocal > 1472) {
+          xLocal = 1472;
         }
-        new BrownTank(x, Main.DISPLAY_HEIGHT + 48, this);        
+        new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);        
       }
     }
   }

@@ -1,11 +1,11 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/HardEndingMode.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMode } from "./IMode.js";
-import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 import { Player } from "./Player.js";
 export class HardEndingMode implements IMode, IFadeListener {
@@ -80,7 +80,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     [ 0, HardEndingMode.computeCenter(3) ],
   ];
   
-  public static readonly CARD0_Y: number = (Main.DISPLAY_HEIGHT - (((HardEndingMode.CARDS[0].length <<1)-1)<<5))>> 1;
+  public static readonly CARD0_Y: number = (MainConstants.DISPLAY_HEIGHT - (((HardEndingMode.CARDS[0].length <<1)-1)<<5))>> 1;
   
   public static readonly CREDITS: any[] = [
     
@@ -145,7 +145,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     HardEndingMode.CREDITS_HEIGHT = y;
   }
   
-  public static readonly CREDITS_SPEED: number = (Main.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / HardEndingMode.CREDITS_TIME;
+  public static readonly CREDITS_SPEED: number = (MainConstants.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / javaFloat(HardEndingMode.CREDITS_TIME);
   
   public finalScore: string = null as any;
   public finalScoreX: number = 0;
@@ -157,13 +157,13 @@ export class HardEndingMode implements IMode, IFadeListener {
   public lineLength: number = 0;
   public cardIndex: number = 0;
   public delay: number = HardEndingMode.TYPE_DELAY;
-  public creditsY: number = Main.DISPLAY_HEIGHT;
+  public creditsY: number = MainConstants.DISPLAY_HEIGHT;
   public input: any = null as any;
   public jeepX: number = -50;
   public rumble: number = 0;
   
   private static computeCenter(index: any): number {
-    return (Main.DISPLAY_WIDTH - (HardEndingMode.NAMES[index].length <<5))>> 1;
+    return (MainConstants.DISPLAY_WIDTH - (HardEndingMode.NAMES[index].length <<5))>> 1;
   }
 
   public init(main: any, gc: any): void {
@@ -172,7 +172,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     this.input = main.input;
     
     this.finalScore = "final score: " + main.scoreStr; 
-    this.finalScoreX = (Main.DISPLAY_WIDTH - (this.finalScore.length <<5))>> 1;    
+    this.finalScoreX = (MainConstants.DISPLAY_WIDTH - (this.finalScore.length <<5))>> 1;    
   }
   
   private updateTyping(): void {
@@ -207,7 +207,7 @@ export class HardEndingMode implements IMode, IFadeListener {
   }
   
   private updateFinalScoreJeep(): void {
-    if (this.jeepX < Main.DISPLAY_WIDTH + 50) {
+    if (this.jeepX < MainConstants.DISPLAY_WIDTH + 50) {
       this.jeepX += Player.SPEED;
     } else {
       this.state = HardEndingMode.STATE_FINAL_SCORE;
@@ -266,22 +266,22 @@ export class HardEndingMode implements IMode, IFadeListener {
 
   public render(gc: any, g: any): void {
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     if (this.state == HardEndingMode.STATE_DONE) {
       return;
     }
     
     if (this.state >= HardEndingMode.STATE_FINAL_SCORE_FADE_IN) {
-      this.main.drawString("THE END", 400, 432, Main.FONT_ORANGE_GRAY);
+      this.main.drawString("THE END", 400, 432, MainConstants.FONT_ORANGE_GRAY);
       
       if (this.state == HardEndingMode.STATE_FINAL_SCORE) {
-        this.main.drawString(this.finalScore, this.finalScoreX, 496, Main.FONT_GRAY);  
+        this.main.drawString(this.finalScore, this.finalScoreX, 496, MainConstants.FONT_GRAY);  
       } else if (this.state == HardEndingMode.STATE_FINAL_SCORE_JEEP) {
         
         if (this.jeepX > 0) {
           g.setWorldClip(0, 494, this.jeepX, 38);
-          this.main.drawString(this.finalScore, this.finalScoreX, 496, Main.FONT_GRAY);
+          this.main.drawString(this.finalScore, this.finalScoreX, 496, MainConstants.FONT_GRAY);
           g.clearWorldClip();
         }
         
@@ -296,7 +296,7 @@ export class HardEndingMode implements IMode, IFadeListener {
       let indent = false;
       for(let i = 0, y = 0; i < HardEndingMode.CREDITS.length; i++, y += 32) {        
         this.main.drawString(HardEndingMode.CREDITS[i], indent ? 64 : 32, y, 
-            indent ? Main.FONT_GRAY : Main.FONT_ORANGE_GRAY);
+            indent ? MainConstants.FONT_GRAY : MainConstants.FONT_ORANGE_GRAY);
         if (!indent) {
           y += 16;
         } 
@@ -309,25 +309,25 @@ export class HardEndingMode implements IMode, IFadeListener {
     } else if (this.cardIndex == 0) {
       for(let i = 0; i < this.lineIndex; i++) {
         this.main.drawString(HardEndingMode.CARDS[this.cardIndex][i], 96, 
-            HardEndingMode.CARD0_Y + (i << 6), Main.FONT_GRAY);
+            HardEndingMode.CARD0_Y + (i << 6), MainConstants.FONT_GRAY);
       }
       if (this.lineIndex != HardEndingMode.CARDS[this.cardIndex].length) {
         this.main.drawString(HardEndingMode.CARDS[this.cardIndex][this.lineIndex], this.lineLength, 
-            96, HardEndingMode.CARD0_Y + (this.lineIndex << 6), Main.FONT_GRAY);
+            96, HardEndingMode.CARD0_Y + (this.lineIndex << 6), MainConstants.FONT_GRAY);
       }
     } else {
       
       this.main.soldiers[HardEndingMode.NAME_INFOS[this.cardIndex - 1][0]].draw(368, 32);
       this.main.drawString(HardEndingMode.NAMES[this.cardIndex - 1], HardEndingMode.NAME_INFOS[this.cardIndex - 1][1], 
-          384, Main.FONT_GRAY);
+          384, MainConstants.FONT_GRAY);
       
       for(let i = 0; i < this.lineIndex; i++) {
         this.main.drawString(HardEndingMode.CARDS[this.cardIndex][i], 96, 
-            480 + (i << 6), Main.FONT_GRAY);
+            480 + (i << 6), MainConstants.FONT_GRAY);
       }
       if (this.lineIndex != HardEndingMode.CARDS[this.cardIndex].length) {
         this.main.drawString(HardEndingMode.CARDS[this.cardIndex][this.lineIndex], this.lineLength, 
-            96, 480 + (this.lineIndex << 6), Main.FONT_GRAY);
+            96, 480 + (this.lineIndex << 6), MainConstants.FONT_GRAY);
       }
     }
   }

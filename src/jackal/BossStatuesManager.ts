@@ -1,20 +1,28 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossStatuesManager.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { BossStatue } from "./BossStatue.js";
 import { BrownTank } from "./BrownTank.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
-import { Main } from "./Main.js";
 export class BossStatuesManager 
-    extends GameElement implements ICameraPanListener, ITankTracker {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+    extends GameElement implements ICameraPanListener, ITankTracker {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.ready = false;
+    this.brownTankDelay = 0;
+    this.statues = 0;
+    this.tanks = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossStatuesManager(...args);
+  }
+  private __construct_BossStatuesManager(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -22,11 +30,10 @@ export class BossStatuesManager
   }
   
   public static readonly MAX_TANKS: number = 5;
-  
-  public ready: boolean = false; 
+ 
   public brownTankDelay: number = 3 * 91;
   public statues: number = 4;
-  public tanks: number = 0;
+
   
   
 
@@ -67,13 +74,13 @@ export class BossStatuesManager
         this.brownTankDelay = 91;
       } else {
         this.brownTankDelay = 10 * 91;
-        let x = this.gameMode.cameraX + this.main.random.nextInt(Main.DISPLAY_WIDTH);
-        if (x < 352) {
-          x = 352;
-        } else if (x > 1760) {
-          x = 1760;
+        let xLocal = this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH);
+        if (xLocal < 352) {
+          xLocal = 352;
+        } else if (xLocal > 1760) {
+          xLocal = 1760;
         }
-        new BrownTank(x, Main.DISPLAY_HEIGHT + 48, this);        
+        new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);        
       }
     }
   }

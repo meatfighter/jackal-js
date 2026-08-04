@@ -1,30 +1,47 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Fire.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Flame } from "./Flame.js";
 import { GameElement } from "./GameElement.js";
-export class Fire extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Fire extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.vx = 0;
+    this.vy = 0;
+    this.dx = 0;
+    this.dy = 0;
+    this.length = 0;
+    this.angle = 0;
+    this.state = 0;
+    this.delay = 0;
+    this.flickerCounter = 0;
+    this.flickerIndex = 0;
+    this.alpha = 0;
+    this.player = null as any;
+    this.enemy = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Fire(...args);
+  }
+  private __construct_Fire(...args: any[]): void {
     if (args.length === 6 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let vx = args[2];
-        let vy = args[3];
-        let angle = args[4];
-        let enemy = args[5];
-            this.x = x;
-                this.y = y;
-                this.dx = vx;
-                this.dy = vy;
-                this.vx = Fire.SPEED * vx;
-                this.vy = Fire.SPEED * vy;
-                this.angle = angle;
-                this.enemy = enemy;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let vxLocal = args[2];
+        let vyLocal = args[3];
+        let angleLocal = args[4];
+        let enemyLocal = args[5];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.dx = vxLocal;
+                this.dy = vyLocal;
+                this.vx = Fire.SPEED * vxLocal;
+                this.vy = Fire.SPEED * vyLocal;
+                this.angle = angleLocal;
+                this.enemy = enemyLocal;
     
                 this.enemyBullet = true;
         return;
@@ -39,20 +56,19 @@ export class Fire extends GameElement {  public constructor(...args: any[]) {
   public static readonly SPEED: number = 3;
   public static readonly MAX_LENGTH: number = 128;
   public static readonly TRAVEL_TIME: number = 60;
-  
-  public vx: number = 0;
-  public vy: number = 0;
-  public dx: number = 0;
-  public dy: number = 0;
-  public length: number = 0;
-  public angle: number = 0;
+
+
+
+
+
+
   public state: number = Fire.STATE_GROWING;
-  public delay: number = 0;
-  public flickerCounter: number = 0;
-  public flickerIndex: number = 0;
+
+
+
   public alpha: number = 1;
-  public player: any = null as any;
-  public enemy: any = null as any;
+
+
   
   
 

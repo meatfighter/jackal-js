@@ -1,16 +1,23 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Airplane.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
-import { Main } from "./Main.js";
-export class Airplane extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Airplane extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.bombDelay = 0;
+    this.up = false;
+    this.orientationIndex = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Airplane(...args);
+  }
+  private __construct_Airplane(...args: any[]): void {
     if (args.length === 1 && typeof args[0] === "boolean") {
         let leftLandingPort = args[0];
             this.x = this.gameMode.player.x 
@@ -19,25 +26,25 @@ export class Airplane extends Enemy {  public constructor(...args: any[]) {
                 this.y = this.gameMode.cameraY - 124;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let up = args[2];
-            this.__construct(x, y);
-                this.up = up;
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+        let upLocal = args[2];
+            this.__construct_Airplane(xLocal2, yLocal2);
+                this.up = upLocal;
                 this.orientationIndex = 1;
         return;
     } else     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
+        let xLocal = args[0];
+        let yLocal = args[1];
             this.x = this.gameMode.player.x 
                     + (this.main.random.nextBoolean() ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
                 if (this.x - 96 < this.gameMode.cameraX) {
                   this.x = this.gameMode.player.x + Airplane.APPEAR_DISTANCE;
-                } else if (this.x + 96 > this.gameMode.cameraX + Main.DISPLAY_WIDTH) {
+                } else if (this.x + 96 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
                   this.x = this.gameMode.player.x - Airplane.APPEAR_DISTANCE;
                 }
     
-                this.y = y;
+                this.y = yLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -46,10 +53,9 @@ export class Airplane extends Enemy {  public constructor(...args: any[]) {
   public static readonly SPEED: number = 5;
   public static readonly BOMB_DELAY: number = 68;
   public static readonly APPEAR_DISTANCE: number = 192;
-  
-  public bombDelay: number = 0;
-  public up: boolean = false;
-  public orientationIndex: number = 0;
+
+
+
   
     
   

@@ -1,26 +1,36 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/TravelingExplosion.java.
 // Original Java imports: java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { GameElement } from "./GameElement.js";
-export class TravelingExplosion extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class TravelingExplosion extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.vx = 0;
+    this.vy = 0;
+    this.notifier = false;
+    this.t = 0;
+    this.scale = 0;
+    this.enemies = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_TravelingExplosion(...args);
+  }
+  private __construct_TravelingExplosion(...args: any[]): void {
     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "number" && typeof args[4] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let vx = args[2];
-        let vy = args[3];
-        let notifier = args[4];
-            this.x = x;
-                this.y = y;
-                this.notifier = notifier;
-                this.vx = TravelingExplosion.VELOCITY * vx;
-                this.vy = TravelingExplosion.VELOCITY * vy;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let vxLocal = args[2];
+        let vyLocal = args[3];
+        let notifierLocal = args[4];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.notifier = notifierLocal;
+                this.vx = TravelingExplosion.VELOCITY * vxLocal;
+                this.vy = TravelingExplosion.VELOCITY * vyLocal;
     
                 this.enemies = this.gameMode.enemies;
         return;
@@ -30,21 +40,20 @@ export class TravelingExplosion extends GameElement {  public constructor(...arg
   
   public static readonly DISTANCE: number = 320;
   public static readonly TRAVEL_TIME: number = 64;
-  public static readonly PERIOD0: number = TravelingExplosion.TRAVEL_TIME / 3;
-  public static readonly PERIOD1: number = 2 * TravelingExplosion.TRAVEL_TIME / 3;
+  public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);
+  public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);
   public static readonly VELOCITY: number = TravelingExplosion.DISTANCE / TravelingExplosion.TRAVEL_TIME;
   public static readonly ALPHA: number = 0.6;
   
   public static readonly K0: number = 1.25 / TravelingExplosion.PERIOD0;
   public static readonly K1: number = 0.75 / (TravelingExplosion.PERIOD1 - TravelingExplosion.PERIOD0);
   public static readonly K2: number = 0.333 / (TravelingExplosion.TRAVEL_TIME - TravelingExplosion.PERIOD1);
-  
-  public vx: number = 0;
-  public vy: number = 0;
-  public notifier: boolean = false;
-  public t: number = 0;
-  public scale: number = 0;
-  public enemies: any = null as any;
+
+
+
+
+
+
   
     
   
@@ -81,9 +90,9 @@ export class TravelingExplosion extends GameElement {  public constructor(...arg
       let y2 = this.y + margin;
       if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
         for(let i = this.enemies.size() - 1; i >= 0; i--) {
-          let enemy = this.enemies.get(i);
-          if (!enemy.removeFlag) {
-            enemy.attack(x1, y1, x2, y2, 
+          let enemyLocal = this.enemies.get(i);
+          if (!enemyLocal.removeFlag) {
+            enemyLocal.attack(x1, y1, x2, y2, 
                 AttackSource.TRAVELING_EXPLOSION);
           }
         }

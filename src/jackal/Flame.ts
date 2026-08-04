@@ -1,19 +1,26 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Flame.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
-export class Flame extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Flame extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.spriteCounter = 0;
+    this.spriteIndex = 0;
+    this.delay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Flame(...args);
+  }
+  private __construct_Flame(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -25,12 +32,11 @@ export class Flame extends GameElement {  public constructor(...args: any[]) {
   
   static {
     for(let i = 0; i < Flame.TIME_TO_LIVE; i++) {
-      Flame.ALPHAS[i] = Math.sqrt(i / Flame.TIME_TO_LIVE);      
+      Flame.ALPHAS[i] = javaFloat(Math.sqrt(i / javaFloat(Flame.TIME_TO_LIVE)));      
     }
   }
-  
-  public spriteCounter: number = 0;
-  public spriteIndex: number = 0;
+
+
   public delay: number = Flame.TIME_TO_LIVE;  
   
   

@@ -1,48 +1,63 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/RotatingGun.java.
 // Original Java imports: org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-enum RotatingGunState { FIRING, PAUSED_BETWEEN_FIRING, TRACKING }
-export class RotatingGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export enum RotatingGunState { FIRING, PAUSED_BETWEEN_FIRING, TRACKING }
+export class RotatingGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = null as any;
+    this.angle = 0;
+    this.recoil = 0;
+    this.pause = 0;
+    this.group = 0;
+    this.groupSize = 0;
+    this.recoilIndex = 0;
+    this.white = false;
+    this.bossGarageManager = null as any;
+    this.type = 0;
+    this.sprites = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_RotatingGun(...args);
+  }
+  private __construct_RotatingGun(...args: any[]): void {
     if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let bossGarageManager = args[2];
-        let white = args[3];
-            this.x = x;
-                this.y = y;    
-                this.white = white;
-                this.bossGarageManager = bossGarageManager;
+        let xLocal3 = args[0];
+        let yLocal3 = args[1];
+        let bossGarageManagerLocal = args[2];
+        let whiteLocal2 = args[3];
+            this.x = xLocal3;
+                this.y = yLocal3;    
+                this.white = whiteLocal2;
+                this.bossGarageManager = bossGarageManagerLocal;
                 this.groupSize = 2;
                 this.sprites = this.main.grayGuns;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let white = args[2];
-            this.x = x;
-                this.y = y;    
-                this.white = white;
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+        let whiteLocal = args[2];
+            this.x = xLocal2;
+                this.y = yLocal2;    
+                this.white = whiteLocal;
                 this.sprites = this.main.grayGuns;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let type = args[2];
-            this.x = x;
-                this.y = y;
-                this.type = type;
-                this.white = type != RotatingGun.TYPE_BROWN;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let typeLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.type = typeLocal;
+                this.white = typeLocal != RotatingGun.TYPE_BROWN;
                 this.groupSize = 1;
     
-                switch(type) {
+                switch(typeLocal) {
                   case RotatingGun.TYPE_GREEN:
                     this.sprites = this.main.greenGuns;
                     break;
@@ -71,28 +86,28 @@ export class RotatingGun extends Enemy {  public constructor(...args: any[]) {
   public static readonly ROTATION_SPEED: number = 0.9;
   public static readonly BULLET_DISTANCE: number = 400;
   public static readonly GARAGE_BULLET_DISTANCE: number = 464;
-  public static readonly BULLET_TRAVEL_TIME: number = (RotatingGun.BULLET_DISTANCE / EnemyBullet.SPEED);
-  public static readonly GARAGE_BULLET_TRAVEL_TIME: number = (RotatingGun.GARAGE_BULLET_DISTANCE / EnemyBullet.SPEED);
+  public static readonly BULLET_TRAVEL_TIME: number = javaInt((RotatingGun.BULLET_DISTANCE / EnemyBullet.SPEED));
+  public static readonly GARAGE_BULLET_TRAVEL_TIME: number = javaInt((RotatingGun.GARAGE_BULLET_DISTANCE / EnemyBullet.SPEED));
   public static readonly YELLOW_BULLET_SPEED: number = 1.25;
   
   static {
     for(let i = 1; i <= RotatingGun.RECOIL_DURATION; i++) {
       RotatingGun.recoils[i - 1] = RotatingGun.RECOIL_AMPLITUDE 
-          * Math.sin(i * Math.PI / (RotatingGun.RECOIL_DURATION + 1));      
+          * javaFloat(Math.sin(i * Math.PI / (RotatingGun.RECOIL_DURATION + 1)));      
     }       
   }
   
-  public state: any = State.PAUSED_BETWEEN_FIRING;
+  public state: any = RotatingGunState.PAUSED_BETWEEN_FIRING;
   public angle: number = 90;
-  public recoil: number = 0;
-  public pause: number = 0;
-  public group: number = 0;
+
+
+
   public groupSize: number = RotatingGun.GROUP_SIZE;
-  public recoilIndex: number = 0;
-  public white: boolean = false;
-  public bossGarageManager: any = null as any;
-  public type: number = 0;
-  public sprites: any[] = null as any;
+
+
+
+
+
   
     
   
@@ -134,12 +149,12 @@ export class RotatingGun extends Enemy {  public constructor(...args: any[]) {
         if (--this.recoilIndex < 0) {
           if (++this.group == this.groupSize) {
             this.recoil = 0;
-            this.state = State.TRACKING;
+            this.state = RotatingGunState.TRACKING;
             this.pause = RotatingGun.PAUSE_BETWEEN_GROUPS;
             this.group = 0;
           } else {
             this.recoil = 0;
-            this.state = State.PAUSED_BETWEEN_FIRING;
+            this.state = RotatingGunState.PAUSED_BETWEEN_FIRING;
             this.pause = RotatingGun.PAUSE_AFTER_RECOIL;
           }
         } else {
@@ -158,8 +173,8 @@ export class RotatingGun extends Enemy {  public constructor(...args: any[]) {
           this.pause--;
         } 
         let player = this.gameMode.player;
-        let targetAngle = ((
-            Math.atan2(player.y - this.y, player.x - this.x) * 180 / Math.PI));
+        let targetAngle = javaFloat(((
+            Math.atan2(player.y - this.y, player.x - this.x)) * 180 / Math.PI));
         let deltaAngle = (targetAngle - this.angle + 180) % 360;
         if (deltaAngle < 0) {
           deltaAngle += 180;
@@ -191,11 +206,11 @@ export class RotatingGun extends Enemy {  public constructor(...args: any[]) {
   }
   
   private fire(): void {
-    this.state = State.FIRING;
+    this.state = RotatingGunState.FIRING;
     this.recoilIndex = RotatingGun.RECOIL_DURATION - 1;
-    let ang = ((this.angle) * Math.PI / 180);
-    let cos = Math.cos(ang);
-    let sin = Math.sin(ang);
+    let ang = javaFloat(((this.angle) * Math.PI / 180));
+    let cos = javaFloat(Math.cos(ang));
+    let sin = javaFloat(Math.sin(ang));
     if (this.bossGarageManager != null) {
       if (this.white) {
         new EnemyBullet(this.x + 60 * cos, this.y + 60 * sin, cos, sin, 

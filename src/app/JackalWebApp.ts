@@ -2,8 +2,7 @@ import { AppGameContainer, Display, ResourceLoader, ScalableGame, SoundStore } f
 import { Main } from "../jackal/Main.js";
 import { RESOURCE_MANIFEST } from "./ResourceManifest.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
-
-declare const __BUILD_STAMP__: string;
+import versionInfo from "../../version.json";
 
 export class JackalWebApp {
     private readonly root: HTMLElement;
@@ -12,7 +11,7 @@ export class JackalWebApp {
 
     public constructor(root: HTMLElement) {
         this.root = root;
-        registerServiceWorker(__BUILD_STAMP__);
+        registerServiceWorker(versionInfo.buildStamp);
     }
 
     public showMenu(errorMessage: string | null = null): void {
@@ -48,7 +47,7 @@ export class JackalWebApp {
             this.applyVolume();
             ResourceLoader.removeAllResourceLocations();
             ResourceLoader.addResourceLocation("/resources/");
-            ResourceLoader.setCacheBust(__BUILD_STAMP__);
+            ResourceLoader.setCacheBust(versionInfo.buildStamp);
             ResourceLoader.setRetryOptions(5, 250);
             await ResourceLoader.preloadResources(RESOURCE_MANIFEST, (progress) => {
                 this.renderLoading(`Loading ${progress.loaded}/${progress.total}`);

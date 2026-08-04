@@ -1,28 +1,42 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/FloorGun.java.
 // Original Java imports: org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
-export class FloorGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class FloorGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.player = null as any;
+    this.state = 0;
+    this.delay = 0;
+    this.openY = 0;
+    this.angle = 0;
+    this.aimingSpeed = 0;
+    this.colorIndex = 0;
+    this.ready = false;
+    this.mask = null as any;
+    this.panel = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_FloorGun(...args);
+  }
+  private __construct_FloorGun(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.__construct(x, y, false);
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+            this.__construct_FloorGun(xLocal2, yLocal2, false);
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
+        let xLocal = args[0];
+        let yLocal = args[1];
         let plain = args[2];
-            this.x = x;
-                this.y = y; 
+            this.x = xLocal;
+                this.y = yLocal; 
                 if (plain) {
                   this.mask = this.main.plainFloorGuns[0];
                   this.panel = this.main.plainFloorGuns[1];
@@ -46,23 +60,22 @@ export class FloorGun extends Enemy {  public constructor(...args: any[]) {
   public static readonly AIMING_DELAY: number = 40;
   public static readonly SHOOT_DELAY: number = 22;
   
-  public static readonly SHOOT_SPREAD_ANGLE: number = ((20) * Math.PI / 180);
+  public static readonly SHOOT_SPREAD_ANGLE: number = javaFloat(((20) * Math.PI / 180));
   
   public static readonly OPEN_SPEED: number = 32 / FloorGun.OPEN_DELAY;  
   
   public static readonly BULLET_SPEED: number = 1.625;
   public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;  
-  
-  public player: any = null as any;
+
   public state: number = FloorGun.STATE_CLOSED;
   public delay: number = 1;
-  public openY: number = 0;
-  public angle: number = 0;
-  public aimingSpeed: number = 0;
-  public colorIndex: number = 0;
-  public ready: boolean = false;
-  public mask: any = null as any;
-  public panel: any = null as any;
+
+
+
+
+
+
+
   
   
   
@@ -125,8 +138,8 @@ export class FloorGun extends Enemy {  public constructor(...args: any[]) {
           this.angle = 90;
           this.delay = FloorGun.AIMING_DELAY;
           
-          let targetAngle = ((
-              Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180 / Math.PI));
+          let targetAngle = javaFloat(((
+              Math.atan2(this.player.y - this.y, this.player.x - this.x)) * 180 / Math.PI));
           let deltaAngle = (targetAngle + 90) % 360;
           if (deltaAngle < 0) {
             deltaAngle += 180;
@@ -150,13 +163,13 @@ export class FloorGun extends Enemy {  public constructor(...args: any[]) {
           this.delay = FloorGun.OPEN_DELAY;
           this.openY = 32;
           
-          let shootAngle = Math.atan2(
-              this.player.y - (this.y + 32), this.player.x - (this.x + 32));
+          let shootAngle = javaFloat(Math.atan2(
+              this.player.y - (this.y + 32), this.player.x - (this.x + 32)));
           shootAngle -= 2 * FloorGun.SHOOT_SPREAD_ANGLE;          
           
           for(let i = 0; i < 5; i++, shootAngle += FloorGun.SHOOT_SPREAD_ANGLE) {
-            let cos = Math.cos(shootAngle);
-            let sin = Math.sin(shootAngle);
+            let cos = javaFloat(Math.cos(shootAngle));
+            let sin = javaFloat(Math.sin(shootAngle));
             new EnemyBullet(this.x + 32 + 13 * cos, this.y + 32 + 13 * sin, 
                 FloorGun.BULLET_SPEED * cos, FloorGun.BULLET_SPEED * sin, 
                 FloorGun.BULLET_TRAVEL_TIME, true);

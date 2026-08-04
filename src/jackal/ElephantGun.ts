@@ -1,24 +1,40 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/ElephantGun.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { ElephantMissile } from "./ElephantMissile.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
-export class ElephantGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class ElephantGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.spriteIndex = 0;
+    this.destroyed = false;
+    this.state = 0;
+    this.delay = 0;
+    this.targetDirection = 0;
+    this.asters = null as any;
+    this.fireballX = 0;
+    this.fireballY = 0;
+    this.fireballVx = 0;
+    this.left = false;
+    this.hits = 0;
+    this.player = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_ElephantGun(...args);
+  }
+  private __construct_ElephantGun(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let left = args[2];
-            this.x = x;
-                this.y = y;
-                this.left = left;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let leftLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.left = leftLocal;
     
                 this.startAiming();
         return;
@@ -42,24 +58,24 @@ export class ElephantGun extends Enemy {  public constructor(...args: any[]) {
   
   public static readonly ASTER_SPINES: number = 5;
   public static readonly ASTER_RADIUS: number = 128;  
-  public static readonly ASTER_MAX_OFFSET_ANGLE: number = (2 * Math.PI / ElephantGun.ASTER_SPINES);
-  public static readonly INVERSE_ASTER_DELAY: number = 1 / ElephantGun.ASTER_DELAY;
+  public static readonly ASTER_MAX_OFFSET_ANGLE: number = javaFloat((2 * Math.PI / ElephantGun.ASTER_SPINES));
+  public static readonly INVERSE_ASTER_DELAY: number = 1 / javaFloat(ElephantGun.ASTER_DELAY);
   public static readonly FIREBALL_SPEED: number = 6;
   
   public static readonly HITS: number = 3;
   
   public spriteIndex: number = ElephantGun.SPRITE_CENTER;
-  public destroyed: boolean = false;
-  public state: number = 0;
-  public delay: number = 0;
-  public targetDirection: number = 0;
+
+
+
+
   public asters: any[] = java2DArray(ElephantGun.ASTER_SPINES, 2, 0);
-  public fireballX: number = 0;
-  public fireballY: number = 0;
-  public fireballVx: number = 0;
-  public left: boolean = false;
-  public hits: number = 0;
-  public player: any = null as any;
+
+
+
+
+
+
 
   
 
@@ -86,8 +102,8 @@ export class ElephantGun extends Enemy {  public constructor(...args: any[]) {
     this.delay = ElephantGun.ASTER_DELAY;
     let offsetAngle = ElephantGun.ASTER_MAX_OFFSET_ANGLE * this.main.random.nextFloat();
     for(let i = 0; i < ElephantGun.ASTER_SPINES; i++) {
-      this.asters[i][0] = Math.cos(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i);
-      this.asters[i][1] = Math.sin(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i);
+      this.asters[i][0] = javaFloat(Math.cos(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i));
+      this.asters[i][1] = javaFloat(Math.sin(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i));
     }
   }
   

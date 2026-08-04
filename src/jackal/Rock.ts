@@ -1,20 +1,34 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Rock.java.
 // Original Java imports: java.util.ArrayList.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
-export class Rock extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Rock extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.player = null as any;
+    this.angle = 0;
+    this.scale = 0;
+    this.vScale = 0;
+    this.state = 0;
+    this.vx = 0;
+    this.delay = 0;
+    this.rollsRight = false;
+    this.acceleration = 0;
+    this.mines = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Rock(...args);
+  }
+  private __construct_Rock(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
-                this.rollsRight = x > 32 * 35;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.rollsRight = xLocal > 32 * 35;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -35,22 +49,21 @@ export class Rock extends Enemy {  public constructor(...args: any[]) {
   public static readonly FALL_TIME: number = 60;
   public static readonly LOW_TIME: number = 60;
   
-  public static readonly HIGH_ACCELERATION: number = (2 * Rock.HIGH_DISTANCE) / (Rock.HIGH_TIME * Rock.HIGH_TIME);
-  public static readonly SCALE_ACCLERATION: number = -0.5 / (Rock.FALL_TIME * Rock.FALL_TIME);
+  public static readonly HIGH_ACCELERATION: number = (2 * Rock.HIGH_DISTANCE) / javaFloat((Rock.HIGH_TIME * Rock.HIGH_TIME));
+  public static readonly SCALE_ACCLERATION: number = -0.5 / javaFloat((Rock.FALL_TIME * Rock.FALL_TIME));
   
-  public static readonly SQRT2: number = (Math.sqrt(2));
-  public static readonly ISQRT2: number = (1.0 / Math.sqrt(2));
-  
-  public player: any = null as any;
-  public angle: number = 0;
+  public static readonly SQRT2: number = javaFloat((Math.sqrt(2)));
+  public static readonly ISQRT2: number = javaFloat((1.0 / Math.sqrt(2)));
+
+
   public scale: number = 1;
-  public vScale: number = 0;
+
   public state: number = Rock.STATE_RESTING_HIGH;
-  public vx: number = 0;
-  public delay: number = 0;
-  public rollsRight: boolean = false;
-  public acceleration: number = 0;
-  public mines: any = null as any;
+
+
+
+
+
   
   
 
@@ -86,10 +99,10 @@ export class Rock extends Enemy {  public constructor(...args: any[]) {
   
   private rollOverEnemies(): void {
     for(let i = this.mines.size() - 1; i >= 0; i--) {
-      let mine = this.mines.get(i);
-      if (mine != this && mine.isMine(this.x + this.mineX1, this.y + this.mineY1, 
+      let mineLocal = this.mines.get(i);
+      if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, 
           this.x + this.mineX2, this.y + this.mineY2)) {
-        mine.flatten();
+        mineLocal.flatten();
       }
     }    
   }
@@ -124,7 +137,7 @@ export class Rock extends Enemy {  public constructor(...args: any[]) {
           this.vx *= Rock.ISQRT2;
           this.delay = Rock.FALL_TIME;
           this.acceleration = 2 * (Rock.FALL_DISTANCE - this.vx * Rock.FALL_TIME) 
-              / (Rock.FALL_TIME * Rock.FALL_TIME);
+              / javaFloat((Rock.FALL_TIME * Rock.FALL_TIME));
         }
         break;
       case Rock.STATE_ROLLING_DOWN:
@@ -143,7 +156,7 @@ export class Rock extends Enemy {  public constructor(...args: any[]) {
           this.state = Rock.STATE_ROLLING_FOWARD_LOW;
           this.vx *= Rock.SQRT2;
           this.delay = Rock.LOW_TIME;
-          this.acceleration = -this.vx / Rock.LOW_TIME;
+          this.acceleration = -this.vx / javaFloat(Rock.LOW_TIME);
         }
         break;
       case Rock.STATE_ROLLING_FOWARD_LOW:

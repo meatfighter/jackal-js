@@ -1,26 +1,44 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossSuperTank.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { AttackSource } from "./AttackSource.js";
 import { BossSuperTankGun } from "./BossSuperTankGun.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { FlashingSkull } from "./FlashingSkull.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
-import { Main } from "./Main.js";
 import { SuperFire } from "./SuperFire.js";
-export class BossSuperTank extends Enemy implements ICameraPanListener {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class BossSuperTank extends Enemy implements ICameraPanListener {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.player = null as any;
+    this.colorIndex = 0;
+    this.wheelAngle = 0;
+    this.treadOffset = 0;
+    this.state = 0;
+    this.appearingDelay = 0;
+    this.vx = 0;
+    this.targetX = 0;
+    this.ax = 0;
+    this.hits = 0;
+    this.delay = 0;
+    this.smashed = 0;
+    this.exploding = 0;
+    this.superFire = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossSuperTank(...args);
+  }
+  private __construct_BossSuperTank(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
                 this.player = this.gameMode.player;
     
                 this.player.longRange = true;
@@ -60,11 +78,11 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {  public
   public static readonly FIRE_PROBABILITY: number = 0.75;
   public static readonly TARGET_PLAYER_PROBABILITY: number = 0.1;
 
-  public static readonly WHEEL_ANGLE_CONST: number = (180 / (Math.PI * 32));
+  public static readonly WHEEL_ANGLE_CONST: number = javaFloat((180 / (Math.PI * 32)));
   public static readonly ANGLED_TREAD_ANGLE: number = 30;
   public static readonly ANGLED_TREAD_RADIANS: number = ((BossSuperTank.ANGLED_TREAD_ANGLE) * Math.PI / 180);
-  public static readonly ANGLED_TREAD_X: number = Math.cos(BossSuperTank.ANGLED_TREAD_RADIANS);
-  public static readonly ANGLED_TREAD_Y: number = Math.sin(BossSuperTank.ANGLED_TREAD_RADIANS);
+  public static readonly ANGLED_TREAD_X: number = javaFloat(Math.cos(BossSuperTank.ANGLED_TREAD_RADIANS));
+  public static readonly ANGLED_TREAD_Y: number = javaFloat(Math.sin(BossSuperTank.ANGLED_TREAD_RADIANS));
   public static readonly APPEARING_SCALE: number = 1 / 23; 
     
   public static readonly HITS_ORANGE: number = 5;
@@ -77,22 +95,21 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {  public
   
   public static readonly EXPLODING_TIME: number = 460;
   public static readonly EXPLODING_FINISHING_TIME: number = 100;
-  public static readonly INV_EXPLODING_TIME: number = 1 / BossSuperTank.EXPLODING_TIME; 
-  
-  public player: any = null as any;
-  public colorIndex: number = 0;
-  public wheelAngle: number = 0;
-  public treadOffset: number = 0;
+  public static readonly INV_EXPLODING_TIME: number = 1 / javaFloat(BossSuperTank.EXPLODING_TIME); 
+
+
+
+
   public state: number = BossSuperTank.STATE_APPEARING;
   public appearingDelay: number = 23;
-  public vx: number = 0;
-  public targetX: number = 0;
-  public ax: number = 0;
-  public hits: number = 0;
+
+
+
+
   public delay: number = 1;
-  public smashed: number = 0;
-  public exploding: number = 0;
-  public superFire: any = null as any;
+
+
+
   
   
 
@@ -115,7 +132,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {  public
       this.targetX = this.player.x;
     } else {
       this.targetX = this.gameMode.cameraX + 48 
-          + this.main.random.nextInt(Main.DISPLAY_WIDTH - 96);
+          + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH - 96);
     }
     if (this.targetX < 176) {
       this.targetX = 176;

@@ -1,20 +1,32 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossSuperTankGun.java.
 // Original Java imports: org.newdawn.slick.Image.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-import { RotatingGun } from "./RotatingGun.js";
-enum BossSuperTankGunState { FIRING, PAUSED_BETWEEN_FIRING, TRACKING }
-export class BossSuperTankGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+import { RotatingGunState } from "./RotatingGun.js";
+export enum BossSuperTankGunState { FIRING, PAUSED_BETWEEN_FIRING, TRACKING }
+export class BossSuperTankGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = null as any;
+    this.angle = 0;
+    this.recoil = 0;
+    this.pause = 0;
+    this.group = 0;
+    this.groupSize = 0;
+    this.recoilIndex = 0;
+    this.bossSuperTank = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossSuperTankGun(...args);
+  }
+  private __construct_BossSuperTankGun(...args: any[]): void {
     if (args.length === 1) {
-        let bossSuperTank = args[0];
-            this.bossSuperTank = bossSuperTank;
+        let bossSuperTankLocal = args[0];
+            this.bossSuperTank = bossSuperTankLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -30,25 +42,25 @@ export class BossSuperTankGun extends Enemy {  public constructor(...args: any[]
   public static readonly BULLET_DISTANCE: number = 480;
   public static readonly GARAGE_BULLET_DISTANCE: number = 464;
   public static readonly YELLOW_BULLET_SPEED: number = 1.75 * EnemyBullet.SPEED;
-  public static readonly BULLET_TRAVEL_TIME: number = (BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED);  
+  public static readonly BULLET_TRAVEL_TIME: number = javaInt((BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED));  
   public static readonly X_OFFSET: number = 244;
   public static readonly Y_OFFSET: number = 88;
   
   static {
     for(let i = 1; i <= BossSuperTankGun.RECOIL_DURATION; i++) {
       BossSuperTankGun.recoils[i - 1] = BossSuperTankGun.RECOIL_AMPLITUDE 
-          * Math.sin(i * Math.PI / (BossSuperTankGun.RECOIL_DURATION + 1));      
+          * javaFloat(Math.sin(i * Math.PI / (BossSuperTankGun.RECOIL_DURATION + 1)));      
     }       
   }
   
-  public state: any = RotatingGun.State.PAUSED_BETWEEN_FIRING;
+  public state: any = RotatingGunState.PAUSED_BETWEEN_FIRING;
   public angle: number = 90;
-  public recoil: number = 0;
+
   public pause: number = 2 * 91;
-  public group: number = 0;
+
   public groupSize: number = BossSuperTankGun.GROUP_SIZE;
-  public recoilIndex: number = 0;
-  public bossSuperTank: any = null as any;
+
+
   
   
 
@@ -64,37 +76,37 @@ export class BossSuperTankGun extends Enemy {  public constructor(...args: any[]
     this.y = this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET;
     
     switch(this.state) {
-      case BossSuperTankGunState.FIRING:
+      case RotatingGunState.FIRING:
         if (--this.recoilIndex < 0) {
           if (++this.group == this.groupSize) {
             this.recoil = 0;
-            this.state = RotatingGun.State.TRACKING;
+            this.state = RotatingGunState.TRACKING;
             this.pause = BossSuperTankGun.PAUSE_BETWEEN_GROUPS;
             this.group = 0;
           } else {
             this.recoil = 0;
-            this.state = RotatingGun.State.PAUSED_BETWEEN_FIRING;
+            this.state = RotatingGunState.PAUSED_BETWEEN_FIRING;
             this.pause = BossSuperTankGun.PAUSE_AFTER_RECOIL;
           }
         } else {
           this.recoil = BossSuperTankGun.recoils[this.recoilIndex]; 
         }
         break;
-      case BossSuperTankGunState.PAUSED_BETWEEN_FIRING:
+      case RotatingGunState.PAUSED_BETWEEN_FIRING:
         if (this.pause > 0) {
           this.pause--;
         } else {
           this.fire();
         }
         break;
-      case BossSuperTankGunState.TRACKING: {
+      case RotatingGunState.TRACKING: {
         if (this.pause > 0) {
           this.pause--;
         } 
         let player = this.gameMode.player;
-        let targetAngle = ((
-            Math.atan2(player.y - (this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET) * 180 / Math.PI), 
-                player.x - (this.bossSuperTank.x + BossSuperTankGun.X_OFFSET)));
+        let targetAngle = javaFloat(((
+            Math.atan2(player.y - (this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET), 
+                player.x - (this.bossSuperTank.x + BossSuperTankGun.X_OFFSET))) * 180 / Math.PI));
         let deltaAngle = (targetAngle - this.angle + 180) % 360;
         if (deltaAngle < 0) {
           deltaAngle += 180;
@@ -123,11 +135,11 @@ export class BossSuperTankGun extends Enemy {  public constructor(...args: any[]
   }
   
   private fire(): void {
-    this.state = RotatingGun.State.FIRING;
+    this.state = RotatingGunState.FIRING;
     this.recoilIndex = BossSuperTankGun.RECOIL_DURATION - 1;
-    let ang = ((this.angle) * Math.PI / 180);
-    let cos = Math.cos(ang);
-    let sin = Math.sin(ang);
+    let ang = javaFloat(((this.angle) * Math.PI / 180));
+    let cos = javaFloat(Math.cos(ang));
+    let sin = javaFloat(Math.sin(ang));
     new EnemyBullet(
         this.bossSuperTank.x + BossSuperTankGun.X_OFFSET + 93 * cos, 
         this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET + 93 * sin, 

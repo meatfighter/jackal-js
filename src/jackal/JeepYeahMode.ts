@@ -1,8 +1,9 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/JeepYeahMode.java.
 // Original Java imports: java.util.*, org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMode } from "./IMode.js";
 import { JeepYeahBullet } from "./JeepYeahBullet.js";
@@ -10,15 +11,14 @@ import { JeepYeahExplosion } from "./JeepYeahExplosion.js";
 import { JeepYeahFireLeft } from "./JeepYeahFireLeft.js";
 import { JeepYeahFireRight } from "./JeepYeahFireRight.js";
 import { JeepYeahPlane } from "./JeepYeahPlane.js";
-import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 export class JeepYeahMode implements IMode, IFadeListener {  public constructor(...args: any[]) {
-    this.__construct(...args);
+    this.__construct_JeepYeahMode(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_JeepYeahMode(...args: any[]): void {
     if (args.length === 1 && typeof args[0] === "boolean") {
-        let yeah = args[0];
-            this.yeah = yeah;
+        let yeahLocal = args[0];
+            this.yeah = yeahLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -123,7 +123,7 @@ export class JeepYeahMode implements IMode, IFadeListener {  public constructor(
 
   public render(gc: any, g: any): void {
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     if (this.state == JeepYeahMode.STATE_DONE) {
       return;

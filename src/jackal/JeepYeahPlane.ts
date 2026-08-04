@@ -1,18 +1,18 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/JeepYeahPlane.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
-import { Main } from "./Main.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 export class JeepYeahPlane {  public constructor(...args: any[]) {
-    this.__construct(...args);
+    this.__construct_JeepYeahPlane(...args);
   }
-  private __construct(...args: any[]): void {
+  private __construct_JeepYeahPlane(...args: any[]): void {
     if (args.length === 1 && typeof args[0] === "boolean") {
-        let left = args[0];
-            this.left = left;
+        let leftLocal = args[0];
+            this.left = leftLocal;
     
-                if (left) {
+                if (leftLocal) {
                   this.z = -8;
                   this.x = -650;
                   this.y = -300;
@@ -27,8 +27,8 @@ export class JeepYeahPlane {  public constructor(...args: any[]) {
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
   }
   
-  public static readonly CENTER_X: number = Main.DISPLAY_WIDTH / 2;
-  public static readonly CENTER_Y: number = Main.DISPLAY_HEIGHT / 2;
+  public static readonly CENTER_X: number = MainConstants.DISPLAY_WIDTH / 2;
+  public static readonly CENTER_Y: number = MainConstants.DISPLAY_HEIGHT / 2;
   
   public static readonly Z1: number = 2;
   public static readonly K1: number = 2;
@@ -55,7 +55,7 @@ export class JeepYeahPlane {  public constructor(...args: any[]) {
     
     let k = JeepYeahPlane.Z0 / (JeepYeahPlane.Z0 - this.z);
     
-    g.setWorldClip(0, 288, Main.DISPLAY_WIDTH, 416);
+    g.setWorldClip(0, 288, MainConstants.DISPLAY_WIDTH, 416);
     if (this.left) {
       if (this.z < -7) {
         main.drawRotated(main.blackPlane, JeepYeahPlane.CENTER_X + k * this.x, JeepYeahPlane.CENTER_Y + k * this.y, 

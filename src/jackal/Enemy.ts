@@ -1,31 +1,45 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Enemy.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Explosion } from "./Explosion.js";
 import { HitElement } from "./HitElement.js";
 export abstract class Enemy extends HitElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.solid = false;
+    this.mine = false;
+    this.solidX1 = 0;
+    this.solidY1 = 0;
+    this.solidX2 = 0;
+    this.solidY2 = 0;
+    this.mineX1 = 0;
+    this.mineY1 = 0;
+    this.mineX2 = 0;
+    this.mineY2 = 0;
+    this.bulletHits = 0;
+    this.points = 0;
+    this.explosionX = 0;
+    this.explosionY = 0;
+    this.playSoundOnRemove = false;
+  }
 
-  public solid: boolean = false; // other enemies will avoid bumping into this one
-  public mine: boolean = false;  // player will explode if it hits this enemy
+ // other enemies will avoid bumping into this one
+  // player will explode if it hits this enemy
+
+
+
+
+
+
+
+
   
-  public solidX1: number = 0;
-  public solidY1: number = 0;
-  public solidX2: number = 0;
-  public solidY2: number = 0;
-  
-  public mineX1: number = 0;
-  public mineY1: number = 0;
-  public mineX2: number = 0;
-  public mineY2: number = 0;
-  
-  public bulletHits: number = 0;  
-  public points: number = 0;
-  
-  public explosionX: number = 0;
-  public explosionY: number = 0;
+
+
+
   
   public playSoundOnRemove: boolean = true;
   

@@ -1,11 +1,11 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/MapMode.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMode } from "./IMode.js";
-import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 export class MapMode implements IMode, IFadeListener {
 
@@ -89,7 +89,7 @@ export class MapMode implements IMode, IFadeListener {
 
   public render(gc: any, g: any): void {
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     if (this.state == MapMode.STATE_DONE) {
       return;
@@ -101,8 +101,8 @@ export class MapMode implements IMode, IFadeListener {
     
     this.main.draw(this.main.friendlySoldiers[0][8], 552, 344);
     
-    this.main.drawString("1P SCORE", 416, 256, Main.FONT_GRAY);
-    this.main.drawString(this.main.scoreStr, 704, 256, Main.FONT_GRAY);
-    this.main.drawNumber(this.main.friendlySoldiersPickedUp, 2, 608, 352, Main.FONT_GRAY);    
+    this.main.drawString("1P SCORE", 416, 256, MainConstants.FONT_GRAY);
+    this.main.drawString(this.main.scoreStr, 704, 256, MainConstants.FONT_GRAY);
+    this.main.drawNumber(this.main.friendlySoldiersPickedUp, 2, 608, 352, MainConstants.FONT_GRAY);    
   }
 }

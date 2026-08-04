@@ -1,30 +1,41 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Parachute.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { EnemySoldier } from "./EnemySoldier.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
-export class Parachute extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Parachute extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.delay = 0;
+    this.state = 0;
+    this.vx = 0;
+    this.inflate = 0;
+    this.inflate2 = 0;
+    this.bossHelicopter = null as any;
+    this.left = false;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Parachute(...args);
+  }
+  private __construct_Parachute(...args: any[]): void {
     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "boolean") {
-        let x = args[0];
-        let y = args[1];
+        let xLocal = args[0];
+        let yLocal = args[1];
         let distance = args[2];
-        let left = args[3];
-        let bossHelicopter = args[4];
-            this.x = x;
-                this.y = y;
-                this.bossHelicopter = bossHelicopter;
+        let leftLocal = args[3];
+        let bossHelicopterLocal = args[4];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.bossHelicopter = bossHelicopterLocal;
     
-                this.delay = (distance / Parachute.SPEED);
-                this.vx = left ? -Parachute.SPEED : Parachute.SPEED;
-                this.left = left;
+                this.delay = javaInt((distance / Parachute.SPEED));
+                this.vx = leftLocal ? -Parachute.SPEED : Parachute.SPEED;
+                this.left = leftLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -49,14 +60,13 @@ export class Parachute extends GameElement {  public constructor(...args: any[])
     [ 64 / 64, 62 / 64 - 64 / 64 ], //2: 64 -- 62
     [ 62 / 60, 60 / 60 - 62 / 60 ], //3: 62 -- 60  
   ];
-  
-  public delay: number = 0;
+
   public state: number = Parachute.STATE_LAUNCH;
-  public vx: number = 0;
-  public inflate: number = 0;
-  public inflate2: number = 0;
-  public bossHelicopter: any = null as any;
-  public left: boolean = false;
+
+
+
+
+
   
   
 
@@ -118,7 +128,7 @@ export class Parachute extends GameElement {  public constructor(...args: any[])
             0.25 + 0.6 * percent, 0.5);
         this.main.drawCentered(this.main.parachutes[Parachute.INFLATE_INDEX[this.inflate]], this.x, this.y,
             Parachute.INFLATES[this.inflate][0] + Parachute.INFLATES[this.inflate][1] 
-                * (this.delay / Parachute.INFLATE_TIME));        
+                * (this.delay / javaFloat(Parachute.INFLATE_TIME)));        
         break;
       case Parachute.STATE_DEAD:
         break;

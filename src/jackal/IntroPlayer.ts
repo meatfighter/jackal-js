@@ -1,22 +1,30 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/IntroPlayer.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { Player } from "./Player.js";
-export class IntroPlayer extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class IntroPlayer extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.angle = 0;
+    this.state = 0;
+    this.delay = 0;
+    this.chinook = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_IntroPlayer(...args);
+  }
+  private __construct_IntroPlayer(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let chinook = args[2];
-            this.x = x;
-                this.y = y;
-                this.chinook = chinook;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let chinookLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.chinook = chinookLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -35,7 +43,7 @@ export class IntroPlayer extends GameElement {  public constructor(...args: any[
   public angle: number = -45;
   public state: number = IntroPlayer.STATE_DIAGONAL;
   public delay: number = IntroPlayer.DIAGONAL_TIME;
-  public chinook: any = null as any;
+
   
   
 

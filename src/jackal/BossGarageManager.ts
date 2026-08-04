@@ -1,21 +1,34 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossGarageManager.java.
 // Original Java imports: java.util.ArrayList.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { BossGarage } from "./BossGarage.js";
 import { GameElement } from "./GameElement.js";
 import { Gate } from "./Gate.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
-import { Main } from "./Main.js";
 import { RotatingGun } from "./RotatingGun.js";
 export class BossGarageManager
-    extends GameElement implements ICameraPanListener, ITankTracker {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+    extends GameElement implements ICameraPanListener, ITankTracker {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.ready = false;
+    this.garages = null as any;
+    this.openDelay = 0;
+    this.garageIndex = 0;
+    this.tanks = 0;
+    this.garageCount = 0;
+    this.sparkX = 0;
+    this.sparkState = 0;
+    this.sparking = false;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossGarageManager(...args);
+  }
+  private __construct_BossGarageManager(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -26,14 +39,13 @@ export class BossGarageManager
   public static readonly SHORT_DELAY: number = 1 * 91;
   public static readonly MAX_TANKS: number = 5;  
   public static readonly SPARK_SPEED: number = 4.25;
-  
-  public ready: boolean = false;
-  public garages: any = null as any;
+
+
   public openDelay: number = BossGarageManager.SHORT_DELAY;
-  public garageIndex: number = 0;
-  public tanks: number = 0;
+
+
   public garageCount: number = 4;
-  public sparkX: number = 0;
+
   public sparkState: number = 0;
   public sparking: boolean = true;
   
@@ -98,7 +110,7 @@ export class BossGarageManager
         let b = this.garages.get(this.garageIndex++);
         if ((!b.removeFlag 
                 && b.x + 128 > this.gameMode.cameraX
-                && b.x < this.gameMode.cameraX + Main.DISPLAY_WIDTH)) {
+                && b.x < this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH)) {
           bossGarage = b;
           break;
         } else if (this.garageIndex == 4) {

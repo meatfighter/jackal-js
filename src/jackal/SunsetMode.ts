@@ -1,11 +1,11 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SunsetMode.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMode } from "./IMode.js";
-import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 export class SunsetMode implements IMode, IFadeListener {
   
@@ -20,8 +20,8 @@ export class SunsetMode implements IMode, IFadeListener {
   public static readonly STATE_HARD_MODE_WAITING: number = 8;
   public static readonly STATE_DONE: number = 9;
 
-  public static readonly CENTER_X: number = Main.DISPLAY_WIDTH / 2;
-  public static readonly CENTER_Y: number = Main.DISPLAY_HEIGHT / 2;
+  public static readonly CENTER_X: number = MainConstants.DISPLAY_WIDTH / 2;
+  public static readonly CENTER_Y: number = MainConstants.DISPLAY_HEIGHT / 2;
   public static readonly HELICOPTER_SCALE_0: number = 0.2;
   public static readonly HELICOPTER_X0: number = -215;
   public static readonly HELICOPTER_X1: number = 215;
@@ -55,10 +55,10 @@ export class SunsetMode implements IMode, IFadeListener {
   public static readonly sunOffsets: any[] = javaArray(SunsetMode.SUN_HEIGHT, 0);
   
   static {    
-    let PERCENT = (SunsetMode.SUN_WAVES * 2 * Math.PI / SunsetMode.SUN_HEIGHT);
+    let PERCENT = javaFloat((SunsetMode.SUN_WAVES * 2 * Math.PI / SunsetMode.SUN_HEIGHT));
     
     for(let i = 0; i < SunsetMode.SUN_HEIGHT; i++) {
-      SunsetMode.sunOffsets[i] = SunsetMode.SUN_AMPLITUDE * Math.sin(i * PERCENT);
+      SunsetMode.sunOffsets[i] = SunsetMode.SUN_AMPLITUDE * javaFloat(Math.sin(i * PERCENT));
     }
   }  
   
@@ -256,7 +256,7 @@ export class SunsetMode implements IMode, IFadeListener {
     
     if (this.state == SunsetMode.STATE_HARD_MODE_WAITING) {
       g.setColor(Color.black);
-      g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+      g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
       return;
     }
 
@@ -306,13 +306,13 @@ export class SunsetMode implements IMode, IFadeListener {
       let indent = false;
       for(let i = 0; i < this.lineIndex; i++) {
         this.main.drawString(lines[i], indent ? 96 : 32, 
-            48 + (i << 6), Main.FONT_WHITE);
+            48 + (i << 6), MainConstants.FONT_WHITE);
         indent = lines[i].length != 0;
       }
       if (this.lineIndex < lines.length) {
         this.main.drawString(lines[this.lineIndex], this.lineLength, 
             indent ? 96 : 32, 
-            48 + (this.lineIndex << 6), Main.FONT_WHITE);
+            48 + (this.lineIndex << 6), MainConstants.FONT_WHITE);
       }
     }
   }

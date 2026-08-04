@@ -1,22 +1,31 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/CliffGun.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
-export class CliffGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class CliffGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = 0;
+    this.spriteIndex = 0;
+    this.delay = 0;
+    this.shots = 0;
+    this.player = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_CliffGun(...args);
+  }
+  private __construct_CliffGun(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -45,17 +54,17 @@ export class CliffGun extends Enemy {  public constructor(...args: any[]) {
   
   static {
     for(let i = 0; i < CliffGun.RECOIL_TIME; i++) {
-      let percent = i / CliffGun.RECOIL_TIME;
-      CliffGun.RECOILS[i] = (CliffGun.RECOIL_MAGNITUDE 
-          * (0.5 - Math.cos(Math.PI * percent) / 2));
+      let percent = i / javaDouble(CliffGun.RECOIL_TIME);
+      CliffGun.RECOILS[i] = javaFloat((CliffGun.RECOIL_MAGNITUDE 
+          * (0.5 - Math.cos(Math.PI * percent) / 2)));
     }
   }
   
   public state: number = CliffGun.STATE_HIDDEN;
-  public spriteIndex: number = 0;
+
   public delay: number = CliffGun.HIDDEN_TIME;
-  public shots: number = 0;
-  public player: any = null as any;
+
+
   
   
 
@@ -153,7 +162,7 @@ export class CliffGun extends Enemy {  public constructor(...args: any[]) {
     let Y = this.y + 36;
     let dx = this.player.x - X;
     let dy = this.player.y - Y;
-    let iMag = CliffGun.BULLET_SPEED / Math.sqrt(dx * dx + dy * dy);
+    let iMag = CliffGun.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
     dx *= iMag;
     dy *= iMag;
     new EnemyBullet(X, Y, dx, dy, CliffGun.BULLET_TRAVEL_TIME);

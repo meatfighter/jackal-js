@@ -18,6 +18,7 @@ const slickImports = [
     "Graphics",
     "Image",
     "Input",
+    "Log",
     "Music",
     "Mouse",
     "ResourceLoader",
@@ -33,11 +34,14 @@ const runtimeImports = [
     "ArrayList",
     "Arrays",
     "BufferedInputStream",
+    "Character",
     "Class",
     "Collections",
     "DataInputStream",
     "HashMap",
     "Integer",
+    "JAVA_LONG_LOW_3_BITS",
+    "JAVA_LONG_PACKED_3BIT_SHIFTS",
     "JavaString",
     "Point2D",
     "Random",
@@ -45,8 +49,33 @@ const runtimeImports = [
     "java2DArray",
     "java3DArray",
     "java4DArray",
-    "javaArray"
+    "javaArray",
+    "javaByte",
+    "javaChar",
+    "javaDouble",
+    "javaFloat",
+    "javaInt",
+    "javaIntDiv",
+    "javaLong",
+    "javaRoundFloat",
+    "javaShort",
+    "rotatePoint"
 ];
+
+const mainConstantNames = new Set([
+    "DISPLAY_WIDTH",
+    "DISPLAY_HEIGHT",
+    "FONT_WHITE",
+    "FONT_GRAY",
+    "FONT_ORANGE",
+    "FONT_ORANGE_GRAY",
+    "ISQRT2",
+    "I_QUARTER_WIDTH",
+    "I_WIDTH",
+    "MINIMUM_SOUND_TIME",
+    "CHARS",
+    "TILES"
+]);
 
 const primitiveTypes = new Set([
     "boolean",
@@ -183,6 +212,7 @@ function stripPackageAndImports(source) {
         .replace(/^\s*@Override\s*$/gm, "")
         .replace(/\bthrows\s+[A-Za-z0-9_.,\s]+(?=[{;])/g, "")
         .replace(/\bString\.format\(/g, "JavaString.format(")
+        .replace(/\bString\.valueOf\(/g, "JavaString.valueOf(")
         .replace(/\bInteger\.toString\(/g, "Integer.toString(")
         .replace(/\bMain\.class\.getClassLoader\(\)/g, "({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) })")
         .replace(/(\w+)\.printStackTrace\(\);/g, "console.error($1);")
@@ -210,6 +240,7 @@ function convertTopLevel(source, className) {
     const metadata = metadataByClass.get(className);
     text = sanitizeGenericTypeSpacing(text);
     text = convertNestedEnums(text, className);
+    text = rewriteQualifiedNestedEnumReferences(text);
     text = collapseSplitFieldInitializers(text);
     text = convertArrayInitializers(text);
     text = replaceAnonymousComparator(text);
@@ -217,7 +248,7 @@ function convertTopLevel(source, className) {
     text = convertClassDeclaration(text);
     text = convertMethodDeclarations(text);
     text = convertAbstractMembers(text);
-    text = convertFieldDeclarations(text, metadata);
+    text = convertFieldDeclarations(text, metadata, className);
     text = convertArrayAllocations(text);
     text = convertLocalDeclarations(text);
     text = convertCasts(text);
@@ -225,9 +256,71 @@ function convertTopLevel(source, className) {
     text = convertDataInputStreamBuffer(text);
     text = renameJavaMainMethod(text, className);
     text = rewriteMemberAccess(text, className);
+    text = rewriteQualifiedNestedEnumFieldValues(text, className);
     text = rewriteQualifiedBackingFieldAccess(text);
+    text = rewriteMainStaticUtilityAccess(text, className);
+    text = applyGameElementFieldDefaultSemantics(text, className);
     text = collapseDuplicateMethods(text, className);
+    text = rewriteKnownPackedDirectionLongAccess(text);
+    text = rewriteKnownJavaIntDivision(text);
+    text = rewriteKnownJavaCharArithmetic(text);
+    text = rewriteKnownJavaFloatRound(text);
     return text;
+}
+
+function rewriteKnownPackedDirectionLongAccess(text) {
+    return text
+        .replace(/\blet index = i \/ 21;/g, "let index = (i / 21) | 0;")
+        .replace(/\blet shift = 3 \* \(i % 21\);/g,
+            "let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];")
+        .replace(/javaInt\(\(\(this\.directions\[index\] >> shift\) & 7\)\)/g,
+            "Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)")
+        .replace(/\(\(this\.directions\[index\] >> shift\) & 7\)/g,
+            "((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)");
+}
+
+function rewriteKnownJavaIntDivision(text) {
+    return text
+        .replace(/public static readonly HALF_TIME: number = Bomb\.TRAVEL_TIME \/ 2;/g,
+            "public static readonly HALF_TIME: number = javaIntDiv(Bomb.TRAVEL_TIME, 2);")
+        .replace(/public static readonly HALF_TIME: number = Grenade\.TRAVEL_TIME \/ 2;/g,
+            "public static readonly HALF_TIME: number = javaIntDiv(Grenade.TRAVEL_TIME, 2);")
+        .replace(/let HALF_TIME = BossHelicopter\.POSITION_DRIFT_TIME \/ 2;/g,
+            "let HALF_TIME = javaIntDiv(BossHelicopter.POSITION_DRIFT_TIME, 2);")
+        .replace(/public static readonly PERIOD0: number = TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
+            "public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);")
+        .replace(/public static readonly PERIOD1: number = 2 \* TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
+            "public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);")
+        .replace(/new Color\(0, 0, 0, 255 \* i \/ \(Main\.FADES\.length - 1\)\)/g,
+            "new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1))")
+        .replace(/\(\(before - 20000\) \/ 50000 != \(this\.score - 20000\) \/ 50000\)/g,
+            "(javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))");
+}
+
+function rewriteKnownJavaCharArithmetic(text) {
+    return text
+        .replace(/for\(let i = 0; i < digits; i\+\+, x -= 32, value \/= 10\) \{\n\s*font\['0' \+ \(value % 10\)\]\.draw\(x, y\);/g,
+            "for(let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {\n      font[String.fromCharCode('0'.charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);")
+        .replace("case '@':\n        return \"copyright\";",
+            "case '@':\n      case '\\u00a9':\n        return \"copyright\";");
+}
+
+function rewriteKnownJavaFloatRound(text) {
+    return text
+        .replace(/javaInt\(Math\.round\(d \/ BossBlueTank\.SPEED\)\)/g,
+            "javaRoundFloat(d / BossBlueTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ BrownTank\.SPEED\)\)/g,
+            "javaRoundFloat(d / BrownTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ FireTank\.SPEED\)\)/g,
+            "javaRoundFloat(d / FireTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ GrayJeep\.SPEED\)\)/g,
+            "javaRoundFloat(d / GrayJeep.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ GrayTank\.SPEED\)\)/g,
+            "javaRoundFloat(d / GrayTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(angle \/ 45\)\)/g,
+            "javaRoundFloat(angle / 45)")
+        .replace(/Math\.round\(ang \/ 45\)/g,
+            "javaRoundFloat(ang / 45)");
 }
 
 function convertInterface(body, className) {
@@ -339,19 +432,72 @@ function parseEnumMembers(body) {
 
 function convertNestedEnums(text, className) {
     const nested = [];
-    text = text.replace(/\s*(public|private|protected)\s+enum\s+(\w+)\s*\{([^}]*)\}/g, (_match, _access, name, members) => {
+    const replacements = [];
+    const withoutNestedEnums = text.replace(/\s*(public|private|protected)\s+enum\s+(\w+)\s*\{([^}]*)\}/g, (_match, _access, name, members) => {
         const enumName = `${className}${name}`;
-        nested.push(`enum ${enumName} {${members}}`);
-        const memberPattern = new RegExp(`\\b${name}\\.`, "g");
-        text = text.replace(memberPattern, `${enumName}.`);
-        const typePattern = new RegExp(`\\b${name}\\s+(\\w+)`, "g");
-        text = text.replace(typePattern, `${enumName} $1`);
+        nested.push(`export enum ${enumName} {${members}}`);
+        replacements.push({ name, enumName });
         return "";
     });
     if (nested.length === 0) {
         return text;
     }
-    return `${nested.join("\n")}\n${text}`;
+    let converted = withoutNestedEnums;
+    for (const replacement of replacements) {
+        const memberPattern = new RegExp(`(^|[^.\\w$])${escapeRegExp(replacement.name)}\\.`, "g");
+        converted = converted.replace(memberPattern, `$1${replacement.enumName}.`);
+        const typePattern = new RegExp(`(^|[^.\\w$])${escapeRegExp(replacement.name)}\\s+(\\w+)`, "g");
+        converted = converted.replace(typePattern, `$1${replacement.enumName} $2`);
+    }
+    return `${nested.join("\n")}\n${converted}`;
+}
+
+function rewriteQualifiedNestedEnumReferences(text) {
+    let output = text;
+    for (const [ownerClassName, metadata] of metadataByClass.entries()) {
+        for (const enumName of metadata.nestedEnums.keys()) {
+            const simpleName = enumName.startsWith(ownerClassName)
+                ? enumName.slice(ownerClassName.length)
+                : enumName;
+            if (!simpleName) {
+                continue;
+            }
+            const pattern = new RegExp(
+                `\\b${escapeRegExp(ownerClassName)}\\.${escapeRegExp(simpleName)}\\b`,
+                "g"
+            );
+            output = output.replace(pattern, enumName);
+        }
+    }
+    return output;
+}
+
+function rewriteQualifiedNestedEnumFieldValues(text, className) {
+    const metadata = metadataByClass.get(className);
+    if (!metadata) {
+        return text;
+    }
+    let output = text;
+    for (const field of metadata.fields) {
+        const qualifiedEnum = normalizeType(field.type).match(/^(\w+)\.(\w+)$/);
+        if (!qualifiedEnum) {
+            continue;
+        }
+        const ownerClassName = qualifiedEnum[1];
+        const simpleName = qualifiedEnum[2];
+        const ownerMetadata = metadataByClass.get(ownerClassName);
+        const targetEnumName = `${ownerClassName}${simpleName}`;
+        const localEnumName = `${className}${simpleName}`;
+        const values = ownerMetadata?.nestedEnums.get(targetEnumName);
+        if (!values || !metadata.nestedEnums.has(localEnumName) || targetEnumName === localEnumName) {
+            continue;
+        }
+        for (const value of values) {
+            const pattern = new RegExp(`\\b${escapeRegExp(localEnumName)}\\.${escapeRegExp(value)}\\b`, "g");
+            output = output.replace(pattern, `${targetEnumName}.${value}`);
+        }
+    }
+    return output;
 }
 
 function collapseSplitFieldInitializers(text) {
@@ -414,13 +560,14 @@ function convertConstructors(text, className) {
         return text;
     }
 
+    const helperName = constructorHelperName(className);
     let superCall = hasExtends ? "super();" : "";
     const branches = [];
     for (let index = 0; index < constructors.length; index++) {
         const ctor = constructors[index];
         const params = parseParams(ctor.params);
         let body = ctor.body
-            .replace(/^\s*this\s*\(/m, "this.__construct(")
+            .replace(/^\s*this\s*\(/m, `this.${helperName}(`)
             .replace(/^\s*super\s*\(([^;]*)\);\s*/m, (_match, args) => {
                 superCall = `super(${args});`;
                 return "";
@@ -439,16 +586,20 @@ function convertConstructors(text, className) {
         "",
         "  public constructor(...args: any[]) {",
         superCall ? `    ${superCall}` : "",
-        "    this.__construct(...args);",
+        `    this.${helperName}(...args);`,
         "  }",
         "",
-        "  private __construct(...args: any[]): void {",
+        `  private ${helperName}(...args: any[]): void {`,
         branches.join(" else "),
         "    throw new Error(`No Java constructor overload matched arguments: ${args.length}`);",
         "  }",
         ""
     ].filter((line) => line !== "").join("\n");
     return `${stripped.slice(0, insertAt)}${dispatch}${stripped.slice(insertAt)}`;
+}
+
+function constructorHelperName(className) {
+    return `__construct_${className}`;
 }
 
 function findConstructors(text, className) {
@@ -503,7 +654,7 @@ function primitiveGuard(type, index) {
         return `typeof args[${index}] === "boolean"`;
     }
     if (stringTypes.has(normalized)) {
-        return `typeof args[${index}] === "string"`;
+        return `(args[${index}] === null || typeof args[${index}] === "string")`;
     }
     return "";
 }
@@ -533,17 +684,77 @@ function convertAbstractMembers(text) {
     );
 }
 
-function convertFieldDeclarations(text, metadata) {
+function convertFieldDeclarations(text, metadata, className) {
+    const omitGameElementSubclassDefault = isGameElementDescendant(className);
     return text.replace(
         /^(\s*)(public|private|protected)\s+(static\s+)?(final\s+)?([A-Za-z0-9_<>,.\[\]]+)\s+(\w+)\s*(=\s*[^;]+)?;/gm,
         (_match, indentText, access, staticPart, finalPart, javaType, name, initializer) => {
             const readonly = finalPart ? " readonly" : "";
             const staticText = staticPart ? " static" : "";
+            if (!staticPart && !initializer && omitGameElementSubclassDefault) {
+                return "";
+            }
             const value = initializer ? initializer.replace(/^=\s*/, "") : defaultValue(javaType);
             const emittedName = getBackingFieldName(metadata, name, Boolean(staticPart));
             return `${indentText}${access}${staticText}${readonly} ${emittedName}: ${convertType(javaType)} = ${value};`;
         }
     );
+}
+
+function applyGameElementFieldDefaultSemantics(text, className) {
+    if (className === "GameElement") {
+        text = insertClassMember(text, className, [
+            "",
+            "  protected __initializeJavaSubclassDefaults(): void {",
+            "  }",
+            ""
+        ].join("\n"));
+        return text.replace(
+            /(\s*this\.gameMode = Main\.gameMode;\s*\n)(\s*this\.init\(\);)/,
+            "$1\n                this.__initializeJavaSubclassDefaults();\n$2"
+        );
+    }
+
+    if (!isGameElementDescendant(className)) {
+        return text;
+    }
+
+    const metadata = metadataByClass.get(className);
+    const assignments = (metadata?.fields ?? [])
+        .filter((field) => !field.static)
+        .map((field) => {
+            const name = getBackingFieldName(metadata, field.name, false);
+            return `    this.${name} = ${defaultValue(field.type)};`;
+        });
+    const method = [
+        "",
+        "  protected __initializeJavaSubclassDefaults(): void {",
+        "    super.__initializeJavaSubclassDefaults();",
+        ...assignments,
+        "  }",
+        ""
+    ].join("\n");
+    return insertClassMember(text, className, method);
+}
+
+function insertClassMember(text, className, member) {
+    const classDecl = text.match(new RegExp(`\\bexport\\s+(?:abstract\\s+)?class\\s+${className}\\b[^{]*\\{`));
+    if (!classDecl) {
+        return text;
+    }
+    const insertAt = classDecl.index + classDecl[0].length;
+    return `${text.slice(0, insertAt)}${member}${text.slice(insertAt)}`;
+}
+
+function isGameElementDescendant(className) {
+    let parent = metadataByClass.get(className)?.parent ?? null;
+    while (parent) {
+        if (parent === "GameElement") {
+            return true;
+        }
+        parent = metadataByClass.get(parent)?.parent ?? null;
+    }
+    return false;
 }
 
 function convertArrayAllocations(text) {
@@ -597,16 +808,18 @@ function convertLocalDeclarations(text) {
 }
 
 function convertCasts(text) {
-    const javaTypePattern = [
+    const primitiveHelpers = new Map([
+        ["byte", "javaByte"],
+        ["char", "javaChar"],
+        ["double", "javaDouble"],
+        ["float", "javaFloat"],
+        ["int", "javaInt"],
+        ["long", "javaLong"],
+        ["short", "javaShort"]
+    ]);
+    const removableTypes = [
         ...classNames,
         "boolean",
-        "byte",
-        "char",
-        "double",
-        "float",
-        "int",
-        "long",
-        "short",
         "String",
         "Image",
         "Music",
@@ -614,22 +827,176 @@ function convertCasts(text) {
         "Stage",
         "Point2D.Float"
     ].sort((a, b) => b.length - a.length).map(escapeRegExp).join("|");
-    return text.replace(new RegExp(`\\(\\s*(?:${javaTypePattern})(?:\\[\\])*\\s*\\)`, "g"), "");
+    const removableCast = new RegExp(`^\\(\\s*(?:${removableTypes})(?:\\[\\])*\\s*\\)`);
+    let output = "";
+    let index = 0;
+    while (index < text.length) {
+        const ch = text[index];
+        if (ch === "\"" || ch === "'" || ch === "`") {
+            const end = readStringLike(text, index, ch);
+            output += text.slice(index, end);
+            index = end;
+            continue;
+        }
+        if (ch === "/" && text[index + 1] === "/") {
+            const end = text.indexOf("\n", index);
+            const next = end < 0 ? text.length : end;
+            output += text.slice(index, next);
+            index = next;
+            continue;
+        }
+        if (ch === "/" && text[index + 1] === "*") {
+            const end = text.indexOf("*/", index + 2);
+            const next = end < 0 ? text.length : end + 2;
+            output += text.slice(index, next);
+            index = next;
+            continue;
+        }
+        const primitiveMatch = text.slice(index).match(/^\(\s*(byte|char|double|float|int|long|short)\s*\)/);
+        if (primitiveMatch) {
+            const helper = primitiveHelpers.get(primitiveMatch[1]);
+            const expressionStart = skipWhitespace(text, index + primitiveMatch[0].length);
+            const expressionEnd = findCastExpressionEnd(text, expressionStart);
+            if (helper && expressionEnd > expressionStart) {
+                output += `${helper}(${convertCasts(text.slice(expressionStart, expressionEnd))})`;
+                index = expressionEnd;
+                continue;
+            }
+        }
+        const removableMatch = text.slice(index).match(removableCast);
+        if (removableMatch) {
+            index += removableMatch[0].length;
+            continue;
+        }
+        output += ch;
+        index++;
+    }
+    return output;
+}
+
+function skipWhitespace(text, index) {
+    while (index < text.length && /\s/.test(text[index])) {
+        index++;
+    }
+    return index;
+}
+
+function findCastExpressionEnd(text, start) {
+    let index = skipWhitespace(text, start);
+    while (/[+\-!~]/.test(text[index])) {
+        index = skipWhitespace(text, index + 1);
+    }
+    if (text[index] === "(") {
+        return findMatchingParen(text, index) + 1;
+    }
+    if (text.startsWith("new ", index)) {
+        index += 4;
+    }
+    if (/[0-9]/.test(text[index])) {
+        index++;
+        while (index < text.length && /[0-9A-Fa-f_xX.]/.test(text[index])) {
+            index++;
+        }
+        return index;
+    }
+    if (!isIdentifierStart(text[index])) {
+        return start;
+    }
+    index++;
+    while (index < text.length) {
+        while (index < text.length && isIdentifierPart(text[index])) {
+            index++;
+        }
+        if (text[index] === ".") {
+            index++;
+            continue;
+        }
+        if (text[index] === "[") {
+            index = findMatchingBracket(text, index, "[", "]") + 1;
+            continue;
+        }
+        if (text[index] === "(") {
+            index = findMatchingParen(text, index) + 1;
+            continue;
+        }
+        break;
+    }
+    return index;
+}
+
+function findMatchingParen(text, openIndex) {
+    return findMatchingBracket(text, openIndex, "(", ")");
+}
+
+function findMatchingBracket(text, openIndex, openChar, closeChar) {
+    let depth = 0;
+    for (let i = openIndex; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === "\"" || ch === "'" || ch === "`") {
+            i = readStringLike(text, i, ch) - 1;
+            continue;
+        }
+        if (ch === "/" && text[i + 1] === "/") {
+            const end = text.indexOf("\n", i);
+            i = end < 0 ? text.length - 1 : end;
+            continue;
+        }
+        if (ch === "/" && text[i + 1] === "*") {
+            const end = text.indexOf("*/", i + 2);
+            i = end < 0 ? text.length - 1 : end + 1;
+            continue;
+        }
+        if (ch === openChar) {
+            depth++;
+        } else if (ch === closeChar) {
+            depth--;
+            if (depth === 0) {
+                return i;
+            }
+        }
+    }
+    return openIndex;
 }
 
 function convertJavaTokens(text) {
-    return text
+    let output = text
         .replace(/\bnull\b/g, "null")
         .replace(/\btrue\b/g, "true")
         .replace(/\bfalse\b/g, "false")
         .replace(/(\d+(?:\.\d+)?)f\b/g, "$1")
         .replace(/(\d+)L\b/g, "$1")
-        .replace(/\.length\(\)/g, ".length")
-        .replace(/Math\.toRadians\(([^)]+)\)/g, "(($1) * Math.PI / 180)")
-        .replace(/Math\.toDegrees\(([^)]+)\)/g, "(($1) * 180 / Math.PI)")
+        .replace(/\.length\(\)/g, ".length");
+    output = rewriteMathAngleConversion(output, "toRadians", "Math.PI / 180");
+    output = rewriteMathAngleConversion(output, "toDegrees", "180 / Math.PI");
+    return output
         .replace(/\bString\[\]\s+args/g, "args: string[]")
         .replace(/\bString\.\s*/g, "JavaString.")
         .replace(/\bMath\.round\(/g, "Math.round(");
+}
+
+function rewriteMathAngleConversion(text, methodName, multiplier) {
+    const target = `Math.${methodName}(`;
+    let output = "";
+    let index = 0;
+    while (index < text.length) {
+        const start = text.indexOf(target, index);
+        if (start < 0) {
+            output += text.slice(index);
+            break;
+        }
+        const openParen = start + target.length - 1;
+        const closeParen = findMatchingParen(text, openParen);
+        if (closeParen <= openParen) {
+            output += text.slice(index, start + target.length);
+            index = start + target.length;
+            continue;
+        }
+        const expression = text.slice(openParen + 1, closeParen);
+        output += text.slice(index, start);
+        output += `((${expression}) * ${multiplier})`;
+        index = closeParen + 1;
+    }
+    return output;
 }
 
 function convertDataInputStreamBuffer(text) {
@@ -781,8 +1148,9 @@ function rewriteMethods(text, className, members, metadata) {
         const openBrace = regex.lastIndex - 1;
         const closeBrace = findMatchingBrace(text, openBrace);
         const signature = text.slice(match.index, openBrace + 1);
-        const body = text.slice(openBrace + 1, closeBrace);
+        let body = text.slice(openBrace + 1, closeBrace);
         const isStatic = Boolean(match[2]);
+        body = renameFieldShadowingLocals(body, members, isStatic);
         const locals = collectLocalNames(body, match[3]);
         result += text.slice(cursor, openBrace + 1);
         result += replaceIdentifiers(body, locals, className, members, isStatic, metadata);
@@ -791,6 +1159,149 @@ function rewriteMethods(text, className, members, metadata) {
         void signature;
     }
     result += text.slice(cursor);
+    return result;
+}
+
+function renameFieldShadowingLocals(body, members, isStaticContext) {
+    const fieldNames = new Set(members.staticFields.keys());
+    if (!isStaticContext) {
+        for (const name of members.instanceFields.keys()) {
+            fieldNames.add(name);
+        }
+    }
+    const declarations = [];
+    for (const match of body.matchAll(/\blet\s+([A-Za-z_$][\w$]*)\b/g)) {
+        const name = match[1];
+        if (fieldNames.has(name)) {
+            declarations.push({
+                name,
+                start: match.index,
+                end: findLocalScopeEnd(body, match.index)
+            });
+        }
+    }
+    let output = body;
+    for (const declaration of declarations.reverse()) {
+        const replacement = uniqueLocalName(output, declaration.name);
+        output = renameIdentifierInRange(output, declaration.name, replacement, declaration.start, declaration.end);
+    }
+    return output;
+}
+
+function uniqueLocalName(source, name) {
+    let candidate = `${name}Local`;
+    let index = 2;
+    while (new RegExp(`\\b${escapeRegExp(candidate)}\\b`).test(source)) {
+        candidate = `${name}Local${index++}`;
+    }
+    return candidate;
+}
+
+function findLocalScopeEnd(source, declarationStart) {
+    const declarationDepth = braceDepthAt(source, declarationStart);
+    let index = declarationStart;
+    let depth = declarationDepth;
+    while (index < source.length) {
+        const ch = source[index];
+        if (ch === "\"" || ch === "'" || ch === "`") {
+            index = readStringLike(source, index, ch);
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "/") {
+            const end = source.indexOf("\n", index);
+            index = end < 0 ? source.length : end;
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "*") {
+            const end = source.indexOf("*/", index + 2);
+            index = end < 0 ? source.length : end + 2;
+            continue;
+        }
+        if (ch === "{") {
+            depth++;
+        } else if (ch === "}") {
+            if (depth === declarationDepth) {
+                return index;
+            }
+            depth--;
+        }
+        index++;
+    }
+    return source.length;
+}
+
+function braceDepthAt(source, targetIndex) {
+    let depth = 0;
+    let index = 0;
+    while (index < targetIndex) {
+        const ch = source[index];
+        if (ch === "\"" || ch === "'" || ch === "`") {
+            index = readStringLike(source, index, ch);
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "/") {
+            const end = source.indexOf("\n", index);
+            index = end < 0 ? source.length : end;
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "*") {
+            const end = source.indexOf("*/", index + 2);
+            index = end < 0 ? source.length : end + 2;
+            continue;
+        }
+        if (ch === "{") {
+            depth++;
+        } else if (ch === "}") {
+            depth--;
+        }
+        index++;
+    }
+    return depth;
+}
+
+function renameIdentifierInRange(source, name, replacement, start, end) {
+    let result = "";
+    let index = 0;
+    while (index < source.length) {
+        if (index < start || index >= end) {
+            result += source[index++];
+            continue;
+        }
+        const ch = source[index];
+        if (ch === "\"" || ch === "'" || ch === "`") {
+            const next = readStringLike(source, index, ch);
+            result += source.slice(index, next);
+            index = next;
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "/") {
+            const lineEnd = source.indexOf("\n", index);
+            const next = lineEnd < 0 ? source.length : lineEnd;
+            result += source.slice(index, next);
+            index = next;
+            continue;
+        }
+        if (ch === "/" && source[index + 1] === "*") {
+            const commentEnd = source.indexOf("*/", index + 2);
+            const next = commentEnd < 0 ? source.length : commentEnd + 2;
+            result += source.slice(index, next);
+            index = next;
+            continue;
+        }
+        if (isIdentifierStart(ch)) {
+            const tokenStart = index;
+            index++;
+            while (index < source.length && isIdentifierPart(source[index])) {
+                index++;
+            }
+            const token = source.slice(tokenStart, index);
+            const previous = previousNonWhitespace(source, tokenStart);
+            result += token === name && previous !== "." ? replacement : token;
+            continue;
+        }
+        result += ch;
+        index++;
+    }
     return result;
 }
 
@@ -1232,16 +1743,42 @@ function findMatchingBrace(text, openIndex) {
 
 function buildDependencyImports(text, className) {
     const imports = [];
+    if (/\bMainConstants\./.test(text)) {
+        imports.push("import { MainConstants } from \"../java/MainConstants.js\";");
+    }
     for (const name of classNames) {
         if (name === className) {
             continue;
         }
-        const pattern = new RegExp(`\\b${escapeRegExp(name)}\\b`);
-        if (pattern.test(text)) {
-            imports.push(`import { ${name} } from "./${name}.js";`);
+        const symbols = [];
+        const classPattern = new RegExp(`\\b${escapeRegExp(name)}\\b`);
+        if (classPattern.test(text)) {
+            symbols.push(name);
+        }
+        const metadata = metadataByClass.get(name);
+        for (const enumName of metadata?.nestedEnums.keys() ?? []) {
+            const enumPattern = new RegExp(`\\b${escapeRegExp(enumName)}\\b`);
+            if (enumPattern.test(text)) {
+                symbols.push(enumName);
+            }
+        }
+        if (symbols.length > 0) {
+            imports.push(`import { ${[...new Set(symbols)].join(", ")} } from "./${name}.js";`);
         }
     }
     return imports;
+}
+
+function rewriteMainStaticUtilityAccess(text, className) {
+    let output = text.replace(/\bMain\.rotate\s*\(/g, "rotatePoint(");
+    if (className === "Main") {
+        return output;
+    }
+    for (const name of mainConstantNames) {
+        const regex = new RegExp(`\\bMain\\.${escapeRegExp(name)}\\b`, "g");
+        output = output.replace(regex, `MainConstants.${name}`);
+    }
+    return output;
 }
 
 function indent(text, spaces) {

@@ -1,50 +1,78 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/GrayTank.java.
 // Original Java imports: java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
-export class GrayTank extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class GrayTank extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.shootDelay = 0;
+    this.shootCount = 0;
+    this.moveSteps = 0;
+    this.targetAngle = 0;
+    this.displayAngle = 0;
+    this.directionX = 0;
+    this.directionY = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.sensorX = 0;
+    this.sensorY = 0;
+    this.lastDx = 0;
+    this.lastDy = 0;
+    this.solids = null as any;
+    this.player = null as any;
+    this.handlingLoop = 0;
+    this.loopTargetX = 0;
+    this.loopTargetY = 0;
+    this.firstMove = 0;
+    this.shack = false;
+    this.shackX = 0;
+    this.shackY = 0;
+    this.garage = false;
+    this.bossGarageManager = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_GrayTank(...args);
+  }
+  private __construct_GrayTank(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
-                firstMove = 2 * 91;
+        let xLocal4 = args[0];
+        let yLocal4 = args[1];
+            this.x = xLocal4;
+                this.y = yLocal4;
+                this.firstMove = 2 * 91;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let shack = args[2];
-            this.x = x;
-                this.y = y;
-                this.shack = shack;
-                this.shackX = x - 62;
-                this.shackY = y - 80;
-                firstMove = 105;
+        let xLocal3 = args[0];
+        let yLocal3 = args[1];
+        let shackLocal = args[2];
+            this.x = xLocal3;
+                this.y = yLocal3;
+                this.shack = shackLocal;
+                this.shackX = xLocal3 - 62;
+                this.shackY = yLocal3 - 80;
+                this.firstMove = 105;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let firstMove = args[2];
-            this.__construct(x, y);
-                this.firstMove = firstMove;
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+        let firstMoveLocal2 = args[2];
+            this.__construct_GrayTank(xLocal2, yLocal2);
+                this.firstMove = firstMoveLocal2;
                 this.garage = true;
         return;
     } else     if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let firstMove = args[2];
-        let bossGarageManager = args[3];
-            this.__construct(x, y, firstMove);
-                this.bossGarageManager = bossGarageManager;
-                if (bossGarageManager != null) {
-                  bossGarageManager.tankCreated();
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let firstMoveLocal = args[2];
+        let bossGarageManagerLocal = args[3];
+            this.__construct_GrayTank(xLocal, yLocal, firstMoveLocal);
+                this.bossGarageManager = bossGarageManagerLocal;
+                if (bossGarageManagerLocal != null) {
+                  bossGarageManagerLocal.tankCreated();
                   this.points = 0;
                 }
         return;
@@ -69,28 +97,28 @@ export class GrayTank extends Enemy {  public constructor(...args: any[]) {
   
   public shootDelay: number = GrayTank.SHOOT_DELAY;
   public shootCount: number = GrayTank.SHOOT_COUNT;
-  public moveSteps: number = 0;
+
   public targetAngle: number = 90;
   public displayAngle: number = 90;
-  public directionX: number = 0;
-  public directionY: number = 0;
-  public vx: number = 0;
-  public vy: number = 0;
-  public sensorX: number = 0;
-  public sensorY: number = 0;
-  public lastDx: number = 0;
-  public lastDy: number = 0;
-  public solids: any = null as any;
-  public player: any = null as any;
-  public handlingLoop: number = 0;
-  public loopTargetX: number = 0;
-  public loopTargetY: number = 0;
-  public firstMove: number = 0;
-  public shack: boolean = false;
-  public shackX: number = 0;
-  public shackY: number = 0;
-  public garage: boolean = false;
-  public bossGarageManager: any = null as any;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   
   
@@ -194,7 +222,7 @@ export class GrayTank extends Enemy {  public constructor(...args: any[]) {
     if (this.firstMove > 0) {      
       this.moveSteps = 16;      
     } else {
-      this.moveSteps = Math.round(d / GrayTank.SPEED);
+      this.moveSteps = javaRoundFloat(d / GrayTank.SPEED);
     }
   }
   
@@ -339,7 +367,7 @@ export class GrayTank extends Enemy {  public constructor(...args: any[]) {
         this.vy = v[1] * GrayTank.SPEED;
         this.directionX = v[0];
         this.directionY = v[1];
-        this.targetAngle = v[2];
+        this.targetAngle = javaInt(v[2]);
         this.sensorX = this.directionX * GrayTank.SENSOR_RADIUS;
         this.sensorY = this.directionY * GrayTank.SENSOR_RADIUS;
         this.computeMoveSteps();
@@ -359,9 +387,9 @@ export class GrayTank extends Enemy {  public constructor(...args: any[]) {
 
         // avoid bumping into other enemies
         for(let i = this.solids.size() - 1; i >= 0; i--) {
-          let solid = this.solids.get(i);
-          if (solid != this && solid.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
-              nextX + this.solidX2, nextY + this.solidY2) && !solid.isSolid(
+          let solidLocal = this.solids.get(i);
+          if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+              nextX + this.solidX2, nextY + this.solidY2) && !solidLocal.isSolid(
                   this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)) {
             driveable = false;
             break;
@@ -387,8 +415,8 @@ export class GrayTank extends Enemy {  public constructor(...args: any[]) {
       let dx = this.player.x - this.x;
       let dy = this.player.y - this.y;
 
-      if (this.moveSteps == 1 && ((this.vy != 0 && (this.player.x) >> 7 == (this.x) >> 7)
-          || (this.vx != 0 && (this.player.y) >> 7 == (this.y) >> 7))) {
+      if (this.moveSteps == 1 && ((this.vy != 0 && (javaInt(this.player.x)) >> 7 == (javaInt(this.x)) >> 7)
+          || (this.vx != 0 && (javaInt(this.player.y)) >> 7 == (javaInt(this.y)) >> 7))) {
         this.moveSteps = 2;
       }      
       if ((this.lastDx * dx <= 0 || this.lastDy * dy <= 0) 

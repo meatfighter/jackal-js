@@ -1,15 +1,29 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Chinook.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { IntroPlayer } from "./IntroPlayer.js";
-export class Chinook extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Chinook extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.angle = 0;
+    this.rotorAngle = 0;
+    this.z = 0;
+    this.state = 0;
+    this.vt = 0;
+    this.t = 0;
+    this.diagonalSteps = 0;
+    this.introPlayer = null as any;
+    this.X = 0;
+    this.Y = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Chinook(...args);
+  }
+  private __construct_Chinook(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -20,31 +34,30 @@ export class Chinook extends GameElement {  public constructor(...args: any[]) {
   public static readonly STATE_UNLOADING: number = 1;
   public static readonly STATE_AWAY: number = 2;
   
-  public static readonly TO_DEGREES: number = (180 / Math.PI);
-  public static readonly PI: number = Math.PI;
-  public static readonly IPI2: number = (2 / Math.PI);
+  public static readonly TO_DEGREES: number = javaFloat((180 / Math.PI));
+  public static readonly PI: number = javaFloat(Math.PI);
+  public static readonly IPI2: number = javaFloat((2 / Math.PI));
   
   public static readonly FOWARD_TIME: number = 4 * 91;
   public static readonly DIAGONAL_TIME: number = 91;
   
-  public static readonly DT: number = (Math.PI / 2);
+  public static readonly DT: number = javaFloat((Math.PI / 2));
   public static readonly AT: number = 2 * Chinook.DT / (Chinook.FOWARD_TIME * Chinook.FOWARD_TIME);
   public static readonly VT0: number = Chinook.AT * Chinook.FOWARD_TIME;
     
   public static readonly Z1: number = 1;
   public static readonly SCALE_1: number = 10;
   public static readonly Z0: number = Chinook.SCALE_1 * Chinook.Z1 / (Chinook.SCALE_1 - 1);
-  
-  public angle: number = 0;
+
   public rotorAngle: number = 90 + Chinook.TO_DEGREES * Chinook.DT;
   public z: number = 1;
   public state: number = Chinook.STATE_FOWARDS;
   public vt: number = Chinook.VT0;
   public t: number = Chinook.DT;  
-  public diagonalSteps: number = 0;
-  public introPlayer: any = null as any;
-  public X: number = 0;
-  public Y: number = 0;
+
+
+
+
   
   
 
@@ -68,8 +81,8 @@ export class Chinook extends GameElement {  public constructor(...args: any[]) {
           this.angle = 90 + Chinook.TO_DEGREES * this.t;          
           this.z = (Chinook.PI - this.t) * Chinook.IPI2;
           this.t += this.vt;        
-          this.x = 1540 + 1024 * Math.cos(this.t);
-          this.y = 10780 + 1024 * Math.sin(this.t);
+          this.x = 1540 + 1024 * javaFloat(Math.cos(this.t));
+          this.y = 10780 + 1024 * javaFloat(Math.sin(this.t));
         } else {
           this.state = Chinook.STATE_UNLOADING;          
           this.introPlayer = new IntroPlayer(this.x, this.y + 102, this);
@@ -84,8 +97,8 @@ export class Chinook extends GameElement {  public constructor(...args: any[]) {
         this.angle = Chinook.TO_DEGREES * this.t - 90;          
         this.z = -this.t * Chinook.IPI2;
         this.t -= this.vt;        
-        this.x = this.X + 1024 * Math.cos(this.t);
-        this.y = this.Y + 1024 * Math.sin(this.t);
+        this.x = this.X + 1024 * javaFloat(Math.cos(this.t));
+        this.y = this.Y + 1024 * javaFloat(Math.sin(this.t));
         if (this.angle < -128) {
           this.remove();
           this.createPlayer();

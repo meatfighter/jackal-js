@@ -1,24 +1,39 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossShipGun.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
-export class BossShipGun extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class BossShipGun extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.player = null as any;
+    this.state = 0;
+    this.delay = 0;
+    this.openY = 0;
+    this.angle = 0;
+    this.aimingSpeed = 0;
+    this.colorIndex = 0;
+    this.bossShipManager = null as any;
+    this.hits = 0;
+    this.wasHit = false;
+    this.triggered = false;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossShipGun(...args);
+  }
+  private __construct_BossShipGun(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let bossShipManager = args[2];
-            this.x = x;
-                this.y = y;
-                this.bossShipManager = bossShipManager;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let bossShipManagerLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.bossShipManager = bossShipManagerLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -36,25 +51,24 @@ export class BossShipGun extends Enemy {  public constructor(...args: any[]) {
   public static readonly AIMING_DELAY: number = 40;
   public static readonly SHOOT_DELAY: number = 22;
   
-  public static readonly SHOOT_SPREAD_ANGLE: number = ((20) * Math.PI / 180);
+  public static readonly SHOOT_SPREAD_ANGLE: number = javaFloat(((20) * Math.PI / 180));
   
   public static readonly OPEN_SPEED: number = 32 / BossShipGun.OPEN_DELAY;  
   
   public static readonly BULLET_SPEED: number = 1.625;
   public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;  
-  
-  public player: any = null as any;
+
   public state: number = BossShipGun.STATE_CLOSED;
   public delay: number = BossShipGun.MIN_CLOSED_DELAY 
       + this.main.random.nextInt(BossShipGun.MAX_CLOSED_DELAY - BossShipGun.MIN_CLOSED_DELAY);
-  public openY: number = 0;
-  public angle: number = 0;
-  public aimingSpeed: number = 0;
-  public colorIndex: number = 0;
-  public bossShipManager: any = null as any;
+
+
+
+
+
   public hits: number = 2;
-  public wasHit: boolean = false;
-  public triggered: boolean = false;
+
+
   
   
 
@@ -111,8 +125,8 @@ export class BossShipGun extends Enemy {  public constructor(...args: any[]) {
           this.angle = 90;
           this.delay = BossShipGun.AIMING_DELAY;
           
-          let targetAngle = ((
-              Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180 / Math.PI));
+          let targetAngle = javaFloat(((
+              Math.atan2(this.player.y - this.y, this.player.x - this.x)) * 180 / Math.PI));
           let deltaAngle = (targetAngle + 90) % 360;
           if (deltaAngle < 0) {
             deltaAngle += 180;
@@ -136,13 +150,13 @@ export class BossShipGun extends Enemy {  public constructor(...args: any[]) {
           this.delay = BossShipGun.OPEN_DELAY;
           this.openY = 32;
           
-          let shootAngle = Math.atan2(
-              this.player.y - (this.y + 32), this.player.x - (this.x + 32));
+          let shootAngle = javaFloat(Math.atan2(
+              this.player.y - (this.y + 32), this.player.x - (this.x + 32)));
           shootAngle -= 2 * BossShipGun.SHOOT_SPREAD_ANGLE;          
           
           for(let i = 0; i < 5; i++, shootAngle += BossShipGun.SHOOT_SPREAD_ANGLE) {
-            let cos = Math.cos(shootAngle);
-            let sin = Math.sin(shootAngle);
+            let cos = javaFloat(Math.cos(shootAngle));
+            let sin = javaFloat(Math.sin(shootAngle));
             new EnemyBullet(this.x + 32 + 13 * cos, this.y + 32 + 13 * sin, 
                 BossShipGun.BULLET_SPEED * cos, BossShipGun.BULLET_SPEED * sin, 
                 BossShipGun.BULLET_TRAVEL_TIME, false);

@@ -1,8 +1,9 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossHeadquartersManager.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { BossHeadquarters } from "./BossHeadquarters.js";
 import { BrownTank } from "./BrownTank.js";
 import { ElephantGun } from "./ElephantGun.js";
@@ -10,13 +11,20 @@ import { EnemyHelicopter } from "./EnemyHelicopter.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
-import { Main } from "./Main.js";
 export class BossHeadquartersManager 
-    extends GameElement implements ICameraPanListener, ITankTracker {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+    extends GameElement implements ICameraPanListener, ITankTracker {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.ready = false;
+    this.createdEnemyHelicopter = false;
+    this.tanks = 0;
+    this.tankSpawnDelay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossHeadquartersManager(...args);
+  }
+  private __construct_BossHeadquartersManager(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -25,10 +33,9 @@ export class BossHeadquartersManager
   
   public static readonly MAX_TANKS: number = 5;
   public static readonly TANK_SPAWN_DELAY: number = 5 * 91;
-  
-  public ready: boolean = false;
-  public createdEnemyHelicopter: boolean = false;
-  public tanks: number = 0;
+
+
+
   public tankSpawnDelay: number = BossHeadquartersManager.TANK_SPAWN_DELAY;
   
   
@@ -70,7 +77,7 @@ export class BossHeadquartersManager
         this.tankSpawnDelay = BossHeadquartersManager.TANK_SPAWN_DELAY;
         let brownTank = new BrownTank(
             256 + this.main.random.nextInt(1536),
-            this.gameMode.cameraY + Main.DISPLAY_HEIGHT + 48, 
+            this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 48, 
             this);
         brownTank.displayAngle = brownTank.targetAngle = 270;
       }

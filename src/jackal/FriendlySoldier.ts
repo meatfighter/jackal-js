@@ -1,27 +1,59 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/FriendlySoldier.java.
 // Original Java imports: java.util.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
-export class FriendlySoldier extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class FriendlySoldier extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.type = null as any;
+    this.state = 0;
+    this.solids = null as any;
+    this.player = null as any;
+    this.vx = 0;
+    this.vy = 0;
+    this.directionX = 0;
+    this.directionY = 0;
+    this.wandering = 0;
+    this.aiming = 0;
+    this.orientation = 0;
+    this.legIndex = 0;
+    this.legFrames = 0;
+    this.walkSteps = 0;
+    this.colorChanging = false;
+    this.colorIndex = 0;
+    this.wobbleX = 0;
+    this.wobbleY = 0;
+    this.spriteIndex = 0;
+    this.entry = 0;
+    this.wobbleScaleX = 0;
+    this.wobbleScaleY = 0;
+    this.entering = false;
+    this.waving = 0;
+    this.houseCount = 0;
+    this.brother = null as any;
+    this.left = false;
+    this.helicopter = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_FriendlySoldier(...args);
+  }
+  private __construct_FriendlySoldier(...args: any[]): void {
     if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let helicopter = args[2];
-        let colorChanging = args[3];
-            this.x = x;
-                this.y = y;
+        let xLocal3 = args[0];
+        let yLocal3 = args[1];
+        let helicopterLocal = args[2];
+        let colorChangingLocal = args[3];
+            this.x = xLocal3;
+                this.y = yLocal3;
                 this.type = FriendlySoldierType.WALKING_TO_HELICOPTER;
                 this.state = FriendlySoldier.STATE_WALKING_TO_HELICOPTER;
-                this.helicopter = helicopter;
-                this.colorChanging = colorChanging;
-                if (x > helicopter.x) {
+                this.helicopter = helicopterLocal;
+                this.colorChanging = colorChangingLocal;
+                if (xLocal3 > helicopterLocal.x) {
                   this.orientation = FriendlySoldier.ORIENTATION_LEFT;
                   this.directionX = -1;
                   this.directionY = 0;      
@@ -38,37 +70,37 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
                 this.wobbleScaleY = 1;
         return;
     } else     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let type = args[2];
-            this.x = x;
-                this.y = y;
-                this.type = type;
+        let xLocal2 = args[0];
+        let yLocal2 = args[1];
+        let typeLocal2 = args[2];
+            this.x = xLocal2;
+                this.y = yLocal2;
+                this.type = typeLocal2;
     
-                if (type == FriendlySoldierType.WEAPON_CARRIER_WANDERER) {
-                  colorChanging = true;
+                if (typeLocal2 == FriendlySoldierType.WEAPON_CARRIER_WANDERER) {
+                  this.colorChanging = true;
                 }
     
                 this.startWandering();
         return;
     } else     if (args.length === 5 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[3] === "number" && typeof args[4] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let type = args[2];
-        let houseCount = args[3];
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let typeLocal = args[2];
+        let houseCountLocal = args[3];
         let shack = args[4];
-            this.x = x;
-                this.y = y;
-                this.type = type;
-                this.houseCount = houseCount;
-                this.left = type == FriendlySoldierType.HOUSE_LEFT_WALKING 
-                    || type == FriendlySoldierType.HOUSE_LEFT_WAVING;
+            this.x = xLocal;
+                this.y = yLocal;
+                this.type = typeLocal;
+                this.houseCount = houseCountLocal;
+                this.left = typeLocal == FriendlySoldierType.HOUSE_LEFT_WALKING 
+                    || typeLocal == FriendlySoldierType.HOUSE_LEFT_WAVING;
     
-                switch(type) {
+                switch(typeLocal) {
                   case FriendlySoldierType.WEAPON_CARRIER:
                     this.state = FriendlySoldier.STATE_ENTRY_DOWN;
                     this.entering = true;
-                    colorChanging = true;
+                    this.colorChanging = true;
                     this.orientation = FriendlySoldier.ORIENTATION_DOWN;
                     this.entry = shack ? 68 : 100;
                     this.wobbleScaleX = 1;
@@ -79,7 +111,7 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
                     break;
                   case FriendlySoldierType.WEAPON_CARRIER_WANDERER:
                     this.state = FriendlySoldier.STATE_WANDERING;
-                    colorChanging = true;
+                    this.colorChanging = true;
                     break;
                   case FriendlySoldierType.HOUSE_LEFT_WALKING:
                     this.state = FriendlySoldier.STATE_ENTRY_LEFT;
@@ -142,41 +174,40 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
   public static readonly WOBBLES: any[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);  
   static {
     for(let i = FriendlySoldier.LEG_FRAMES - 1; i >= 0; i--) {
-      FriendlySoldier.WOBBLES[i] = -FriendlySoldier.LEG_AMPLITUDE * Math.sin(
-          2.0 * Math.PI * i / FriendlySoldier.LEG_FRAMES);      
+      FriendlySoldier.WOBBLES[i] = -FriendlySoldier.LEG_AMPLITUDE * javaFloat(Math.sin(
+          2.0 * Math.PI * i / javaDouble(FriendlySoldier.LEG_FRAMES)));      
     }
   }
   
   public static count: number = 0;
-  
-  public type: any = null as any;
-  public state: number = 0;
-  public solids: any = null as any;
-  public player: any = null as any;
-  public vx: number = 0;
-  public vy: number = 0;
-  public directionX: number = 0;
-  public directionY: number = 0;
-  public wandering: number = 0;
-  public aiming: number = 0;
-  public orientation: number = 0;
-  public legIndex: number = 0;
-  public legFrames: number = 0;
-  public walkSteps: number = 0;
-  public colorChanging: boolean = false;
-  public colorIndex: number = 0;
-  public wobbleX: number = 0;
-  public wobbleY: number = 0;
-  public spriteIndex: number = 0;
-  public entry: number = 0;
-  public wobbleScaleX: number = 0;
-  public wobbleScaleY: number = 0;
-  public entering: boolean = false;
-  public waving: number = 0;
-  public houseCount: number = 0;
-  public brother: any = null as any;
-  public left: boolean = false;
-  public helicopter: any = null as any;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   
   
@@ -245,8 +276,8 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
     this.state = FriendlySoldier.STATE_WANDERING;
     for(let i = 0; i < 16; i++) {
       let angle = 6.283 * this.main.random.nextFloat();
-      this.directionX = Math.cos(angle);
-      this.directionY = Math.sin(angle);
+      this.directionX = javaFloat(Math.cos(angle));
+      this.directionY = javaFloat(Math.sin(angle));
       if (this.gameMode.isDriveable(this.x + this.directionX * 32, this.y + this.directionY * 32)) {
         break;
       }
@@ -387,10 +418,10 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
 
         // avoid bumping into other enemies
         for(let i = this.solids.size() - 1; i >= 0; i--) {
-          let solid = this.solids.get(i);
-          if (solid != this && solid.isSolid(this.x + this.solidX1, nextY + this.solidY1, 
+          let solidLocal = this.solids.get(i);
+          if (solidLocal != this && solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, 
               this.x + this.solidX2, nextY + this.solidY2)
-                  && !solid.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
+                  && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
                         this.x + this.solidX2, this.y + this.solidY2)) {          
             walkable = false;
             break;
@@ -414,10 +445,10 @@ export class FriendlySoldier extends Enemy {  public constructor(...args: any[])
       
       // avoid bumping into other enemies
       for(let i = this.solids.size() - 1; i >= 0; i--) {
-        let solid = this.solids.get(i);
-        if (solid != this && solid.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+        let solidLocal = this.solids.get(i);
+        if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
             nextX + this.solidX2, nextY + this.solidY2)
-                && !solid.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
+                && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
                        this.x + this.solidX2, this.y + this.solidY2)) {          
           walkable = false;
           break;

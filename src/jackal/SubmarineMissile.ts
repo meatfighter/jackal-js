@@ -1,31 +1,41 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SubmarineMissile.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
-export class SubmarineMissile extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class SubmarineMissile extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.vy = 0;
+    this.vx = 0;
+    this.tx = 0;
+    this.ty = 0;
+    this.angle = 0;
+    this.explodeDelay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_SubmarineMissile(...args);
+  }
+  private __construct_SubmarineMissile(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            y -= 20;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            yLocal -= 20;
     
                 let player = this.gameMode.player;
                 let ang = 180 
-                    + SubmarineMissile.TO_DEGREES * Math.atan2(y - player.y, x - player.x);
-                this.angle = 45 * Math.round(ang / 45);
+                    + SubmarineMissile.TO_DEGREES * javaFloat(Math.atan2(yLocal - player.y, xLocal - player.x));
+                this.angle = 45 * javaRoundFloat(ang / 45);
                 let v = this.main.createUnitVector(this.angle);
                 this.vx = SubmarineMissile.SPEED * v[0];
                 this.vy = SubmarineMissile.SPEED * v[1];
                 this.tx = 18 * v[0];
                 this.ty = 18 * v[1];
     
-                this.x = x + v[0] * 24;
-                this.y = y + v[1] * 24;
+                this.x = xLocal + v[0] * 24;
+                this.y = yLocal + v[1] * 24;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -33,14 +43,13 @@ export class SubmarineMissile extends Enemy {  public constructor(...args: any[]
   
   public static readonly SPEED: number = 8;
   
-  public static readonly TO_DEGREES: number = (180.0 / Math.PI);
+  public static readonly TO_DEGREES: number = javaFloat((180.0 / Math.PI));
 
-  public vy: number = 0;
-  public vx: number = 0;
-  public tx: number = 0;
-  public ty: number = 0;
-  public angle: number = 0;
-  public explodeDelay: number = 0;
+
+
+
+
+
 
   
 

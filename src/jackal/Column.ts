@@ -1,26 +1,43 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Column.java.
 // Original Java imports: java.util.ArrayList.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
-export class Column extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Column extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.rotationOffset = 0;
+    this.left = false;
+    this.state = 0;
+    this.player = null as any;
+    this.groupIndex = 0;
+    this.angle = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.angleInc = 0;
+    this.tipSteps = 0;
+    this.canDropLeft = false;
+    this.canDropRight = false;
+    this.mines = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Column(...args);
+  }
+  private __construct_Column(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
     
                 this.player = this.gameMode.player;
     
-                let X = (x) >> 5;
-                let Y = (y) >> 5;
+                let X = (javaInt(xLocal)) >> 5;
+                let Y = (javaInt(yLocal)) >> 5;
               
                 this.groupIndex = this.gameMode.groupsMap[Y][X];
     
@@ -57,18 +74,18 @@ export class Column extends Enemy {  public constructor(...args: any[]) {
           / (Column.ROLL_STEPS * Column.ROLL_STEPS);
   
   public rotationOffset: number = 27.933975;
-  public left: boolean = false;
+
   public state: number = Column.STATE_HIDDEN;
-  public player: any = null as any;
-  public groupIndex: number = 0;
+
+
   public angle: number = -90;
-  public vx: number = 0;
-  public vy: number = 0;
-  public angleInc: number = 0;
-  public tipSteps: number = (90 / Column.TIP_ANGLE_INC);
-  public canDropLeft: boolean = false;
-  public canDropRight: boolean = false;
-  public mines: any = null as any;
+
+
+
+  public tipSteps: number = javaInt((90 / Column.TIP_ANGLE_INC));
+
+
+
 
   
 
@@ -102,10 +119,10 @@ export class Column extends Enemy {  public constructor(...args: any[]) {
   
   private rollOverEnemies(): void {
     for(let i = this.mines.size() - 1; i >= 0; i--) {
-      let mine = this.mines.get(i);
-      if (mine != this && mine.isMine(this.x + this.mineX1, this.y + this.mineY1, 
+      let mineLocal = this.mines.get(i);
+      if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, 
           this.x + this.mineX2, this.y + this.mineY2)) {
-        mine.flatten();
+        mineLocal.flatten();
       }
     }    
   }  

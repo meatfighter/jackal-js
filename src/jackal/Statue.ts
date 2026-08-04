@@ -1,29 +1,38 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Statue.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { StatueMissile } from "./StatueMissile.js";
-export class Statue extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class Statue extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.type = 0;
+    this.groupIndex = 0;
+    this.state = 0;
+    this.delay = 0;
+    this.eyesVisible = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_Statue(...args);
+  }
+  private __construct_Statue(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let type = args[2];
-            this.x = x;
-                this.y = y;
-                this.type = type;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let typeLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.type = typeLocal;
     
-                let X = (x) >> 5;
-                let Y = (y) >> 5; 
+                let X = (javaInt(xLocal)) >> 5;
+                let Y = (javaInt(yLocal)) >> 5; 
     
-                if (type == Statue.TYPE_LEFT) {
+                if (typeLocal == Statue.TYPE_LEFT) {
                   this.delay += 108;
                 }
     
@@ -45,12 +54,11 @@ export class Statue extends Enemy {  public constructor(...args: any[]) {
   public static readonly STATE_PAUSED: number = 0;
   public static readonly STATE_EYES_FLASHING: number = 1;
   public static readonly STATE_MOUTH_OPEN: number = 2;
-  
-  public type: number = 0;
-  public groupIndex: number = 0;
+
+
   public state: number = Statue.STATE_PAUSED;
   public delay: number = Statue.PAUSE_TIME;
-  public eyesVisible: number = 0;
+
   
   
 

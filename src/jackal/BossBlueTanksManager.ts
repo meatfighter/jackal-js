@@ -1,17 +1,25 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossBlueTanksManager.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { BossBlueTank } from "./BossBlueTank.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 export class BossBlueTanksManager 
-    extends GameElement implements ICameraPanListener {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+    extends GameElement implements ICameraPanListener {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.ready = false;
+    this.spawnDelay = 0;
+    this.spawned = 0;
+    this.destroyed = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_BossBlueTanksManager(...args);
+  }
+  private __construct_BossBlueTanksManager(...args: any[]): void {
     if (args.length === 0) {
         return;
     }
@@ -20,11 +28,10 @@ export class BossBlueTanksManager
   
   public static readonly SPAWN_DELAY: number = 3 * 91;
   public static readonly TANKS: number = 4;
-  
-  public ready: boolean = false;
+
   public spawnDelay: number = 91;
-  public spawned: number = 0;
-  public destroyed: number = 0;
+
+
   
   
 
@@ -44,9 +51,9 @@ export class BossBlueTanksManager
     if (this.spawned < BossBlueTanksManager.TANKS && --this.spawnDelay == 0) {
       this.spawned++;
       this.spawnDelay = BossBlueTanksManager.SPAWN_DELAY;      
-      let x = this.main.random.nextBoolean() ? 640 : 1408;
-      let y = this.main.random.nextBoolean() ? -52 : 1012;
-      new BossBlueTank(x, y, this);
+      let xLocal = this.main.random.nextBoolean() ? 640 : 1408;
+      let yLocal = this.main.random.nextBoolean() ? -52 : 1012;
+      new BossBlueTank(xLocal, yLocal, this);
     }
   }
   

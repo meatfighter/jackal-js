@@ -1,12 +1,12 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/IntroMode.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { IFadeListener } from "./IFadeListener.js";
 import { IMenuListener } from "./IMenuListener.js";
 import { IMode } from "./IMode.js";
-import { Main } from "./Main.js";
 import { Menu } from "./Menu.js";
 import { Modes } from "./Modes.js";
 export class IntroMode implements IMode, IFadeListener, IMenuListener {
@@ -129,11 +129,11 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
   
   private updateStoryScroll(): void {
     
-    this.scrollOffsetX = Main.DISPLAY_WIDTH * (this.delay * IntroMode.I_SCROLL_DELAY - 1);
+    this.scrollOffsetX = MainConstants.DISPLAY_WIDTH * (this.delay * IntroMode.I_SCROLL_DELAY - 1);
     
     if (--this.delay == 0) {
       this.state = IntroMode.STATE_STORY;
-      this.scrollOffsetX = -Main.DISPLAY_WIDTH;
+      this.scrollOffsetX = -MainConstants.DISPLAY_WIDTH;
       this.delay = IntroMode.STORY_DELAY;
     }
   }
@@ -298,13 +298,13 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
   
   private renderBlankScreen(gc: any, g: any): void {
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
   }
   
   private renderTitleAndStory(gc: any, g: any): void {
     
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     if (this.state == IntroMode.STATE_STORY_SCROLL || this.state == IntroMode.STATE_STORY) {
       this.main.translateGraphics(this.scrollOffsetX, 0);
@@ -318,8 +318,8 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     if (this.state == IntroMode.STATE_STORY_SCROLL || this.state == IntroMode.STATE_STORY) {
 
       for(let i = 0; i < IntroMode.STORY.length; i++) {
-        this.main.drawString(IntroMode.STORY[i], Main.DISPLAY_WIDTH + 96, (i << 6) + 96, 
-            Main.FONT_GRAY);
+        this.main.drawString(IntroMode.STORY[i], MainConstants.DISPLAY_WIDTH + 96, (i << 6) + 96, 
+            MainConstants.FONT_GRAY);
       }
 
       this.main.popGraphics();
@@ -329,7 +329,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
   private renderSoldiers(gc: any, g: any): void {
     
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     let offset = this.soldierSet << 1;
     this.main.soldiers[offset + 0].draw(this.upperSolderX, IntroMode.UPPER_SOLDIER_Y);
@@ -339,7 +339,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
   private renderTyping(gc: any, g: any): void {
     
     g.setColor(Color.black);
-    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     
     let offset = this.soldierSet << 1;
     this.main.soldiers[offset + 0].draw(IntroMode.UPPER_SOLDIER_X1, IntroMode.UPPER_SOLDIER_Y);
@@ -347,11 +347,11 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     
     for(let i = 0; i < this.namesIndex; i++) {
       this.main.drawString(IntroMode.NAMES[this.soldierSet][i], IntroMode.NAME_XYS[i][0], IntroMode.NAME_XYS[i][1], 
-          Main.FONT_GRAY);
+          MainConstants.FONT_GRAY);
     }
     if (this.namesIndex != IntroMode.NAMES[this.soldierSet].length) {
       this.main.drawString(IntroMode.NAMES[this.soldierSet][this.namesIndex], this.nameLength, 
-          IntroMode.NAME_XYS[this.namesIndex][0], IntroMode.NAME_XYS[this.namesIndex][1], Main.FONT_GRAY);
+          IntroMode.NAME_XYS[this.namesIndex][0], IntroMode.NAME_XYS[this.namesIndex][1], MainConstants.FONT_GRAY);
     }
   }  
 

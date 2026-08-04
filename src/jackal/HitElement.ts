@@ -1,14 +1,25 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/HitElement.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
-export abstract class HitElement extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export abstract class HitElement extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.hitField = false;
+    this.hitX1 = 0;
+    this.hitY1 = 0;
+    this.hitX2 = 0;
+    this.hitY2 = 0;
+    this.trail = null as any;
+    this.trailIndex = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_HitElement(...args);
+  }
+  private __construct_HitElement(...args: any[]): void {
     if (args.length === 0) {
             for(let i = 0; i < 8; i++) {
                   this.trail[i] = -i;
@@ -17,13 +28,11 @@ export abstract class HitElement extends GameElement {  public constructor(...ar
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
   }
-  
-  public hitField: boolean = false;
-  
-  public hitX1: number = 0;
-  public hitY1: number = 0;
-  public hitX2: number = 0;
-  public hitY2: number = 0;
+
+
+
+
+
   
   public trail: any[] = javaArray(8, 0);
   public trailIndex: number = 7;
@@ -93,7 +102,7 @@ public hit__overload0(h: any): boolean {
   }  
   
   public updateTrail(): void {    
-    let cell = (((this.y) >> 7) <<4)|((this.x)>> 7);
+    let cell = (((javaInt(this.y)) >> 7) <<4)|((javaInt(this.x))>> 7);
     if (cell != this.trail[this.trailIndex]) {
       if (--this.trailIndex < 0) {
         this.trailIndex = 7;

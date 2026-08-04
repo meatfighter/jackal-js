@@ -1,22 +1,33 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SuperFire.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
-import { Main } from "./Main.js";
-export class SuperFire extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class SuperFire extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.player = null as any;
+    this.state = 0;
+    this.length = 0;
+    this.flickerCounter = 0;
+    this.flickerIndex = 0;
+    this.asterDelay = 0;
+    this.bossSuperTank = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_SuperFire(...args);
+  }
+  private __construct_SuperFire(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-        let bossSuperTank = args[2];
-            this.x = x;
-                this.y = y;
-                this.bossSuperTank = bossSuperTank;
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let bossSuperTankLocal = args[2];
+            this.x = xLocal;
+                this.y = yLocal;
+                this.bossSuperTank = bossSuperTankLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -30,34 +41,33 @@ export class SuperFire extends GameElement {  public constructor(...args: any[])
   public static readonly ASTER_DELAY: number = 23;
   public static readonly ASTER_SPINES: number = 5;
   public static readonly ASTER_RADIUS: number = 128;  
-  public static readonly ASTER_ANGLE: number = (Math.PI);
-  public static readonly ASTER_SPACER_ANGLE: number = (2.0 * Math.PI / SuperFire.ASTER_SPINES);
+  public static readonly ASTER_ANGLE: number = javaFloat((Math.PI));
+  public static readonly ASTER_SPACER_ANGLE: number = javaFloat((2.0 * Math.PI / SuperFire.ASTER_SPINES));
   
   public static readonly ASTERS_XYS: any[] = java3DArray(SuperFire.ASTER_DELAY, SuperFire.ASTER_SPINES, 2, 0);
   public static readonly ASTER_SCALES: any[] = javaArray(SuperFire.ASTER_DELAY, 0);
   
   static {
     for(let i = 0; i < SuperFire.ASTER_DELAY; i++) {
-      SuperFire.ASTER_SCALES[i] = (i) / (SuperFire.ASTER_DELAY - 1);
+      SuperFire.ASTER_SCALES[i] = (javaFloat(i)) / javaFloat((SuperFire.ASTER_DELAY - 1));
       let radius = (1 - SuperFire.ASTER_SCALES[i]) * SuperFire.ASTER_RADIUS;
       let angle = SuperFire.ASTER_SCALES[i] * SuperFire.ASTER_ANGLE;
       for(let j = 0; j < SuperFire.ASTER_SPINES; j++) {
         let ang = angle + SuperFire.ASTER_SPACER_ANGLE * j;
-        SuperFire.ASTERS_XYS[i][j][0] = radius * Math.cos(ang);
-        SuperFire.ASTERS_XYS[i][j][1] = radius * Math.sin(ang);
+        SuperFire.ASTERS_XYS[i][j][0] = radius * javaFloat(Math.cos(ang));
+        SuperFire.ASTERS_XYS[i][j][1] = radius * javaFloat(Math.sin(ang));
       }
     }
   }  
   
   public static readonly SPEED: number = 11;
-  
-  public player: any = null as any;
+
   public state: number = SuperFire.STATE_ASTER;
-  public length: number = 0;
-  public flickerCounter: number = 0;
-  public flickerIndex: number = 0;
-  public asterDelay: number = 0;
-  public bossSuperTank: any = null as any;
+
+
+
+
+
   
   
 
@@ -90,7 +100,7 @@ export class SuperFire extends GameElement {  public constructor(...args: any[])
         break;
       case SuperFire.STATE_MOVING:
         this.y += SuperFire.SPEED;
-        if (this.y > this.gameMode.cameraY + Main.DISPLAY_HEIGHT + 32) {
+        if (this.y > this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 32) {
           this.remove();
         }
         break;
@@ -132,7 +142,7 @@ export class SuperFire extends GameElement {  public constructor(...args: any[])
       case SuperFire.STATE_GROWING:
         this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
         this.gameMode.g.setWorldClip(X - 1, this.y + 64, 98, this.length);
-        for(let i = 1 + (((this.length - 128)) >> 5); i >= 0; i--) {
+        for(let i = 1 + ((javaInt((this.length - 128))) >> 5); i >= 0; i--) {
           this.main.draw(this.main.superFires[this.flickerIndex][1], X, 
               this.y + this.length - (i << 5) - 64);
         } 

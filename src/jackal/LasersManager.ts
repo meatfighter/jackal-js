@@ -1,21 +1,32 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/LasersManager.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 import { Laser } from "./Laser.js";
-import { Main } from "./Main.js";
-export class LasersManager extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class LasersManager extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.state = 0;
+    this.delay = 0;
+    this.beamIndex = 0;
+    this.visibles = null as any;
+    this.flash = false;
+    this.colorIndex = 0;
+    this.laser = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_LasersManager(...args);
+  }
+  private __construct_LasersManager(...args: any[]): void {
     if (args.length === 2 && typeof args[0] === "number" && typeof args[1] === "number") {
-        let x = args[0];
-        let y = args[1];
-            this.x = x;
-                this.y = y;
+        let xLocal = args[0];
+        let yLocal = args[1];
+            this.x = xLocal;
+                this.y = yLocal;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${args.length}`);
@@ -38,9 +49,9 @@ export class LasersManager extends GameElement {  public constructor(...args: an
   public delay: number = LasersManager.OUTER_FLASH_TIME;
   public beamIndex: number = 0;
   public visibles: any[] = javaArray(3, false);
-  public flash: boolean = false;
-  public colorIndex: number = 0;
-  public laser: any = null as any;
+
+
+
   
   
 
@@ -71,7 +82,7 @@ export class LasersManager extends GameElement {  public constructor(...args: an
   
   private beamVisible(beamX: any): boolean {
     return !((beamX + 8 < this.gameMode.cameraX) 
-        || (beamX - 8 > this.gameMode.cameraX + Main.DISPLAY_WIDTH));
+        || (beamX - 8 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH));
   }
 
   public update(): void {

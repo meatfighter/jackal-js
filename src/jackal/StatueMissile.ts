@@ -1,38 +1,50 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/StatueMissile.java.
 // Original Java imports: org.newdawn.slick.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
-export class StatueMissile extends Enemy {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class StatueMissile extends Enemy {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.vx = 0;
+    this.angle = 0;
+    this.sprite = null as any;
+    this.statueX = 0;
+    this.statueY = 0;
+    this.right = false;
+    this.clipX = 0;
+    this.explodeDelay = 0;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_StatueMissile(...args);
+  }
+  private __construct_StatueMissile(...args: any[]): void {
     if (args.length === 3 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "boolean") {
-        let statueX = args[0];
-        let statueY = args[1];
-        let right = args[2];
-            this.statueX = statueX;
-                this.statueY = statueY;
-                this.right = right;
+        let statueXLocal = args[0];
+        let statueYLocal = args[1];
+        let rightLocal = args[2];
+            this.statueX = statueXLocal;
+                this.statueY = statueYLocal;
+                this.right = rightLocal;
     
-                this.x = statueX + 48;
-                this.y = statueY + 86;
+                this.x = statueXLocal + 48;
+                this.y = statueYLocal + 86;
     
-                if (right) {
+                if (rightLocal) {
                   this.x -= 26;         
                   this.vx = StatueMissile.SPEED;
                   this.angle = 45;
                   this.sprite = this.main.statueMissiles[0];
-                  this.clipX = statueX + 74;
+                  this.clipX = statueXLocal + 74;
                 } else {
                   this.x += 26;
                   this.vx = -StatueMissile.SPEED;
                   this.angle = 315;
                   this.sprite = this.main.statueMissiles[1];
-                  this.clipX = statueX - 22;
+                  this.clipX = statueXLocal - 22;
                 }
         return;
     }
@@ -41,15 +53,14 @@ export class StatueMissile extends Enemy {  public constructor(...args: any[]) {
   
   public static readonly EXPLODE_DELAY: number = 91;
   public static readonly SPEED: number = 3.5;
-  
-  public vx: number = 0;
-  public angle: number = 0;
-  public sprite: any = null as any;
-  public statueX: number = 0;
-  public statueY: number = 0;
-  public right: boolean = false;
-  public clipX: number = 0;
-  public explodeDelay: number = 0;
+
+
+
+
+
+
+
+
 
   
 

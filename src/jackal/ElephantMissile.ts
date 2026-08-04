@@ -1,25 +1,37 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/ElephantMissile.java.
 // Original Java imports: none.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Class, Collections, DataInputStream, HashMap, Integer, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray } from "../java/JavaRuntime.js";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
-export class ElephantMissile extends GameElement {  public constructor(...args: any[]) {
-    super();
-    this.__construct(...args);
+export class ElephantMissile extends GameElement {
+  protected __initializeJavaSubclassDefaults(): void {
+    super.__initializeJavaSubclassDefaults();
+    this.angle = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.maxY = 0;
+    this.explosionOffset = 0;
+    this.tipX = 0;
+    this.tipY = 0;
+    this.player = null as any;
   }
-  private __construct(...args: any[]): void {
+  public constructor(...args: any[]) {
+    super();
+    this.__construct_ElephantMissile(...args);
+  }
+  private __construct_ElephantMissile(...args: any[]): void {
     if (args.length === 4 && typeof args[0] === "number" && typeof args[1] === "number" && typeof args[2] === "number" && typeof args[3] === "boolean") {
-        let x = args[0];
-        let y = args[1];
-        let angle = args[2];
+        let xLocal = args[0];
+        let yLocal = args[1];
+        let angleLocal = args[2];
         let left = args[3];
-            this.x = x;
-                this.y = y;
-                this.angle = angle;
+            this.x = xLocal;
+                this.y = yLocal;
+                this.angle = angleLocal;
     
-                switch(angle) {
+                switch(angleLocal) {
                   case 45:
                     this.vx = ElephantMissile.DIAGONAL_SPEED;
                     this.vy = ElephantMissile.DIAGONAL_SPEED;
@@ -44,7 +56,7 @@ export class ElephantMissile extends GameElement {  public constructor(...args: 
                     break;
                 }
     
-                if (angle == 90) {
+                if (angleLocal == 90) {
                   this.maxY = 908;
                 } else {
                   this.maxY = this.main.random.nextBoolean() ? 598 : 822;
@@ -57,16 +69,15 @@ export class ElephantMissile extends GameElement {  public constructor(...args: 
   }
   
   public static readonly SPEED: number = 6;
-  public static readonly DIAGONAL_SPEED: number = (ElephantMissile.SPEED / Math.sqrt(2));
-  
-  public angle: number = 0;
-  public vx: number = 0;
-  public vy: number = 0;
-  public maxY: number = 0;
-  public explosionOffset: number = 0;
-  public tipX: number = 0;
-  public tipY: number = 0;
-  public player: any = null as any;
+  public static readonly DIAGONAL_SPEED: number = javaFloat((ElephantMissile.SPEED / Math.sqrt(2)));
+
+
+
+
+
+
+
+
   
   
 
@@ -81,8 +92,8 @@ export class ElephantMissile extends GameElement {  public constructor(...args: 
     this.y += this.vy;
     if (this.y >= this.maxY) {
       this.remove();
-      let X = (this.x) >> 5;
-      let Y = (this.y) >> 5;             
+      let X = (javaInt(this.x)) >> 5;
+      let Y = (javaInt(this.y)) >> 5;             
       let groupIndex = this.gameMode.groupsMap[Y][X]; 
       this.gameMode.triggerGroup(groupIndex);
       new Explosion((X << 5) + this.explosionOffset, (Y << 5) + 32)
