@@ -32,7 +32,7 @@ export class JackalWebApp {
 
         const slider = this.root.querySelector<HTMLInputElement>("#volume");
         slider?.addEventListener("input", () => {
-            this.volume = Number(slider.value) / 100;
+            this.volume = clampVolume(Number(slider.value) / 100, this.volume);
             this.applyVolume();
         });
 
@@ -91,9 +91,19 @@ export class JackalWebApp {
     }
 
     private applyVolume(): void {
-        SoundStore.get().setMusicVolume(this.volume);
-        SoundStore.get().setSoundVolume(this.volume);
+        const masterVolume = clampVolume(this.volume, 1);
+        this.volume = masterVolume;
+        SoundStore.get().setMusicVolume(masterVolume);
+        // Slick applies global sound volume twice for effects; sqrt makes this a neutral master slider.
+        SoundStore.get().setSoundVolume(Math.sqrt(masterVolume));
     }
+}
+
+function clampVolume(value: number, fallback: number): number {
+    if (!Number.isFinite(value)) {
+        return fallback;
+    }
+    return Math.max(0, Math.min(1, value));
 }
 
 function escapeHtml(value: string): string {

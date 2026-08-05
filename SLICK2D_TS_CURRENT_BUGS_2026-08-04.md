@@ -151,8 +151,10 @@ Applied Jackal-side repair:
 
 - `src/app/JackalWebApp.ts:10` now defaults the PWA menu volume to `1`.
 - This restores strict startup parity with Java's default global `musicVolume = 1` and `soundVolume = 1`.
+- `src/app/JackalWebApp.ts` now applies the menu slider as a neutral browser master volume by sending `Math.sqrt(this.volume)` to `setSoundVolume(...)`.
+- The slider-derived master value is clamped to finite `0..1` before applying the square root.
 - Do not remove one of the two Slick sound-volume multiplications in `slick2d-ts`; that would break Java Slick2D parity.
-- If the browser UI later wants a perceptual master-volume slider instead of a direct Slick global-volume slider, make that an explicit app-shell decision. One possible mapping is `setMusicVolume(master)` and `setSoundVolume(Math.sqrt(master))`, because Slick then squares the stored sound volume. This is not Java behavior; it is a browser UI policy.
+- This is an app-shell policy, not generated Jackal game logic and not a `slick2d-ts` parity change.
 
 ## Browser-Specific Audio Divergence To Keep
 
@@ -257,5 +259,6 @@ For `slick2d-ts`:
 For `jackal-js`:
 
 1. Weak default SFX startup volume is fixed by defaulting `JackalWebApp.volume` to `1`.
-2. Generated constructor rest arrays are fixed by the converter and regenerated TS output.
-3. A load-time decoded direction cache remains optional. Add it only with explicit acceptance that it is an auxiliary non-Java structure and only after parity proof against all `maps/dirs-*.dat`.
+2. Weak lowered-slider SFX mixing is fixed by mapping the PWA master slider through `setSoundVolume(Math.sqrt(master))`.
+3. Generated constructor rest arrays are fixed by the converter and regenerated TS output.
+4. A load-time decoded direction cache remains optional. Add it only with explicit acceptance that it is an auxiliary non-Java structure and only after parity proof against all `maps/dirs-*.dat`.
