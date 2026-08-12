@@ -1,0 +1,14 @@
+Signature-Version: 1.0
+SHA1-Digest-Manifest-Main-Attributes: PuZwNtnXkcNdZVxSVwOq2sTVA0c=
+Created-By: 1.6.0_14 (Sun Microsystems Inc.)
+SHA1-Digest-Manifest: VUgT6x0DLN8n4pnQ3FIhSXYWNfc=
+
+Name: liblwjgl.jnilib
+SHA1-Digest: je6Ltkq1jMAdc0WgW5SaeljOKLk=
+
+Name: openal.dylib
+SHA1-Digest: N9IrLmAUVvPjiTa4WMZr3HfeKH4=
+
+Name: libjinput-osx.jnilib
+SHA1-Digest: /Zy++BzIVUy7RnCt14eqpA8OXaE=
+

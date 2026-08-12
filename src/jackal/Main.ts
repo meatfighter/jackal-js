@@ -260,6 +260,17 @@ export class Main extends BasicGame {  public constructor() {
   public konamiCode: any = null as any;
   
   public gc: any = null as any;
+  public appGameContainer: any = null as any;
+  public scalableGame: any = null as any;
+  public loadingFinishedHandler: any = null as any;
+  public loadingCompleteHandler: any = null as any;
+  public stateSaveInvalidatedHandler: any = null as any;
+  public windowedDisplayModeProvider: any = null as any;
+  public browserFullscreenController: any = null as any;
+  public browserSuspended: boolean = false;
+  public browserSuspendedMusicOn: boolean = true;
+  public browserSuspendedSoundOn: boolean = true;
+  private loadingFinishedNotified: boolean = false;
   
   
 
@@ -289,6 +300,11 @@ export class Main extends BasicGame {  public constructor() {
   }  
 
   public update(gc: any, delta: any): void {
+    if (this.browserSuspended) {
+      this.resetNextFrameTime();
+      return;
+    }
+
     if (this.fading) {
       if (this.fadeOut) {
         if (++this.fadeIndex == Main.FADES.length) {
@@ -374,13 +390,24 @@ export class Main extends BasicGame {  public constructor() {
   
   private fullScreenToggleCheck(gc: any): void {
     let isEscape = this.input.isEscape();
-    if (this.input.isF12() || isEscape) {
-      if (gc.isFullscreen()) {        
+    if (this.input.isFullscreenTogglePressed() || isEscape) {
+      let fullscreen = this.browserFullscreenController != null 
+          ? this.browserFullscreenController.isFullscreen() 
+          : gc.isFullscreen();
+      if (fullscreen) {        
         this.showMouseCursor();
-        gc.setFullscreen(false);        
+        if (this.browserFullscreenController != null) {
+          this.browserFullscreenController.exitFullscreen();
+        } else {
+          gc.setFullscreen(false);
+        }
       } else if (!isEscape) {
         this.hideMouseCursor();
-        gc.setFullscreen(true);
+        if (this.browserFullscreenController != null) {
+          this.browserFullscreenController.enterFullscreen();
+        } else {
+          gc.setFullscreen(true);
+        }
       }      
       this.resetNextFrameTime();
     }
@@ -434,6 +461,10 @@ export class Main extends BasicGame {  public constructor() {
   }
   
   public requestMode(mode: any, gc: any): void {
+    if (this.isModeStateSaveInvalidating(mode)) {
+      this.notifyStateSaveInvalidated();
+    }
+
     switch(mode) {
       case Modes.GAME: 
         Main.gameMode = new GameMode();
@@ -2101,11 +2132,118 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.loadStages(this.stages);        
         break;        
       case 41:        
-        this.requestMode(Modes.INTRO, this.gc);
+        let loadingHandled = false;
+        if (this.loadingCompleteHandler != null) {
+          loadingHandled = this.loadingCompleteHandler(this.gc) == true;
+        }
+        this.notifyLoadingFinished();
+        if (!loadingHandled) {
+          this.requestMode(Modes.INTRO, this.gc);
+        }
         break;
     }
     
     return ++this.loadIndex / 42;
+  }
+
+  public completeLoadingImmediately(gc: any): void {
+    while(this.loadIndex < 42) {
+      this.loadNext();
+    }
+    this.resetNextFrameTime();
+  }
+
+  public isLoadingScreenActive(): boolean {
+    return this.mode instanceof LoadingMode || this.loadIndex < 42;
+  }
+
+  public isStateSaveReady(): boolean {
+    return this.loadIndex >= 42
+        && this.mode === Main.gameMode
+        && Main.gameMode instanceof GameMode
+        && Main.gameMode.player != null
+        && Main.gameMode.elements != null
+        && this.gc != null;
+  }
+
+  public isStateSaveInvalidatingMenuActive(): boolean {
+    return this.mode == null
+        || this.mode instanceof LoadingMode
+        || this.mode instanceof IntroMode
+        || this.mode instanceof ContinueMode
+        || this.mode instanceof DifficultyMode
+        || this.mode instanceof OptionsMode
+        || this.mode instanceof InputMode;
+  }
+
+  public setBrowserSuspended(suspended: any): void {
+    if (this.browserSuspended == suspended) {
+      return;
+    }
+    this.browserSuspended = suspended;
+    if (suspended) {
+      this.browserSuspendedMusicOn = this.gc == null ? true : this.gc.isMusicOn();
+      this.browserSuspendedSoundOn = this.gc == null ? true : this.gc.isSoundOn();
+      if (this.gc != null) {
+        this.gc.setMusicOn(false);
+        this.gc.setSoundOn(false);
+      }
+      this.clearInputPressedRecords();
+    } else {
+      if (this.gc != null) {
+        this.gc.setMusicOn(this.browserSuspendedMusicOn);
+        this.gc.setSoundOn(this.browserSuspendedSoundOn);
+      }
+      this.clearInputPressedRecords();
+      this.resetNextFrameTime();
+    }
+  }
+
+  public stopAllSounds(): void {
+    this.stopAllSound();
+  }
+
+  public clearInputPressedRecords(): void {
+    if (this.input != null) {
+      this.input.clearKeyPressedRecord();
+    }
+    if (this.gc != null && this.gc.getInput != null) {
+      let slickInput = this.gc.getInput();
+      if (slickInput != null && slickInput.clearKeyPressedRecord != null) {
+        slickInput.clearKeyPressedRecord();
+      }
+    }
+  }
+
+  public getWindowedDisplayMode(): any {
+    if (this.windowedDisplayModeProvider != null) {
+      return this.windowedDisplayModeProvider();
+    }
+    return { width: Main.DISPLAY_WIDTH, height: Main.DISPLAY_HEIGHT };
+  }
+
+  private notifyLoadingFinished(): void {
+    if (this.loadingFinishedNotified) {
+      return;
+    }
+    this.loadingFinishedNotified = true;
+    if (this.loadingFinishedHandler != null) {
+      this.loadingFinishedHandler();
+    }
+  }
+
+  private notifyStateSaveInvalidated(): void {
+    if (this.stateSaveInvalidatedHandler != null) {
+      this.stateSaveInvalidatedHandler();
+    }
+  }
+
+  private isModeStateSaveInvalidating(mode: any): boolean {
+    return mode == Modes.INTRO
+        || mode == Modes.CONTINUE
+        || mode == Modes.DIFFICULTY
+        || mode == Modes.OPTIONS
+        || mode == Modes.INPUT;
   }
 
   // some classes have static tables that need generating

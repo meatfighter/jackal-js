@@ -87,8 +87,8 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
     return this.input.isKeyPressed(Input.KEY_ENTER);
   }
 
-  public isF12(): boolean {
-    return this.input.isKeyPressed(Input.KEY_F12);
+  public isFullscreenTogglePressed(): boolean {
+    return this.input.isKeyPressed(Input.KEY_SPACE);
   }
 
   public isEscape(): boolean {

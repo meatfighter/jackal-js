@@ -13,7 +13,7 @@ snap(): void;
     isLeft(): boolean;
     isRight(): boolean;
     isEnter(): boolean;
-    isF12(): boolean;
+    isFullscreenTogglePressed(): boolean;
     isEscape(): boolean;
     isPause(): boolean;
     clearKeyPressedRecord(): void;

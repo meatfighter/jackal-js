@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.8.2
+Created-By: 1.6.0_14-b08 (Sun Microsystems Inc.)
+
+Name: liblwjgl.jnilib
+SHA1-Digest: ZJ/8bIstP5JK9V3l4QMy5BuzT5A=
+
+Name: openal.dylib
+SHA1-Digest: F/gczCePZwj7IknnTYXIRgsnbV4=
+
+Name: libjinput-osx.jnilib
+SHA1-Digest: ahZ/c2+HRokmZfGR4wk3xdluXmU=
+

@@ -1,0 +1,335 @@
+package jackal;
+
+import java.util.*;
+
+public class GrayJeep extends Enemy{
+  
+  public static final float SPEED = 3f;
+  public static final float SENSOR_RADIUS = 53;
+  public static final int ANGLE_STEPS = 16;
+  public static final float ANGLE_VELOCITY = 45f / ANGLE_STEPS;  
+  public static final int BOMB_DELAY = 91;
+  public static final int BULLET_TRAVEL_TIME = 2 * 91;
+  
+  public static final int MAX_MOVE_SQUARES = 8;
+  
+  public static final float DIMENSION_1 = 48;
+  public static final float DIMENSION_2 = 32;
+  
+  public int bombDelay;
+  public int moveSteps;
+  public int targetAngle = 90;
+  public float displayAngle = 90;
+  public float directionX;
+  public float directionY;
+  public float vx;
+  public float vy;
+  public float sensorX;
+  public float sensorY;
+  public float lastDx;
+  public float lastDy;
+  public ArrayList<Enemy> solids;
+  public Player player;
+  public int handlingLoop;
+  public float loopTargetX;
+  public float loopTargetY;
+  
+  public GrayJeep(float x, float y) {
+    this.x = x;
+    this.y = y;
+  }
+  
+  @Override
+  public void init() {
+    super.init();
+    
+    solids = gameMode.solids;
+    player = gameMode.player;    
+    
+    layer = 3;
+    
+    bulletHits = 2;
+    
+    hitX1 = -40;
+    hitY1 = -40;
+    hitX2 = 40;
+    hitY2 = 40;
+    
+    mine = true;
+    mineX1 = -28;
+    mineY1 = -28;
+    mineX2 = 28;
+    mineY2 = 28;
+    
+    solid = true;
+    solidX1 = -48;
+    solidY1 = -48;
+    solidX2 = 48;
+    solidY2 = 48;
+    
+    points = 800;
+  }  
+   
+  private void driveAtRightAngleToBarrier() {
+    float Vx = vx;
+    float Vy = vy;
+    float Dx = directionX;
+    float Dy = directionY;
+    
+    if (main.random.nextInt(5) == 4) {      
+      vx = -vx;
+      vy = -vy;
+      directionX = -directionX;
+      directionY = -directionY;
+      targetAngle += 180;
+    } else if (main.random.nextInt(3) == 2) {
+      vx = Vy;
+      vy = -Vx;
+      directionX = Dy;
+      directionY = -Dx;
+      targetAngle -= 90;
+    } else {
+      vx = -Vy;
+      vy = Vx;
+      directionX = -Dy;
+      directionY = Dx;
+      targetAngle += 90;
+    }    
+    if (targetAngle >= 360) {
+      targetAngle -= 360;
+    } else if (targetAngle < 0) {
+      targetAngle += 360;
+    }
+    sensorX = directionX * SENSOR_RADIUS;
+    sensorY = directionY * SENSOR_RADIUS;
+    
+    if (main.random.nextInt(5) != 4) {
+      computeMoveSteps();
+    }
+  }  
+  
+  private void computeMoveSteps() {
+    
+    float v = 0;
+    
+    if (directionX != 0) {
+      v = directionX;
+    } else {
+      v = directionY;
+    }
+    if (v == 0) {
+      return;
+    }
+    
+    float d = 0;
+    
+    if (v > 0) {
+      d = 32 - (v % 32);
+    } else {
+      d = v % 32;
+    }
+    
+    d += 32 * (1 + main.random.nextInt(MAX_MOVE_SQUARES));
+    
+    moveSteps = (int)Math.round(d / SPEED);
+  }
+  
+  private void testCorners(float nextX, float nextY) {
+    
+    float sx1 = 0;
+    float sy1 = 0;
+    float sx2 = 0;
+    float sy2 = 0;
+    
+    switch(targetAngle) {
+      case 0:
+        sx1 = nextX + DIMENSION_1;
+        sy1 = nextY - DIMENSION_2;
+        sx2 = nextX + DIMENSION_1;
+        sy2 = nextY + DIMENSION_2;        
+        break;
+      case 90:
+        sx1 = nextX + DIMENSION_2;
+        sy1 = nextY + DIMENSION_1;
+        sx2 = nextX - DIMENSION_2;
+        sy2 = nextY + DIMENSION_1;
+        break;
+      case 180:
+        sx1 = nextX - DIMENSION_1;
+        sy1 = nextY + DIMENSION_2;
+        sx2 = nextX - DIMENSION_1;
+        sy2 = nextY - DIMENSION_2;        
+        break;
+      case 270:
+        sx1 = nextX - DIMENSION_2;
+        sy1 = nextY - DIMENSION_1;
+        sx2 = nextX + DIMENSION_2;
+        sy2 = nextY - DIMENSION_1;        
+        break;
+      default:
+        return;
+    }
+    
+    boolean drive1 = gameMode.isDriveable(sx1, sy1);
+    boolean drive2 = gameMode.isDriveable(sx2, sy2);
+    if (drive1 && drive2) {
+      return;
+    }
+    
+    if (!(drive1 || drive2)) {
+      driveAtRightAngleToBarrier();
+      return;
+    }
+    
+    float Vx = vx;
+    float Vy = vy;
+    float Dx = directionX;
+    float Dy = directionY;
+    
+    if (drive2) {
+      vx = -Vy;
+      vy = Vx;
+      directionX = -Dy;
+      directionY = Dx;
+      targetAngle += 90;
+    } else {
+      vx = Vy;
+      vy = -Vx;
+      directionX = Dy;
+      directionY = -Dx;
+      targetAngle -= 90;
+    }
+    
+    if (targetAngle >= 360) {
+      targetAngle -= 360;
+    } else if (targetAngle < 0) {
+      targetAngle += 360;
+    }
+    sensorX = directionX * SENSOR_RADIUS;
+    sensorY = directionY * SENSOR_RADIUS;
+    
+    if (main.random.nextInt(5) != 4) {
+      computeMoveSteps();
+    }
+  }
+  
+  private void handleLoop() {
+    if (handlingLoop == 0) {
+      handlingLoop = 91 * (2 + main.random.nextInt(5));
+      loopTargetX = main.random.nextFloat() * 2048;
+      loopTargetY = main.random.nextFloat() * player.y;
+    }
+  }
+
+  @Override
+  public void update() {
+    
+    if (displayAngle != targetAngle) {
+      float deltaAngle = (targetAngle - displayAngle + 180) % 360;
+      if (deltaAngle < 0) {
+        deltaAngle += 180;
+      } else {
+        deltaAngle -= 180;
+      }
+      if (Math.abs(deltaAngle) < ANGLE_VELOCITY) {
+        displayAngle = targetAngle;
+      } else {
+        if (deltaAngle < 0) {
+          displayAngle -= ANGLE_VELOCITY;
+        } else {
+          displayAngle += ANGLE_VELOCITY;
+        }
+      } 
+    } else {
+      
+      if (handlingLoop > 0) {
+        handlingLoop--;
+      }
+      
+      if (--moveSteps <= 0) {        
+        int dx = 0;
+        int dy = 0;
+        if (main.random.nextInt(5) == 4) {
+          dx = main.random.nextInt(512) - 256;
+          dy = main.random.nextInt(512) - 256;
+        }
+        float[] v = handlingLoop > 0
+            ? gameMode.suggestDirection(
+                x, y, loopTargetX + dx, loopTargetY + dy, targetAngle, false) 
+            : gameMode.suggestDirection(
+                x, y, player.x + dx, player.y + dy, targetAngle, false);
+        vx = v[0] * SPEED;
+        vy = v[1] * SPEED;
+        directionX = v[0];
+        directionY = v[1];
+        targetAngle = (int)v[2];
+        sensorX = directionX * SENSOR_RADIUS;
+        sensorY = directionY * SENSOR_RADIUS;
+        computeMoveSteps();
+      }          
+
+      float nextX = x + vx;
+      float nextY = y + vy;
+      
+      if (gameMode.conveyorDelta > 0 && gameMode.isConveyor(x, y)) {
+        nextY += gameMode.conveyorDelta;
+      }
+      
+      testCorners(nextX, nextY);
+      
+      boolean driveable = true;
+      
+      if (gameMode.isDriveable(nextX + sensorX, nextY + sensorY)) {
+
+        // avoid bumping into other enemies
+        for(int i = solids.size() - 1; i >= 0; i--) {
+          Enemy solid = solids.get(i);
+          if (solid != this && solid.isSolid(nextX + solidX1, nextY + solidY1, 
+              nextX + solidX2, nextY + solidY2) && !solid.isSolid(
+                  x + solidX1, y + solidY1, x + solidX2, y + solidY2)) {
+            driveable = false;
+            break;
+          }
+        } 
+      } else {
+        driveable = false;
+      }
+
+      if (driveable) {
+        x = nextX;
+        y = nextY;
+        updateTrail();
+        if (trailContainsLoop()) {
+          handleLoop();
+        }
+      } else {
+        driveAtRightAngleToBarrier();
+      }
+      
+      float dx = player.x - x;
+      float dy = player.y - y;
+
+      if (moveSteps == 1 && ((vy != 0 && ((int)player.x) >> 7 == ((int)x) >> 7)
+          || (vx != 0 && ((int)player.y) >> 7 == ((int)y) >> 7))) {
+        moveSteps = 2;
+      }      
+      if ((lastDx * dx <= 0 || lastDy * dy <= 0) 
+          && main.random.nextInt(3) != 2) { 
+        moveSteps = 0;
+      }
+
+      lastDx = dx;
+      lastDy = dy;
+      
+      if (--bombDelay < 0) {
+        bombDelay = BOMB_DELAY;
+        new Bomb(x, y, false, 0.75f * vx, 0.75f * vy);
+      }
+    }
+  }
+
+  @Override
+  public void render() {
+    main.drawVehicle(main.grayJeeps, x, y, displayAngle);
+  }  
+}

@@ -1,0 +1,23 @@
+Signature-Version: 1.0
+SHA1-Digest-Manifest-Main-Attributes: PuZwNtnXkcNdZVxSVwOq2sTVA0c=
+Created-By: 1.6.0_14 (Sun Microsystems Inc.)
+SHA1-Digest-Manifest: vJLYhkyyaXwBEwamGZUEm1w3Tms=
+
+Name: libjinput-linux64.so
+SHA1-Digest: eUWbFWKQTz278r5rpEFin0d2Fmc=
+
+Name: libopenal.so
+SHA1-Digest: bzmsihtLYY38BLUqD45M78CwNDs=
+
+Name: liblwjgl.so
+SHA1-Digest: 3B+mW/4cEmLq9JyJ0VcWoBmaY3M=
+
+Name: libopenal64.so
+SHA1-Digest: CJoj97s73zAUi4sF3GiYkgtCImM=
+
+Name: libjinput-linux.so
+SHA1-Digest: JCMWEEW2W0tBVhbFuBie46fwOz8=
+
+Name: liblwjgl64.so
+SHA1-Digest: EtQMcteuop/bhmG3PS1z6YVN5L4=
+

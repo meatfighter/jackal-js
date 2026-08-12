@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.8.2
+Created-By: 1.6.0_14-b08 (Sun Microsystems Inc.)
+
+Name: libopenal.so
+SHA1-Digest: vK6ILddWjG43cET7I2SbSL4o9ZQ=
+
+Name: libopenal64.so
+SHA1-Digest: +IGW4pFXYARQ4nqyQEjaO7/zyWA=
+
+Name: liblwjgl.so
+SHA1-Digest: bY32hfgmI098FmXyPqlO1BmkiZ0=
+
+Name: liblwjgl64.so
+SHA1-Digest: f7fD3IydlTLKCvboAiTb6HHM7Xg=
+

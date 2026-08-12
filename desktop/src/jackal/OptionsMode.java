@@ -1,0 +1,86 @@
+package jackal;
+
+import org.newdawn.slick.*;
+
+public class OptionsMode implements IMode, IFadeListener, IMenuListener {
+
+  public static final int STATE_FADE_IN = 0;
+  public static final int STATE_MENU = 1;
+  public static final int STATE_FADE_OUT = 2;
+  public static final int STATE_DONE = 3;
+  
+  public Main main;
+  public GameContainer gc;
+  public IInput input;  
+  public int state = STATE_FADE_IN;
+  public Menu menu;
+  public boolean optionSelected;
+  public int selectedIndex;
+  
+  @Override
+  public void init(Main main, GameContainer gc) throws SlickException {
+    this.main = main;
+    this.gc = gc;
+    this.input = main.input;
+    
+    menu = new Menu(448, 512, main, 0, 
+        Menu.ICON_TANK, this, "input", "difficulty", "done");
+    
+    main.startFade(false, this);
+  }
+  
+  @Override
+  public void fadeCompleted() {
+    if (state == STATE_FADE_IN) {
+      state = STATE_MENU;
+    } else if (state == STATE_FADE_OUT) {
+      state = STATE_DONE;
+      switch(selectedIndex) {
+        case 0:
+          main.requestMode(Modes.INPUT, gc);
+          break;
+        case 1:
+          main.requestMode(Modes.DIFFICULTY, gc);
+          break;
+        case 2:
+          main.requestMode(Modes.INTRO, gc);
+          break;
+      }
+    }
+  }  
+
+  @Override
+  public void selectionChanged(int selectedIndex) {
+  }
+
+  @Override
+  public void optionSelected(int selectedIndex) {
+    this.optionSelected = true;
+    this.selectedIndex = selectedIndex;
+    main.playSound(main.missileSound);
+  }  
+  
+  @Override
+  public void update(GameContainer gc) throws SlickException {
+    menu.update();
+    
+    if (state == STATE_MENU && optionSelected) {
+      state = STATE_FADE_OUT;
+      main.startFade(true, this);
+    }
+  }
+
+  @Override
+  public void render(GameContainer gc, Graphics g) throws SlickException {
+    
+    g.setColor(Color.black);
+    g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
+    
+    if (state == STATE_DONE) {
+      return;
+    }
+    
+    main.drawString("options", 400, 384, Main.FONT_GRAY);
+    menu.render();
+  }
+}

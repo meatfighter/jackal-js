@@ -1,8 +1,13 @@
-const APP_VERSION = "0.1.1";
-const BUILD_STAMP = "20260804T000000Z";
+const APP_VERSION = "0.1.2";
+const BUILD_STAMP = "20260812T000000Z";
 const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
+const APP_INDEX = "/index.html";
 const APP_SHELL = [
     "/",
+    APP_INDEX,
+    "/manifest.webmanifest",
+    "/favicon.ico",
+    "/resources/icons/32x32.png",
     `/index.html?v=${encodeURIComponent(BUILD_STAMP)}`
 ];
 const MAX_FETCH_RETRIES = 5;
@@ -27,8 +32,29 @@ self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") {
         return;
     }
+    if (event.request.mode === "navigate") {
+        event.respondWith(networkFirstNavigation(event.request));
+        return;
+    }
     event.respondWith(networkFirstWithRetry(event.request));
 });
+
+async function networkFirstNavigation(request) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        const response = await fetchWithRetry(request);
+        if (response.ok) {
+            await cache.put(APP_INDEX, response.clone());
+        }
+        return response;
+    } catch (error) {
+        const cached = await cache.match(APP_INDEX) || await cache.match("/");
+        if (cached) {
+            return cached;
+        }
+        throw error;
+    }
+}
 
 async function networkFirstWithRetry(request) {
     const cache = await caches.open(CACHE_NAME);

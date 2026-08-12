@@ -137,9 +137,17 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }    
   }  
 
+  private isReservedKey(i: any): boolean {
+    return i == Input.KEY_SPACE || i == Input.KEY_ESCAPE;
+  }
+
   public keyPressed(i: any, c: any): void {
     
     if (this.state != InputMode.STATE_READING) {
+      return;
+    }
+
+    if (this.isReservedKey(i)) {
       return;
     }
     

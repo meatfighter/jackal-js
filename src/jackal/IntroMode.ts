@@ -57,6 +57,10 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     [ 240, 640 ],
     [ 304, 736 ],
   ];
+
+  public static readonly FULL_SCREEN_TEXT: string = "SPACE - FULL-SCREEN MODE";
+  public static readonly FULL_SCREEN_TEXT_X: number = (MainConstants.DISPLAY_WIDTH - (IntroMode.FULL_SCREEN_TEXT.length << 5)) / 2;
+  public static readonly FULL_SCREEN_TEXT_Y: number = 832;
   
   public static readonly UPPER_SOLDIER_Y: number = 96;
   public static readonly LOWER_SOLDIER_Y: number = 576;
@@ -313,6 +317,8 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     if (this.state <= IntroMode.STATE_TITLE || this.state == IntroMode.STATE_STORY_SCROLL) {
       this.main.title.draw(128, 192);
       this.menu.render();
+      this.main.drawString(IntroMode.FULL_SCREEN_TEXT, IntroMode.FULL_SCREEN_TEXT_X,
+          IntroMode.FULL_SCREEN_TEXT_Y, MainConstants.FONT_GRAY);
     }
 
     if (this.state == IntroMode.STATE_STORY_SCROLL || this.state == IntroMode.STATE_STORY) {

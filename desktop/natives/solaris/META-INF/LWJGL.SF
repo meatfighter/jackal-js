@@ -1,0 +1,17 @@
+Signature-Version: 1.0
+SHA1-Digest-Manifest-Main-Attributes: PuZwNtnXkcNdZVxSVwOq2sTVA0c=
+Created-By: 1.6.0_14 (Sun Microsystems Inc.)
+SHA1-Digest-Manifest: S/Iiw/t4z/E75twCroNE/decRSY=
+
+Name: libopenal.so
+SHA1-Digest: 6hwMeh16o1PRNmCv95jnX2AoZjs=
+
+Name: liblwjgl.so
+SHA1-Digest: VDgZntVOs7InwEqg3Gx15OnpuFs=
+
+Name: libopenal64.so
+SHA1-Digest: 4ykBMyu4VreR9P13eWMEz0pafNU=
+
+Name: liblwjgl64.so
+SHA1-Digest: RrRrZzqrerxbJxoEdtqD9lhr/+g=
+

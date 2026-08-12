@@ -1,0 +1,29 @@
+Signature-Version: 1.0
+SHA1-Digest-Manifest-Main-Attributes: PuZwNtnXkcNdZVxSVwOq2sTVA0c=
+Created-By: 1.6.0_14 (Sun Microsystems Inc.)
+SHA1-Digest-Manifest: v9jycghMoGqt5VzlbgvvbACazeE=
+
+Name: OpenAL32.dll
+SHA1-Digest: G/lG0HV8gpPxyDlNrGt0uSCVItc=
+
+Name: OpenAL64.dll
+SHA1-Digest: Ae4A73SYdvFXNWwrUNLU0wpVjZw=
+
+Name: jinput-dx8_64.dll
+SHA1-Digest: WGjz8vGEIyLhgKWzKjFyEM0ZCBA=
+
+Name: jinput-raw.dll
+SHA1-Digest: 7vlAsq+c+lFrorDZj3Gi9aG2vfU=
+
+Name: jinput-raw_64.dll
+SHA1-Digest: CSUljtPFDxIxg8gNmNE7kK3vw9c=
+
+Name: lwjgl64.dll
+SHA1-Digest: icZq8WtMOTsG2m9e5/3lKN/7Ii4=
+
+Name: lwjgl.dll
+SHA1-Digest: G0jER66tIxyx8PIcI5IWoNpriEE=
+
+Name: jinput-dx8.dll
+SHA1-Digest: dhn6XkFPoKd/IJOBnVTxyae+5qE=
+

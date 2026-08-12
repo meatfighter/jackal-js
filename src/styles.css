@@ -2,17 +2,30 @@
     box-sizing: border-box;
 }
 
+:root {
+    --title-cream: #f2d59d;
+    --title-shadow-gray: #565656;
+    --title-jeep-green: #18b313;
+    --title-mountain-brown: #9a5514;
+    --plain-white: #ffffff;
+}
+
 html,
 body,
 #app {
-    width: 100%;
     height: 100%;
     margin: 0;
+    width: 100%;
+}
+
+html,
+body {
+    overflow: hidden;
 }
 
 body {
-    background: #111111;
-    color: #f5f5f5;
+    background: #000000;
+    color: var(--title-cream);
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -21,117 +34,329 @@ input {
     font: inherit;
 }
 
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
 .boot-screen,
 .menu-screen {
     align-items: center;
+    background: #000000;
     display: flex;
-    height: 100%;
+    inset: 0;
     justify-content: center;
-    min-height: 100vh;
-}
-
-.boot-title,
-.menu-panel h1 {
-    font-size: 48px;
-    font-weight: 800;
-    letter-spacing: 0;
-    margin: 0 0 16px;
-    text-transform: uppercase;
+    padding: 24px;
+    position: fixed;
 }
 
 .boot-screen {
     flex-direction: column;
 }
 
-.boot-loading {
-    min-height: 24px;
-    opacity: 0.8;
-}
-
-.dot {
-    animation: dotPulse 1.2s infinite;
-    opacity: 0;
-}
-
-.dot-2 {
-    animation-delay: 0.2s;
-}
-
-.dot-3 {
-    animation-delay: 0.4s;
-}
-
-.menu-panel {
-    align-items: stretch;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    max-width: 360px;
-    width: min(90vw, 360px);
-}
-
-.volume-row {
-    display: grid;
-    gap: 8px;
-}
-
-.menu-panel button {
-    background: #f1c94a;
-    border: 0;
-    border-radius: 6px;
-    color: #111111;
-    cursor: pointer;
+.boot-title {
+    color: var(--plain-white);
+    font-size: 26px;
     font-weight: 700;
-    min-height: 44px;
-}
-
-.error-message {
-    background: #4d1515;
-    border: 1px solid #c64a4a;
-    border-radius: 6px;
+    letter-spacing: 0;
+    line-height: 1;
     margin: 0;
-    padding: 12px;
 }
 
-.game-host {
-    height: 100%;
+.boot-progress {
+    display: grid;
+    justify-items: center;
+    width: min(420px, calc(100vw - 48px));
+}
+
+.progress-shell {
+    background: var(--title-mountain-brown);
+    border-radius: 8px;
+    height: 8px;
     overflow: hidden;
     width: 100%;
 }
 
-.hamburger {
+.progress-bar {
+    background: var(--title-jeep-green);
+    height: 100%;
+    width: var(--progress, 0%);
+}
+
+.load-error-panel {
+    display: grid;
+    gap: 14px;
+    justify-items: center;
+    text-align: center;
+    width: min(420px, calc(100vw - 48px));
+}
+
+.failure-icon {
+    color: var(--plain-white);
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", Arial, Helvetica, sans-serif;
+    font-size: 52px;
+    line-height: 1;
+}
+
+.boot-error {
+    color: var(--plain-white);
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 280px;
+    text-align: center;
+}
+
+.menu-panel {
     align-items: center;
-    background: rgba(17, 17, 17, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: none;
+    padding: 0;
+    width: min(520px, calc(100vw - 48px));
+}
+
+.volume-row {
+    align-items: center;
+    color: var(--plain-white);
+    display: grid;
+    font-size: 16px;
+    font-weight: 700;
+    column-gap: 10px;
+    grid-template-columns: 30px minmax(0, 1fr) max-content;
+    width: min(360px, 100%);
+}
+
+.volume-icon {
+    color: var(--plain-white);
+    display: grid;
+    height: 30px;
+    place-items: center;
+    width: 30px;
+}
+
+.volume-icon svg {
+    display: block;
+    fill: none;
+    height: 24px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    width: 26px;
+}
+
+#volume-input {
+    appearance: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    height: 8px;
+    margin: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+#volume-input:focus-visible {
+    outline: none;
+}
+
+#volume-input::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--title-cream) 0%, var(--title-cream) var(--thumb-position, 50%), var(--title-mountain-brown) var(--thumb-position, 50%), var(--title-mountain-brown) 100%);
+    border-radius: 10px;
+    height: 8px;
+}
+
+#volume-input::-webkit-slider-thumb {
+    appearance: none;
+    background: var(--plain-white);
+    border: 3px solid #050505;
+    border-radius: 50%;
+    height: 24px;
+    margin-top: -8px;
+    width: 24px;
+}
+
+#volume-input::-moz-range-track {
+    background: var(--title-mountain-brown);
+    border-radius: 10px;
+    height: 8px;
+}
+
+#volume-input::-moz-range-progress {
+    background: var(--title-cream);
+    border-radius: 10px;
+    height: 8px;
+}
+
+#volume-input::-moz-range-thumb {
+    background: var(--plain-white);
+    border: 3px solid #050505;
+    border-radius: 50%;
+    height: 18px;
+    width: 18px;
+}
+
+.volume-value {
+    color: var(--plain-white);
+    font-variant-numeric: tabular-nums;
+    min-width: 24px;
+    text-align: left;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.start-button,
+.retry-button {
+    background: var(--title-jeep-green);
+    border: none;
+    border-radius: 30px;
+    color: #000000;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    min-height: 48px;
+    min-width: 192px;
+    padding: 10px 20px;
+    text-shadow: none;
+}
+
+.start-button:focus-visible,
+.retry-button:focus-visible {
+    outline: none;
+}
+
+.start-button:active:not(:disabled),
+.retry-button:active {
+    transform: translateY(2px);
+}
+
+.start-button:disabled {
+    background: var(--title-shadow-gray);
+    color: #111111;
+    cursor: default;
+}
+
+.error-message {
+    color: #ffd6c7;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0;
+    max-width: 360px;
+    padding: 0;
+    text-align: center;
+}
+
+.game-shell {
+    align-items: center;
+    background: #000000;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.game-shell,
+.game-shell:focus,
+.game-shell:focus-visible,
+.game-host,
+.game-host:focus,
+.game-host:focus-visible,
+.game-host canvas,
+.game-host canvas:focus,
+.game-host canvas:focus-visible {
+    outline: none;
+}
+
+.game-host {
+    align-items: center;
+    background: #000000;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+}
+
+.game-host canvas {
+    border: 0;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.game-host.cursor-hidden,
+.game-host.cursor-hidden canvas {
+    cursor: none !important;
+}
+
+.hamburger-button {
+    align-items: center;
+    background: rgba(10, 10, 10, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.42);
     border-radius: 6px;
     cursor: pointer;
     display: grid;
-    gap: 4px;
-    height: 40px;
+    height: 42px;
     justify-content: center;
-    left: 12px;
-    padding: 8px;
+    left: 14px;
+    padding: 0;
     position: fixed;
-    top: 12px;
-    width: 40px;
+    top: 14px;
+    width: 42px;
     z-index: 10;
 }
 
-.hamburger span {
+.hamburger-button span,
+.hamburger-button::before,
+.hamburger-button::after {
     background: #ffffff;
+    content: "";
     display: block;
     height: 2px;
     width: 20px;
 }
 
-@keyframes dotPulse {
-    0%,
-    20% {
-        opacity: 0;
+.hamburger-button span {
+    box-shadow: 0 7px 0 #ffffff, 0 -7px 0 #ffffff;
+}
+
+.hamburger-button::before,
+.hamburger-button::after {
+    display: none;
+}
+
+.hamburger-button:hover,
+.hamburger-button:focus-visible {
+    background: rgba(247, 212, 81, 0.86);
+    border-color: rgba(255, 255, 255, 0.76);
+}
+
+.hamburger-button:hover span,
+.hamburger-button:focus-visible span {
+    background: #080808;
+    box-shadow: 0 7px 0 #080808, 0 -7px 0 #080808;
+}
+
+.hamburger-button[hidden] {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .boot-title {
+        font-size: 26px;
     }
 
-    45%,
-    100% {
-        opacity: 1;
+    .menu-panel {
+        width: min(100%, calc(100vw - 32px));
     }
 }

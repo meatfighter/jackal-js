@@ -3,19 +3,181 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#111111">
-        <meta name="app-version" content="0.1.1">
-        <link rel="icon" type="image/png" sizes="32x32" href="/resources/icons/32x32.png?v=20260804T000000Z">
-        <link rel="manifest" href="/manifest.webmanifest?v=20260804T000000Z">
+        <meta name="theme-color" content="#000000">
+        <meta name="app-version" content="0.1.2">
+        <link rel="icon" type="image/png" sizes="32x32" href="/resources/icons/32x32.png?v=20260812T000000Z">
+        <link rel="manifest" href="/manifest.webmanifest?v=20260812T000000Z">
         <title>Jackal</title>
+        <style>
+            html,
+            body,
+            #app {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                background: #000000;
+                color: #ffffff;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            body {
+                position: fixed;
+                inset: 0;
+            }
+
+            .static-boot-screen {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #000000;
+            }
+
+            .static-boot-dots {
+                display: grid;
+                width: 40px;
+                height: 8px;
+                grid-template-columns: repeat(3, 8px);
+                gap: 8px;
+            }
+
+            .static-boot-dot {
+                width: 8px;
+                height: 8px;
+                background: #18b313;
+                animation: static-boot-dot-pulse 1.2s ease-in-out infinite;
+                opacity: 0.25;
+            }
+
+            .static-boot-dot:nth-child(1) {
+                animation-delay: 0s;
+            }
+
+            .static-boot-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .static-boot-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+            .static-load-error-panel {
+                display: none;
+                width: min(420px, calc(100vw - 48px));
+                gap: 14px;
+                justify-items: center;
+                text-align: center;
+            }
+
+            .static-failure-icon {
+                color: #ffffff;
+                font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", Arial, Helvetica, sans-serif;
+                font-size: 52px;
+                line-height: 1;
+            }
+
+            .static-boot-title {
+                color: #ffffff;
+                font-size: 26px;
+                font-weight: 700;
+            }
+
+            .static-boot-error {
+                max-width: 280px;
+                margin: 0;
+                color: #ffffff;
+                font-size: 14px;
+                line-height: 1.45;
+                text-align: center;
+            }
+
+            .static-retry-link {
+                display: inline-flex;
+                min-width: 192px;
+                min-height: 48px;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+                padding: 10px 20px;
+                border-radius: 30px;
+                background: #18b313;
+                color: #000000;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: 700;
+                text-decoration: none;
+                text-shadow: none;
+            }
+
+            .static-retry-link:active {
+                transform: translateY(2px);
+            }
+
+            .static-boot-failed .static-boot-dots {
+                display: none;
+            }
+
+            .static-boot-failed .static-load-error-panel {
+                display: grid;
+            }
+
+            @keyframes static-boot-dot-pulse {
+                0%,
+                80%,
+                100% {
+                    opacity: 0.25;
+                }
+
+                40% {
+                    opacity: 1;
+                }
+            }
+        </style>
+        <noscript>
+            <style>
+                .static-boot-dots {
+                    display: none;
+                }
+
+                .static-load-error-panel {
+                    display: grid;
+                }
+            </style>
+        </noscript>
     </head>
     <body>
         <div id="app">
-            <div class="boot-screen">
-                <div class="boot-title">Jackal</div>
-                <div class="boot-loading">Loading<span class="dot dot-1">.</span><span class="dot dot-2">.</span><span class="dot dot-3">.</span></div>
-            </div>
+            <main id="static-boot-screen" class="static-boot-screen" role="status" aria-label="Loading">
+                <div class="static-boot-dots" aria-hidden="true">
+                    <span class="static-boot-dot"></span>
+                    <span class="static-boot-dot"></span>
+                    <span class="static-boot-dot"></span>
+                </div>
+                <section class="static-load-error-panel" role="alert" aria-label="Unable to start">
+                    <div class="static-failure-icon" aria-hidden="true">&#x1F480;</div>
+                    <div class="static-boot-title">Unable to start.</div>
+                    <p class="static-boot-error">Check your connection and try again.</p>
+                    <a class="static-retry-link" href="">Retry</a>
+                </section>
+            </main>
         </div>
-        <script type="module" src="/src/main.ts?v=20260804T000000Z"></script>
+        <script>
+            (function () {
+                var boot = document.getElementById("static-boot-screen");
+                if (!boot) {
+                    return;
+                }
+                window.setTimeout(function () {
+                    if (!boot.isConnected) {
+                        return;
+                    }
+                    boot.classList.add("static-boot-failed");
+                }, 10000);
+            })();
+        </script>
+        <script type="module" src="/src/main.ts?v=20260812T000000Z"></script>
     </body>
 </html>
