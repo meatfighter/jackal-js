@@ -19,6 +19,9 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
+  private static readonly CONTROLLER_INDEX_LIMIT: number = 16;
+  private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET: number = 4;
+
   private buttonMapping: any = null as any;
   private input: any = null as any;
   private up: boolean = false;
@@ -31,29 +34,55 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   
   
   public snap(): void {
-    this.up = this.input.isKeyDown(this.buttonMapping.keyUp);
-    this.down = this.input.isKeyDown(this.buttonMapping.keyDown);
-    this.left = this.input.isKeyDown(this.buttonMapping.keyLeft);
-    this.right = this.input.isKeyDown(this.buttonMapping.keyRight);  
-    this.fire = this.input.isKeyDown(this.buttonMapping.keyGrenade);
-    
-    if (this.buttonMapping.gunKeyMapped) {
-      this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun);
-    } else {
-      this.shoot = this.input.isKeyDown(Input.KEY_Z) | this.input.isKeyDown(Input.KEY_Y) 
-          | this.input.isKeyDown(Input.KEY_W) | this.input.isKeyDown(Input.KEY_K);      
+    this.up = this.input.isKeyDown(this.buttonMapping.keyUp)
+        || this.isControllerBindingDown(this.buttonMapping.controllerUp);
+    this.down = this.input.isKeyDown(this.buttonMapping.keyDown)
+        || this.isControllerBindingDown(this.buttonMapping.controllerDown);
+    this.left = this.input.isKeyDown(this.buttonMapping.keyLeft)
+        || this.isControllerBindingDown(this.buttonMapping.controllerLeft);
+    this.right = this.input.isKeyDown(this.buttonMapping.keyRight)
+        || this.isControllerBindingDown(this.buttonMapping.controllerRight);  
+    this.fire = this.input.isKeyDown(this.buttonMapping.keyGrenade)
+        || this.isAnyControllerButtonDown(this.buttonMapping.controllerGrenade);
+    this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun)
+        || this.isAnyControllerButtonDown(this.buttonMapping.controllerGun);
+  }
+
+  private isControllerBindingDown(button: any): boolean {
+    switch(button) {
+      case 12:
+        return this.input.isControllerUp(Input.ANY_CONTROLLER);
+      case 13:
+        return this.input.isControllerDown(Input.ANY_CONTROLLER);
+      case 14:
+        return this.input.isControllerLeft(Input.ANY_CONTROLLER);
+      case 15:
+        return this.input.isControllerRight(Input.ANY_CONTROLLER);
+      default:
+        return this.isAnyControllerButtonDown(button);
     }
-    
-    if (this.buttonMapping.controller) {
-      this.up |= this.input.isControllerUp(this.buttonMapping.controllerIndex);
-      this.down |= this.input.isControllerDown(this.buttonMapping.controllerIndex);
-      this.left |= this.input.isControllerLeft(this.buttonMapping.controllerIndex);
-      this.right |= this.input.isControllerRight(this.buttonMapping.controllerIndex);
-      this.fire |= this.input.isButtonPressed(
-          this.buttonMapping.controllerGrenade, this.buttonMapping.controllerIndex);
-      this.shoot |= this.input.isButtonPressed(
-          this.buttonMapping.controllerGun, this.buttonMapping.controllerIndex); 
+  }
+
+  private isAnyControllerButtonDown(button: any): boolean {
+    if (button < 0) {
+      return false;
     }
+    return this.input.isButtonPressed(button, Input.ANY_CONTROLLER);
+  }
+
+  private isControllerBindingPressed(button: any): boolean {
+    let pressed = false;
+    let control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
+    for(let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
+      pressed = this.input.isControlPressed(control, controller) || pressed;
+    }
+    return pressed;
+  }
+
+  private isMappedStartPressed(): boolean {
+    let pressed = this.input.isKeyPressed(this.buttonMapping.keyStart);
+    pressed = this.isControllerBindingPressed(this.buttonMapping.controllerStart) || pressed;
+    return pressed;
   }
 
   public reset(): void {
@@ -84,7 +113,7 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   }
 
   public isEnter(): boolean {
-    return this.input.isKeyPressed(Input.KEY_ENTER);
+    return this.isMappedStartPressed();
   }
 
   public isFullscreenTogglePressed(): boolean {
@@ -96,12 +125,12 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   }
 
   public isPause(): boolean {
-    return this.input.isKeyPressed(Input.KEY_P) 
-        | this.input.isKeyPressed(Input.KEY_ENTER);
+    return this.isMappedStartPressed();
   }
 
   public clearKeyPressedRecord(): void {
     this.input.clearKeyPressedRecord();
+    this.input.clearControlPressedRecord();
   }
 
   public update(): boolean {

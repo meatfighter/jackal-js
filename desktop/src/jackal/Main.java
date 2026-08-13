@@ -1070,6 +1070,7 @@ public class Main extends BasicGame {
       case '-':
         return "hyphen";
       case '@':
+      case '\u00a9':
         return "copyright";
       case ' ':
         return "space";

@@ -2212,6 +2212,9 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
       if (slickInput != null && slickInput.clearKeyPressedRecord != null) {
         slickInput.clearKeyPressedRecord();
       }
+      if (slickInput != null && slickInput.clearControlPressedRecord != null) {
+        slickInput.clearControlPressedRecord();
+      }
     }
   }
 
