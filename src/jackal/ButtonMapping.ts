@@ -5,6 +5,7 @@ import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, D
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 export class ButtonMapping {
 
+  public static readonly NO_BINDING: number = -1;
   public static readonly ACTION_UP: number = 0;
   public static readonly ACTION_DOWN: number = 1;
   public static readonly ACTION_LEFT: number = 2;
@@ -119,6 +120,9 @@ export class ButtonMapping {
   }
 
   public static getKeyText(key: any): string {
+    if (key == ButtonMapping.NO_BINDING) {
+      return "NONE";
+    }
     switch(key) {
       case Input.KEY_UP:
         return "UP";
@@ -162,6 +166,9 @@ export class ButtonMapping {
   }
 
   public static getGamepadButtonText(button: any): string {
+    if (button == ButtonMapping.NO_BINDING) {
+      return "GP-NONE";
+    }
     switch(button) {
       case 0:
         return "GP-A";

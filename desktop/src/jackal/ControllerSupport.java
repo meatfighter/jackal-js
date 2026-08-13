@@ -10,6 +10,11 @@ public final class ControllerSupport {
   private static final int GAMEPAD_BUTTON_CONTROL_OFFSET = 4;
   private static final int CONTROLLER_BUTTON_PRESSED_LIMIT
       = CONTROLLER_BUTTON_LIMIT - GAMEPAD_BUTTON_CONTROL_OFFSET;
+  private static final int GAMEPAD_AXIS_LIMIT = 16;
+  private static final float AXIS_THRESHOLD = 0.5f;
+  private static final float AXIS_RECENTER_THRESHOLD = 0.05f;
+  private static final int[] EXTRA_HORIZONTAL_AXES = {2, 6};
+  private static final int[] EXTRA_VERTICAL_AXES = {3, 7};
 
   private static final boolean[] controllerCandidateKnown
       = new boolean[CONTROLLER_INDEX_LIMIT];
@@ -17,6 +22,14 @@ public final class ControllerSupport {
       = new boolean[CONTROLLER_INDEX_LIMIT];
   private static final boolean[][] unsupportedControllerButtons
       = new boolean[CONTROLLER_INDEX_LIMIT][CONTROLLER_BUTTON_LIMIT];
+  private static final float[] extraAxisBaselines
+      = new float[CONTROLLER_INDEX_LIMIT * GAMEPAD_AXIS_LIMIT];
+
+  static {
+    for(int i = 0; i < extraAxisBaselines.length; i++) {
+      extraAxisBaselines[i] = Float.NaN;
+    }
+  }
 
   private ControllerSupport() {
   }
@@ -108,17 +121,116 @@ public final class ControllerSupport {
     try {
       switch(button) {
         case ButtonMapping.DEFAULT_CONTROLLER_UP:
-          return input.isControllerUp(controller);
+          return isControllerUp(input, controller)
+              || isExtraAxisUp(input, controller);
         case ButtonMapping.DEFAULT_CONTROLLER_DOWN:
-          return input.isControllerDown(controller);
+          return isControllerDown(input, controller)
+              || isExtraAxisDown(input, controller);
         case ButtonMapping.DEFAULT_CONTROLLER_LEFT:
-          return input.isControllerLeft(controller);
+          return isControllerLeft(input, controller)
+              || isExtraAxisLeft(input, controller);
         case ButtonMapping.DEFAULT_CONTROLLER_RIGHT:
-          return input.isControllerRight(controller);
+          return isControllerRight(input, controller)
+              || isExtraAxisRight(input, controller);
       }
     } catch(RuntimeException e) {
     }
     return false;
+  }
+
+  private static boolean isControllerUp(Input input, int controller) {
+    try {
+      return input.isControllerUp(controller);
+    } catch(RuntimeException e) {
+      return false;
+    }
+  }
+
+  private static boolean isControllerDown(Input input, int controller) {
+    try {
+      return input.isControllerDown(controller);
+    } catch(RuntimeException e) {
+      return false;
+    }
+  }
+
+  private static boolean isControllerLeft(Input input, int controller) {
+    try {
+      return input.isControllerLeft(controller);
+    } catch(RuntimeException e) {
+      return false;
+    }
+  }
+
+  private static boolean isControllerRight(Input input, int controller) {
+    try {
+      return input.isControllerRight(controller);
+    } catch(RuntimeException e) {
+      return false;
+    }
+  }
+
+  private static boolean isExtraAxisUp(Input input, int controller) {
+    return isAnyAxisLessThan(input, controller, EXTRA_VERTICAL_AXES,
+        -AXIS_THRESHOLD);
+  }
+
+  private static boolean isExtraAxisDown(Input input, int controller) {
+    return isAnyAxisGreaterThan(input, controller, EXTRA_VERTICAL_AXES,
+        AXIS_THRESHOLD);
+  }
+
+  private static boolean isExtraAxisLeft(Input input, int controller) {
+    return isAnyAxisLessThan(input, controller, EXTRA_HORIZONTAL_AXES,
+        -AXIS_THRESHOLD);
+  }
+
+  private static boolean isExtraAxisRight(Input input, int controller) {
+    return isAnyAxisGreaterThan(input, controller, EXTRA_HORIZONTAL_AXES,
+        AXIS_THRESHOLD);
+  }
+
+  private static boolean isAnyAxisLessThan(Input input, int controller,
+      int[] axes, float threshold) {
+    for(int i = 0; i < axes.length; i++) {
+      if (readExtraAxisValue(input, controller, axes[i]) < threshold) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isAnyAxisGreaterThan(Input input, int controller,
+      int[] axes, float threshold) {
+    for(int i = 0; i < axes.length; i++) {
+      if (readExtraAxisValue(input, controller, axes[i]) > threshold) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static float readExtraAxisValue(Input input, int controller,
+      int axis) {
+    try {
+      if (input.getAxisCount(controller) <= axis) {
+        return 0;
+      }
+      float value = input.getAxisValue(controller, axis);
+      int baselineIndex = controller * GAMEPAD_AXIS_LIMIT + axis;
+      float baseline = extraAxisBaselines[baselineIndex];
+      if (Float.isNaN(baseline)) {
+        baseline = value;
+        extraAxisBaselines[baselineIndex] = baseline;
+      }
+      if (Math.abs(value) <= AXIS_RECENTER_THRESHOLD) {
+        baseline = 0;
+        extraAxisBaselines[baselineIndex] = baseline;
+      }
+      return value - baseline;
+    } catch(RuntimeException e) {
+      return 0;
+    }
   }
 
   private static boolean isControllerButtonDown(Input input, int button,

@@ -26,6 +26,13 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public static readonly FADE_TIME: number = 11;
 
   public static readonly I_FADE_TIME: number = 1 / InputMode.FADE_TIME;
+  public static readonly ARM_DELAY: number = 8;
+  public static readonly CONTROLLER_INDEX_LIMIT: number = 16;
+  public static readonly GAMEPAD_AXIS_LIMIT: number = 16;
+  public static readonly AXIS_THRESHOLD: number = 0.5;
+  public static readonly AXIS_RECENTER_THRESHOLD: number = 0.05;
+  public static readonly EXTRA_HORIZONTAL_AXES: any[] = [2, 6];
+  public static readonly EXTRA_VERTICAL_AXES: any[] = [3, 7];
 
   public static readonly INPUT_TITLE: string = "INPUT";
   public static readonly INPUT_TITLE_X: number = (MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2;
@@ -81,6 +88,17 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public menu: any = null as any;
   public selectedIndex: number = 0;
   public listeningForInput: boolean = false;
+  public draftButtonMapping: any = null as any;
+  public assignedKeys: any = new Set();
+  public assignedControllerButtons: any = new Set();
+  public message: string = "";
+  public armDelay: number = 0;
+  public extraAxisBaselines: any[] = javaArray(
+      InputMode.CONTROLLER_INDEX_LIMIT * InputMode.GAMEPAD_AXIS_LIMIT, Number.NaN);
+  public extraAxisUpDown: boolean = false;
+  public extraAxisDownDown: boolean = false;
+  public extraAxisLeftDown: boolean = false;
+  public extraAxisRightDown: boolean = false;
 
   public init(main: any, gc: any): void {
 
@@ -140,7 +158,14 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     this.nameIndex = 0;
     this.delay = 0;
     this.menu = null;
+    this.draftButtonMapping = this.copyButtonMapping(this.buttonMapping);
+    this.assignedKeys.clear();
+    this.assignedControllerButtons.clear();
+    this.message = "";
+    this.armDelay = InputMode.ARM_DELAY;
+    this.resetExtraAxisBaselines();
     this.addInputListeners();
+    this.syncExtraAxisDirectionState();
     this.gc.getInput().clearKeyPressedRecord();
     this.gc.getInput().clearControlPressedRecord();
   }
@@ -164,28 +189,28 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   }
 
   public controllerLeftPressed(controllerIndex: any): void {
-    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT);
+    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT, controllerIndex);
   }
 
   public controllerLeftReleased(i: any): void {
   }
 
   public controllerRightPressed(controllerIndex: any): void {
-    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
+    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT, controllerIndex);
   }
 
   public controllerRightReleased(controllerIndex: any): void {
   }
 
   public controllerUpPressed(controllerIndex: any): void {
-    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP);
+    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP, controllerIndex);
   }
 
   public controllerUpReleased(controllerIndex: any): void {
   }
 
   public controllerDownPressed(controllerIndex: any): void {
-    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN);
+    this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN, controllerIndex);
   }
 
   public controllerDownReleased(controllerIndex: any): void {
@@ -218,27 +243,24 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
       return;
     }
 
-    if (!this.isControllerButtonAvailable(buttonIndex, this.getCurrentAction())) {
+    if (!this.bindDraftControllerButton(buttonIndex, controllerIndex)) {
+      this.message = "ALREADY USED";
       return;
     }
 
-    this.buttonMapping.controller = true;
-    this.buttonMapping.controllerIndex = controllerIndex;
-    this.bindControllerButton(buttonIndex);
     this.advance();
   }
 
-  private bindControllerDirection(buttonIndex: any): void {
+  private bindControllerDirection(buttonIndex: any, controllerIndex: any): void {
     if (this.state != InputMode.STATE_READING || this.isActionStep()) {
       return;
     }
 
-    if (!this.isControllerButtonAvailable(buttonIndex, this.getCurrentAction())) {
+    if (!this.bindDraftControllerButton(buttonIndex, controllerIndex)) {
+      this.message = "ALREADY USED";
       return;
     }
 
-    this.buttonMapping.controller = true;
-    this.bindControllerButton(buttonIndex);
     this.advance();
   }
 
@@ -252,118 +274,173 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
       return;
     }
 
-    if (!this.isKeyboardKeyAvailable(i, this.getCurrentAction())) {
+    if (!this.bindDraftKeyboardKey(i)) {
+      this.message = "ALREADY USED";
       return;
     }
 
-    this.bindKeyboardKey(i);
     this.advance();
   }
 
   public keyReleased(i: any, c: any): void {
   }
 
-  private bindKeyboardKey(i: any): void {
+  private bindDraftKeyboardKey(i: any): boolean {
+    if (this.assignedKeys.has(i)) {
+      return false;
+    }
+    this.clearDraftKey(i);
     switch(this.getCurrentAction()) {
       case ButtonMapping.ACTION_UP:
-        this.buttonMapping.keyUp = i;
+        this.draftButtonMapping.keyUp = i;
         break;
       case ButtonMapping.ACTION_DOWN:
-        this.buttonMapping.keyDown = i;
+        this.draftButtonMapping.keyDown = i;
         break;
       case ButtonMapping.ACTION_LEFT:
-        this.buttonMapping.keyLeft = i;
+        this.draftButtonMapping.keyLeft = i;
         break;
       case ButtonMapping.ACTION_RIGHT:
-        this.buttonMapping.keyRight = i;
+        this.draftButtonMapping.keyRight = i;
         break;
       case ButtonMapping.ACTION_GRENADE:
-        this.buttonMapping.keyGrenade = i;
+        this.draftButtonMapping.keyGrenade = i;
         break;
       case ButtonMapping.ACTION_GUN:
-        this.buttonMapping.gunKeyMapped = true;
-        this.buttonMapping.keyGun = i;
+        this.draftButtonMapping.gunKeyMapped = true;
+        this.draftButtonMapping.keyGun = i;
         break;
       case ButtonMapping.ACTION_START:
-        this.buttonMapping.keyStart = i;
+        this.draftButtonMapping.keyStart = i;
         break;
     }
-  }
-
-  private bindControllerButton(buttonIndex: any): void {
-    switch(this.getCurrentAction()) {
-      case ButtonMapping.ACTION_UP:
-        this.buttonMapping.controllerUp = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_DOWN:
-        this.buttonMapping.controllerDown = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_LEFT:
-        this.buttonMapping.controllerLeft = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_RIGHT:
-        this.buttonMapping.controllerRight = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GRENADE:
-        this.buttonMapping.controllerGrenade = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GUN:
-        this.buttonMapping.controllerGun = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_START:
-        this.buttonMapping.controllerStart = buttonIndex;
-        break;
-    }
-  }
-
-  private isKeyboardKeyAvailable(i: any, action: any): boolean {
-    if (action != ButtonMapping.ACTION_UP && this.buttonMapping.keyUp == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_DOWN && this.buttonMapping.keyDown == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_LEFT && this.buttonMapping.keyLeft == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_RIGHT && this.buttonMapping.keyRight == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GRENADE && this.buttonMapping.keyGrenade == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GUN && this.buttonMapping.keyGun == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_START && this.buttonMapping.keyStart == i) {
-      return false;
-    }
+    this.assignedKeys.add(i);
     return true;
   }
 
-  private isControllerButtonAvailable(buttonIndex: any, action: any): boolean {
-    if (action != ButtonMapping.ACTION_UP && this.buttonMapping.controllerUp == buttonIndex) {
+  private bindDraftControllerButton(buttonIndex: any, controllerIndex: any): boolean {
+    if (this.assignedControllerButtons.has(buttonIndex)) {
       return false;
     }
-    if (action != ButtonMapping.ACTION_DOWN && this.buttonMapping.controllerDown == buttonIndex) {
-      return false;
+    this.clearDraftControllerButton(buttonIndex);
+    this.draftButtonMapping.controller = true;
+    this.draftButtonMapping.controllerIndex = controllerIndex;
+    switch(this.getCurrentAction()) {
+      case ButtonMapping.ACTION_UP:
+        this.draftButtonMapping.controllerUp = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_DOWN:
+        this.draftButtonMapping.controllerDown = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_LEFT:
+        this.draftButtonMapping.controllerLeft = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_RIGHT:
+        this.draftButtonMapping.controllerRight = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_GRENADE:
+        this.draftButtonMapping.controllerGrenade = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_GUN:
+        this.draftButtonMapping.controllerGun = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_START:
+        this.draftButtonMapping.controllerStart = buttonIndex;
+        break;
     }
-    if (action != ButtonMapping.ACTION_LEFT && this.buttonMapping.controllerLeft == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_RIGHT && this.buttonMapping.controllerRight == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GRENADE && this.buttonMapping.controllerGrenade == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GUN && this.buttonMapping.controllerGun == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_START && this.buttonMapping.controllerStart == buttonIndex) {
-      return false;
-    }
+    this.assignedControllerButtons.add(buttonIndex);
     return true;
+  }
+
+  private copyButtonMapping(source: any): any {
+    let copy = new ButtonMapping();
+    copy.keyUp = source.keyUp;
+    copy.keyDown = source.keyDown;
+    copy.keyLeft = source.keyLeft;
+    copy.keyRight = source.keyRight;
+    copy.keyGrenade = source.keyGrenade;
+    copy.keyGun = source.keyGun;
+    copy.keyStart = source.keyStart;
+    copy.controller = source.controller;
+    copy.controllerIndex = source.controllerIndex;
+    copy.controllerUp = source.controllerUp;
+    copy.controllerDown = source.controllerDown;
+    copy.controllerLeft = source.controllerLeft;
+    copy.controllerRight = source.controllerRight;
+    copy.controllerGrenade = source.controllerGrenade;
+    copy.controllerGun = source.controllerGun;
+    copy.controllerStart = source.controllerStart;
+    copy.gunKeyMapped = source.gunKeyMapped;
+    return copy;
+  }
+
+  private clearDraftKey(key: any): void {
+    if (this.draftButtonMapping.keyUp == key) {
+      this.draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyDown == key) {
+      this.draftButtonMapping.keyDown = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyLeft == key) {
+      this.draftButtonMapping.keyLeft = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyRight == key) {
+      this.draftButtonMapping.keyRight = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyGrenade == key) {
+      this.draftButtonMapping.keyGrenade = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyGun == key) {
+      this.draftButtonMapping.keyGun = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.keyStart == key) {
+      this.draftButtonMapping.keyStart = ButtonMapping.NO_BINDING;
+    }
+  }
+
+  private clearDraftControllerButton(buttonIndex: any): void {
+    if (this.draftButtonMapping.controllerUp == buttonIndex) {
+      this.draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerDown == buttonIndex) {
+      this.draftButtonMapping.controllerDown = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerLeft == buttonIndex) {
+      this.draftButtonMapping.controllerLeft = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerRight == buttonIndex) {
+      this.draftButtonMapping.controllerRight = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerGrenade == buttonIndex) {
+      this.draftButtonMapping.controllerGrenade = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerGun == buttonIndex) {
+      this.draftButtonMapping.controllerGun = ButtonMapping.NO_BINDING;
+    }
+    if (this.draftButtonMapping.controllerStart == buttonIndex) {
+      this.draftButtonMapping.controllerStart = ButtonMapping.NO_BINDING;
+    }
+  }
+
+  private commitDraftButtonMapping(): void {
+    this.buttonMapping.keyUp = this.draftButtonMapping.keyUp;
+    this.buttonMapping.keyDown = this.draftButtonMapping.keyDown;
+    this.buttonMapping.keyLeft = this.draftButtonMapping.keyLeft;
+    this.buttonMapping.keyRight = this.draftButtonMapping.keyRight;
+    this.buttonMapping.keyGrenade = this.draftButtonMapping.keyGrenade;
+    this.buttonMapping.keyGun = this.draftButtonMapping.keyGun;
+    this.buttonMapping.keyStart = this.draftButtonMapping.keyStart;
+    this.buttonMapping.controller = this.draftButtonMapping.controller;
+    this.buttonMapping.controllerIndex = this.draftButtonMapping.controllerIndex;
+    this.buttonMapping.controllerUp = this.draftButtonMapping.controllerUp;
+    this.buttonMapping.controllerDown = this.draftButtonMapping.controllerDown;
+    this.buttonMapping.controllerLeft = this.draftButtonMapping.controllerLeft;
+    this.buttonMapping.controllerRight = this.draftButtonMapping.controllerRight;
+    this.buttonMapping.controllerGrenade = this.draftButtonMapping.controllerGrenade;
+    this.buttonMapping.controllerGun = this.draftButtonMapping.controllerGun;
+    this.buttonMapping.controllerStart = this.draftButtonMapping.controllerStart;
+    this.buttonMapping.gunKeyMapped = this.draftButtonMapping.gunKeyMapped;
+    this.draftButtonMapping = null;
   }
 
   private isActionStep(): boolean {
@@ -377,12 +454,142 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
   }
 
+  private bindExtraAxisDirectionPressed(): void {
+    if (this.state != InputMode.STATE_READING || this.isActionStep()) {
+      this.syncExtraAxisDirectionState();
+      return;
+    }
+    let buttonIndex = this.getPressedExtraAxisDirection();
+    if (buttonIndex != null) {
+      this.bindControllerDirection(buttonIndex, 0);
+    }
+  }
+
+  private getPressedExtraAxisDirection(): any {
+    if (this.isExtraAxisUpPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_UP;
+    }
+    if (this.isExtraAxisDownPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
+    }
+    if (this.isExtraAxisLeftPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
+    }
+    if (this.isExtraAxisRightPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+    }
+    return null;
+  }
+
+  private isExtraAxisUpDown(): boolean {
+    return this.isAnyAxisLessThan(InputMode.EXTRA_VERTICAL_AXES, -InputMode.AXIS_THRESHOLD);
+  }
+
+  private isExtraAxisDownDown(): boolean {
+    return this.isAnyAxisGreaterThan(InputMode.EXTRA_VERTICAL_AXES, InputMode.AXIS_THRESHOLD);
+  }
+
+  private isExtraAxisLeftDown(): boolean {
+    return this.isAnyAxisLessThan(InputMode.EXTRA_HORIZONTAL_AXES, -InputMode.AXIS_THRESHOLD);
+  }
+
+  private isExtraAxisRightDown(): boolean {
+    return this.isAnyAxisGreaterThan(InputMode.EXTRA_HORIZONTAL_AXES, InputMode.AXIS_THRESHOLD);
+  }
+
+  private isExtraAxisUpPressed(): boolean {
+    let down = this.isExtraAxisUpDown();
+    let pressed = down && !this.extraAxisUpDown;
+    this.extraAxisUpDown = down;
+    return pressed;
+  }
+
+  private isExtraAxisDownPressed(): boolean {
+    let down = this.isExtraAxisDownDown();
+    let pressed = down && !this.extraAxisDownDown;
+    this.extraAxisDownDown = down;
+    return pressed;
+  }
+
+  private isExtraAxisLeftPressed(): boolean {
+    let down = this.isExtraAxisLeftDown();
+    let pressed = down && !this.extraAxisLeftDown;
+    this.extraAxisLeftDown = down;
+    return pressed;
+  }
+
+  private isExtraAxisRightPressed(): boolean {
+    let down = this.isExtraAxisRightDown();
+    let pressed = down && !this.extraAxisRightDown;
+    this.extraAxisRightDown = down;
+    return pressed;
+  }
+
+  private isAnyAxisLessThan(axes: any, threshold: any): boolean {
+    for(let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
+      for(let i = 0; i < axes.length; i++) {
+        if (this.readExtraAxisValue(controller, axes[i]) < threshold) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private isAnyAxisGreaterThan(axes: any, threshold: any): boolean {
+    for(let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
+      for(let i = 0; i < axes.length; i++) {
+        if (this.readExtraAxisValue(controller, axes[i]) > threshold) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private readExtraAxisValue(controller: any, axis: any): number {
+    try {
+      let input = this.gc.getInput();
+      if (input.getAxisCount(controller) <= axis) {
+        return 0;
+      }
+      let value = input.getAxisValue(controller, axis);
+      let baselineIndex = controller * InputMode.GAMEPAD_AXIS_LIMIT + axis;
+      let baseline = this.extraAxisBaselines[baselineIndex];
+      if (Number.isNaN(baseline)) {
+        baseline = value;
+        this.extraAxisBaselines[baselineIndex] = baseline;
+      }
+      if (Math.abs(value) <= InputMode.AXIS_RECENTER_THRESHOLD) {
+        baseline = 0;
+        this.extraAxisBaselines[baselineIndex] = baseline;
+      }
+      return value - baseline;
+    } catch(e) {
+      return 0;
+    }
+  }
+
+  private resetExtraAxisBaselines(): void {
+    for(let i = 0; i < this.extraAxisBaselines.length; i++) {
+      this.extraAxisBaselines[i] = Number.NaN;
+    }
+  }
+
+  private syncExtraAxisDirectionState(): void {
+    this.extraAxisUpDown = this.isExtraAxisUpDown();
+    this.extraAxisDownDown = this.isExtraAxisDownDown();
+    this.extraAxisLeftDown = this.isExtraAxisLeftDown();
+    this.extraAxisRightDown = this.isExtraAxisRightDown();
+  }
+
   private getCurrentAction(): number {
     return InputMode.ACTIONS[this.nameIndex];
   }
 
   private advance(): void {
     this.main.playSoundAlways(this.main.bulletHitSound);
+    this.message = "";
     this.state = InputMode.STATE_READ_FADE;
     this.delay = InputMode.FADE_TIME;
   }
@@ -392,15 +599,26 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
       case InputMode.STATE_MENU:
         this.menu.update();
         break;
+      case InputMode.STATE_READING:
+        if (this.armDelay > 0) {
+          this.syncExtraAxisDirectionState();
+          this.armDelay--;
+        } else {
+          this.bindExtraAxisDirectionPressed();
+        }
+        break;
       case InputMode.STATE_READ_FADE:
         if (--this.delay == 0) {
           if (++this.nameIndex == InputMode.NAMES.length) {
             this.removeInputListeners();
             this.state = InputMode.STATE_MENU;
+            this.commitDraftButtonMapping();
             this.main.notifyInputMappingChanged();
             this.createMenu(InputMode.OPTION_DONE);
           } else {
             this.state = InputMode.STATE_READING;
+            this.armDelay = InputMode.ARM_DELAY;
+            this.syncExtraAxisDirectionState();
           }
         }
         break;
@@ -444,6 +662,14 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
       this.main.drawString(InputMode.NAMES[this.nameIndex], InputMode.NAME_XS[this.nameIndex],
           464, MainConstants.FONT_ORANGE_GRAY);
     }
+    if (this.state == InputMode.STATE_READING && this.message.length > 0) {
+      this.main.drawString(this.message, this.centerStringX(this.message), 560,
+          MainConstants.FONT_GRAY);
+    }
+  }
+
+  private centerStringX(text: any): number {
+    return (MainConstants.DISPLAY_WIDTH - (text.length << 5)) / 2;
   }
 
   public render(gc: any, g: any): void {

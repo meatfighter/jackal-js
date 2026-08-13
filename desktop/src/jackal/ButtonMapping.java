@@ -4,6 +4,7 @@ import org.newdawn.slick.*;
 
 public class ButtonMapping {
 
+  public static final int NO_BINDING = -1;
   public static final int ACTION_UP = 0;
   public static final int ACTION_DOWN = 1;
   public static final int ACTION_LEFT = 2;
@@ -118,6 +119,9 @@ public class ButtonMapping {
   }
 
   public static String getKeyText(int key) {
+    if (key == NO_BINDING) {
+      return "NONE";
+    }
     switch(key) {
       case Input.KEY_UP:
         return "UP";
@@ -161,6 +165,9 @@ public class ButtonMapping {
   }
 
   public static String getGamepadButtonText(int button) {
+    if (button == NO_BINDING) {
+      return "GP-NONE";
+    }
     switch(button) {
       case 0:
         return "GP-A";

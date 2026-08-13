@@ -1,5 +1,7 @@
 package jackal;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.newdawn.slick.*;
 
 public class InputMode implements IMode, ControllerListener, 
@@ -19,6 +21,13 @@ public class InputMode implements IMode, ControllerListener,
   public static final int FADE_TIME = 11;
   
   public static final float I_FADE_TIME = 1f / FADE_TIME;
+  public static final int ARM_DELAY = 8;
+  public static final int CONTROLLER_INDEX_LIMIT = 16;
+  public static final int GAMEPAD_AXIS_LIMIT = 16;
+  public static final float AXIS_THRESHOLD = 0.5f;
+  public static final float AXIS_RECENTER_THRESHOLD = 0.05f;
+  public static final int[] EXTRA_HORIZONTAL_AXES = {2, 6};
+  public static final int[] EXTRA_VERTICAL_AXES = {3, 7};
 
   public static final String INPUT_TITLE = "INPUT";
   public static final float INPUT_TITLE_X
@@ -75,6 +84,17 @@ public class InputMode implements IMode, ControllerListener,
   public Menu menu;
   public int selectedIndex;
   public boolean listeningForInput;
+  public ButtonMapping draftButtonMapping;
+  public Set<Integer> assignedKeys = new HashSet<Integer>();
+  public Set<Integer> assignedControllerButtons = new HashSet<Integer>();
+  public String message = "";
+  public int armDelay;
+  public float[] extraAxisBaselines
+      = new float[CONTROLLER_INDEX_LIMIT * GAMEPAD_AXIS_LIMIT];
+  public boolean extraAxisUpDown;
+  public boolean extraAxisDownDown;
+  public boolean extraAxisLeftDown;
+  public boolean extraAxisRightDown;
   
   @Override
   public void init(Main main, GameContainer gc) throws SlickException {
@@ -136,7 +156,14 @@ public class InputMode implements IMode, ControllerListener,
     nameIndex = 0;
     delay = 0;
     menu = null;
+    draftButtonMapping = copyButtonMapping(buttonMapping);
+    assignedKeys.clear();
+    assignedControllerButtons.clear();
+    message = "";
+    armDelay = ARM_DELAY;
+    resetExtraAxisBaselines();
     addInputListeners();
+    syncExtraAxisDirectionState();
     gc.getInput().clearKeyPressedRecord();
     gc.getInput().clearControlPressedRecord();
   }
@@ -162,7 +189,8 @@ public class InputMode implements IMode, ControllerListener,
   @Override
   public void controllerLeftPressed(int controllerIndex) {
     if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT);
+      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT,
+          controllerIndex);
     }
   }
 
@@ -173,7 +201,8 @@ public class InputMode implements IMode, ControllerListener,
   @Override
   public void controllerRightPressed(int controllerIndex) {
     if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
+      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT,
+          controllerIndex);
     }
   }
 
@@ -184,7 +213,8 @@ public class InputMode implements IMode, ControllerListener,
   @Override
   public void controllerUpPressed(int controllerIndex) {
     if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP);
+      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP,
+          controllerIndex);
     }
   }
 
@@ -195,7 +225,8 @@ public class InputMode implements IMode, ControllerListener,
   @Override
   public void controllerDownPressed(int controllerIndex) {
     if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN);
+      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN,
+          controllerIndex);
     }
   }
 
@@ -241,27 +272,24 @@ public class InputMode implements IMode, ControllerListener,
       return;
     }
 
-    if (!isControllerButtonAvailable(buttonIndex, getCurrentAction())) {
+    if (!bindDraftControllerButton(buttonIndex, controllerIndex)) {
+      message = "ALREADY USED";
       return;
     }
 
-    buttonMapping.controller = true;
-    buttonMapping.controllerIndex = controllerIndex;  
-    bindControllerButton(buttonIndex);
     advance();
   }
 
-  private void bindControllerDirection(int buttonIndex) {
+  private void bindControllerDirection(int buttonIndex, int controllerIndex) {
     if (state != STATE_READING || isActionStep()) {
       return;
     }
 
-    if (!isControllerButtonAvailable(buttonIndex, getCurrentAction())) {
+    if (!bindDraftControllerButton(buttonIndex, controllerIndex)) {
+      message = "ALREADY USED";
       return;
     }
 
-    buttonMapping.controller = true;
-    bindControllerButton(buttonIndex);
     advance();
   }
 
@@ -276,11 +304,11 @@ public class InputMode implements IMode, ControllerListener,
       return;
     }
 
-    if (!isKeyboardKeyAvailable(i, getCurrentAction())) {
+    if (!bindDraftKeyboardKey(i)) {
+      message = "ALREADY USED";
       return;
     }
 
-    bindKeyboardKey(i);
     advance();
   }
 
@@ -288,115 +316,163 @@ public class InputMode implements IMode, ControllerListener,
   public void keyReleased(int i, char c) {
   }
 
-  private void bindKeyboardKey(int i) {
+  private boolean bindDraftKeyboardKey(int i) {
+    if (assignedKeys.contains(i)) {
+      return false;
+    }
+    clearDraftKey(i);
     switch(getCurrentAction()) {
       case ButtonMapping.ACTION_UP:
-        buttonMapping.keyUp = i;
+        draftButtonMapping.keyUp = i;
         break;
       case ButtonMapping.ACTION_DOWN:
-        buttonMapping.keyDown = i;
+        draftButtonMapping.keyDown = i;
         break;
       case ButtonMapping.ACTION_LEFT:
-        buttonMapping.keyLeft = i;
+        draftButtonMapping.keyLeft = i;
         break;
       case ButtonMapping.ACTION_RIGHT:
-        buttonMapping.keyRight = i;
+        draftButtonMapping.keyRight = i;
         break;
       case ButtonMapping.ACTION_GRENADE:
-        buttonMapping.keyGrenade = i;
+        draftButtonMapping.keyGrenade = i;
         break;
       case ButtonMapping.ACTION_GUN:
-        buttonMapping.gunKeyMapped = true;
-        buttonMapping.keyGun = i;
+        draftButtonMapping.gunKeyMapped = true;
+        draftButtonMapping.keyGun = i;
         break;
       case ButtonMapping.ACTION_START:
-        buttonMapping.keyStart = i;
+        draftButtonMapping.keyStart = i;
         break;
     }
-  }
-
-  private void bindControllerButton(int buttonIndex) {
-    switch(getCurrentAction()) {
-      case ButtonMapping.ACTION_UP:
-        buttonMapping.controllerUp = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_DOWN:
-        buttonMapping.controllerDown = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_LEFT:
-        buttonMapping.controllerLeft = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_RIGHT:
-        buttonMapping.controllerRight = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GRENADE:
-        buttonMapping.controllerGrenade = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GUN:
-        buttonMapping.controllerGun = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_START:
-        buttonMapping.controllerStart = buttonIndex;
-        break;
-    }
-  }
-
-  private boolean isKeyboardKeyAvailable(int i, int action) {
-    if (action != ButtonMapping.ACTION_UP && buttonMapping.keyUp == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_DOWN && buttonMapping.keyDown == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_LEFT && buttonMapping.keyLeft == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_RIGHT && buttonMapping.keyRight == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GRENADE 
-        && buttonMapping.keyGrenade == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GUN && buttonMapping.keyGun == i) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_START && buttonMapping.keyStart == i) {
-      return false;
-    }
+    assignedKeys.add(i);
     return true;
   }
 
-  private boolean isControllerButtonAvailable(int buttonIndex, int action) {
-    if (action != ButtonMapping.ACTION_UP 
-        && buttonMapping.controllerUp == buttonIndex) {
+  private boolean bindDraftControllerButton(int buttonIndex,
+      int controllerIndex) {
+    if (assignedControllerButtons.contains(buttonIndex)) {
       return false;
     }
-    if (action != ButtonMapping.ACTION_DOWN 
-        && buttonMapping.controllerDown == buttonIndex) {
-      return false;
+    clearDraftControllerButton(buttonIndex);
+    draftButtonMapping.controller = true;
+    draftButtonMapping.controllerIndex = controllerIndex;
+    switch(getCurrentAction()) {
+      case ButtonMapping.ACTION_UP:
+        draftButtonMapping.controllerUp = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_DOWN:
+        draftButtonMapping.controllerDown = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_LEFT:
+        draftButtonMapping.controllerLeft = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_RIGHT:
+        draftButtonMapping.controllerRight = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_GRENADE:
+        draftButtonMapping.controllerGrenade = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_GUN:
+        draftButtonMapping.controllerGun = buttonIndex;
+        break;
+      case ButtonMapping.ACTION_START:
+        draftButtonMapping.controllerStart = buttonIndex;
+        break;
     }
-    if (action != ButtonMapping.ACTION_LEFT 
-        && buttonMapping.controllerLeft == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_RIGHT 
-        && buttonMapping.controllerRight == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GRENADE 
-        && buttonMapping.controllerGrenade == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_GUN 
-        && buttonMapping.controllerGun == buttonIndex) {
-      return false;
-    }
-    if (action != ButtonMapping.ACTION_START 
-        && buttonMapping.controllerStart == buttonIndex) {
-      return false;
-    }
+    assignedControllerButtons.add(buttonIndex);
     return true;
+  }
+
+  private ButtonMapping copyButtonMapping(ButtonMapping source) {
+    ButtonMapping copy = new ButtonMapping();
+    copy.keyUp = source.keyUp;
+    copy.keyDown = source.keyDown;
+    copy.keyLeft = source.keyLeft;
+    copy.keyRight = source.keyRight;
+    copy.keyGrenade = source.keyGrenade;
+    copy.keyGun = source.keyGun;
+    copy.keyStart = source.keyStart;
+    copy.controller = source.controller;
+    copy.controllerIndex = source.controllerIndex;
+    copy.controllerUp = source.controllerUp;
+    copy.controllerDown = source.controllerDown;
+    copy.controllerLeft = source.controllerLeft;
+    copy.controllerRight = source.controllerRight;
+    copy.controllerGrenade = source.controllerGrenade;
+    copy.controllerGun = source.controllerGun;
+    copy.controllerStart = source.controllerStart;
+    copy.gunKeyMapped = source.gunKeyMapped;
+    return copy;
+  }
+
+  private void clearDraftKey(int key) {
+    if (draftButtonMapping.keyUp == key) {
+      draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyDown == key) {
+      draftButtonMapping.keyDown = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyLeft == key) {
+      draftButtonMapping.keyLeft = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyRight == key) {
+      draftButtonMapping.keyRight = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyGrenade == key) {
+      draftButtonMapping.keyGrenade = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyGun == key) {
+      draftButtonMapping.keyGun = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.keyStart == key) {
+      draftButtonMapping.keyStart = ButtonMapping.NO_BINDING;
+    }
+  }
+
+  private void clearDraftControllerButton(int buttonIndex) {
+    if (draftButtonMapping.controllerUp == buttonIndex) {
+      draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerDown == buttonIndex) {
+      draftButtonMapping.controllerDown = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerLeft == buttonIndex) {
+      draftButtonMapping.controllerLeft = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerRight == buttonIndex) {
+      draftButtonMapping.controllerRight = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerGrenade == buttonIndex) {
+      draftButtonMapping.controllerGrenade = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerGun == buttonIndex) {
+      draftButtonMapping.controllerGun = ButtonMapping.NO_BINDING;
+    }
+    if (draftButtonMapping.controllerStart == buttonIndex) {
+      draftButtonMapping.controllerStart = ButtonMapping.NO_BINDING;
+    }
+  }
+
+  private void commitDraftButtonMapping() {
+    buttonMapping.keyUp = draftButtonMapping.keyUp;
+    buttonMapping.keyDown = draftButtonMapping.keyDown;
+    buttonMapping.keyLeft = draftButtonMapping.keyLeft;
+    buttonMapping.keyRight = draftButtonMapping.keyRight;
+    buttonMapping.keyGrenade = draftButtonMapping.keyGrenade;
+    buttonMapping.keyGun = draftButtonMapping.keyGun;
+    buttonMapping.keyStart = draftButtonMapping.keyStart;
+    buttonMapping.controller = draftButtonMapping.controller;
+    buttonMapping.controllerIndex = draftButtonMapping.controllerIndex;
+    buttonMapping.controllerUp = draftButtonMapping.controllerUp;
+    buttonMapping.controllerDown = draftButtonMapping.controllerDown;
+    buttonMapping.controllerLeft = draftButtonMapping.controllerLeft;
+    buttonMapping.controllerRight = draftButtonMapping.controllerRight;
+    buttonMapping.controllerGrenade = draftButtonMapping.controllerGrenade;
+    buttonMapping.controllerGun = draftButtonMapping.controllerGun;
+    buttonMapping.controllerStart = draftButtonMapping.controllerStart;
+    buttonMapping.gunKeyMapped = draftButtonMapping.gunKeyMapped;
+    draftButtonMapping = null;
   }
 
   private boolean isActionStep() {
@@ -411,12 +487,146 @@ public class InputMode implements IMode, ControllerListener,
         && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
   }
 
+  private void bindExtraAxisDirectionPressed() {
+    if (state != STATE_READING || isActionStep()) {
+      syncExtraAxisDirectionState();
+      return;
+    }
+    int buttonIndex = getPressedExtraAxisDirection();
+    if (buttonIndex != ButtonMapping.NO_BINDING) {
+      bindControllerDirection(buttonIndex, 0);
+    }
+  }
+
+  private int getPressedExtraAxisDirection() {
+    if (isExtraAxisUpPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_UP;
+    }
+    if (isExtraAxisDownPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
+    }
+    if (isExtraAxisLeftPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
+    }
+    if (isExtraAxisRightPressed()) {
+      return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+    }
+    return ButtonMapping.NO_BINDING;
+  }
+
+  private boolean isExtraAxisUpDown() {
+    return isAnyAxisLessThan(EXTRA_VERTICAL_AXES, -AXIS_THRESHOLD);
+  }
+
+  private boolean isExtraAxisDownDown() {
+    return isAnyAxisGreaterThan(EXTRA_VERTICAL_AXES, AXIS_THRESHOLD);
+  }
+
+  private boolean isExtraAxisLeftDown() {
+    return isAnyAxisLessThan(EXTRA_HORIZONTAL_AXES, -AXIS_THRESHOLD);
+  }
+
+  private boolean isExtraAxisRightDown() {
+    return isAnyAxisGreaterThan(EXTRA_HORIZONTAL_AXES, AXIS_THRESHOLD);
+  }
+
+  private boolean isExtraAxisUpPressed() {
+    boolean down = isExtraAxisUpDown();
+    boolean pressed = down && !extraAxisUpDown;
+    extraAxisUpDown = down;
+    return pressed;
+  }
+
+  private boolean isExtraAxisDownPressed() {
+    boolean down = isExtraAxisDownDown();
+    boolean pressed = down && !extraAxisDownDown;
+    extraAxisDownDown = down;
+    return pressed;
+  }
+
+  private boolean isExtraAxisLeftPressed() {
+    boolean down = isExtraAxisLeftDown();
+    boolean pressed = down && !extraAxisLeftDown;
+    extraAxisLeftDown = down;
+    return pressed;
+  }
+
+  private boolean isExtraAxisRightPressed() {
+    boolean down = isExtraAxisRightDown();
+    boolean pressed = down && !extraAxisRightDown;
+    extraAxisRightDown = down;
+    return pressed;
+  }
+
+  private boolean isAnyAxisLessThan(int[] axes, float threshold) {
+    for(int controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
+      if (ControllerSupport.isGameController(gc.getInput(), controller)) {
+        for(int i = 0; i < axes.length; i++) {
+          if (readExtraAxisValue(controller, axes[i]) < threshold) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean isAnyAxisGreaterThan(int[] axes, float threshold) {
+    for(int controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
+      if (ControllerSupport.isGameController(gc.getInput(), controller)) {
+        for(int i = 0; i < axes.length; i++) {
+          if (readExtraAxisValue(controller, axes[i]) > threshold) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private float readExtraAxisValue(int controller, int axis) {
+    try {
+      Input input = gc.getInput();
+      if (input.getAxisCount(controller) <= axis) {
+        return 0;
+      }
+      float value = input.getAxisValue(controller, axis);
+      int baselineIndex = controller * GAMEPAD_AXIS_LIMIT + axis;
+      float baseline = extraAxisBaselines[baselineIndex];
+      if (Float.isNaN(baseline)) {
+        baseline = value;
+        extraAxisBaselines[baselineIndex] = baseline;
+      }
+      if (Math.abs(value) <= AXIS_RECENTER_THRESHOLD) {
+        baseline = 0;
+        extraAxisBaselines[baselineIndex] = baseline;
+      }
+      return value - baseline;
+    } catch(RuntimeException e) {
+      return 0;
+    }
+  }
+
+  private void resetExtraAxisBaselines() {
+    for(int i = 0; i < extraAxisBaselines.length; i++) {
+      extraAxisBaselines[i] = Float.NaN;
+    }
+  }
+
+  private void syncExtraAxisDirectionState() {
+    extraAxisUpDown = isExtraAxisUpDown();
+    extraAxisDownDown = isExtraAxisDownDown();
+    extraAxisLeftDown = isExtraAxisLeftDown();
+    extraAxisRightDown = isExtraAxisRightDown();
+  }
+
   private int getCurrentAction() {
     return ACTIONS[nameIndex];
   }
   
   private void advance() {
     main.playSoundAlways(main.bulletHitSound);
+    message = "";
     state = STATE_READ_FADE;
     delay = FADE_TIME;
   }
@@ -427,14 +637,25 @@ public class InputMode implements IMode, ControllerListener,
       case STATE_MENU:
         menu.update();
         break;
+      case STATE_READING:
+        if (armDelay > 0) {
+          syncExtraAxisDirectionState();
+          armDelay--;
+        } else {
+          bindExtraAxisDirectionPressed();
+        }
+        break;
       case STATE_READ_FADE:
-        if (--delay == 0) {          
+        if (--delay == 0) {
           if (++nameIndex == NAMES.length) {
             removeInputListeners();
             state = STATE_MENU;
+            commitDraftButtonMapping();
             createMenu(OPTION_DONE);
           } else {
             state = STATE_READING;
+            armDelay = ARM_DELAY;
+            syncExtraAxisDirectionState();
           }
         }
         break;
@@ -474,9 +695,16 @@ public class InputMode implements IMode, ControllerListener,
       main.drawStringAlpha(NAMES[nameIndex], NAME_XS[nameIndex], 464, 
           Main.FONT_ORANGE_GRAY, delay * I_FADE_TIME);
     } else {
-      main.drawString(NAMES[nameIndex], NAME_XS[nameIndex], 464, 
+      main.drawString(NAMES[nameIndex], NAME_XS[nameIndex], 464,
           Main.FONT_ORANGE_GRAY);
     }
+    if (state == STATE_READING && message.length() > 0) {
+      main.drawString(message, centerStringX(message), 560, Main.FONT_GRAY);
+    }
+  }
+
+  private float centerStringX(String text) {
+    return (Main.DISPLAY_WIDTH - (text.length() << 5)) / 2f;
   }
 
   @Override
