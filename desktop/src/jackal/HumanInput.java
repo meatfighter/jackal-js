@@ -75,7 +75,8 @@ public class HumanInput implements IInput {
   }
 
   public boolean isEnter() {
-    return isMappedStartPressed();
+    return isMappedStartPressed()
+        || ControllerSupport.isNonDirectionalButtonPressed(input, buttonMapping);
   }
 
   public boolean isFullscreenTogglePressed() {

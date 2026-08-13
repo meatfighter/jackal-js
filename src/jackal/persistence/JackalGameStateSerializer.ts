@@ -1,11 +1,18 @@
 import type { GameContainer } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
+import { BossGarage } from "../BossGarage.js";
+import { EnemyBullet } from "../EnemyBullet.js";
+import { FloorGun } from "../FloorGun.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
 import { GameMode } from "../GameMode.js";
 import { KonamiCode } from "../KonamiCode.js";
 import { Main } from "../Main.js";
 import { Modes } from "../Modes.js";
 import { Player } from "../Player.js";
+import { RotatingGun } from "../RotatingGun.js";
+import { StatueMissile } from "../StatueMissile.js";
+import { StatueSeekerMissile } from "../StatueSeekerMissile.js";
+import { TileDebris } from "../TileDebris.js";
 import {
     GAME_STATE_VERSION,
     type EncodedRecord,
@@ -93,8 +100,20 @@ const SKIPPED_INSTANCE_FIELDS = new Set([
     "enemies",
     "solids",
     "mines",
-    "player"
+    "player",
+    "mask",
+    "panel",
+    "sprite",
+    "sprites",
+    "vehicle"
 ]);
+
+const RUNTIME_ENEMY_BULLET_SPRITE_FIELD = "__jackalEnemyBulletSprite";
+const RUNTIME_FLOOR_GUN_PLAIN_FIELD = "__jackalFloorGunPlain";
+const RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD = "__jackalTileDebrisSpriteTile";
+const ENEMY_BULLET_SPRITE_CANNONBALL = "cannonball";
+const ENEMY_BULLET_SPRITE_WHITE = "white";
+const ENEMY_BULLET_SPRITE_YELLOW = "yellow";
 
 const SONG_IDS = [
     "bossSong",
@@ -230,10 +249,12 @@ export class JackalGameStateSerializer {
         if (id === undefined) {
             throw new Error(`Unregistered Jackal entity type: ${type}`);
         }
+        const fields = this.encodeObjectFields(entity, context);
+        this.encodeEntityRuntimeFields(entity, fields, context);
         return {
             id,
             type,
-            fields: this.encodeObjectFields(entity, context)
+            fields
         };
     }
 
@@ -324,6 +345,110 @@ export class JackalGameStateSerializer {
         mutableEntity.enemies = gameMode.enemies;
         mutableEntity.mines = gameMode.mines;
         mutableEntity.player = gameMode.player;
+        this.restoreEntityRuntimeImages(mutableEntity, main, gameMode);
+        this.clearEntityRuntimeFields(mutableEntity);
+    }
+
+    private encodeEntityRuntimeFields(entity: object, fields: EncodedRecord, context: EntityContext): void {
+        const mutableEntity = entity as any;
+        if (entity instanceof EnemyBullet) {
+            fields[RUNTIME_ENEMY_BULLET_SPRITE_FIELD] = this.enemyBulletSpriteId(mutableEntity.sprite, context.main);
+        } else if (entity instanceof FloorGun) {
+            fields[RUNTIME_FLOOR_GUN_PLAIN_FIELD] = this.floorGunUsesPlainSprites(mutableEntity, context.main);
+        } else if (entity instanceof TileDebris) {
+            fields[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD] = this.indexOfReference(context.gameMode.tiles, mutableEntity.sprite, "TileDebris sprite");
+        }
+    }
+
+    private restoreEntityRuntimeImages(entity: any, main: Main, gameMode: GameMode): void {
+        const mutableEntity = entity as any;
+        if (entity instanceof RotatingGun) {
+            switch (mutableEntity.type) {
+                case RotatingGun.TYPE_GREEN:
+                    mutableEntity.sprites = main.greenGuns;
+                    break;
+                case RotatingGun.TYPE_BROWN:
+                    mutableEntity.sprites = main.brownGuns;
+                    break;
+                default:
+                    mutableEntity.sprites = main.grayGuns;
+                    break;
+            }
+        } else if (entity instanceof EnemyBullet) {
+            mutableEntity.sprite = this.enemyBulletSpriteById(main, mutableEntity[RUNTIME_ENEMY_BULLET_SPRITE_FIELD]);
+        } else if (entity instanceof FloorGun) {
+            const plain = mutableEntity[RUNTIME_FLOOR_GUN_PLAIN_FIELD] === true;
+            mutableEntity.mask = plain ? main.plainFloorGuns[0] : main.floorGuns[6];
+            mutableEntity.panel = plain ? main.plainFloorGuns[1] : main.floorGuns[7];
+        } else if (entity instanceof StatueMissile) {
+            mutableEntity.sprite = mutableEntity.right ? main.statueMissiles[0] : main.statueMissiles[1];
+        } else if (entity instanceof StatueSeekerMissile) {
+            mutableEntity.sprite = main.statueMissiles[0];
+        } else if (entity instanceof TileDebris) {
+            const tile = mutableEntity[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD];
+            if (Number.isInteger(tile) && tile >= 0 && tile < gameMode.tiles.length) {
+                mutableEntity.sprite = gameMode.tiles[tile];
+            } else {
+                mutableEntity.sprite = gameMode.tiles[gameMode.tileMap[mutableEntity.Y][mutableEntity.X]];
+            }
+        } else if (entity instanceof BossGarage) {
+            if (mutableEntity.state === BossGarage.STATE_CLOSED) {
+                mutableEntity.vehicle = null;
+            } else {
+                mutableEntity.vehicle = mutableEntity.isBrownTank ? main.brownTanks : main.grayTanks;
+            }
+        }
+    }
+
+    private clearEntityRuntimeFields(entity: any): void {
+        delete entity[RUNTIME_ENEMY_BULLET_SPRITE_FIELD];
+        delete entity[RUNTIME_FLOOR_GUN_PLAIN_FIELD];
+        delete entity[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD];
+    }
+
+    private enemyBulletSpriteId(sprite: unknown, main: Main): string {
+        if (sprite === main.cannonball) {
+            return ENEMY_BULLET_SPRITE_CANNONBALL;
+        }
+        if (sprite === main.whiteBullet) {
+            return ENEMY_BULLET_SPRITE_WHITE;
+        }
+        if (sprite === main.yellowBullet) {
+            return ENEMY_BULLET_SPRITE_YELLOW;
+        }
+        throw new Error("Unable to identify EnemyBullet sprite for game-state save.");
+    }
+
+    private enemyBulletSpriteById(main: Main, id: unknown): unknown {
+        switch (id) {
+            case ENEMY_BULLET_SPRITE_CANNONBALL:
+                return main.cannonball;
+            case ENEMY_BULLET_SPRITE_WHITE:
+                return main.whiteBullet;
+            case ENEMY_BULLET_SPRITE_YELLOW:
+                return main.yellowBullet;
+            default:
+                throw new Error("Unsupported EnemyBullet sprite in saved game state.");
+        }
+    }
+
+    private floorGunUsesPlainSprites(entity: any, main: Main): boolean {
+        if (entity.mask === main.plainFloorGuns[0] && entity.panel === main.plainFloorGuns[1]) {
+            return true;
+        }
+        if (entity.mask === main.floorGuns[6] && entity.panel === main.floorGuns[7]) {
+            return false;
+        }
+        throw new Error("Unable to identify FloorGun sprite set for game-state save.");
+    }
+
+    private indexOfReference(values: unknown[], value: unknown, label: string): number {
+        for (let i = 0; i < values.length; i++) {
+            if (values[i] === value) {
+                return i;
+            }
+        }
+        throw new Error(`Unable to identify ${label} for game-state save.`);
     }
 
     private encodeNamedFields(source: object, names: string[], context: EntityContext): EncodedRecord {

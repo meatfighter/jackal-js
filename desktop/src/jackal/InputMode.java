@@ -27,7 +27,7 @@ public class InputMode implements IMode, ControllerListener,
   public static final float INPUT_MAPPING_Y = 192;
   public static final float INPUT_MAPPING_ROW_HEIGHT = 64;
   public static final float INPUT_MENU_X = 416;
-  public static final float INPUT_MENU_Y = 640;
+  public static final float INPUT_MENU_Y = 672;
 
   public static final int[] ACTIONS = {
     ButtonMapping.ACTION_UP,
@@ -88,8 +88,8 @@ public class InputMode implements IMode, ControllerListener,
   }
 
   private void createMenu(int selectedIndex) {
-    menu = new Menu(INPUT_MENU_X, INPUT_MENU_Y, main, selectedIndex, 
-        Menu.ICON_TANK, this, "CHANGE", "RESET", "DONE");
+    menu = new Menu(INPUT_MENU_X, INPUT_MENU_Y, main, selectedIndex,
+        Menu.ICON_BROWN_TANK, this, "CHANGE", "RESET", "DONE");
   }
   
   @Override

@@ -39,6 +39,7 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
   public static readonly ICON_MISSILE: number = 2;
   public static readonly ICON_EXPLOSION: number = 3;
   public static readonly ICON_TANK: number = 4;
+  public static readonly ICON_BROWN_TANK: number = 5;
   
   private static readonly SELECT_STATE_STATIONARY: number = 0;
   private static readonly SELECT_STATE_ACCELERATING: number = 1;
@@ -188,6 +189,9 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
         break;
       case Menu.ICON_TANK:
         this.main.drawRotated(this.main.bossBlueTanks[0][0], -72, this.iconY, 0);
+        break;
+      case Menu.ICON_BROWN_TANK:
+        this.main.drawRotated(this.main.brownTanks[0], -72, this.iconY, 0);
         break;
     }
     this.main.popGraphics();

@@ -3,6 +3,7 @@
 // Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import { ButtonMapping } from "./ButtonMapping.js";
 import { IInput } from "./IInput.js";
 export class HumanInput implements IInput {  public constructor(arg0?: any, arg1?: any) {
     const argCount = arguments.length;
@@ -21,6 +22,7 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
 
   private static readonly CONTROLLER_INDEX_LIMIT: number = 16;
   private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET: number = 4;
+  private static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = 100;
 
   private buttonMapping: any = null as any;
   private input: any = null as any;
@@ -85,6 +87,31 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
     return pressed;
   }
 
+  private isAnyNonDirectionalControllerButtonPressed(): boolean {
+    let pressed = false;
+    for(let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
+      for(let button = 0; button < HumanInput.GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
+        if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
+          pressed = this.input.isControlPressed(
+              HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
+        }
+      }
+    }
+    return pressed;
+  }
+
+  private isMappedDirectionButton(button: any): boolean {
+    return this.buttonMapping.controllerUp == button
+        || this.buttonMapping.controllerDown == button
+        || this.buttonMapping.controllerLeft == button
+        || this.buttonMapping.controllerRight == button;
+  }
+
+  private isDirectionalGamepadButton(button: any): boolean {
+    return button >= ButtonMapping.DEFAULT_CONTROLLER_UP
+        && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+  }
+
   public reset(): void {
   }
 
@@ -113,7 +140,7 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   }
 
   public isEnter(): boolean {
-    return this.isMappedStartPressed();
+    return this.isMappedStartPressed() || this.isAnyNonDirectionalControllerButtonPressed();
   }
 
   public isFullscreenTogglePressed(): boolean {

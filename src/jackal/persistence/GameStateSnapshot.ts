@@ -1,4 +1,4 @@
-export const GAME_STATE_VERSION = 1;
+export const GAME_STATE_VERSION = 2;
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };

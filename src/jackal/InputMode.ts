@@ -33,7 +33,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public static readonly INPUT_MAPPING_Y: number = 192;
   public static readonly INPUT_MAPPING_ROW_HEIGHT: number = 64;
   public static readonly INPUT_MENU_X: number = 416;
-  public static readonly INPUT_MENU_Y: number = 640;
+  public static readonly INPUT_MENU_Y: number = 672;
 
   public static readonly ACTIONS: any[] = [
     ButtonMapping.ACTION_UP,
@@ -94,7 +94,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
   private createMenu(selectedIndex: any): void {
     this.menu = new Menu(InputMode.INPUT_MENU_X, InputMode.INPUT_MENU_Y, this.main,
-        selectedIndex, Menu.ICON_TANK, this, "CHANGE", "RESET", "DONE");
+        selectedIndex, Menu.ICON_BROWN_TANK, this, "CHANGE", "RESET", "DONE");
   }
 
   public fadeCompleted(): void {
@@ -124,9 +124,11 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         break;
       case InputMode.OPTION_RESET:
         this.buttonMapping.resetToDefaults();
+        this.main.notifyInputMappingChanged();
         this.createMenu(InputMode.OPTION_RESET);
         break;
       case InputMode.OPTION_DONE:
+        this.main.notifyInputMappingChanged();
         this.state = InputMode.STATE_FADE_OUT;
         this.main.startFade(true, this);
         break;
@@ -395,6 +397,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
           if (++this.nameIndex == InputMode.NAMES.length) {
             this.removeInputListeners();
             this.state = InputMode.STATE_MENU;
+            this.main.notifyInputMappingChanged();
             this.createMenu(InputMode.OPTION_DONE);
           } else {
             this.state = InputMode.STATE_READING;

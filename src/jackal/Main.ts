@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Main.java.
 // Original Java imports: java.awt.geom.*, org.newdawn.slick.util.*, org.newdawn.slick.*, org.newdawn.slick.opengl.*, org.lwjgl.opengl.*, org.lwjgl.input.*, org.lwjgl.*, java.io.*, java.util.*, java.nio.*, java.net.*.
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
+import { AppGameContainer, ApplicationGameContainer, BasicGame, BufferUtils, Color, Cursor, CursorLoader, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { BossHelicopter } from "./BossHelicopter.js";
 import { BossSuperTankGun } from "./BossSuperTankGun.js";
@@ -265,6 +265,7 @@ export class Main extends BasicGame {  public constructor() {
   public loadingFinishedHandler: any = null as any;
   public loadingCompleteHandler: any = null as any;
   public stateSaveInvalidatedHandler: any = null as any;
+  public inputMappingChangedHandler: any = null as any;
   public windowedDisplayModeProvider: any = null as any;
   public browserFullscreenController: any = null as any;
   public browserSuspended: boolean = false;
@@ -391,24 +392,24 @@ export class Main extends BasicGame {  public constructor() {
   private fullScreenToggleCheck(gc: any): void {
     let isEscape = this.input.isEscape();
     if (this.input.isFullscreenTogglePressed() || isEscape) {
-      let fullscreen = this.browserFullscreenController != null 
-          ? this.browserFullscreenController.isFullscreen() 
+      let fullscreen = this.browserFullscreenController != null
+          ? this.browserFullscreenController.isFullscreen()
           : gc.isFullscreen();
-      if (fullscreen) {        
-        this.showMouseCursor();
+      if (fullscreen) {
         if (this.browserFullscreenController != null) {
           this.browserFullscreenController.exitFullscreen();
         } else {
+          this.showMouseCursor();
           gc.setFullscreen(false);
         }
       } else if (!isEscape) {
-        this.hideMouseCursor();
         if (this.browserFullscreenController != null) {
           this.browserFullscreenController.enterFullscreen();
         } else {
+          this.hideMouseCursor();
           gc.setFullscreen(true);
         }
-      }      
+      }
       this.resetNextFrameTime();
     }
   }
@@ -2238,6 +2239,12 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
   private notifyStateSaveInvalidated(): void {
     if (this.stateSaveInvalidatedHandler != null) {
       this.stateSaveInvalidatedHandler();
+    }
+  }
+
+  public notifyInputMappingChanged(): void {
+    if (this.inputMappingChangedHandler != null) {
+      this.inputMappingChangedHandler();
     }
   }
 

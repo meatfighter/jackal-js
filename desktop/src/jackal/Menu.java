@@ -7,6 +7,7 @@ public class Menu {
   public static final int ICON_MISSILE = 2;
   public static final int ICON_EXPLOSION = 3;
   public static final int ICON_TANK = 4;
+  public static final int ICON_BROWN_TANK = 5;
   
   private static final int SELECT_STATE_STATIONARY = 0;
   private static final int SELECT_STATE_ACCELERATING = 1;
@@ -171,6 +172,9 @@ public class Menu {
         break;
       case ICON_TANK:
         main.drawRotated(main.bossBlueTanks[0][0], -72, iconY, 0);
+        break;
+      case ICON_BROWN_TANK:
+        main.drawRotated(main.brownTanks[0], -72, iconY, 0);
         break;
     }
     main.popGraphics();

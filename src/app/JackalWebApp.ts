@@ -1,5 +1,6 @@
 import { AL, AppGameContainer, Display, ResourceLoader, ScalableGame, SoundStore } from "slick2d-ts";
 import { Main } from "../jackal/Main.js";
+import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
 import { RESOURCE_MANIFEST } from "./ResourceManifest.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
@@ -12,6 +13,7 @@ const DEFAULT_VOLUME = 0.1;
 export class JackalWebApp {
     private readonly root: HTMLElement;
     private readonly gameStateStore = new JackalGameStateStore(versionInfo.version);
+    private readonly inputMappingStore = new JackalInputMappingStore();
     private container: AppGameContainer | null = null;
     private game: Main | null = null;
     private activeGameShell: HTMLElement | null = null;
@@ -102,6 +104,7 @@ export class JackalWebApp {
             Display.setParent(host);
 
             const mainGame = new Main();
+            this.inputMappingStore.restore(mainGame.buttonMapping);
             const scalableGame = new ScalableGame(mainGame as any, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true);
             const displayMode = this.getResponsiveWindowedDisplayMode();
             const appContainer = new AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
@@ -110,6 +113,7 @@ export class JackalWebApp {
             mainGame.appGameContainer = appContainer;
             mainGame.scalableGame = scalableGame;
             mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
+            mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
             mainGame.windowedDisplayModeProvider = () => this.getResponsiveWindowedDisplayMode();
             mainGame.browserFullscreenController = {
                 isFullscreen: () => this.isGameShellFullscreen(),
@@ -182,6 +186,7 @@ export class JackalWebApp {
             return;
         }
         this.game?.setBrowserSuspended(true);
+        this.saveCurrentInputMapping();
         this.saveCurrentGameState();
         this.showMenu();
     }
@@ -202,6 +207,13 @@ export class JackalWebApp {
 
     private clearStoredGameState(): void {
         this.gameStateStore.clear();
+    }
+
+    private saveCurrentInputMapping(): boolean {
+        if (this.game === null) {
+            return false;
+        }
+        return this.inputMappingStore.save(this.game.buttonMapping);
     }
 
     private renderLoading(progress: number): void {
@@ -244,6 +256,7 @@ export class JackalWebApp {
     }
 
     private destroyGame(): void {
+        this.saveCurrentInputMapping();
         this.resetLifecycleSuspension();
         this.stopHamburgerVisibilityMonitor();
         this.stopGameCursorAutoHide();
@@ -354,7 +367,10 @@ export class JackalWebApp {
             return;
         }
         void this.activeGameShell.requestFullscreen()
-            .then(this.scheduleResponsiveGameResize)
+            .then(() => {
+                this.updateHamburgerVisibility();
+                this.scheduleResponsiveGameResize();
+            })
             .catch((error) => {
                 console.error(error);
             });
@@ -365,7 +381,10 @@ export class JackalWebApp {
             return;
         }
         void document.exitFullscreen()
-            .then(this.scheduleResponsiveGameResize)
+            .then(() => {
+                this.updateHamburgerVisibility();
+                this.scheduleResponsiveGameResize();
+            })
             .catch((error) => {
                 console.error(error);
             });
@@ -373,32 +392,34 @@ export class JackalWebApp {
 
     private startHamburgerVisibilityMonitor(): void {
         this.stopHamburgerVisibilityMonitor();
+        document.addEventListener("fullscreenchange", this.updateHamburgerVisibility);
         this.updateHamburgerVisibility();
     }
 
     private stopHamburgerVisibilityMonitor(): void {
+        document.removeEventListener("fullscreenchange", this.updateHamburgerVisibility);
         if (this.hamburgerVisibilityAnimationFrame !== 0) {
             cancelAnimationFrame(this.hamburgerVisibilityAnimationFrame);
             this.hamburgerVisibilityAnimationFrame = 0;
         }
     }
 
-    private updateHamburgerVisibility(): void {
+    private readonly updateHamburgerVisibility = (): void => {
         const hamburger = this.root.querySelector<HTMLButtonElement>("#hamburger-button");
-        const hidden = this.game === null || this.game.isLoadingScreenActive();
+        const hidden = this.game === null || this.game.isLoadingScreenActive() || this.isGameShellFullscreen();
         if (!hidden) {
             this.applyCurrentGameLifecycleSuspension();
         }
         if (hamburger !== null) {
             hamburger.hidden = hidden;
         }
-        if (hidden && this.game !== null) {
+        if (this.game !== null && this.game.isLoadingScreenActive()) {
             this.hamburgerVisibilityAnimationFrame = requestAnimationFrame(() => {
                 this.hamburgerVisibilityAnimationFrame = 0;
                 this.updateHamburgerVisibility();
             });
         }
-    }
+    };
 
     private startGameCursorAutoHide(host: HTMLElement): void {
         this.stopGameCursorAutoHide();
