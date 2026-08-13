@@ -55,7 +55,7 @@ public class IntroMode implements IMode, IFadeListener, IMenuListener {
   public static final float FULL_SCREEN_TEXT_X
       = (Main.DISPLAY_WIDTH - (FULL_SCREEN_TEXT.length() << 5)) / 2f;
   public static final float FULL_SCREEN_TEXT_Y = 800;
-  public static final String COPYRIGHT_TEXT = "© 2013 MEATFIGHTER.COM";
+  public static final String COPYRIGHT_TEXT = "© 2013, 2026 MEATFIGHTER.COM";
   public static final float COPYRIGHT_TEXT_X
       = (Main.DISPLAY_WIDTH - (COPYRIGHT_TEXT.length() << 5)) / 2f;
   public static final float COPYRIGHT_TEXT_Y = 860;
