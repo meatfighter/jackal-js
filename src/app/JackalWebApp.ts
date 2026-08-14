@@ -26,6 +26,8 @@ export class JackalWebApp {
     private cursorGameHost: HTMLElement | null = null;
     private cursorHideTimer = 0;
     private pointerOverGameHost = false;
+    private menuOverlay: HTMLElement | null = null;
+    private liveMenuOpen = false;
     private runtimeResourcesLoaded = false;
     private suspendedByFocusLoss = false;
     private suspendedByVisibilityLoss = false;
@@ -39,27 +41,44 @@ export class JackalWebApp {
 
     public showMenu(errorMessage: string | null = null): void {
         this.destroyGame();
-        const canContinue = this.gameStateStore.hasValidSave();
-        this.root.innerHTML = `
-            <main class="menu-screen">
-                <section class="menu-panel" aria-label="Jackal menu">
-                    <label class="volume-row">
-                        <span id="volume-icon" class="volume-icon" aria-hidden="true">${volumeIconSvg(this.volume)}</span>
-                        <input id="volume-input" type="range" min="0" max="100" step="1" value="${Math.round(this.volume * 100)}" aria-label="Volume">
-                        <span id="volume-value" class="volume-value">${Math.round(this.volume * 100)}</span>
-                    </label>
-                    <div class="menu-buttons">
-                        <button id="new-game-button" class="start-button" type="button">New Game</button>
-                        <button id="continue-button" class="start-button" type="button"${canContinue ? "" : " disabled"}>Continue</button>
-                    </div>
-                    ${errorMessage ? `<p class="error-message">${escapeHtml(errorMessage)}</p>` : ""}
-                </section>
-            </main>
-        `;
+        this.renderMenu(this.root, this.gameStateStore.hasValidSave(), errorMessage, false);
+    }
 
-        const volumeInput = this.root.querySelector<HTMLInputElement>("#volume-input") as HTMLInputElement;
-        const volumeValue = this.root.querySelector<HTMLElement>("#volume-value") as HTMLElement;
-        const volumeIcon = this.root.querySelector<HTMLElement>("#volume-icon") as HTMLElement;
+    private renderMenu(parent: HTMLElement, canContinue: boolean, errorMessage: string | null, overlay: boolean): HTMLElement {
+        const menu = document.createElement("main");
+        menu.className = overlay ? "menu-screen menu-overlay" : "menu-screen";
+        if (overlay) {
+            menu.dataset.liveMenu = "true";
+        }
+        menu.innerHTML = `
+            <section class="menu-panel" aria-label="Jackal menu">
+                <label class="volume-row">
+                    <span id="volume-icon" class="volume-icon" aria-hidden="true">${volumeIconSvg(this.volume)}</span>
+                    <input id="volume-input" type="range" min="0" max="100" step="1" value="${Math.round(this.volume * 100)}" aria-label="Volume">
+                    <span id="volume-value" class="volume-value">${Math.round(this.volume * 100)}</span>
+                </label>
+                <div class="menu-buttons">
+                    <button id="new-game-button" class="start-button" type="button">New Game</button>
+                    <button id="continue-button" class="start-button" type="button"${canContinue ? "" : " disabled"}>Continue</button>
+                </div>
+                ${errorMessage ? `<p class="error-message">${escapeHtml(errorMessage)}</p>` : ""}
+            </section>
+        `;
+        if (!overlay) {
+            parent.innerHTML = "";
+        }
+        parent.appendChild(menu);
+        this.bindMenuControls(menu);
+        return menu;
+    }
+
+    private bindMenuControls(menu: HTMLElement): void {
+        const volumeInput = menu.querySelector<HTMLInputElement>("#volume-input");
+        const volumeValue = menu.querySelector<HTMLElement>("#volume-value");
+        const volumeIcon = menu.querySelector<HTMLElement>("#volume-icon");
+        if (volumeInput === null || volumeValue === null || volumeIcon === null) {
+            return;
+        }
         const updateVolumeUi = (): void => {
             const percent = Math.round(this.volume * 100);
             volumeInput.style.setProperty("--thumb-position", `${percent}%`);
@@ -72,15 +91,81 @@ export class JackalWebApp {
         });
         updateVolumeUi();
 
-        this.root.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
+        menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
             this.gameStateStore.clear();
             this.setAudioVolume(Number(volumeInput.value) / 100);
             void this.startGame(false);
         });
-        this.root.querySelector<HTMLButtonElement>("#continue-button")?.addEventListener("click", () => {
+        menu.querySelector<HTMLButtonElement>("#continue-button")?.addEventListener("click", () => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
+            if (this.hasLiveSuspendedGame()) {
+                this.resumeLiveGameFromMenu();
+                return;
+            }
             void this.startGame(true);
         });
+    }
+
+    private hasLiveSuspendedGame(): boolean {
+        return this.liveMenuOpen
+            && this.menuOverlay !== null
+            && this.game !== null
+            && this.container !== null;
+    }
+
+    private showLiveMenuOverlay(): void {
+        if (this.game === null || this.container === null || this.activeGameShell === null) {
+            this.showMenu();
+            return;
+        }
+        this.removeMenuOverlay();
+        this.liveMenuOpen = true;
+        this.game.setBrowserSuspended(true);
+        this.container.stopSoundEffects();
+        this.container.setLoopSuspended(true);
+        this.container.getInput().pause();
+        this.saveCurrentInputMapping();
+        this.saveCurrentGameState();
+        this.stopHamburgerVisibilityMonitor();
+        this.hideHamburgerButton();
+        this.stopGameCursorAutoHide();
+        this.menuOverlay = this.renderMenu(this.activeGameShell, true, null, true);
+    }
+
+    private resumeLiveGameFromMenu(): void {
+        if (this.game === null || this.container === null) {
+            void this.startGame(true);
+            return;
+        }
+        this.removeMenuOverlay();
+        this.container.getInput().resume();
+        this.game.clearInputPressedRecords();
+        if (this.activeGameHost !== null) {
+            this.startGameCursorAutoHide(this.activeGameHost);
+        }
+        this.startHamburgerVisibilityMonitor();
+        this.setAudioVolume(this.volume);
+        this.scheduleResponsiveGameResize();
+        this.focusGameCanvas();
+        this.applyCurrentGameLifecycleSuspension();
+    }
+
+    private removeMenuOverlay(): void {
+        this.menuOverlay?.remove();
+        this.menuOverlay = null;
+        this.liveMenuOpen = false;
+    }
+
+    private focusGameCanvas(): void {
+        const canvas = this.activeGameHost?.querySelector<HTMLCanvasElement>("canvas");
+        canvas?.focus();
+    }
+
+    private hideHamburgerButton(): void {
+        const hamburger = this.root.querySelector<HTMLButtonElement>("#hamburger-button");
+        if (hamburger !== null) {
+            hamburger.hidden = true;
+        }
     }
 
     private async startGame(restoreSavedGame: boolean): Promise<void> {
@@ -189,9 +274,12 @@ export class JackalWebApp {
         if (this.game?.isLoadingScreenActive()) {
             return;
         }
-        this.game?.setBrowserSuspended(true);
-        this.saveCurrentInputMapping();
-        this.saveCurrentGameState();
+        if (this.game !== null && this.container !== null
+            && this.game.isStateSaveReady() && !this.game.isStateSaveInvalidatingMenuActive()) {
+            this.showLiveMenuOverlay();
+            return;
+        }
+        this.clearStoredGameState();
         this.showMenu();
     }
 
@@ -260,6 +348,7 @@ export class JackalWebApp {
     }
 
     private destroyGame(): void {
+        this.removeMenuOverlay();
         this.saveCurrentInputMapping();
         this.resetLifecycleSuspension();
         this.stopHamburgerVisibilityMonitor();
@@ -410,7 +499,7 @@ export class JackalWebApp {
 
     private readonly updateHamburgerVisibility = (): void => {
         const hamburger = this.root.querySelector<HTMLButtonElement>("#hamburger-button");
-        const hidden = this.game === null || this.game.isLoadingScreenActive() || this.isGameShellFullscreen();
+        const hidden = this.liveMenuOpen || this.game === null || this.game.isLoadingScreenActive() || this.isGameShellFullscreen();
         if (!hidden) {
             this.applyCurrentGameLifecycleSuspension();
         }
@@ -550,7 +639,7 @@ export class JackalWebApp {
         if (this.game.isLoadingScreenActive()) {
             return;
         }
-        if (this.suspendedByVisibilityLoss || this.suspendedByFocusLoss) {
+        if (this.liveMenuOpen || this.suspendedByVisibilityLoss || this.suspendedByFocusLoss) {
             this.suspendCurrentGameForLifecycle();
             return;
         }
@@ -563,12 +652,13 @@ export class JackalWebApp {
             return;
         }
         this.game.setBrowserSuspended(true);
+        this.container?.stopSoundEffects();
         this.container?.setLoopSuspended(true);
         this.saveCurrentGameState();
     }
 
     private resumeCurrentGameForLifecycle(): void {
-        if (this.game === null || this.game.isLoadingScreenActive()) {
+        if (this.liveMenuOpen || this.game === null || this.game.isLoadingScreenActive()) {
             return;
         }
         this.game.setBrowserSuspended(false);

@@ -53,6 +53,10 @@ button {
     flex-direction: column;
 }
 
+.menu-overlay {
+    z-index: 20;
+}
+
 .boot-title {
     color: var(--plain-white);
     font-size: 26px;
