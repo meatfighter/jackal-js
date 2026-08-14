@@ -9,6 +9,8 @@ import versionInfo from "../../version.json";
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
 const DEFAULT_VOLUME = 0.1;
+const HIGH_DPI_ENABLED = true;
+const MAX_DEVICE_PIXEL_RATIO = 2;
 
 export class JackalWebApp {
     private readonly root: HTMLElement;
@@ -108,6 +110,8 @@ export class JackalWebApp {
             const scalableGame = new ScalableGame(mainGame as any, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true);
             const displayMode = this.getResponsiveWindowedDisplayMode();
             const appContainer = new AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
+            appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
+            appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
             this.container = appContainer;
             this.game = mainGame;
             mainGame.appGameContainer = appContainer;

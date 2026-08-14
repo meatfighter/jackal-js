@@ -1,4 +1,4 @@
-import type { GameContainer } from "slick2d-ts";
+import type { GameContainer, Music } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
 import { BossGarage } from "../BossGarage.js";
 import { EnemyBullet } from "../EnemyBullet.js";
@@ -19,6 +19,7 @@ import {
     type EncodedValue,
     type EntitySnapshot,
     type JackalGameStateSnapshot,
+    type MusicSnapshot,
     type RandomSnapshot
 } from "./GameStateSnapshot.js";
 import { GAME_ELEMENT_TYPES, type GameElementConstructor } from "./GameElementTypeRegistry.js";
@@ -149,6 +150,7 @@ export class JackalGameStateSerializer {
             friendlySoldierCount: FriendlySoldier.count,
             currentSongId: this.songIdFor(main, main.currentSong),
             requestedSongId: this.songIdFor(main, main.requestedSong),
+            currentSongState: this.createSongSnapshot(main, main.currentSong),
             gameMode: {
                 fields: this.encodeNamedFields(gameMode, GAME_MODE_FIELD_NAMES, context),
                 elements: this.snapshotElementLayers(gameMode, context),
@@ -209,8 +211,7 @@ export class JackalGameStateSerializer {
         this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);
         this.rebuildGameModeIndexes(gameMode);
         FriendlySoldier.count = snapshot.friendlySoldierCount;
-        main.currentSong = null;
-        main.requestedSong = this.songById(main, snapshot.requestedSongId ?? snapshot.currentSongId);
+        this.restoreSongPlayback(context, snapshot);
         main.mode = gameMode;
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
@@ -592,10 +593,213 @@ export class JackalGameStateSerializer {
         return null;
     }
 
+    private createSongSnapshot(main: Main, song: unknown): JackalGameStateSnapshot["currentSongState"] {
+        const id = this.songIdFor(main, song);
+        if (id === null) {
+            return null;
+        }
+
+        const songValue = song as any;
+        return {
+            id,
+            playing: Boolean(songValue.playing),
+            playedIntro2: Boolean(songValue.playedIntro2),
+            activeMusic: this.captureActiveSongMusic(main, songValue)
+        };
+    }
+
+    private captureActiveSongMusic(main: Main, song: any): MusicSnapshot | null {
+        const intro = song.intro as Music | null;
+        if (intro !== null && this.isMusicActiveForSnapshot(intro)) {
+            return this.captureMusic(main, intro);
+        }
+
+        const intro2 = song.intro2 as Music | null;
+        if (intro2 !== null && this.isMusicActiveForSnapshot(intro2)) {
+            return this.captureMusic(main, intro2);
+        }
+
+        const loop = song.loop as Music | null;
+        if (loop !== null && this.isMusicActiveForSnapshot(loop)) {
+            return this.captureMusic(main, loop);
+        }
+
+        return null;
+    }
+
+    private captureMusic(main: Main, music: Music): MusicSnapshot {
+        const id = this.musicIdForMusic(main, music);
+        if (id === null) {
+            throw new Error("Unable to identify music for game-state save.");
+        }
+
+        const looped = Boolean(this.getField(music, "looped"));
+        return {
+            id,
+            looped,
+            paused: Boolean(this.getField(music, "paused")),
+            playing: music.playing(),
+            playbackRate: this.numberField(music, "playbackRate", 1),
+            position: this.normalizeMusicPosition(music, music.getPosition(), looped),
+            volume: music.getVolume()
+        };
+    }
+
+    private restoreSongPlayback(context: RestoreContext, snapshot: JackalGameStateSnapshot): void {
+        const currentSongState = snapshot.currentSongState;
+        if (typeof currentSongState === "undefined") {
+            context.main.currentSong = null;
+            context.main.requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
+            this.restoreMusicEnabledForGameState(context);
+            return;
+        }
+
+        const currentSong = currentSongState === null
+            ? null
+            : this.songById(context.main, currentSongState.id);
+        const requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
+        context.main.currentSong = currentSong;
+        context.main.requestedSong = requestedSong;
+        if (currentSongState === null || currentSong === null || currentSong !== requestedSong) {
+            this.restoreMusicEnabledForGameState(context);
+            return;
+        }
+
+        const song = currentSong as any;
+        song.playing = currentSongState.playing;
+        song.playedIntro2 = currentSongState.playedIntro2;
+        if (currentSongState.activeMusic !== null && currentSongState.playing) {
+            this.restoreActiveMusic(context, currentSongState.activeMusic);
+        } else {
+            this.restoreMusicEnabledForGameState(context);
+        }
+    }
+
     private songById(main: Main, id: string | null): unknown {
         if (id === null) {
             return null;
         }
         return main[id] ?? null;
+    }
+
+    private musicIdForMusic(main: Main, music: Music | null): string | null {
+        if (music === null) {
+            return null;
+        }
+
+        for (const songId of SONG_IDS) {
+            const song = main[songId] as any;
+            if (song === null || typeof song === "undefined") {
+                continue;
+            }
+            if (song.intro === music) {
+                return `${songId}.intro`;
+            }
+            if (song.intro2 === music) {
+                return `${songId}.intro2`;
+            }
+            if (song.loop === music) {
+                return `${songId}.loop`;
+            }
+        }
+
+        return null;
+    }
+
+    private musicById(main: Main, id: string | null): Music | null {
+        if (id === null) {
+            return null;
+        }
+
+        const dot = id.lastIndexOf(".");
+        if (dot < 0) {
+            return null;
+        }
+
+        const song = this.songById(main, id.substring(0, dot)) as any;
+        if (song === null) {
+            return null;
+        }
+
+        switch (id.substring(dot + 1)) {
+            case "intro":
+                return song.intro as Music | null;
+            case "intro2":
+                return song.intro2 as Music | null;
+            case "loop":
+                return song.loop as Music | null;
+            default:
+                return null;
+        }
+    }
+
+    private restoreActiveMusic(context: RestoreContext, snapshot: MusicSnapshot): void {
+        const music = this.musicById(context.main, snapshot.id);
+        if (music === null) {
+            this.restoreMusicEnabledForGameState(context);
+            return;
+        }
+
+        const position = this.normalizeMusicPosition(music, snapshot.position, snapshot.looped);
+        if (!snapshot.playing && !snapshot.paused) {
+            music.setVolume(snapshot.volume);
+            music.setPosition(position);
+            this.restoreMusicEnabledForGameState(context);
+            return;
+        }
+
+        context.gc.setMusicOn(false);
+        music.setVolume(snapshot.volume);
+        music.setPosition(position);
+        if (snapshot.looped) {
+            music.loop(snapshot.playbackRate, snapshot.volume);
+        } else {
+            music.play(snapshot.playbackRate, snapshot.volume);
+        }
+
+        void music.ready().then(() => {
+            globalThis.setTimeout(() => {
+                music.setPosition(this.normalizeMusicPosition(music, position, snapshot.looped));
+                music.setVolume(snapshot.volume);
+                if (snapshot.paused) {
+                    music.pause();
+                }
+                this.restoreMusicEnabledForGameState(context);
+            }, 0);
+        }).catch(() => {
+            this.restoreMusicEnabledForGameState(context);
+        });
+    }
+
+    private restoreMusicEnabledForGameState(context: RestoreContext): void {
+        context.gc.setMusicOn(!context.gameMode.paused);
+    }
+
+    private normalizeMusicPosition(music: Music, position: number, looped: boolean): number {
+        const sanitized = Number.isFinite(position) ? Math.max(0, position) : 0;
+        if (!looped) {
+            return sanitized;
+        }
+
+        const buffer = this.getField(music, "buffer") as { duration?: unknown } | null;
+        const duration = typeof buffer?.duration === "number" ? buffer.duration : 0;
+        if (!Number.isFinite(duration) || duration <= 0) {
+            return sanitized;
+        }
+
+        return sanitized % duration;
+    }
+
+    private getField(target: object, field: string): unknown {
+        return (target as Record<string, unknown>)[field];
+    }
+
+    private isMusicActiveForSnapshot(music: Music): boolean {
+        return music.playing() || Boolean(this.getField(music, "paused"));
+    }
+
+    private numberField(target: object, field: string, fallback: number): number {
+        const value = this.getField(target, field);
+        return typeof value === "number" && Number.isFinite(value) ? value : fallback;
     }
 }

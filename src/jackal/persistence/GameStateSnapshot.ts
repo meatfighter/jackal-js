@@ -9,6 +9,23 @@ export type RandomSnapshot = {
     seed2: number;
 };
 
+export type MusicSnapshot = {
+    id: string;
+    looped: boolean;
+    paused: boolean;
+    playing: boolean;
+    playbackRate: number;
+    position: number;
+    volume: number;
+};
+
+export type SongSnapshot = {
+    id: string;
+    playing: boolean;
+    playedIntro2: boolean;
+    activeMusic: MusicSnapshot | null;
+};
+
 export type EncodedValue =
     | JsonPrimitive
     | { kind: "bigint"; value: string }
@@ -44,6 +61,7 @@ export type JackalGameStateSnapshot = {
     friendlySoldierCount: number;
     currentSongId: string | null;
     requestedSongId: string | null;
+    currentSongState?: SongSnapshot | null;
     gameMode: GameModeSnapshot;
     playerFields: EncodedRecord;
 };

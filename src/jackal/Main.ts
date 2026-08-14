@@ -1228,11 +1228,11 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       return;
     }
     this.requestedSong = song;
-  }  
-  
+  }
+
   public resetNextFrameTime(): void {
     this.nextFrameTime = Sys.getTime();
-  }  
+  }
 
   public closeRequested(): boolean {    
     if (!super.closeRequested()) {
