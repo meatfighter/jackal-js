@@ -1,4 +1,4 @@
-export const GAME_STATE_VERSION = 2;
+export const GAME_STATE_VERSION = 3;
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -26,8 +26,14 @@ export type SongSnapshot = {
     activeMusic: MusicSnapshot | null;
 };
 
+export type AudioStateSnapshot = {
+    musicOn: boolean;
+    soundOn: boolean;
+};
+
 export type EncodedValue =
     | JsonPrimitive
+    | { kind: "nonFiniteNumber"; value: "NaN" | "Infinity" | "-Infinity" }
     | { kind: "bigint"; value: string }
     | { kind: "array"; items: EncodedValue[] }
     | { kind: "arrayList"; items: EncodedValue[] }
@@ -51,17 +57,64 @@ export type GameModeSnapshot = {
     entities: EntitySnapshot[];
 };
 
-export type JackalGameStateSnapshot = {
+export type MenuSnapshot = {
+    fields: EncodedRecord;
+};
+
+export type ButtonMappingSnapshot = {
+    fields: EncodedRecord;
+};
+
+export type JeepYeahModeExtraSnapshot = {
+    explosion: EncodedRecord | null;
+    leftPlane: EncodedRecord | null;
+    rightPlane: EncodedRecord | null;
+    fireLeft: EncodedRecord | null;
+    fireRight: EncodedRecord | null;
+    bullets: EncodedRecord[];
+};
+
+export type InputModeExtraSnapshot = {
+    menu: MenuSnapshot | null;
+    draftButtonMapping: ButtonMappingSnapshot | null;
+    assignedKeys: number[];
+    assignedControllerButtons: number[];
+};
+
+export type GenericModeExtraSnapshot = {
+    menu?: MenuSnapshot | null;
+    input?: InputModeExtraSnapshot;
+    jeepYeah?: JeepYeahModeExtraSnapshot;
+};
+
+export type JackalBaseStateSnapshot = {
     version: number;
     appVersion: string;
     savedAt: string;
+    kind: "game" | "mode";
     mainFields: EncodedRecord;
     konamiCodeFields: EncodedRecord | null;
     random: RandomSnapshot;
     friendlySoldierCount: number;
     currentSongId: string | null;
     requestedSongId: string | null;
-    currentSongState?: SongSnapshot | null;
+    currentSongState: SongSnapshot | null;
+    audioState: AudioStateSnapshot;
+};
+
+export type JackalGameModeStateSnapshot = JackalBaseStateSnapshot & {
+    kind: "game";
     gameMode: GameModeSnapshot;
     playerFields: EncodedRecord;
 };
+
+export type JackalStandaloneModeStateSnapshot = JackalBaseStateSnapshot & {
+    kind: "mode";
+    modeId: string;
+    modeFields: EncodedRecord;
+    modeExtra?: GenericModeExtraSnapshot;
+};
+
+export type JackalGameStateSnapshot =
+    | JackalGameModeStateSnapshot
+    | JackalStandaloneModeStateSnapshot;

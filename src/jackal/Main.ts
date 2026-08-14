@@ -2166,21 +2166,14 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
 
   public isStateSaveReady(): boolean {
     return this.loadIndex >= 42
-        && this.mode === Main.gameMode
-        && Main.gameMode instanceof GameMode
-        && Main.gameMode.player != null
-        && Main.gameMode.elements != null
+        && this.mode != null
+        && !(this.mode instanceof LoadingMode)
         && this.gc != null;
   }
 
   public isStateSaveInvalidatingMenuActive(): boolean {
     return this.mode == null
-        || this.mode instanceof LoadingMode
-        || this.mode instanceof IntroMode
-        || this.mode instanceof ContinueMode
-        || this.mode instanceof DifficultyMode
-        || this.mode instanceof OptionsMode
-        || this.mode instanceof InputMode;
+        || this.mode instanceof LoadingMode;
   }
 
   public setBrowserSuspended(suspended: any): void {
@@ -2255,11 +2248,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
   }
 
   private isModeStateSaveInvalidating(mode: any): boolean {
-    return mode == Modes.INTRO
-        || mode == Modes.CONTINUE
-        || mode == Modes.DIFFICULTY
-        || mode == Modes.OPTIONS
-        || mode == Modes.INPUT;
+    return false;
   }
 
   // some classes have static tables that need generating

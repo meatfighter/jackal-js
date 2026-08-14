@@ -5,21 +5,48 @@ import { EnemyBullet } from "../EnemyBullet.js";
 import { FloorGun } from "../FloorGun.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
 import { GameMode } from "../GameMode.js";
+import { HardEndingMode } from "../HardEndingMode.js";
+import { InputMode } from "../InputMode.js";
+import { IntroMapMode } from "../IntroMapMode.js";
+import { IntroMode } from "../IntroMode.js";
+import { JeepHereMode } from "../JeepHereMode.js";
+import { JeepYeahBullet } from "../JeepYeahBullet.js";
+import { JeepYeahExplosion } from "../JeepYeahExplosion.js";
+import { JeepYeahFireLeft } from "../JeepYeahFireLeft.js";
+import { JeepYeahFireRight } from "../JeepYeahFireRight.js";
+import { JeepYeahMode } from "../JeepYeahMode.js";
+import { JeepYeahPlane } from "../JeepYeahPlane.js";
 import { KonamiCode } from "../KonamiCode.js";
 import { Main } from "../Main.js";
 import { MainRuntimeState } from "../MainRuntimeState.js";
+import { MapMode } from "../MapMode.js";
+import { Menu } from "../Menu.js";
 import { Modes } from "../Modes.js";
+import { OptionsMode } from "../OptionsMode.js";
 import { Player } from "../Player.js";
 import { RotatingGun } from "../RotatingGun.js";
 import { StatueMissile } from "../StatueMissile.js";
 import { StatueSeekerMissile } from "../StatueSeekerMissile.js";
+import { SunsetMode } from "../SunsetMode.js";
 import { TileDebris } from "../TileDebris.js";
+import { ButtonMapping } from "../ButtonMapping.js";
+import { ContinueMode } from "../ContinueMode.js";
+import { DifficultyMode } from "../DifficultyMode.js";
 import {
     GAME_STATE_VERSION,
+    type AudioStateSnapshot,
+    type ButtonMappingSnapshot,
     type EncodedRecord,
     type EncodedValue,
     type EntitySnapshot,
+    type GenericModeExtraSnapshot,
+    type InputModeExtraSnapshot,
+    type JackalBaseStateSnapshot,
     type JackalGameStateSnapshot,
+    type JackalGameModeStateSnapshot,
+    type JackalStandaloneModeStateSnapshot,
+    type JeepYeahModeExtraSnapshot,
+    type MenuSnapshot,
     type MusicSnapshot,
     type RandomSnapshot
 } from "./GameStateSnapshot.js";
@@ -27,18 +54,19 @@ import { GAME_ELEMENT_TYPES, type GameElementConstructor } from "./GameElementTy
 
 type EntityContext = {
     main: Main;
-    gameMode: GameMode;
-    player: Player;
+    gameMode: GameMode | null;
+    player: Player | null;
     ids: Map<object, number>;
     entities: object[];
 };
 
 type RestoreContext = {
     main: Main;
-    gameMode: GameMode;
+    gameMode: GameMode | null;
     gc: GameContainer;
-    player: Player;
+    player: Player | null;
     entitiesById: Map<number, object>;
+    audioState: AudioStateSnapshot;
 };
 
 const MAIN_FIELD_NAMES = [
@@ -84,6 +112,178 @@ const GAME_MODE_FIELD_NAMES = [
     "stageIndex",
     "stageCompletedFlag",
     "stageCompletedDelay"
+];
+
+const MENU_FIELD_NAMES = [
+    "x",
+    "y",
+    "iconY",
+    "selectedIndex",
+    "icon",
+    "buttonReleased",
+    "selectState",
+    "iconVy",
+    "iconMidY",
+    "iconA",
+    "targetY",
+    "selectionMade",
+    "inputEnabled",
+    "konamiCodeTest"
+];
+
+const BUTTON_MAPPING_FIELD_NAMES = [
+    "keyUp",
+    "keyDown",
+    "keyLeft",
+    "keyRight",
+    "keyGrenade",
+    "keyGun",
+    "keyStart",
+    "controller",
+    "controllerIndex",
+    "controllerUp",
+    "controllerDown",
+    "controllerLeft",
+    "controllerRight",
+    "controllerGrenade",
+    "controllerGun",
+    "controllerStart",
+    "gunKeyMapped"
+];
+
+const INTRO_MODE_FIELD_NAMES = [
+    "state",
+    "delay",
+    "scrollOffsetX",
+    "upperSolderX",
+    "lowerSolderX",
+    "namesIndex",
+    "nameLength",
+    "soldierSet",
+    "selectionMade",
+    "selectedIndex"
+];
+
+const SIMPLE_MENU_MODE_FIELD_NAMES = [
+    "state",
+    "optionSelectedFlag",
+    "selectedIndex"
+];
+
+const INPUT_MODE_FIELD_NAMES = [
+    "state",
+    "nameIndex",
+    "delay",
+    "selectedIndex",
+    "message",
+    "armDelay",
+    "extraAxisBaselines",
+    "extraAxisUpDown",
+    "extraAxisDownDown",
+    "extraAxisLeftDown",
+    "extraAxisRightDown"
+];
+
+const INTRO_MAP_MODE_FIELD_NAMES = [
+    "delay",
+    "state"
+];
+
+const MAP_MODE_FIELD_NAMES = [
+    "state",
+    "delay",
+    "jeepY",
+    "soldierDelay",
+    "targetJeepY"
+];
+
+const JEEP_HERE_MODE_FIELD_NAMES = [
+    "state",
+    "jeepHereX",
+    "delay"
+];
+
+const JEEP_YEAH_MODE_FIELD_NAMES = [
+    "smokeX",
+    "smokeY",
+    "bulletDelay",
+    "yeahVisible",
+    "yeah",
+    "state"
+];
+
+const JEEP_YEAH_PLANE_FIELD_NAMES = [
+    "x",
+    "y",
+    "z",
+    "left",
+    "angle"
+];
+
+const JEEP_YEAH_EXPLOSION_FIELD_NAMES = [
+    "size",
+    "spriteIndex",
+    "scale",
+    "grenadeExplosion",
+    "damagesEnemies",
+    "type",
+    "tiny",
+    "delay",
+    "alpha",
+    "enemyX",
+    "enemyY",
+    "x",
+    "y",
+    "remove",
+    "removeFlag"
+];
+
+const JEEP_YEAH_FIRE_FIELD_NAMES = [
+    "scale",
+    "state",
+    "x",
+    "y",
+    "delay"
+];
+
+const JEEP_YEAH_BULLET_FIELD_NAMES = [
+    "x",
+    "y",
+    "vx",
+    "vy",
+    "angle",
+    "remove",
+    "removeFlag",
+    "scale"
+];
+
+const SUNSET_MODE_FIELD_NAMES = [
+    "sunOffset",
+    "sunOffsetCounter",
+    "rotorAngle",
+    "helicopterX",
+    "helicopterY",
+    "helicopterZ",
+    "helicopterAngle",
+    "delay",
+    "helicopterDelay",
+    "state",
+    "creditsIndex",
+    "lineIndex",
+    "lineLength"
+];
+
+const HARD_ENDING_MODE_FIELD_NAMES = [
+    "finalScore",
+    "finalScoreX",
+    "state",
+    "lineIndex",
+    "lineLength",
+    "cardIndex",
+    "delay",
+    "creditsY",
+    "jeepX",
+    "rumble"
 ];
 
 const SKIPPED_INSTANCE_FIELDS = new Set([
@@ -132,13 +332,80 @@ const SONG_IDS = [
 
 export class JackalGameStateSerializer {
     public createSnapshot(main: Main, appVersion: string): JackalGameStateSnapshot {
-        const gameMode = Main.gameMode as GameMode | null;
-        if (!(gameMode instanceof GameMode) || !(gameMode.player instanceof Player)) {
-            throw new Error("Jackal save requires an active GameMode.");
+        const activeMode = main.mode as object | null;
+        if (activeMode instanceof GameMode && activeMode.player instanceof Player) {
+            return this.createGameModeSnapshot(main, activeMode, activeMode.player, appVersion);
         }
 
+        if (activeMode === null) {
+            throw new Error("Jackal save requires an active mode.");
+        }
+        return this.createStandaloneModeSnapshot(main, activeMode, appVersion);
+    }
+
+    public restoreSnapshot(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
+        if (!this.isSupportedSnapshot(snapshot)) {
+            throw new Error("Unsupported Jackal game-state snapshot.");
+        }
+
+        if (snapshot.kind === "game") {
+            this.restoreGameModeSnapshot(main, gc, snapshot);
+            return;
+        }
+
+        this.restoreStandaloneModeSnapshot(main, gc, snapshot);
+    }
+
+    public isSupportedSnapshot(snapshot: JackalGameStateSnapshot): boolean {
+        if (snapshot.version !== GAME_STATE_VERSION
+            || snapshot.random === undefined
+            || snapshot.mainFields === undefined
+            || snapshot.audioState === undefined) {
+            return false;
+        }
+        if (snapshot.kind === "game") {
+            return snapshot.gameMode !== undefined
+                && Array.isArray(snapshot.gameMode.entities)
+                && Array.isArray(snapshot.gameMode.elements);
+        }
+        return snapshot.kind === "mode"
+            && typeof snapshot.modeId === "string"
+            && snapshot.modeFields !== undefined;
+    }
+
+    private createGameModeSnapshot(
+        main: Main,
+        gameMode: GameMode,
+        player: Player,
+        appVersion: string
+    ): JackalGameModeStateSnapshot {
         const context = this.createEntityContext(main, gameMode, gameMode.player);
         const entities = context.entities.map((entity) => this.createEntitySnapshot(entity, context));
+        return {
+            kind: "game",
+            ...this.createBaseSnapshot(main, appVersion, context),
+            gameMode: {
+                fields: this.encodeNamedFields(gameMode, GAME_MODE_FIELD_NAMES, context),
+                elements: this.snapshotElementLayers(gameMode, context),
+                entities
+            },
+            playerFields: this.encodeObjectFields(player, context)
+        };
+    }
+
+    private createStandaloneModeSnapshot(main: Main, mode: object, appVersion: string): JackalStandaloneModeStateSnapshot {
+        const context = this.createModeContext(main);
+        const modeId = this.modeIdForMode(mode);
+        return {
+            kind: "mode",
+            ...this.createBaseSnapshot(main, appVersion, context),
+            modeId,
+            modeFields: this.encodeNamedFields(mode, this.modeFieldsForModeId(modeId), context),
+            modeExtra: this.createModeExtraSnapshot(modeId, mode, context)
+        };
+    }
+
+    private createBaseSnapshot(main: Main, appVersion: string, context: EntityContext): Omit<JackalBaseStateSnapshot, "kind"> {
         return {
             version: GAME_STATE_VERSION,
             appVersion,
@@ -152,20 +419,24 @@ export class JackalGameStateSerializer {
             currentSongId: this.songIdFor(main, main.currentSong),
             requestedSongId: this.songIdFor(main, main.requestedSong),
             currentSongState: this.createSongSnapshot(main, main.currentSong),
-            gameMode: {
-                fields: this.encodeNamedFields(gameMode, GAME_MODE_FIELD_NAMES, context),
-                elements: this.snapshotElementLayers(gameMode, context),
-                entities
-            },
-            playerFields: this.encodeObjectFields(gameMode.player, context)
+            audioState: this.createAudioStateSnapshot(main)
         };
     }
 
-    public restoreSnapshot(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
-        if (!this.isSupportedSnapshot(snapshot)) {
-            throw new Error("Unsupported Jackal game-state snapshot.");
+    private createAudioStateSnapshot(main: Main): AudioStateSnapshot {
+        if (main.browserSuspended) {
+            return {
+                musicOn: Boolean(main.browserSuspendedMusicOn),
+                soundOn: Boolean(main.browserSuspendedSoundOn)
+            };
         }
+        return {
+            musicOn: main.gc === null ? true : main.gc.isMusicOn(),
+            soundOn: main.gc === null ? true : main.gc.isSoundOn()
+        };
+    }
 
+    private restoreGameModeSnapshot(main: Main, gc: GameContainer, snapshot: JackalGameModeStateSnapshot): void {
         const gameMode = new GameMode();
         Main.mainInstance = main;
         Main.gameMode = gameMode;
@@ -186,17 +457,13 @@ export class JackalGameStateSerializer {
             gameMode,
             gc,
             player,
-            entitiesById
+            entitiesById,
+            audioState: snapshot.audioState
         };
 
         this.decodeFieldsInto(main, snapshot.mainFields, context);
         main.random = this.restoreRandom(snapshot.random);
-        if (snapshot.konamiCodeFields !== null) {
-            main.konamiCode = Object.create(KonamiCode.prototype);
-            this.decodeFieldsInto(main.konamiCode, snapshot.konamiCodeFields, context);
-            main.konamiCode.main = main;
-            main.konamiCode.input = main.input;
-        }
+        this.restoreKonamiCode(main, snapshot, context);
 
         this.decodeFieldsInto(gameMode, snapshot.gameMode.fields, context);
         this.decodeFieldsInto(player, snapshot.playerFields, context);
@@ -214,18 +481,347 @@ export class JackalGameStateSerializer {
         this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);
         this.rebuildGameModeIndexes(gameMode);
         FriendlySoldier.count = snapshot.friendlySoldierCount;
-        this.restoreSongPlayback(context, snapshot);
         main.mode = gameMode;
+        this.restoreFadeListener(main, gameMode);
+        this.restoreSongPlayback(context, snapshot);
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
     }
 
-    public isSupportedSnapshot(snapshot: JackalGameStateSnapshot): boolean {
-        return snapshot.version === GAME_STATE_VERSION
-            && snapshot.gameMode !== undefined
-            && Array.isArray(snapshot.gameMode.entities)
-            && Array.isArray(snapshot.gameMode.elements)
-            && snapshot.random !== undefined;
+    private restoreStandaloneModeSnapshot(main: Main, gc: GameContainer, snapshot: JackalStandaloneModeStateSnapshot): void {
+        Main.mainInstance = main;
+        Main.gameMode = null;
+        MainRuntimeState.mainInstance = main;
+        MainRuntimeState.gameMode = null;
+
+        const context: RestoreContext = {
+            main,
+            gameMode: null,
+            gc,
+            player: null,
+            entitiesById: new Map<number, object>(),
+            audioState: snapshot.audioState
+        };
+
+        this.decodeFieldsInto(main, snapshot.mainFields, context);
+        main.random = this.restoreRandom(snapshot.random);
+        this.restoreKonamiCode(main, snapshot, context);
+
+        const mode = this.createStandaloneMode(snapshot.modeId);
+        mode.init(main, gc);
+        this.decodeFieldsInto(main, snapshot.mainFields, context);
+        main.random = this.restoreRandom(snapshot.random);
+        this.decodeFieldsInto(mode, snapshot.modeFields, context);
+        this.restoreModeRuntimePointers(mode, main, gc);
+        this.restoreModeExtraSnapshot(mode, snapshot.modeExtra, context);
+
+        FriendlySoldier.count = snapshot.friendlySoldierCount;
+        main.mode = mode;
+        this.restoreFadeListener(main, mode);
+        this.restoreSongPlayback(context, snapshot);
+        main.resetNextFrameTime();
+        main.clearInputPressedRecords();
+    }
+
+    private createModeContext(main: Main): EntityContext {
+        return {
+            main,
+            gameMode: null,
+            player: null,
+            ids: new Map<object, number>(),
+            entities: []
+        };
+    }
+
+    private restoreKonamiCode(main: Main, snapshot: JackalGameStateSnapshot, context: RestoreContext): void {
+        if (snapshot.konamiCodeFields === null) {
+            main.konamiCode = null;
+            return;
+        }
+        main.konamiCode = Object.create(KonamiCode.prototype);
+        this.decodeFieldsInto(main.konamiCode, snapshot.konamiCodeFields, context);
+        main.konamiCode.main = main;
+        main.konamiCode.input = main.input;
+    }
+
+    private restoreFadeListener(main: Main, mode: object): void {
+        if (main.fading && typeof (mode as any).fadeCompleted === "function") {
+            main.fadeListener = mode;
+        } else {
+            main.fadeListener = null;
+        }
+    }
+
+    private modeIdForMode(mode: object): string {
+        if (mode instanceof IntroMode) {
+            return "INTRO";
+        }
+        if (mode instanceof JeepHereMode) {
+            return "HERE";
+        }
+        if (mode instanceof JeepYeahMode) {
+            return (mode as any).yeah ? "YEAH" : "WE_MADE_IT";
+        }
+        if (mode instanceof SunsetMode) {
+            return "SUNSET";
+        }
+        if (mode instanceof HardEndingMode) {
+            return "HARD_ENDING";
+        }
+        if (mode instanceof MapMode) {
+            return "MAP";
+        }
+        if (mode instanceof ContinueMode) {
+            return "CONTINUE";
+        }
+        if (mode instanceof DifficultyMode) {
+            return "DIFFICULTY";
+        }
+        if (mode instanceof OptionsMode) {
+            return "OPTIONS";
+        }
+        if (mode instanceof InputMode) {
+            return "INPUT";
+        }
+        if (mode instanceof IntroMapMode) {
+            return "INTRO_MAP";
+        }
+        throw new Error(`Unsupported Jackal mode for game-state save: ${mode.constructor?.name ?? "unknown"}.`);
+    }
+
+    private createStandaloneMode(modeId: string): any {
+        switch (modeId) {
+            case "INTRO":
+                return new IntroMode();
+            case "HERE":
+                return new JeepHereMode();
+            case "YEAH":
+                return new JeepYeahMode(true);
+            case "WE_MADE_IT":
+                return new JeepYeahMode(false);
+            case "SUNSET":
+                return new SunsetMode();
+            case "HARD_ENDING":
+                return new HardEndingMode();
+            case "MAP":
+                return new MapMode();
+            case "CONTINUE":
+                return new ContinueMode();
+            case "DIFFICULTY":
+                return new DifficultyMode();
+            case "OPTIONS":
+                return new OptionsMode();
+            case "INPUT":
+                return new InputMode();
+            case "INTRO_MAP":
+                return new IntroMapMode();
+            default:
+                throw new Error(`Unsupported Jackal mode in saved game state: ${modeId}.`);
+        }
+    }
+
+    private modeFieldsForModeId(modeId: string): string[] {
+        switch (modeId) {
+            case "INTRO":
+                return INTRO_MODE_FIELD_NAMES;
+            case "HERE":
+                return JEEP_HERE_MODE_FIELD_NAMES;
+            case "YEAH":
+            case "WE_MADE_IT":
+                return JEEP_YEAH_MODE_FIELD_NAMES;
+            case "SUNSET":
+                return SUNSET_MODE_FIELD_NAMES;
+            case "HARD_ENDING":
+                return HARD_ENDING_MODE_FIELD_NAMES;
+            case "MAP":
+                return MAP_MODE_FIELD_NAMES;
+            case "CONTINUE":
+            case "DIFFICULTY":
+            case "OPTIONS":
+                return SIMPLE_MENU_MODE_FIELD_NAMES;
+            case "INPUT":
+                return INPUT_MODE_FIELD_NAMES;
+            case "INTRO_MAP":
+                return INTRO_MAP_MODE_FIELD_NAMES;
+            default:
+                throw new Error(`Unsupported Jackal mode field map: ${modeId}.`);
+        }
+    }
+
+    private createModeExtraSnapshot(modeId: string, mode: object, context: EntityContext): GenericModeExtraSnapshot | undefined {
+        switch (modeId) {
+            case "INTRO":
+            case "CONTINUE":
+            case "DIFFICULTY":
+            case "OPTIONS":
+                return {
+                    menu: this.createMenuSnapshot((mode as any).menu, context)
+                };
+            case "INPUT":
+                return {
+                    input: this.createInputModeExtraSnapshot(mode as InputMode, context)
+                };
+            case "YEAH":
+            case "WE_MADE_IT":
+                return {
+                    jeepYeah: this.createJeepYeahModeExtraSnapshot(mode as JeepYeahMode, context)
+                };
+            default:
+                return undefined;
+        }
+    }
+
+    private createMenuSnapshot(menu: Menu | null, context: EntityContext): MenuSnapshot | null {
+        if (menu === null) {
+            return null;
+        }
+        return {
+            fields: this.encodeNamedFields(menu, MENU_FIELD_NAMES, context)
+        };
+    }
+
+    private createButtonMappingSnapshot(buttonMapping: ButtonMapping | null, context: EntityContext): ButtonMappingSnapshot | null {
+        if (buttonMapping === null) {
+            return null;
+        }
+        return {
+            fields: this.encodeNamedFields(buttonMapping, BUTTON_MAPPING_FIELD_NAMES, context)
+        };
+    }
+
+    private createInputModeExtraSnapshot(mode: InputMode, context: EntityContext): InputModeExtraSnapshot {
+        const mutableMode = mode as any;
+        return {
+            menu: this.createMenuSnapshot(mutableMode.menu, context),
+            draftButtonMapping: this.createButtonMappingSnapshot(mutableMode.draftButtonMapping, context),
+            assignedKeys: Array.from(mutableMode.assignedKeys ?? []),
+            assignedControllerButtons: Array.from(mutableMode.assignedControllerButtons ?? [])
+        };
+    }
+
+    private createJeepYeahModeExtraSnapshot(mode: JeepYeahMode, context: EntityContext): JeepYeahModeExtraSnapshot {
+        const mutableMode = mode as any;
+        const bullets: EncodedRecord[] = [];
+        if (mutableMode.bullets !== null) {
+            for (let i = 0; i < mutableMode.bullets.size(); i++) {
+                bullets.push(this.encodeNamedFields(mutableMode.bullets.get(i), JEEP_YEAH_BULLET_FIELD_NAMES, context));
+            }
+        }
+        return {
+            explosion: this.encodeNullableNamedFields(mutableMode.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, context),
+            leftPlane: this.encodeNullableNamedFields(mutableMode.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
+            rightPlane: this.encodeNullableNamedFields(mutableMode.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
+            fireLeft: this.encodeNullableNamedFields(mutableMode.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES, context),
+            fireRight: this.encodeNullableNamedFields(mutableMode.fireRight, JEEP_YEAH_FIRE_FIELD_NAMES, context),
+            bullets
+        };
+    }
+
+    private encodeNullableNamedFields(source: object | null, names: string[], context: EntityContext): EncodedRecord | null {
+        return source === null ? null : this.encodeNamedFields(source, names, context);
+    }
+
+    private restoreModeExtraSnapshot(mode: object, extra: GenericModeExtraSnapshot | undefined, context: RestoreContext): void {
+        if (extra === undefined) {
+            return;
+        }
+        if (extra.menu !== undefined) {
+            this.restoreModeMenu(mode, extra.menu, context);
+        }
+        if (extra.input !== undefined && mode instanceof InputMode) {
+            this.restoreInputModeExtraSnapshot(mode, extra.input, context);
+        }
+        if (extra.jeepYeah !== undefined && mode instanceof JeepYeahMode) {
+            this.restoreJeepYeahModeExtraSnapshot(mode, extra.jeepYeah, context);
+        }
+    }
+
+    private restoreModeMenu(mode: object, snapshot: MenuSnapshot | null, context: RestoreContext): void {
+        const mutableMode = mode as any;
+        if (snapshot === null) {
+            mutableMode.menu = null;
+            return;
+        }
+        if (mutableMode.menu === null) {
+            mutableMode.menu = Object.create(Menu.prototype);
+        }
+        this.decodeFieldsInto(mutableMode.menu, snapshot.fields, context);
+        this.restoreMenuRuntimePointers(mutableMode.menu, context.main, mode);
+    }
+
+    private restoreInputModeExtraSnapshot(mode: InputMode, snapshot: InputModeExtraSnapshot, context: RestoreContext): void {
+        const mutableMode = mode as any;
+        this.restoreModeMenu(mode, snapshot.menu, context);
+        if (snapshot.draftButtonMapping === null) {
+            mutableMode.draftButtonMapping = null;
+        } else {
+            mutableMode.draftButtonMapping = new ButtonMapping();
+            this.decodeFieldsInto(mutableMode.draftButtonMapping, snapshot.draftButtonMapping.fields, context);
+        }
+        mutableMode.assignedKeys = new Set(snapshot.assignedKeys);
+        mutableMode.assignedControllerButtons = new Set(snapshot.assignedControllerButtons);
+        this.restoreInputModeListenerState(mutableMode);
+    }
+
+    private restoreInputModeListenerState(mode: any): void {
+        if (mode.listeningForInput && typeof mode.removeInputListeners === "function") {
+            mode.removeInputListeners();
+        }
+        mode.listeningForInput = false;
+        if ((mode.state === InputMode.STATE_READING || mode.state === InputMode.STATE_READ_FADE)
+            && typeof mode.addInputListeners === "function") {
+            mode.addInputListeners();
+        }
+    }
+
+    private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
+        const mutableMode = mode as any;
+        mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context);
+        mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context);
+        mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context);
+        mutableMode.fireLeft = this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context);
+        mutableMode.fireRight = this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context);
+        mutableMode.bullets = new ArrayList<JeepYeahBullet>(snapshot.bullets.length);
+        for (const bulletSnapshot of snapshot.bullets) {
+            const bullet = Object.create(JeepYeahBullet.prototype) as JeepYeahBullet;
+            this.decodeFieldsInto(bullet, bulletSnapshot, context);
+            mutableMode.bullets.add(bullet);
+        }
+    }
+
+    private restoreNullableTypedRecord<T extends object>(
+        constructor: { prototype: T },
+        snapshot: EncodedRecord | null,
+        context: RestoreContext
+    ): T | null {
+        if (snapshot === null) {
+            return null;
+        }
+        const value = Object.create(constructor.prototype) as T;
+        this.decodeFieldsInto(value, snapshot, context);
+        return value;
+    }
+
+    private restoreModeRuntimePointers(mode: object, main: Main, gc: GameContainer): void {
+        const mutableMode = mode as any;
+        mutableMode.main = main;
+        mutableMode.gc = gc;
+        if ("input" in mutableMode) {
+            mutableMode.input = main.input;
+        }
+        if ("buttonMapping" in mutableMode) {
+            mutableMode.buttonMapping = main.buttonMapping;
+        }
+        if (mutableMode.menu !== null && typeof mutableMode.menu !== "undefined") {
+            this.restoreMenuRuntimePointers(mutableMode.menu, main, mode);
+        }
+    }
+
+    private restoreMenuRuntimePointers(menu: Menu, main: Main, listener: object): void {
+        const mutableMenu = menu as any;
+        mutableMenu.main = main;
+        mutableMenu.input = main.input;
+        mutableMenu.menuListener = listener;
     }
 
     private createEntityContext(main: Main, gameMode: GameMode, player: Player): EntityContext {
@@ -479,7 +1075,16 @@ export class JackalGameStateSerializer {
     }
 
     private encodeValue(value: unknown, context: EntityContext): EncodedValue {
-        if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        if (typeof value === "number") {
+            if (Number.isFinite(value)) {
+                return value;
+            }
+            if (Number.isNaN(value)) {
+                return { kind: "nonFiniteNumber", value: "NaN" };
+            }
+            return { kind: "nonFiniteNumber", value: value < 0 ? "-Infinity" : "Infinity" };
+        }
+        if (value === null || typeof value === "string" || typeof value === "boolean") {
             return value as EncodedValue;
         }
         if (typeof value === "bigint") {
@@ -528,6 +1133,16 @@ export class JackalGameStateSerializer {
             return value;
         }
         switch (value.kind) {
+            case "nonFiniteNumber":
+                switch (value.value) {
+                    case "NaN":
+                        return Number.NaN;
+                    case "Infinity":
+                        return Number.POSITIVE_INFINITY;
+                    case "-Infinity":
+                        return Number.NEGATIVE_INFINITY;
+                }
+                return Number.NaN;
             case "bigint":
                 return BigInt(value.value);
             case "array":
@@ -653,7 +1268,7 @@ export class JackalGameStateSerializer {
         if (typeof currentSongState === "undefined") {
             context.main.currentSong = null;
             context.main.requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
             return;
         }
 
@@ -664,7 +1279,7 @@ export class JackalGameStateSerializer {
         context.main.currentSong = currentSong;
         context.main.requestedSong = requestedSong;
         if (currentSongState === null || currentSong === null || currentSong !== requestedSong) {
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
             return;
         }
 
@@ -674,7 +1289,7 @@ export class JackalGameStateSerializer {
         if (currentSongState.activeMusic !== null && currentSongState.playing) {
             this.restoreActiveMusic(context, currentSongState.activeMusic);
         } else {
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
         }
     }
 
@@ -739,7 +1354,7 @@ export class JackalGameStateSerializer {
     private restoreActiveMusic(context: RestoreContext, snapshot: MusicSnapshot): void {
         const music = this.musicById(context.main, snapshot.id);
         if (music === null) {
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
             return;
         }
 
@@ -747,7 +1362,7 @@ export class JackalGameStateSerializer {
         if (!snapshot.playing && !snapshot.paused) {
             music.setVolume(snapshot.volume);
             music.setPosition(position);
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
             return;
         }
 
@@ -767,15 +1382,23 @@ export class JackalGameStateSerializer {
                 if (snapshot.paused) {
                     music.pause();
                 }
-                this.restoreMusicEnabledForGameState(context);
+                this.restoreAudioEnabledForSnapshot(context);
             }, 0);
         }).catch(() => {
-            this.restoreMusicEnabledForGameState(context);
+            this.restoreAudioEnabledForSnapshot(context);
         });
     }
 
-    private restoreMusicEnabledForGameState(context: RestoreContext): void {
-        context.gc.setMusicOn(!context.gameMode.paused);
+    private restoreAudioEnabledForSnapshot(context: RestoreContext): void {
+        if (context.main.browserSuspended) {
+            context.main.browserSuspendedMusicOn = context.audioState.musicOn;
+            context.main.browserSuspendedSoundOn = context.audioState.soundOn;
+            context.gc.setMusicOn(false);
+            context.gc.setSoundOn(false);
+            return;
+        }
+        context.gc.setMusicOn(context.audioState.musicOn);
+        context.gc.setSoundOn(context.audioState.soundOn);
     }
 
     private normalizeMusicPosition(music: Music, position: number, looped: boolean): number {

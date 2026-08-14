@@ -12,7 +12,7 @@ const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
 const GAME_STATE_STORAGE_KEY = "jackal.game-state";
-const GAME_STATE_VERSION = 2;
+const GAME_STATE_VERSION = 3;
 const DEFAULT_VOLUME = 0.1;
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 2;
@@ -299,21 +299,15 @@ export class JackalWebApp {
         if (this.game?.isLoadingScreenActive()) {
             return;
         }
-        if (this.game !== null && this.container !== null
-            && this.game.isStateSaveReady() && !this.game.isStateSaveInvalidatingMenuActive()) {
+        if (this.game !== null && this.container !== null) {
             this.showLiveMenuOverlay();
             return;
         }
-        this.clearStoredGameState();
         this.showMenu();
     }
 
     private saveCurrentGameState(): boolean {
         if (this.game === null || this.preparedRuntime === null) {
-            return false;
-        }
-        if (this.game.isStateSaveInvalidatingMenuActive()) {
-            this.clearStoredGameState();
             return false;
         }
         if (!this.game.isStateSaveReady()) {
@@ -451,12 +445,12 @@ export class JackalWebApp {
     }
 
     private async prepareRuntime(): Promise<PreparedRuntime> {
-        const [slick, mainModule, gameStateStoreModule, resourceManifestModule] = await Promise.all([
+        const [slick, resourceManifestModule] = await Promise.all([
             import("slick2d-ts"),
-            import("../jackal/Main.js"),
-            import("../jackal/persistence/JackalGameStateStore.js"),
             import("./ResourceManifest.js")
         ]);
+        const mainModule = await import("../jackal/Main.js");
+        const gameStateStoreModule = await import("../jackal/persistence/JackalGameStateStore.js");
         await this.preloadPreparedResources(resourceManifestModule.RESOURCE_MANIFEST);
         return {
             slick,
@@ -872,15 +866,21 @@ function isPotentialGameStateSnapshot(snapshot: unknown): boolean {
         return false;
     }
     const record = snapshot as Record<string, unknown>;
-    const gameMode = record.gameMode;
-    if (gameMode === null || typeof gameMode !== "object") {
+    if (record.version !== GAME_STATE_VERSION || record.random === undefined) {
         return false;
     }
-    const gameModeRecord = gameMode as Record<string, unknown>;
-    return record.version === GAME_STATE_VERSION
-        && Array.isArray(gameModeRecord.entities)
-        && Array.isArray(gameModeRecord.elements)
-        && record.random !== undefined;
+    if (record.kind === "game") {
+        const gameMode = record.gameMode;
+        if (gameMode === null || typeof gameMode !== "object") {
+            return false;
+        }
+        const gameModeRecord = gameMode as Record<string, unknown>;
+        return Array.isArray(gameModeRecord.entities)
+            && Array.isArray(gameModeRecord.elements);
+    }
+    return record.kind === "mode"
+        && typeof record.modeId === "string"
+        && record.modeFields !== undefined;
 }
 
 function volumeIconSvg(value: number): string {
