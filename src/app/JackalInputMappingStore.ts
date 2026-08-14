@@ -1,4 +1,4 @@
-import { ButtonMapping } from "../jackal/ButtonMapping.js";
+import type { ButtonMapping } from "../jackal/ButtonMapping.js";
 
 interface JackalInputMappingSnapshot {
     version: number;

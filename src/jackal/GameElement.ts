@@ -3,7 +3,7 @@
 // Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
-import { Main } from "./Main.js";
+import { MainRuntimeState } from "./MainRuntimeState.js";
 export abstract class GameElement {
   protected __initializeJavaSubclassDefaults(): void {
   }
@@ -13,8 +13,8 @@ export abstract class GameElement {
   }
   private __construct_GameElement(argCount: number): void {
     if (argCount === 0) {
-            this.main = Main.mainInstance;
-                this.gameMode = Main.gameMode;
+            this.main = MainRuntimeState.mainInstance;
+                this.gameMode = MainRuntimeState.gameMode;
     
 
                 this.__initializeJavaSubclassDefaults();

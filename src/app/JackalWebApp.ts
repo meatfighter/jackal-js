@@ -1,21 +1,43 @@
-import { AL, AppGameContainer, Display, ResourceLoader, ScalableGame, SoundStore } from "slick2d-ts";
-import { Main } from "../jackal/Main.js";
+import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
+import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
+import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
+import type { Main } from "../jackal/Main.js";
+import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
-import { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
-import { RESOURCE_MANIFEST } from "./ResourceManifest.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
 import versionInfo from "../../version.json";
 
+const GAME_DISPLAY_WIDTH = 1024;
+const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
+const GAME_STATE_STORAGE_KEY = "jackal.game-state";
+const GAME_STATE_VERSION = 2;
 const DEFAULT_VOLUME = 0.1;
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 2;
+const RESOURCE_CACHE_RETRY_COUNT = 5;
+const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
+
+type SlickRuntimeModule = typeof import("slick2d-ts");
+type MainConstructor = typeof import("../jackal/Main.js").Main;
+type JackalGameStateStoreConstructor = typeof import("../jackal/persistence/JackalGameStateStore.js").JackalGameStateStore;
+
+interface PreparedRuntime {
+    readonly slick: SlickRuntimeModule;
+    readonly Main: MainConstructor;
+    readonly JackalGameStateStore: JackalGameStateStoreConstructor;
+}
 
 export class JackalWebApp {
     private readonly root: HTMLElement;
-    private readonly gameStateStore = new JackalGameStateStore(versionInfo.version);
     private readonly inputMappingStore = new JackalInputMappingStore();
+    private gameStateStore: JackalGameStateStore | null = null;
+    private preparedRuntime: PreparedRuntime | null = null;
+    private preparationPromise: Promise<PreparedRuntime> | null = null;
+    private preparationError: unknown = null;
+    private preparationProgress = 0;
+    private backgroundPreparationScheduled = false;
     private container: AppGameContainer | null = null;
     private game: Main | null = null;
     private activeGameShell: HTMLElement | null = null;
@@ -28,7 +50,6 @@ export class JackalWebApp {
     private pointerOverGameHost = false;
     private menuOverlay: HTMLElement | null = null;
     private liveMenuOpen = false;
-    private runtimeResourcesLoaded = false;
     private suspendedByFocusLoss = false;
     private suspendedByVisibilityLoss = false;
     private volume = safeReadVolume();
@@ -41,7 +62,8 @@ export class JackalWebApp {
 
     public showMenu(errorMessage: string | null = null): void {
         this.destroyGame();
-        this.renderMenu(this.root, this.gameStateStore.hasValidSave(), errorMessage, false);
+        this.renderMenu(this.root, this.hasPotentialSavedGameState(), errorMessage, false);
+        this.scheduleBackgroundPreparation();
     }
 
     private renderMenu(parent: HTMLElement, canContinue: boolean, errorMessage: string | null, overlay: boolean): HTMLElement {
@@ -92,7 +114,7 @@ export class JackalWebApp {
         updateVolumeUi();
 
         menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
-            this.gameStateStore.clear();
+            this.clearStoredGameState();
             this.setAudioVolume(Number(volumeInput.value) / 100);
             void this.startGame(false);
         });
@@ -169,80 +191,18 @@ export class JackalWebApp {
     }
 
     private async startGame(restoreSavedGame: boolean): Promise<void> {
+        const audioUnlockPromise = this.unlockAudio();
         this.destroyGame();
-        const showVisibleLoading = !this.runtimeResourcesLoaded;
+
         try {
-            if (showVisibleLoading) {
-                this.renderLoading(0);
+            if (this.preparedRuntime === null) {
+                this.renderLoading(this.preparationProgress);
             }
 
-            await this.unlockAudio();
-            this.configureResourceLoader();
+            const runtime = await this.ensureRuntimePrepared(this.preparationError !== null);
+            await audioUnlockPromise;
             this.setAudioVolume(this.volume);
-            if (showVisibleLoading) {
-                await ResourceLoader.preloadResources(RESOURCE_MANIFEST, (progress) => {
-                    this.renderLoading(progress.total === 0 ? 0 : progress.loaded / progress.total);
-                });
-                this.runtimeResourcesLoaded = true;
-            }
-
-            const host = this.showGameShell();
-            this.activeGameHost = host;
-            Display.setParent(host);
-
-            const mainGame = new Main();
-            this.inputMappingStore.restore(mainGame.buttonMapping);
-            const scalableGame = new ScalableGame(mainGame as any, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true);
-            const displayMode = this.getResponsiveWindowedDisplayMode();
-            const appContainer = new AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
-            appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
-            appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
-            this.container = appContainer;
-            this.game = mainGame;
-            mainGame.appGameContainer = appContainer;
-            mainGame.scalableGame = scalableGame;
-            mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
-            mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
-            mainGame.windowedDisplayModeProvider = () => this.getResponsiveWindowedDisplayMode();
-            mainGame.browserFullscreenController = {
-                isFullscreen: () => this.isGameShellFullscreen(),
-                enterFullscreen: () => this.enterGameShellFullscreen(),
-                exitFullscreen: () => this.exitGameShellFullscreen()
-            };
-            if (restoreSavedGame) {
-                mainGame.loadingCompleteHandler = (gc: unknown) => {
-                    if (!this.gameStateStore.restore(mainGame, gc as any)) {
-                        throw new Error("Saved game could not be restored.");
-                    }
-                    return true;
-                };
-            }
-            mainGame.loadingFinishedHandler = () => {
-                this.runtimeResourcesLoaded = true;
-            };
-
-            appContainer.setErrorHandler((error) => {
-                console.error(error);
-                this.showLoadError("Unable to start.", "Check your connection and try again.", () => {
-                    void this.startGame(restoreSavedGame);
-                });
-            });
-            appContainer.setAlwaysRender(true);
-            appContainer.setVSync(true);
-            appContainer.setSmoothDeltas(false);
-            appContainer.setShowFPS(false);
-            appContainer.setClearEachFrame(true);
-            await Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false));
-            await appContainer.start();
-            if (!showVisibleLoading) {
-                mainGame.completeLoadingImmediately(appContainer);
-                await ResourceLoader.waitForAll();
-                this.runtimeResourcesLoaded = true;
-            }
-            this.startResponsiveGameSizing(host);
-            this.startGameCursorAutoHide(host);
-            this.startHamburgerVisibilityMonitor();
-            this.setAudioVolume(this.volume);
+            await this.launchPreparedGame(runtime, restoreSavedGame);
         } catch (error) {
             console.error(error);
             if (restoreSavedGame) {
@@ -253,6 +213,71 @@ export class JackalWebApp {
                 void this.startGame(false);
             });
         }
+    }
+
+    private async launchPreparedGame(runtime: PreparedRuntime, restoreSavedGame: boolean): Promise<void> {
+        const host = this.showGameShell();
+        this.activeGameHost = host;
+        runtime.slick.Display.setParent(host);
+
+        const mainGame = new runtime.Main();
+        mainGame.skipJavaLoadingAssets = true;
+        this.inputMappingStore.restore(mainGame.buttonMapping);
+
+        const scalableGame = new runtime.slick.ScalableGame(mainGame as any, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
+        const displayMode = this.getResponsiveWindowedDisplayMode();
+        const appContainer = new runtime.slick.AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
+        appContainer.setPreserveAudioCacheOnDestroy(true);
+        appContainer.setLoopSuspended(true);
+        appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
+        appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
+        this.container = appContainer;
+        this.game = mainGame;
+        mainGame.appGameContainer = appContainer;
+        mainGame.scalableGame = scalableGame;
+        mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
+        mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
+        mainGame.windowedDisplayModeProvider = () => this.getResponsiveWindowedDisplayMode();
+        mainGame.browserFullscreenController = {
+            isFullscreen: () => this.isGameShellFullscreen(),
+            enterFullscreen: () => this.enterGameShellFullscreen(),
+            exitFullscreen: () => this.exitGameShellFullscreen()
+        };
+        if (restoreSavedGame) {
+            mainGame.loadingCompleteHandler = (gc: unknown) => {
+                if (!this.getGameStateStore(runtime).restore(mainGame, gc as any)) {
+                    throw new Error("Saved game could not be restored.");
+                }
+                return true;
+            };
+        }
+        mainGame.loadingFinishedHandler = () => {
+            this.preparationProgress = 1;
+        };
+
+        appContainer.setAlwaysRender(true);
+        appContainer.setVSync(true);
+        appContainer.setSmoothDeltas(false);
+        appContainer.setShowFPS(false);
+        appContainer.setClearEachFrame(true);
+        await Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false));
+        await appContainer.start();
+        mainGame.completeLoadingImmediately(appContainer);
+        await ResourceLoader.waitForAll();
+
+        appContainer.setErrorHandler((error) => {
+            console.error(error);
+            this.showLoadError("Unable to start.", "Check your connection and try again.", () => {
+                void this.startGame(restoreSavedGame);
+            });
+        });
+        this.startResponsiveGameSizing(host);
+        this.startGameCursorAutoHide(host);
+        this.startHamburgerVisibilityMonitor();
+        this.setAudioVolume(this.volume);
+        this.focusGameCanvas();
+        mainGame.clearInputPressedRecords();
+        this.syncCurrentGameLifecycleSuspension();
     }
 
     private showGameShell(): HTMLElement {
@@ -284,7 +309,7 @@ export class JackalWebApp {
     }
 
     private saveCurrentGameState(): boolean {
-        if (this.game === null) {
+        if (this.game === null || this.preparedRuntime === null) {
             return false;
         }
         if (this.game.isStateSaveInvalidatingMenuActive()) {
@@ -294,11 +319,16 @@ export class JackalWebApp {
         if (!this.game.isStateSaveReady()) {
             return false;
         }
-        return this.gameStateStore.save(this.game);
+        return this.getGameStateStore(this.preparedRuntime).save(this.game);
     }
 
     private clearStoredGameState(): void {
-        this.gameStateStore.clear();
+        try {
+            localStorage.removeItem(GAME_STATE_STORAGE_KEY);
+        } catch {
+            // Storage can be disabled in hardened/private browser contexts.
+        }
+        this.gameStateStore?.clear();
     }
 
     private saveCurrentInputMapping(): boolean {
@@ -326,6 +356,12 @@ export class JackalWebApp {
                 </section>
             </main>
         `;
+    }
+
+    private refreshVisibleLoadingProgress(): void {
+        if (this.root.querySelector("[data-loading-progress='true']") !== null) {
+            this.renderLoading(this.preparationProgress);
+        }
     }
 
     private showError(message: string): void {
@@ -360,19 +396,144 @@ export class JackalWebApp {
             this.container.destroy();
             this.container = null;
         } else {
-            AL.destroy();
+            SoundStore.get().stopAllPlayback();
         }
         this.game = null;
         this.activeGameShell = null;
         this.activeGameHost = null;
-        Display.setParent(null);
+        this.preparedRuntime?.slick.Display.setParent(null);
+    }
+
+    private scheduleBackgroundPreparation(): void {
+        if (this.preparedRuntime !== null
+            || this.preparationPromise !== null
+            || this.preparationError !== null
+            || this.backgroundPreparationScheduled) {
+            return;
+        }
+        this.backgroundPreparationScheduled = true;
+        window.setTimeout(() => {
+            this.backgroundPreparationScheduled = false;
+            void this.ensureRuntimePrepared(false).catch((error) => {
+                console.warn("Unable to prepare Jackal resources in the background.", error);
+            });
+        }, 0);
+    }
+
+    private async ensureRuntimePrepared(forceRetry: boolean): Promise<PreparedRuntime> {
+        if (this.preparedRuntime !== null) {
+            return this.preparedRuntime;
+        }
+        if (forceRetry) {
+            this.preparationPromise = null;
+            this.preparationError = null;
+        }
+        if (this.preparationPromise === null) {
+            ResourceLoader.clearFailures();
+            this.configureResourceLoader();
+            this.preparationProgress = 0;
+            this.refreshVisibleLoadingProgress();
+            this.preparationPromise = this.prepareRuntime()
+                .then((runtime) => {
+                    this.preparedRuntime = runtime;
+                    this.preparationError = null;
+                    this.preparationProgress = 1;
+                    this.refreshVisibleLoadingProgress();
+                    return runtime;
+                })
+                .catch((error) => {
+                    this.preparationPromise = null;
+                    this.preparationError = error;
+                    throw error;
+                });
+        }
+        return this.preparationPromise;
+    }
+
+    private async prepareRuntime(): Promise<PreparedRuntime> {
+        const [slick, mainModule, gameStateStoreModule, resourceManifestModule] = await Promise.all([
+            import("slick2d-ts"),
+            import("../jackal/Main.js"),
+            import("../jackal/persistence/JackalGameStateStore.js"),
+            import("./ResourceManifest.js")
+        ]);
+        await this.preloadPreparedResources(resourceManifestModule.RESOURCE_MANIFEST);
+        return {
+            slick,
+            Main: mainModule.Main,
+            JackalGameStateStore: gameStateStoreModule.JackalGameStateStore
+        };
+    }
+
+    private async preloadPreparedResources(resourceManifest: string[]): Promise<void> {
+        const audioRefs: string[] = [];
+        const resourceRefs: string[] = [];
+        for (const ref of resourceManifest) {
+            if (isAudioResourceRef(ref)) {
+                audioRefs.push(ref);
+            } else {
+                resourceRefs.push(ref);
+            }
+        }
+
+        const total = audioRefs.length + resourceRefs.length;
+        if (total === 0) {
+            this.preparationProgress = 1;
+            this.refreshVisibleLoadingProgress();
+            return;
+        }
+
+        let loadedAudio = 0;
+        let loadedResources = 0;
+        const updateProgress = (): void => {
+            this.preparationProgress = (loadedAudio + loadedResources) / total;
+            this.refreshVisibleLoadingProgress();
+        };
+
+        await Promise.all([
+            ResourceLoader.preloadResources(resourceRefs, (progress) => {
+                loadedResources = progress.loaded;
+                updateProgress();
+            }),
+            SoundStore.get().preloadAudioBuffers(audioRefs, (progress) => {
+                loadedAudio = progress.loaded;
+                updateProgress();
+            })
+        ]);
+        this.preparationProgress = 1;
+        this.refreshVisibleLoadingProgress();
     }
 
     private configureResourceLoader(): void {
         ResourceLoader.removeAllResourceLocations();
         ResourceLoader.addResourceLocation("/resources/");
         ResourceLoader.setCacheBust(versionInfo.buildStamp);
-        ResourceLoader.setRetryOptions(5, 250);
+        ResourceLoader.setRetryOptions(RESOURCE_CACHE_RETRY_COUNT, RESOURCE_CACHE_RETRY_DELAY_MS);
+    }
+
+    private getGameStateStore(runtime: PreparedRuntime): JackalGameStateStore {
+        if (this.gameStateStore === null) {
+            this.gameStateStore = new runtime.JackalGameStateStore(versionInfo.version);
+        }
+        return this.gameStateStore;
+    }
+
+    private hasPotentialSavedGameState(): boolean {
+        try {
+            const text = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+            if (text === null) {
+                return false;
+            }
+            const snapshot = JSON.parse(text) as unknown;
+            if (!isPotentialGameStateSnapshot(snapshot)) {
+                this.clearStoredGameState();
+                return false;
+            }
+            return true;
+        } catch {
+            this.clearStoredGameState();
+            return false;
+        }
     }
 
     private startResponsiveGameSizing(host: HTMLElement): void {
@@ -446,8 +607,8 @@ export class JackalWebApp {
 
     private getResponsiveFullscreenDisplayMode(): { width: number; height: number } {
         const viewport = window.visualViewport;
-        const width = viewport?.width || window.innerWidth || document.documentElement.clientWidth || Main.DISPLAY_WIDTH;
-        const height = viewport?.height || window.innerHeight || document.documentElement.clientHeight || Main.DISPLAY_HEIGHT;
+        const width = viewport?.width || window.innerWidth || document.documentElement.clientWidth || GAME_DISPLAY_WIDTH;
+        const height = viewport?.height || window.innerHeight || document.documentElement.clientHeight || GAME_DISPLAY_HEIGHT;
         return normalizeDisplayMode(width, height);
     }
 
@@ -687,7 +848,7 @@ export class JackalWebApp {
 
 function getAspectFitDisplayMode(width: number, height: number): { width: number; height: number } {
     const displayMode = normalizeDisplayMode(width, height);
-    const gameAspectRatio = Main.DISPLAY_WIDTH / Main.DISPLAY_HEIGHT;
+    const gameAspectRatio = GAME_DISPLAY_WIDTH / GAME_DISPLAY_HEIGHT;
     const displayAspectRatio = displayMode.width / displayMode.height;
     if (displayAspectRatio > gameAspectRatio) {
         return normalizeDisplayMode(displayMode.height * gameAspectRatio, displayMode.height);
@@ -700,6 +861,26 @@ function normalizeDisplayMode(width: number, height: number): { width: number; h
         width: Math.max(1, Math.trunc(width)),
         height: Math.max(1, Math.trunc(height))
     };
+}
+
+function isAudioResourceRef(ref: string): boolean {
+    return ref.endsWith(".ogg");
+}
+
+function isPotentialGameStateSnapshot(snapshot: unknown): boolean {
+    if (snapshot === null || typeof snapshot !== "object") {
+        return false;
+    }
+    const record = snapshot as Record<string, unknown>;
+    const gameMode = record.gameMode;
+    if (gameMode === null || typeof gameMode !== "object") {
+        return false;
+    }
+    const gameModeRecord = gameMode as Record<string, unknown>;
+    return record.version === GAME_STATE_VERSION
+        && Array.isArray(gameModeRecord.entities)
+        && Array.isArray(gameModeRecord.elements)
+        && record.random !== undefined;
 }
 
 function volumeIconSvg(value: number): string {

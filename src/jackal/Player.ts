@@ -8,7 +8,7 @@ import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { GameMode } from "./GameMode.js";
 import { Grenade } from "./Grenade.js";
-import { Main } from "./Main.js";
+import { MainRuntimeState } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { PlayerBullet } from "./PlayerBullet.js";
 import { PlayerMissile } from "./PlayerMissile.js";
@@ -18,8 +18,8 @@ export class Player {  public constructor() {
   }
   private __construct_Player(argCount: number): void {
     if (argCount === 0) {
-            this.main = Main.mainInstance;
-                this.gameMode = Main.gameMode;    
+            this.main = MainRuntimeState.mainInstance;
+                this.gameMode = MainRuntimeState.gameMode;    
                 this.input = this.main.input;
                 this.mines = this.gameMode.mines;
         return;

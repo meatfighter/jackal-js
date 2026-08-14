@@ -37,8 +37,6 @@ export const RESOURCE_MANIFEST: string[] = [
     "images/sprites-7.xml",
     "images/sprites-8.png",
     "images/sprites-8.xml",
-    "images/sprites-9.png",
-    "images/sprites-9.xml",
     "images/sunset.dat",
     "images/tiles-0.png",
     "images/tiles-0.xml",

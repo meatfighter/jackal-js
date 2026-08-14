@@ -26,6 +26,7 @@ import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
 import { LoadingMode } from "./LoadingMode.js";
 import { MapMode } from "./MapMode.js";
+import { MainRuntimeState } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { OptionsMode } from "./OptionsMode.js";
 import { RotatingGun } from "./RotatingGun.js";
@@ -271,12 +272,14 @@ export class Main extends BasicGame {  public constructor() {
   public browserSuspended: boolean = false;
   public browserSuspendedMusicOn: boolean = true;
   public browserSuspendedSoundOn: boolean = true;
+  public skipJavaLoadingAssets: boolean = false;
   private loadingFinishedNotified: boolean = false;
   
   
 
   public init(gc: any): void {
     Main.mainInstance = this;
+    MainRuntimeState.mainInstance = this;
     this.gc = gc;
     
     gc.setAlwaysRender(true);
@@ -286,7 +289,9 @@ export class Main extends BasicGame {  public constructor() {
     gc.setClearEachFrame(true);
     
     try {
-      this.loadProgressBar();
+      if (!this.skipJavaLoadingAssets) {
+        this.loadProgressBar();
+      }
       this.loadFont();
       this.loadClasses();            
     } catch (t) {
@@ -469,6 +474,7 @@ export class Main extends BasicGame {  public constructor() {
     switch(mode) {
       case Modes.GAME: 
         Main.gameMode = new GameMode();
+        MainRuntimeState.gameMode = Main.gameMode;
         Main.gameMode.setStage(this.stageIndex, this.stages[this.stageIndex], this.hardMode);
         this.setMode(Main.gameMode, gc);
         break;      

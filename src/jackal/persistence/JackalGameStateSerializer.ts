@@ -7,6 +7,7 @@ import { FriendlySoldier } from "../FriendlySoldier.js";
 import { GameMode } from "../GameMode.js";
 import { KonamiCode } from "../KonamiCode.js";
 import { Main } from "../Main.js";
+import { MainRuntimeState } from "../MainRuntimeState.js";
 import { Modes } from "../Modes.js";
 import { Player } from "../Player.js";
 import { RotatingGun } from "../RotatingGun.js";
@@ -168,6 +169,8 @@ export class JackalGameStateSerializer {
         const gameMode = new GameMode();
         Main.mainInstance = main;
         Main.gameMode = gameMode;
+        MainRuntimeState.mainInstance = main;
+        MainRuntimeState.gameMode = gameMode;
         gameMode.setStage(snapshot.mainFields.stageIndex as number, main.stages[snapshot.mainFields.stageIndex as number], snapshot.mainFields.hardMode as boolean);
         gameMode.init(main, gc);
         const player = gameMode.player as Player;
