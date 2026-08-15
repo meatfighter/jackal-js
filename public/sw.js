@@ -1,5 +1,5 @@
-const APP_VERSION = "0.1.16";
-const BUILD_STAMP = "20260815T012000Z";
+const APP_VERSION = "0.1.17";
+const BUILD_STAMP = "20260815T013000Z";
 const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
 const APP_INDEX = "/index.html";
 const APP_SHELL = [
