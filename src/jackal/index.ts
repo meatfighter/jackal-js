@@ -88,7 +88,6 @@ export * from "./LandingPort.js";
 export * from "./LargeImage.js";
 export * from "./Laser.js";
 export * from "./LasersManager.js";
-export * from "./LoadingMode.js";
 export * from "./Main.js";
 export * from "./MapMode.js";
 export * from "./Menu.js";

@@ -24,7 +24,6 @@ import { JeepHereMode } from "./JeepHereMode.js";
 import { JeepYeahMode } from "./JeepYeahMode.js";
 import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
-import { LoadingMode } from "./LoadingMode.js";
 import { MapMode } from "./MapMode.js";
 import { MainRuntimeState } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
@@ -201,7 +200,6 @@ export class Main extends BasicGame {  public constructor() {
   public suns: any[] = null as any;
   public waves: any[] = null as any;
   public rescueHelicopters: any[] = javaArray(3, null);
-  public controllers: any[] = javaArray(2, null);
   
   public jeepHere: any = null as any;  
   public title: any = null as any;
@@ -272,7 +270,6 @@ export class Main extends BasicGame {  public constructor() {
   public browserSuspended: boolean = false;
   public browserSuspendedMusicOn: boolean = true;
   public browserSuspendedSoundOn: boolean = true;
-  public skipJavaLoadingAssets: boolean = false;
   private loadingFinishedNotified: boolean = false;
   
   
@@ -289,11 +286,8 @@ export class Main extends BasicGame {  public constructor() {
     gc.setClearEachFrame(true);
     
     try {
-      if (!this.skipJavaLoadingAssets) {
-        this.loadProgressBar();
-      }
       this.loadFont();
-      this.loadClasses();            
+      this.loadClasses();
     } catch (t) {
       Log.error("Loading error", t);
     }
@@ -302,7 +296,7 @@ export class Main extends BasicGame {  public constructor() {
     this.konamiCode = new KonamiCode(this);
     this.startPlayer();
     this.resetNextFrameTime();
-    this.requestMode(Modes.LOADING, gc);    
+    this.completeLoadingImmediately(gc);
   }  
 
   public update(gc: any, delta: any): void {
@@ -513,9 +507,6 @@ export class Main extends BasicGame {  public constructor() {
         break;
       case Modes.INTRO_MAP:
         this.setMode(new IntroMapMode(), gc);
-        break;
-      case Modes.LOADING:
-        this.setMode(new LoadingMode(), gc);
         break;
     }
   }
@@ -1347,14 +1338,6 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.title = this.loadLargeImage("title", "large-5");    
   }
   
-  private loadProgressBar(): void {
-    let pack9 = new XMLPackedSheet(
-        "images/sprites-9.png", "images/sprites-9.xml");
-    
-    this.controllers[0] = pack9.getSprite("controller-0.png");
-    this.controllers[1] = pack9.getSprite("controller-1.png");
-  }
-  
   private loadSprites(): void {
     
     let pack1 = new XMLPackedSheet(
@@ -2161,19 +2144,18 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
   }
 
   public isLoadingScreenActive(): boolean {
-    return this.mode instanceof LoadingMode || this.loadIndex < 42;
+    return this.loadIndex < 42;
   }
 
   public isStateSaveReady(): boolean {
     return this.loadIndex >= 42
         && this.mode != null
-        && !(this.mode instanceof LoadingMode)
         && this.gc != null;
   }
 
   public isStateSaveInvalidatingMenuActive(): boolean {
     return this.mode == null
-        || this.mode instanceof LoadingMode;
+        || this.loadIndex < 42;
   }
 
   public setBrowserSuspended(suspended: any): void {

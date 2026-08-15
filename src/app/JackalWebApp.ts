@@ -221,7 +221,6 @@ export class JackalWebApp {
         runtime.slick.Display.setParent(host);
 
         const mainGame = new runtime.Main();
-        mainGame.skipJavaLoadingAssets = true;
         this.inputMappingStore.restore(mainGame.buttonMapping);
 
         const scalableGame = new runtime.slick.ScalableGame(mainGame as any, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
@@ -262,7 +261,6 @@ export class JackalWebApp {
         appContainer.setClearEachFrame(true);
         await Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false));
         await appContainer.start();
-        mainGame.completeLoadingImmediately(appContainer);
         await ResourceLoader.waitForAll();
 
         appContainer.setErrorHandler((error) => {

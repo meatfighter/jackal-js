@@ -17,5 +17,4 @@ export enum Modes {
   OPTIONS,
   INPUT,
   INTRO_MAP,
-  LOADING,
 }
