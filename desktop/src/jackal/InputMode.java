@@ -13,6 +13,7 @@ public class InputMode implements IMode, ControllerListener,
   public static final int STATE_READ_FADE = 3;
   public static final int STATE_FADE_OUT = 4;
   public static final int STATE_DONE = 5;
+  public static final int STATE_SAVED = 6;
 
   public static final int OPTION_CHANGE = 0;
   public static final int OPTION_RESET = 1;
@@ -21,6 +22,7 @@ public class InputMode implements IMode, ControllerListener,
   public static final int FADE_TIME = 11;
   
   public static final float I_FADE_TIME = 1f / FADE_TIME;
+  public static final int DONE_DELAY = 30;
   public static final int ARM_DELAY = 8;
   public static final int CONTROLLER_INDEX_LIMIT = 16;
   public static final int GAMEPAD_AXIS_LIMIT = 16;
@@ -649,14 +651,24 @@ public class InputMode implements IMode, ControllerListener,
         if (--delay == 0) {
           if (++nameIndex == NAMES.length) {
             removeInputListeners();
-            state = STATE_MENU;
             commitDraftButtonMapping();
-            createMenu(OPTION_DONE);
+            gc.getInput().clearKeyPressedRecord();
+            gc.getInput().clearControlPressedRecord();
+            message = "SAVED";
+            delay = DONE_DELAY;
+            state = STATE_SAVED;
           } else {
             state = STATE_READING;
             armDelay = ARM_DELAY;
             syncExtraAxisDirectionState();
           }
+        }
+        break;
+      case STATE_SAVED:
+        if (--delay == 0) {
+          message = "";
+          state = STATE_MENU;
+          createMenu(OPTION_DONE);
         }
         break;
     }
@@ -688,6 +700,12 @@ public class InputMode implements IMode, ControllerListener,
   }
 
   private void renderReading(GameContainer gc, Graphics g) {
+    if (state == STATE_SAVED) {
+      main.drawString(message, centerStringX(message), 464,
+          Main.FONT_GRAY);
+      return;
+    }
+
     main.drawString("ON EITHER YOUR KEYBOARD", 144, 304, Main.FONT_GRAY);
     main.drawString("OR GAMEPAD, PRESS:", 224, 368, Main.FONT_GRAY);
 
@@ -715,6 +733,7 @@ public class InputMode implements IMode, ControllerListener,
     switch(state) {
       case STATE_READING:
       case STATE_READ_FADE:
+      case STATE_SAVED:
         renderReading(gc, g);
         break;
       case STATE_DONE:

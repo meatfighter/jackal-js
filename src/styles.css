@@ -341,14 +341,14 @@ button {
 
 .hamburger-button:hover,
 .hamburger-button:focus-visible {
-    background: rgba(247, 212, 81, 0.86);
+    background: #3f3f3f;
     border-color: rgba(255, 255, 255, 0.76);
 }
 
 .hamburger-button:hover span,
 .hamburger-button:focus-visible span {
-    background: #080808;
-    box-shadow: 0 7px 0 #080808, 0 -7px 0 #080808;
+    background: #ffffff;
+    box-shadow: 0 7px 0 #ffffff, 0 -7px 0 #ffffff;
 }
 
 .hamburger-button[hidden] {

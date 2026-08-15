@@ -18,6 +18,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public static readonly STATE_READ_FADE: number = 3;
   public static readonly STATE_FADE_OUT: number = 4;
   public static readonly STATE_DONE: number = 5;
+  public static readonly STATE_SAVED: number = 6;
 
   public static readonly OPTION_CHANGE: number = 0;
   public static readonly OPTION_RESET: number = 1;
@@ -26,6 +27,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public static readonly FADE_TIME: number = 11;
 
   public static readonly I_FADE_TIME: number = 1 / InputMode.FADE_TIME;
+  public static readonly DONE_DELAY: number = 30;
   public static readonly ARM_DELAY: number = 8;
   public static readonly CONTROLLER_INDEX_LIMIT: number = 16;
   public static readonly GAMEPAD_AXIS_LIMIT: number = 16;
@@ -611,15 +613,24 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         if (--this.delay == 0) {
           if (++this.nameIndex == InputMode.NAMES.length) {
             this.removeInputListeners();
-            this.state = InputMode.STATE_MENU;
             this.commitDraftButtonMapping();
             this.main.notifyInputMappingChanged();
-            this.createMenu(InputMode.OPTION_DONE);
+            this.main.clearInputPressedRecords();
+            this.message = "SAVED";
+            this.delay = InputMode.DONE_DELAY;
+            this.state = InputMode.STATE_SAVED;
           } else {
             this.state = InputMode.STATE_READING;
             this.armDelay = InputMode.ARM_DELAY;
             this.syncExtraAxisDirectionState();
           }
+        }
+        break;
+      case InputMode.STATE_SAVED:
+        if (--this.delay == 0) {
+          this.message = "";
+          this.state = InputMode.STATE_MENU;
+          this.createMenu(InputMode.OPTION_DONE);
         }
         break;
     }
@@ -652,6 +663,12 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   }
 
   private renderReading(gc: any, g: any): void {
+    if (this.state == InputMode.STATE_SAVED) {
+      this.main.drawString(this.message, this.centerStringX(this.message), 464,
+          MainConstants.FONT_GRAY);
+      return;
+    }
+
     this.main.drawString("ON EITHER YOUR KEYBOARD", 144, 304, MainConstants.FONT_GRAY);
     this.main.drawString("OR GAMEPAD, PRESS:", 224, 368, MainConstants.FONT_GRAY);
 
@@ -679,6 +696,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     switch(this.state) {
       case InputMode.STATE_READING:
       case InputMode.STATE_READ_FADE:
+      case InputMode.STATE_SAVED:
         this.renderReading(gc, g);
         break;
       case InputMode.STATE_DONE:
