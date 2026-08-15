@@ -6,7 +6,7 @@
 
     <groupId>com.meatfighter</groupId>
     <artifactId>jackal-desktop</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.17</version>
     <packaging>jar</packaging>
 
     <name>Jackal Desktop</name>

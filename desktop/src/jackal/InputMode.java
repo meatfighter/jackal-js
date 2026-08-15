@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 import org.newdawn.slick.*;
 
-public class InputMode implements IMode, ControllerListener, 
-    KeyListener, IFadeListener, IMenuListener {
+public class InputMode implements IMode, KeyListener, IFadeListener,
+    IMenuListener {
   
   public static final int STATE_FADE_IN = 0;
   public static final int STATE_MENU = 1;
@@ -20,16 +20,11 @@ public class InputMode implements IMode, ControllerListener,
   public static final int OPTION_DONE = 2;
   
   public static final int FADE_TIME = 11;
-  
+
   public static final float I_FADE_TIME = 1f / FADE_TIME;
   public static final int DONE_DELAY = 30;
   public static final int ARM_DELAY = 8;
-  public static final int CONTROLLER_INDEX_LIMIT = 16;
-  public static final int GAMEPAD_AXIS_LIMIT = 16;
-  public static final float AXIS_THRESHOLD = 0.5f;
-  public static final float AXIS_RECENTER_THRESHOLD = 0.05f;
-  public static final int[] EXTRA_HORIZONTAL_AXES = {2, 6};
-  public static final int[] EXTRA_VERTICAL_AXES = {3, 7};
+  public static final int DEFAULT_CONTROLLER_INDEX = 0;
 
   public static final String INPUT_TITLE = "INPUT";
   public static final float INPUT_TITLE_X
@@ -91,12 +86,12 @@ public class InputMode implements IMode, ControllerListener,
   public Set<Integer> assignedControllerButtons = new HashSet<Integer>();
   public String message = "";
   public int armDelay;
-  public float[] extraAxisBaselines
-      = new float[CONTROLLER_INDEX_LIMIT * GAMEPAD_AXIS_LIMIT];
-  public boolean extraAxisUpDown;
-  public boolean extraAxisDownDown;
-  public boolean extraAxisLeftDown;
-  public boolean extraAxisRightDown;
+  public boolean[] controllerButtonDown =
+      new boolean[ControllerSupport.GAMEPAD_BUTTON_INDEX_LIMIT];
+  public boolean controllerUpDown;
+  public boolean controllerDownDown;
+  public boolean controllerLeftDown;
+  public boolean controllerRightDown;
   
   @Override
   public void init(Main main, GameContainer gc) throws SlickException {
@@ -163,9 +158,8 @@ public class InputMode implements IMode, ControllerListener,
     assignedControllerButtons.clear();
     message = "";
     armDelay = ARM_DELAY;
-    resetExtraAxisBaselines();
     addInputListeners();
-    syncExtraAxisDirectionState();
+    syncControllerInputState();
     gc.getInput().clearKeyPressedRecord();
     gc.getInput().clearControlPressedRecord();
   }
@@ -174,7 +168,6 @@ public class InputMode implements IMode, ControllerListener,
     if (listeningForInput) {
       return;
     }
-    gc.getInput().addControllerListener(this);
     gc.getInput().addKeyListener(this);
     listeningForInput = true;
   }
@@ -183,61 +176,8 @@ public class InputMode implements IMode, ControllerListener,
     if (!listeningForInput) {
       return;
     }
-    gc.getInput().removeControllerListener(this);
     gc.getInput().removeKeyListener(this);
     listeningForInput = false;
-  }  
-  
-  @Override
-  public void controllerLeftPressed(int controllerIndex) {
-    if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT,
-          controllerIndex);
-    }
-  }
-
-  @Override
-  public void controllerLeftReleased(int controllerIndex) {
-  }
-
-  @Override
-  public void controllerRightPressed(int controllerIndex) {
-    if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT,
-          controllerIndex);
-    }
-  }
-
-  @Override
-  public void controllerRightReleased(int controllerIndex) {
-  }
-
-  @Override
-  public void controllerUpPressed(int controllerIndex) {
-    if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP,
-          controllerIndex);
-    }
-  }
-
-  @Override
-  public void controllerUpReleased(int controllerIndex) {
-  }
-
-  @Override
-  public void controllerDownPressed(int controllerIndex) {
-    if (ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN,
-          controllerIndex);
-    }
-  }
-
-  @Override
-  public void controllerDownReleased(int controllerIndex) {
-  }
-
-  @Override
-  public void controllerButtonReleased(int controllerIndex, int buttonIndex) {
   }
 
   @Override
@@ -255,31 +195,6 @@ public class InputMode implements IMode, ControllerListener,
 
   @Override
   public void inputStarted() {
-  }
-
-  @Override
-  public void controllerButtonPressed(int controllerIndex, int buttonIndex) {
-    
-    if (state != STATE_READING) {
-      return;
-    }
-
-    if (!ControllerSupport.isGameController(gc.getInput(), controllerIndex)) {
-      return;
-    }
-    
-    buttonIndex--;
-    if (buttonIndex < 0 || (isActionStep() 
-        && isDirectionalGamepadButton(buttonIndex))) {
-      return;
-    }
-
-    if (!bindDraftControllerButton(buttonIndex, controllerIndex)) {
-      message = "ALREADY USED";
-      return;
-    }
-
-    advance();
   }
 
   private void bindControllerDirection(int buttonIndex, int controllerIndex) {
@@ -484,142 +399,103 @@ public class InputMode implements IMode, ControllerListener,
         || action == ButtonMapping.ACTION_START;
   }
 
-  private boolean isDirectionalGamepadButton(int buttonIndex) {
-    return buttonIndex >= ButtonMapping.DEFAULT_CONTROLLER_UP
-        && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-  }
-
-  private void bindExtraAxisDirectionPressed() {
-    if (state != STATE_READING || isActionStep()) {
-      syncExtraAxisDirectionState();
+  private void bindControllerInputPressed() {
+    if (state != STATE_READING) {
+      syncControllerInputState();
       return;
     }
-    int buttonIndex = getPressedExtraAxisDirection();
-    if (buttonIndex != ButtonMapping.NO_BINDING) {
-      bindControllerDirection(buttonIndex, 0);
+
+    int direction = getPressedControllerDirection();
+    if (direction != ButtonMapping.NO_BINDING && !isActionStep()) {
+      bindControllerDirection(direction, DEFAULT_CONTROLLER_INDEX);
+      return;
+    }
+
+    int button = getPressedNonDirectionalControllerButton();
+    if (button != ButtonMapping.NO_BINDING) {
+      if (!bindDraftControllerButton(button, DEFAULT_CONTROLLER_INDEX)) {
+        message = "ALREADY USED";
+        return;
+      }
+      advance();
     }
   }
 
-  private int getPressedExtraAxisDirection() {
-    if (isExtraAxisUpPressed()) {
+  private int getPressedControllerDirection() {
+    if (isControllerUpPressed()) {
       return ButtonMapping.DEFAULT_CONTROLLER_UP;
     }
-    if (isExtraAxisDownPressed()) {
+    if (isControllerDownPressed()) {
       return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
     }
-    if (isExtraAxisLeftPressed()) {
+    if (isControllerLeftPressed()) {
       return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
     }
-    if (isExtraAxisRightPressed()) {
+    if (isControllerRightPressed()) {
       return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
     return ButtonMapping.NO_BINDING;
   }
 
-  private boolean isExtraAxisUpDown() {
-    return isAnyAxisLessThan(EXTRA_VERTICAL_AXES, -AXIS_THRESHOLD);
+  private int getPressedNonDirectionalControllerButton() {
+    int pressedButton = ButtonMapping.NO_BINDING;
+    for(int button = 0; button < controllerButtonDown.length; button++) {
+      boolean down = ControllerSupport.isButtonDown(button);
+      boolean pressed = down && !controllerButtonDown[button];
+      controllerButtonDown[button] = down;
+      if (pressedButton == ButtonMapping.NO_BINDING
+          && pressed
+          && !ControllerSupport.isDirectionalButton(button)
+          && !isDraftDirectionButton(button)) {
+        pressedButton = button;
+      }
+    }
+    return pressedButton;
   }
 
-  private boolean isExtraAxisDownDown() {
-    return isAnyAxisGreaterThan(EXTRA_VERTICAL_AXES, AXIS_THRESHOLD);
+  private boolean isDraftDirectionButton(int button) {
+    return draftButtonMapping.controllerUp == button
+        || draftButtonMapping.controllerDown == button
+        || draftButtonMapping.controllerLeft == button
+        || draftButtonMapping.controllerRight == button;
   }
 
-  private boolean isExtraAxisLeftDown() {
-    return isAnyAxisLessThan(EXTRA_HORIZONTAL_AXES, -AXIS_THRESHOLD);
-  }
-
-  private boolean isExtraAxisRightDown() {
-    return isAnyAxisGreaterThan(EXTRA_HORIZONTAL_AXES, AXIS_THRESHOLD);
-  }
-
-  private boolean isExtraAxisUpPressed() {
-    boolean down = isExtraAxisUpDown();
-    boolean pressed = down && !extraAxisUpDown;
-    extraAxisUpDown = down;
+  private boolean isControllerUpPressed() {
+    boolean down = ControllerSupport.isUpDown();
+    boolean pressed = down && !controllerUpDown;
+    controllerUpDown = down;
     return pressed;
   }
 
-  private boolean isExtraAxisDownPressed() {
-    boolean down = isExtraAxisDownDown();
-    boolean pressed = down && !extraAxisDownDown;
-    extraAxisDownDown = down;
+  private boolean isControllerDownPressed() {
+    boolean down = ControllerSupport.isDownDown();
+    boolean pressed = down && !controllerDownDown;
+    controllerDownDown = down;
     return pressed;
   }
 
-  private boolean isExtraAxisLeftPressed() {
-    boolean down = isExtraAxisLeftDown();
-    boolean pressed = down && !extraAxisLeftDown;
-    extraAxisLeftDown = down;
+  private boolean isControllerLeftPressed() {
+    boolean down = ControllerSupport.isLeftDown();
+    boolean pressed = down && !controllerLeftDown;
+    controllerLeftDown = down;
     return pressed;
   }
 
-  private boolean isExtraAxisRightPressed() {
-    boolean down = isExtraAxisRightDown();
-    boolean pressed = down && !extraAxisRightDown;
-    extraAxisRightDown = down;
+  private boolean isControllerRightPressed() {
+    boolean down = ControllerSupport.isRightDown();
+    boolean pressed = down && !controllerRightDown;
+    controllerRightDown = down;
     return pressed;
   }
 
-  private boolean isAnyAxisLessThan(int[] axes, float threshold) {
-    for(int controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
-      if (ControllerSupport.isGameController(gc.getInput(), controller)) {
-        for(int i = 0; i < axes.length; i++) {
-          if (readExtraAxisValue(controller, axes[i]) < threshold) {
-            return true;
-          }
-        }
-      }
+  private void syncControllerInputState() {
+    controllerUpDown = ControllerSupport.isUpDown();
+    controllerDownDown = ControllerSupport.isDownDown();
+    controllerLeftDown = ControllerSupport.isLeftDown();
+    controllerRightDown = ControllerSupport.isRightDown();
+    for(int button = 0; button < controllerButtonDown.length; button++) {
+      controllerButtonDown[button] = ControllerSupport.isButtonDown(button);
     }
-    return false;
-  }
-
-  private boolean isAnyAxisGreaterThan(int[] axes, float threshold) {
-    for(int controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
-      if (ControllerSupport.isGameController(gc.getInput(), controller)) {
-        for(int i = 0; i < axes.length; i++) {
-          if (readExtraAxisValue(controller, axes[i]) > threshold) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private float readExtraAxisValue(int controller, int axis) {
-    try {
-      Input input = gc.getInput();
-      if (input.getAxisCount(controller) <= axis) {
-        return 0;
-      }
-      float value = input.getAxisValue(controller, axis);
-      int baselineIndex = controller * GAMEPAD_AXIS_LIMIT + axis;
-      float baseline = extraAxisBaselines[baselineIndex];
-      if (Float.isNaN(baseline)) {
-        baseline = value;
-        extraAxisBaselines[baselineIndex] = baseline;
-      }
-      if (Math.abs(value) <= AXIS_RECENTER_THRESHOLD) {
-        baseline = 0;
-        extraAxisBaselines[baselineIndex] = baseline;
-      }
-      return value - baseline;
-    } catch(RuntimeException e) {
-      return 0;
-    }
-  }
-
-  private void resetExtraAxisBaselines() {
-    for(int i = 0; i < extraAxisBaselines.length; i++) {
-      extraAxisBaselines[i] = Float.NaN;
-    }
-  }
-
-  private void syncExtraAxisDirectionState() {
-    extraAxisUpDown = isExtraAxisUpDown();
-    extraAxisDownDown = isExtraAxisDownDown();
-    extraAxisLeftDown = isExtraAxisLeftDown();
-    extraAxisRightDown = isExtraAxisRightDown();
   }
 
   private int getCurrentAction() {
@@ -641,10 +517,10 @@ public class InputMode implements IMode, ControllerListener,
         break;
       case STATE_READING:
         if (armDelay > 0) {
-          syncExtraAxisDirectionState();
+          syncControllerInputState();
           armDelay--;
         } else {
-          bindExtraAxisDirectionPressed();
+          bindControllerInputPressed();
         }
         break;
       case STATE_READ_FADE:
@@ -660,7 +536,7 @@ public class InputMode implements IMode, ControllerListener,
           } else {
             state = STATE_READING;
             armDelay = ARM_DELAY;
-            syncExtraAxisDirectionState();
+            syncControllerInputState();
           }
         }
         break;

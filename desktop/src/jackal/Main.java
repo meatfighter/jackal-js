@@ -245,6 +245,7 @@ public class Main extends BasicGame {
     gc.setSmoothDeltas(false);
     gc.setShowFPS(false);
     gc.setClearEachFrame(true);
+    ControllerSupport.prepareDesktopInput();
     
     try {
       loadProgressBar();
@@ -1976,7 +1977,8 @@ public class Main extends BasicGame {
   
   public static void main(String[] args) throws SlickException {
     java.awt.Toolkit.getDefaultToolkit();
-    
+    ControllerSupport.prepareDesktopInput();
+
     Main main = new Main();
     
     ApplicationGameContainer appGameContainer = new ApplicationGameContainer(

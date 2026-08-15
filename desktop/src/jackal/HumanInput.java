@@ -12,42 +12,72 @@ public class HumanInput implements IInput {
   private boolean right;
   private boolean fire;
   private boolean shoot;
+  private boolean mappedStartDown;
+  private boolean mappedStartWasDown;
+  private boolean nonDirectionalButtonDown;
+  private boolean nonDirectionalButtonWasDown;
 
   public HumanInput(ButtonMapping buttonMapping, GameContainer gc) {
     this.buttonMapping = buttonMapping;
-    this.input = gc.getInput();   
+    this.input = gc.getInput();
+    syncControllerPressedRecord();
   }
   
   public void snap() {
-    up = input.isKeyDown(buttonMapping.keyUp)
-        || isControllerBindingDown(buttonMapping.controllerUp);
-    down = input.isKeyDown(buttonMapping.keyDown)
-        || isControllerBindingDown(buttonMapping.controllerDown);
-    left = input.isKeyDown(buttonMapping.keyLeft)
-        || isControllerBindingDown(buttonMapping.controllerLeft);
-    right = input.isKeyDown(buttonMapping.keyRight)
-        || isControllerBindingDown(buttonMapping.controllerRight);  
-    fire = input.isKeyDown(buttonMapping.keyGrenade)
-        || ControllerSupport.isButtonDown(input, buttonMapping.controllerGrenade);
-    shoot = input.isKeyDown(buttonMapping.keyGun)
-        || ControllerSupport.isButtonDown(input, buttonMapping.controllerGun);
+    mappedStartWasDown = mappedStartDown;
+    nonDirectionalButtonWasDown = nonDirectionalButtonDown;
+
+    up = isKeyDown(buttonMapping.keyUp)
+        || ControllerSupport.isDirectionDown(buttonMapping.controllerUp);
+    down = isKeyDown(buttonMapping.keyDown)
+        || ControllerSupport.isDirectionDown(buttonMapping.controllerDown);
+    left = isKeyDown(buttonMapping.keyLeft)
+        || ControllerSupport.isDirectionDown(buttonMapping.controllerLeft);
+    right = isKeyDown(buttonMapping.keyRight)
+        || ControllerSupport.isDirectionDown(buttonMapping.controllerRight);
+    fire = isKeyDown(buttonMapping.keyGrenade)
+        || ControllerSupport.isButtonDown(buttonMapping.controllerGrenade);
+    shoot = isKeyDown(buttonMapping.keyGun)
+        || ControllerSupport.isButtonDown(buttonMapping.controllerGun);
+    mappedStartDown = ControllerSupport.isButtonDown(
+        buttonMapping.controllerStart);
+    nonDirectionalButtonDown =
+        ControllerSupport.isNonDirectionalButtonDown(buttonMapping);
   }
 
-  private boolean isControllerBindingDown(int button) {
-    return ControllerSupport.isDirectionDown(input, button);
+  private boolean isKeyDown(int key) {
+    if (key == ButtonMapping.NO_BINDING) {
+      return false;
+    }
+    try {
+      return input.isKeyDown(key);
+    } catch(RuntimeException e) {
+      return false;
+    }
   }
 
-  private boolean isControllerBindingPressed(int button) {
-    return ControllerSupport.isButtonPressed(input, button);
+  private boolean isKeyPressed(int key) {
+    if (key == ButtonMapping.NO_BINDING) {
+      return false;
+    }
+    try {
+      return input.isKeyPressed(key);
+    } catch(RuntimeException e) {
+      return false;
+    }
   }
 
   private boolean isMappedStartPressed() {
-    boolean pressed = input.isKeyPressed(buttonMapping.keyStart);
-    pressed = isControllerBindingPressed(buttonMapping.controllerStart) || pressed;
-    return pressed;
+    return isKeyPressed(buttonMapping.keyStart)
+        || isPressed(mappedStartDown, mappedStartWasDown);
+  }
+
+  private boolean isPressed(boolean down, boolean wasDown) {
+    return down && !wasDown;
   }
 
   public void reset() {
+    syncControllerPressedRecord();
   }
 
   public boolean isUp() {
@@ -76,15 +106,15 @@ public class HumanInput implements IInput {
 
   public boolean isEnter() {
     return isMappedStartPressed()
-        || ControllerSupport.isNonDirectionalButtonPressed(input, buttonMapping);
+        || isPressed(nonDirectionalButtonDown, nonDirectionalButtonWasDown);
   }
 
   public boolean isFullscreenTogglePressed() {
-    return input.isKeyPressed(Input.KEY_SPACE);
+    return isKeyPressed(Input.KEY_SPACE);
   }
 
   public boolean isEscape() {
-    return input.isKeyPressed(Input.KEY_ESCAPE);
+    return isKeyPressed(Input.KEY_ESCAPE);
   }
 
   public boolean isPause() {
@@ -92,8 +122,21 @@ public class HumanInput implements IInput {
   }
 
   public void clearKeyPressedRecord() {
-    input.clearKeyPressedRecord();
-    input.clearControlPressedRecord();
+    try {
+      input.clearKeyPressedRecord();
+      input.clearControlPressedRecord();
+    } catch(RuntimeException e) {
+    }
+    syncControllerPressedRecord();
+  }
+
+  private void syncControllerPressedRecord() {
+    mappedStartDown = ControllerSupport.isButtonDown(
+        buttonMapping.controllerStart);
+    mappedStartWasDown = mappedStartDown;
+    nonDirectionalButtonDown =
+        ControllerSupport.isNonDirectionalButtonDown(buttonMapping);
+    nonDirectionalButtonWasDown = nonDirectionalButtonDown;
   }
 
   public boolean update() {
