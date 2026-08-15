@@ -298,6 +298,7 @@ const SKIPPED_INSTANCE_FIELDS = new Set([
     "triggerMap",
     "groupsMap",
     "directions",
+    "directionsDecoded",
     "elements",
     "enemies",
     "solids",

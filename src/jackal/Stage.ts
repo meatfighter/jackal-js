@@ -14,6 +14,7 @@ export class Stage {
   public mapWidth: number = 0;
   public mapHeight: number = 0;
   public directions: any[] = null as any;
+  public directionsDecoded: Uint8Array = null as any;
   public directionsWidth: number = 0;
   public directionsHeight: number = 0;  
 }

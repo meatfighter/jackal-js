@@ -27,8 +27,11 @@ export class ExtraLargeImage {  public constructor(arg0?: any, arg1?: any, arg2?
   
 
   public draw(x: any, y: any): void {
+    let main = this.main;
+    let tiles = this.tiles;
+    let map = this.map;
     for(let i = this.map.length - 1; i >= 0; i--) {
-      this.main.draw(this.tiles[this.map[i][0]], this.map[i][1] + x, this.map[i][2] + y);
+      main.draw__overload0(tiles[map[i][0]], map[i][1] + x, map[i][2] + y);
     }
   }  
 }

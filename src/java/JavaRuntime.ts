@@ -59,14 +59,24 @@ export class ArrayList<T> {
             if (index < 0 || index >= this.values.length) {
                 return false;
             }
-            return this.values.splice(index, 1)[0];
+            return this.removeAt(index);
         }
         const index = this.values.indexOf(valueOrIndex);
         if (index < 0) {
             return false;
         }
-        this.values.splice(index, 1);
+        this.removeAt(index);
         return true;
+    }
+
+    private removeAt(index: number): T {
+        const previous = this.values[index];
+        const lastIndex = this.values.length - 1;
+        for (let i = index; i < lastIndex; i++) {
+            this.values[i] = this.values[i + 1];
+        }
+        this.values.length = lastIndex;
+        return previous;
     }
 
     public size(): number {

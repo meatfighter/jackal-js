@@ -101,12 +101,15 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   public extraAxisDownDown: boolean = false;
   public extraAxisLeftDown: boolean = false;
   public extraAxisRightDown: boolean = false;
+  public inputMappingLines: any[] = javaArray(InputMode.LABELS.length, "");
+  public inputMappingX: number = 0;
 
   public init(main: any, gc: any): void {
 
     this.main = main;
     this.gc = gc;
     this.buttonMapping = main.buttonMapping;
+    this.refreshInputMappingLines();
     this.createMenu(0);
 
     main.startFade(false, this);
@@ -144,6 +147,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         break;
       case InputMode.OPTION_RESET:
         this.buttonMapping.resetToDefaults();
+        this.refreshInputMappingLines();
         this.main.notifyInputMappingChanged();
         this.createMenu(InputMode.OPTION_RESET);
         break;
@@ -443,6 +447,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     this.buttonMapping.controllerStart = this.draftButtonMapping.controllerStart;
     this.buttonMapping.gunKeyMapped = this.draftButtonMapping.gunKeyMapped;
     this.draftButtonMapping = null;
+    this.refreshInputMappingLines();
   }
 
   private isActionStep(): boolean {
@@ -642,8 +647,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     let mappingX = this.getInputMappingX();
     for(let i = 0; i < InputMode.LABELS.length; i++) {
-      this.main.drawString(this.buttonMapping.inputMappingLine(InputMode.LABELS[i],
-          InputMode.ACTIONS[i]), mappingX,
+      this.main.drawString(this.inputMappingLines[i], mappingX,
           InputMode.INPUT_MAPPING_Y + i * InputMode.INPUT_MAPPING_ROW_HEIGHT,
           MainConstants.FONT_GRAY);
     }
@@ -654,12 +658,20 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
   }
 
   private getInputMappingX(): number {
+    return this.inputMappingX;
+  }
+
+  private refreshInputMappingLines(): void {
     let maxLength = 0;
     for(let i = 0; i < InputMode.LABELS.length; i++) {
-      maxLength = Math.max(maxLength, this.buttonMapping.inputMappingLine(
-          InputMode.LABELS[i], InputMode.ACTIONS[i]).length);
+      let line = this.buttonMapping.inputMappingLine(InputMode.LABELS[i],
+          InputMode.ACTIONS[i]);
+      this.inputMappingLines[i] = line;
+      if (line.length > maxLength) {
+        maxLength = line.length;
+      }
     }
-    return (MainConstants.DISPLAY_WIDTH - (maxLength << 5)) / 2;
+    this.inputMappingX = (MainConstants.DISPLAY_WIDTH - (maxLength << 5)) / 2;
   }
 
   private renderReading(gc: any, g: any): void {

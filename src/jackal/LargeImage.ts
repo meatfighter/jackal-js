@@ -33,10 +33,13 @@ export class LargeImage {  public constructor(arg0?: any, arg1?: any, arg2?: any
   
 
   public draw(x: any, y: any): void {
+    let main = this.main;
+    let tiles = this.tiles;
+    let map = this.map;
     for(let i = this.height - 1; i >= 0; i--) {
       let Y = y + (i << 5);
       for(let j = this.width - 1; j >= 0; j--) {
-        this.main.draw(this.tiles[this.map[i][j]], x + (j << 5), Y);
+        main.draw__overload0(tiles[map[i][j]], x + (j << 5), Y);
       }
     }
   }

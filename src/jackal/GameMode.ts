@@ -135,6 +135,7 @@ export class GameMode implements IMode, IFadeListener {
   public mapWidth: number = 0;
   public mapHeight: number = 0;
   public directions: any[] = null as any;
+  public directionsDecoded: Uint8Array = null as any;
   public directionsWidth: number = 0;
   public directionsHeight: number = 0;  
   public g: any = null as any;
@@ -199,6 +200,7 @@ export class GameMode implements IMode, IFadeListener {
     this.mapWidth = stage.mapWidth;
     this.mapHeight = stage.mapHeight;
     this.directions = stage.directions;
+    this.directionsDecoded = stage.directionsDecoded;
     this.directionsWidth = stage.directionsWidth;
     this.directionsHeight = stage.directionsHeight;  
     
@@ -341,13 +343,12 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
     let index = (i / 21) | 0;
-    let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];
     
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
     }
     
-    let direction = Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS);
+    let direction = this.directionsDecoded[i];
     
     if (addRandomness) {
       let angle = GameMode.DIRECTION_RADIANS[direction] 
@@ -401,13 +402,12 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
     let index = (i / 21) | 0;
-    let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];
     
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
     }    
     
-    let direction = Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS);
+    let direction = this.directionsDecoded[i];
     
     if (addRandomness) {
       let angle = GameMode.DIRECTION_RADIANS[direction] 
@@ -1043,26 +1043,29 @@ public add__overload0(enemy: any): void {
     let xTile = javaInt((this.cameraX / 32));
     let yTile = javaInt((this.cameraY / 32));  
     let xStart = 32 + xTile == this.mapWidth ? 31 : 32;
+    let main = this.main;
+    let tiles = this.tiles;
+    let tileMap = this.tileMap;
     
     if (this.stageIndex > 0) {
       
       if (this.stageIndex == 2) {
         for(let i = 0; i < 4; i++) {
-          this.tiles[i].setAlpha(GameMode.WATER_ALPHAS[this.waterAlphaIndex]);
+          tiles[i].setAlpha(GameMode.WATER_ALPHAS[this.waterAlphaIndex]);
         }
         // tile sheet 2 (includes water rendering)
         for(let y = 30; y >= 0; y--) {   
           let Y = (y << 5) - yOffset;
           for(let x = xStart; x >= 0; x--) {
-            let tile = this.tileMap[y + yTile][x + xTile];
+            let tile = tileMap[y + yTile][x + xTile];
             let X = (x << 5) - xOffset;            
             if (tile < 32) {
               let water = (((y + yTile) & 1) << 1) + ((x + xTile) & 1);
-              this.main.draw(this.tiles[water + 4], X, Y);
-              this.main.draw(this.tiles[water], X, Y);
+              main.draw__overload0(tiles[water + 4], X, Y);
+              main.draw__overload0(tiles[water], X, Y);
             }
             if (tile < 225) {
-              this.main.draw(this.tiles[tile], X, Y);
+              main.draw__overload0(tiles[tile], X, Y);
             }
           }
         }
@@ -1071,9 +1074,9 @@ public add__overload0(enemy: any): void {
         for(let y = 30; y >= 0; y--) { 
           let Y = (y << 5) - yOffset;
           for(let x = xStart; x >= 0; x--) {
-            let tile = this.tileMap[y + yTile][x + xTile];
+            let tile = tileMap[y + yTile][x + xTile];
             if (tile < 225) {
-              this.main.draw(this.tiles[tile], (x << 5) - xOffset, Y);
+              main.draw__overload0(tiles[tile], (x << 5) - xOffset, Y);
             }
           }
         }        
@@ -1083,9 +1086,9 @@ public add__overload0(enemy: any): void {
       for(let y = 30; y >= 0; y--) { 
         let Y = (y << 5) - yOffset;
         for(let x = xStart; x >= 0; x--) {
-          let tile = this.tileMap[y + yTile][x + xTile];
+          let tile = tileMap[y + yTile][x + xTile];
           if (tile >= 225) {
-            this.main.draw(this.tiles[tile], (x << 5) - xOffset, Y);
+            main.draw__overload0(tiles[tile], (x << 5) - xOffset, Y);
           }
         }
       }
@@ -1094,7 +1097,7 @@ public add__overload0(enemy: any): void {
       // tile sheet [stage index]
       for(let y = 30; y >= 0; y--) {      
         for(let x = xStart; x >= 0; x--) {
-          this.main.draw(this.tiles[this.tileMap[y + yTile][x + xTile]], 
+          main.draw__overload0(tiles[tileMap[y + yTile][x + xTile]],
               (x << 5) - xOffset, (y << 5) - yOffset);
         }
       }

@@ -261,6 +261,7 @@ export class Main extends BasicGame {  public constructor() {
   public gc: any = null as any;
   public appGameContainer: any = null as any;
   public scalableGame: any = null as any;
+  public hiddenCursor: any = null as any;
   public loadingFinishedHandler: any = null as any;
   public loadingCompleteHandler: any = null as any;
   public stateSaveInvalidatedHandler: any = null as any;
@@ -529,9 +530,17 @@ export class Main extends BasicGame {  public constructor() {
     if ((before <20000&&this.score>= 20000) 
         || (javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))) {
       this.gainExtraLife();
-    } 
-    
-    this.scoreStr = JavaString.format("%06d", this.score);
+    }
+
+    this.scoreStr = Main.formatScore(this.score);
+  }
+
+  private static formatScore(score: any): string {
+    let digits = Integer.toString(score);
+    if (digits.length < 6) {
+      digits = "000000".substring(0, 6 - digits.length) + digits;
+    }
+    return digits;
   }
   
   public loseLife(): void {
@@ -565,10 +574,12 @@ export class Main extends BasicGame {  public constructor() {
 
   private hideMouseCursor(): void {
     try {
-			let buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
-			let cursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
+      if (this.hiddenCursor == null) {
+        let buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
+        this.hiddenCursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
+      }
       this.nativeCursor = Mouse.getNativeCursor();
-			Mouse.setNativeCursor(cursor);
+      Mouse.setNativeCursor(this.hiddenCursor);
 		} catch (e) {
 			Log.error("Failed to load and apply cursor.", e);
 		}
@@ -689,10 +700,11 @@ public playSound__overload0(sound: any): void {
       return;
     }
     let time = this.lastPlayTime.get(sound);
-    if (time == null 
-        || System.currentTimeMillis() - time > Main.MINIMUM_SOUND_TIME) {    
+    let now = System.currentTimeMillis();
+    if (time == null
+        || now - time > Main.MINIMUM_SOUND_TIME) {
       sound.play();
-      this.lastPlayTime.put(sound, System.currentTimeMillis());
+      this.lastPlayTime.put(sound, now);
     }
   }
   
@@ -708,10 +720,11 @@ public playSound__overload0(sound: any): void {
       return;
     }
     let time = this.lastPlayTime.get(sound);
-    if (time == null 
-        || System.currentTimeMillis() - time > Main.MINIMUM_SOUND_TIME) {    
+    let now = System.currentTimeMillis();
+    if (time == null
+        || now - time > Main.MINIMUM_SOUND_TIME) {
       sound.play(1, volume);
-      this.lastPlayTime.put(sound, System.currentTimeMillis());
+      this.lastPlayTime.put(sound, now);
     }
   }
   
@@ -1976,10 +1989,16 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
     stage.directionsWidth = dis.readInt();
     stage.directionsHeight = dis.readInt();
     stage.directions = javaArray(size, 0n);
+    stage.directionsDecoded = new Uint8Array(size * 21);
     for(let i = 0; i < size; i++) {
-      stage.directions[i] = dis.readLong();
+      let value = dis.readLong();
+      let decodedIndex = i * 21;
+      stage.directions[i] = value;
+      for(let j = 0; j < 21; j++) {
+        stage.directionsDecoded[decodedIndex + j] = Number((value >> JAVA_LONG_PACKED_3BIT_SHIFTS[j]) & JAVA_LONG_LOW_3_BITS);
+      }
     }
-    dis.close();  
+    dis.close();
   }
   
   public loadNext(): number {
