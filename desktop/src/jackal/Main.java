@@ -69,9 +69,17 @@ public class Main extends BasicGame {
   public long nextFrameTime;
   public IMode mode;
   public IInput input;
-  public Cursor nativeCursor;  
+  public Cursor nativeCursor;
+  private Cursor hiddenCursor;
+  private boolean mouseCursorHidden;
+  public JackalAppGameContainer appGameContainer;
+  public ScalableGame scalableGame;
+  public DisplayMode nativeDisplayMode;
+  public int fullscreenWidth = DISPLAY_WIDTH;
+  public int fullscreenHeight = DISPLAY_HEIGHT;
+  public boolean fullscreenFallbackActive;
   public Song currentSong;
-  public Song requestedSong; 
+  public Song requestedSong;
   public int loadIndex;
   
   public IFadeListener fadeListener;
@@ -246,7 +254,8 @@ public class Main extends BasicGame {
     gc.setShowFPS(false);
     gc.setClearEachFrame(true);
     ControllerSupport.prepareDesktopInput();
-    
+    findNativeDisplayMode();
+
     try {
       loadProgressBar();
       loadFont();
@@ -350,15 +359,154 @@ public class Main extends BasicGame {
   private void fullScreenToggleCheck(GameContainer gc) throws SlickException {
     boolean isEscape = input.isEscape();
     if (input.isFullscreenTogglePressed() || isEscape) {
-      if (gc.isFullscreen()) {        
-        showMouseCursor();
-        gc.setFullscreen(false);        
+      if (isFullscreenDisplayActive(gc)) {
+        restoreWindowedDisplayMode(gc);
       } else if (!isEscape) {
-        hideMouseCursor();
-        gc.setFullscreen(true);
-      }      
+        enterFullScreenDisplayMode(gc);
+      }
       resetNextFrameTime();
     }
+  }
+
+  private boolean isFullscreenDisplayActive(GameContainer gc) {
+    return gc.isFullscreen() || fullscreenFallbackActive;
+  }
+
+  private void restoreWindowedDisplayMode(GameContainer gc) {
+    showMouseCursor();
+    fullscreenFallbackActive = false;
+    try {
+      if (appGameContainer == null) {
+        gc.setFullscreen(false);
+      } else {
+        appGameContainer.setDisplayMode(DISPLAY_WIDTH, DISPLAY_HEIGHT, false);
+      }
+      recalculateScale();
+    } catch(Throwable t) {
+      Log.warn("Unable to restore the windowed display mode: "
+          + describe(t));
+    }
+  }
+
+  private void enterFullScreenDisplayMode(GameContainer gc) {
+    hideMouseCursor();
+    fullscreenFallbackActive = false;
+    if (appGameContainer == null || nativeDisplayMode == null) {
+      try {
+        gc.setFullscreen(true);
+        recalculateScale();
+      } catch(Throwable t) {
+        showMouseCursor();
+        Log.warn("Unable to enter fullscreen display mode: "
+            + describe(t));
+      }
+      return;
+    }
+
+    try {
+      long startTime = System.currentTimeMillis();
+      appGameContainer.setNativeFullscreenDisplayMode(nativeDisplayMode);
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      if (elapsedTime > 1000L) {
+        Log.warn("Native fullscreen display mode took " + elapsedTime
+            + " ms to apply.");
+      }
+      recalculateScale();
+    } catch(Throwable fullscreenError) {
+      Log.warn("Unable to enter native fullscreen display mode; using a "
+          + "desktop-size window: " + describe(fullscreenError));
+      enterFullscreenWindowFallback();
+    }
+  }
+
+  private void enterFullscreenWindowFallback() {
+    if (appGameContainer == null) {
+      showMouseCursor();
+      return;
+    }
+
+    try {
+      appGameContainer.setDisplayMode(DISPLAY_WIDTH, DISPLAY_HEIGHT, false);
+      Display.setLocation(0, 0);
+      appGameContainer.setDisplayMode(fullscreenWidth, fullscreenHeight, false);
+      fullscreenFallbackActive = true;
+      recalculateScale();
+    } catch(Throwable fallbackError) {
+      fullscreenFallbackActive = false;
+      showMouseCursor();
+      Log.warn("Unable to use the desktop-size window fallback: "
+          + describe(fallbackError));
+    }
+  }
+
+  private void recalculateScale() {
+    if (scalableGame == null) {
+      return;
+    }
+    try {
+      scalableGame.recalculateScale();
+    } catch(Throwable t) {
+      Log.warn("Unable to recalculate scalable game dimensions: "
+          + describe(t));
+    }
+  }
+
+  private void findNativeDisplayMode() {
+    fullscreenWidth = DISPLAY_WIDTH;
+    fullscreenHeight = DISPLAY_HEIGHT;
+    nativeDisplayMode = null;
+
+    try {
+      DisplayMode displayMode = Display.getDesktopDisplayMode();
+      if (isUsableDisplayMode(displayMode)) {
+        setNativeDisplayMode(displayMode);
+        return;
+      }
+    } catch(Throwable t) {
+      Log.warn("Unable to read the desktop display mode: " + describe(t));
+    }
+
+    int bestArea = 0;
+    int bestColorDepth = 0;
+    try {
+      DisplayMode[] displayModes = Display.getAvailableDisplayModes();
+      for(int i = 0; i < displayModes.length; i++) {
+        DisplayMode displayMode = displayModes[i];
+        if (!isUsableDisplayMode(displayMode)) {
+          continue;
+        }
+        int area = displayMode.getWidth() * displayMode.getHeight();
+        if (nativeDisplayMode == null || area > bestArea
+            || (area == bestArea
+                && displayMode.getBitsPerPixel() > bestColorDepth)) {
+          setNativeDisplayMode(displayMode);
+          bestArea = area;
+          bestColorDepth = displayMode.getBitsPerPixel();
+        }
+      }
+    } catch(Throwable t) {
+      Log.warn("Unable to scan fullscreen display modes: " + describe(t));
+    }
+  }
+
+  private boolean isUsableDisplayMode(DisplayMode displayMode) {
+    return displayMode != null
+        && displayMode.getWidth() > 0
+        && displayMode.getHeight() > 0;
+  }
+
+  private void setNativeDisplayMode(DisplayMode displayMode) {
+    nativeDisplayMode = displayMode;
+    fullscreenWidth = displayMode.getWidth();
+    fullscreenHeight = displayMode.getHeight();
+  }
+
+  private String describe(Throwable t) {
+    String message = t.getMessage();
+    if (message == null || message.length() == 0) {
+      return t.getClass().getName();
+    }
+    return message;
   }
 
   public void render(GameContainer gc, Graphics g) throws SlickException {
@@ -502,22 +650,32 @@ public class Main extends BasicGame {
   }
 
   private void showMouseCursor() {
+    if (!mouseCursorHidden) {
+      return;
+    }
     try {
       Mouse.setNativeCursor(nativeCursor);
+      mouseCursorHidden = false;
     } catch (Exception e) {
-			Log.error("Failed to load and apply cursor.", e);
-		}
+      Log.error("Failed to load and apply cursor.", e);
+    }
   }
 
   private void hideMouseCursor() {
+    if (mouseCursorHidden) {
+      return;
+    }
     try {
-			ByteBuffer buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
-			Cursor cursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
+      if (hiddenCursor == null) {
+        ByteBuffer buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
+        hiddenCursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
+      }
       nativeCursor = Mouse.getNativeCursor();
-			Mouse.setNativeCursor(cursor);
-		} catch (Exception e) {
-			Log.error("Failed to load and apply cursor.", e);
-		}
+      Mouse.setNativeCursor(hiddenCursor);
+      mouseCursorHidden = true;
+    } catch (Exception e) {
+      Log.error("Failed to load and apply cursor.", e);
+    }
   }
 
   public void drawNumber(int value, int digits, int x, int y, int color) {
@@ -1980,16 +2138,17 @@ public class Main extends BasicGame {
     ControllerSupport.prepareDesktopInput();
 
     Main main = new Main();
-    
-    ApplicationGameContainer appGameContainer = new ApplicationGameContainer(
-        new ScalableGame(main, DISPLAY_WIDTH, DISPLAY_HEIGHT, true),
-            DISPLAY_WIDTH, DISPLAY_HEIGHT, false);
+
+    main.scalableGame = new ScalableGame(
+        main, DISPLAY_WIDTH, DISPLAY_HEIGHT, true);
+    main.appGameContainer = new JackalAppGameContainer(
+        main.scalableGame, DISPLAY_WIDTH, DISPLAY_HEIGHT, false);
     try {
-      appGameContainer.setIcon("icons/32x32.png");
+      main.appGameContainer.setIcon("icons/32x32.png");
     } catch(Throwable t) {
       Log.error("Icon error", t);
     }
-    appGameContainer.setResizable(true);
-    appGameContainer.start();
-  }  
+    main.appGameContainer.setResizable(true);
+    main.appGameContainer.start();
+  }
 }
