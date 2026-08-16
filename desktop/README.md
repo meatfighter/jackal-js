@@ -1,8 +1,8 @@
 # Jackal Desktop
 
-This directory is a preserved, Maven-buildable copy of the original Java SlickJackal project from `C:\NetBeansProjects\SlickJackal`.
+This directory contains the preserved, Maven-buildable Java desktop version of SlickJackal.
 
-The source and resource tree under `desktop/src` intentionally mirrors the original NetBeans project. The added Maven files and launch scripts are packaging support only; they are not part of the TypeScript web port and should not be used to infer new gameplay behavior.
+The source and resource tree under `desktop/src` intentionally preserves the Java desktop code layout. The Maven files and launch scripts are packaging support only; they are not part of the TypeScript web port and should not be used to infer new gameplay behavior.
 
 ## Build
 

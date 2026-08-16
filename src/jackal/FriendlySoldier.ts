@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/FriendlySoldier.java.
-// Original Java imports: java.util.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
@@ -57,7 +55,7 @@ export class FriendlySoldier extends Enemy {
                 if (xLocal3 > helicopterLocal.x) {
                   this.orientation = FriendlySoldier.ORIENTATION_LEFT;
                   this.directionX = -1;
-                  this.directionY = 0;      
+                  this.directionY = 0;
                   this.vx = -FriendlySoldier.WALK_SPEED;
                   this.vy = 0;
                 } else {
@@ -77,11 +75,11 @@ export class FriendlySoldier extends Enemy {
             this.x = xLocal2;
                 this.y = yLocal2;
                 this.type = typeLocal2;
-    
+
                 if (typeLocal2 == FriendlySoldierType.WEAPON_CARRIER_WANDERER) {
                   this.colorChanging = true;
                 }
-    
+
                 this.startWandering();
         return;
     } else     if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
@@ -94,9 +92,9 @@ export class FriendlySoldier extends Enemy {
                 this.y = yLocal;
                 this.type = typeLocal;
                 this.houseCount = houseCountLocal;
-                this.left = typeLocal == FriendlySoldierType.HOUSE_LEFT_WALKING 
+                this.left = typeLocal == FriendlySoldierType.HOUSE_LEFT_WALKING
                     || typeLocal == FriendlySoldierType.HOUSE_LEFT_WAVING;
-    
+
                 switch(typeLocal) {
                   case FriendlySoldierType.WEAPON_CARRIER:
                     this.state = FriendlySoldier.STATE_ENTRY_DOWN;
@@ -149,115 +147,81 @@ export class FriendlySoldier extends Enemy {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly WALK_SPEED: number = 1;
   public static readonly MIN_WANDER_TIME: number = 1 * 91;
   public static readonly MAX_WANDER_TIME: number = 4 * 91;
   public static readonly MAX_WALK_STEPS: number = 5;
-  public static readonly LEG_FRAMES: number = 26; 
+  public static readonly LEG_FRAMES: number = 26;
   public static readonly LEG_AMPLITUDE: number = 2;
   public static readonly WAVING_DELAY: number = 2 * 91;
-  
+
   public static readonly STATE_ENTRY_DOWN: number = 0;
   public static readonly STATE_ENTRY_LEFT: number = 1;
   public static readonly STATE_ENTRY_RIGHT: number = 2;
   public static readonly STATE_WANDERING: number = 3;
   public static readonly STATE_WAVING: number = 4;
   public static readonly STATE_WALKING_TO_HELICOPTER: number = 5;
-  
+
   public static readonly ORIENTATION_DOWN: number = 0;
   public static readonly ORIENTATION_RIGHT: number = 2;
   public static readonly ORIENTATION_UP: number = 4;
   public static readonly ORIENTATION_LEFT: number = 6;
   public static readonly ORIENTATION_WAVING_LEFT: number = 8;
   public static readonly ORIENTATION_WAVING_RIGHT: number = 10;
-  
-  public static readonly WOBBLES: any[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);  
+
+  public static readonly WOBBLES: any[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);
   static {
     for(let i = FriendlySoldier.LEG_FRAMES - 1; i >= 0; i--) {
       FriendlySoldier.WOBBLES[i] = -FriendlySoldier.LEG_AMPLITUDE * javaFloat(Math.sin(
-          2.0 * Math.PI * i / javaDouble(FriendlySoldier.LEG_FRAMES)));      
+          2.0 * Math.PI * i / javaDouble(FriendlySoldier.LEG_FRAMES)));
     }
   }
-  
+
   public static count: number = 0;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
   public static resetCount(): void {
     FriendlySoldier.count = 0;
   }
 
   public init(): void {
     super.init();
-    
+
     FriendlySoldier.count++;
-    
+
     this.solids = this.gameMode.solids;
     this.player = this.gameMode.player;
-    
+
     this.layer = 2;
     this.bulletHits = 1;
-    
+
     this.hitX1 = 0;
     this.hitY1 = -40;
     this.hitX2 = 0;
     this.hitY2 = -20;
-    
+
     this.mine = true;
     this.mineX1 = 0;
     this.mineY1 = -40;
     this.mineX2 = 0;
     this.mineY2 = -20;
-    
+
     this.solid = true;
     this.solidX1 = -16;
     this.solidY1 = -60;
     this.solidX2 = 16;
     this.solidY2 = 6;
   }
-  
+
   private spawnBrother(): void {
     if (this.houseCount > 0) {
-      this.brother = new FriendlySoldier(this.x, this.y, this.left 
-          ? FriendlySoldierType.HOUSE_LEFT_WAVING 
-          : FriendlySoldierType.HOUSE_RIGHT_WAVING, 
+      this.brother = new FriendlySoldier(this.x, this.y, this.left
+          ? FriendlySoldierType.HOUSE_LEFT_WAVING
+          : FriendlySoldierType.HOUSE_RIGHT_WAVING,
           this.houseCount - 1, false);
-    }    
+    }
   }
-  
+
   private promote(): void {
     if (this.left) {
       this.type = FriendlySoldierType.HOUSE_LEFT_WALKING;
@@ -268,11 +232,11 @@ export class FriendlySoldier extends Enemy {
       this.state = FriendlySoldier.STATE_ENTRY_RIGHT;
       this.orientation = FriendlySoldier.ORIENTATION_RIGHT;
     }
-    this.entering = true;    
+    this.entering = true;
     this.entry = 141;
     this.spawnBrother();
   }
-  
+
   private startWandering(): void {
     this.state = FriendlySoldier.STATE_WANDERING;
     for(let i = 0; i < 16; i++) {
@@ -289,23 +253,23 @@ export class FriendlySoldier extends Enemy {
         FriendlySoldier.MAX_WANDER_TIME - FriendlySoldier.MIN_WANDER_TIME);
     this.computeOrientation();
   }
-  
+
   private startWaving(randomize: any, left: any): void {
     this.state = FriendlySoldier.STATE_WAVING;
     this.wobbleX = 0;
     this.wobbleY = 0;
     if (randomize) {
-      this.orientation = this.main.random.nextBoolean() 
-          ? FriendlySoldier.ORIENTATION_WAVING_LEFT : FriendlySoldier.ORIENTATION_WAVING_RIGHT;    
+      this.orientation = this.main.random.nextBoolean()
+          ? FriendlySoldier.ORIENTATION_WAVING_LEFT : FriendlySoldier.ORIENTATION_WAVING_RIGHT;
     } else {
-      this.orientation = left ? FriendlySoldier.ORIENTATION_WAVING_LEFT : FriendlySoldier.ORIENTATION_WAVING_RIGHT; 
+      this.orientation = left ? FriendlySoldier.ORIENTATION_WAVING_LEFT : FriendlySoldier.ORIENTATION_WAVING_RIGHT;
     }
     if (this.orientation == FriendlySoldier.ORIENTATION_WAVING_LEFT) {
       this.wobbleX = -8;
     }
     this.waving = FriendlySoldier.WAVING_DELAY;
   }
-  
+
   private wave(): void {
     if (this.legFrames == 0) {
       this.legFrames = FriendlySoldier.LEG_FRAMES - 1;
@@ -314,20 +278,20 @@ export class FriendlySoldier extends Enemy {
       this.legIndex = 0;
     }
     this.legFrames--;
-    
+
     if ((this.type == FriendlySoldierType.WEAPON_CARRIER
         || this.type == FriendlySoldierType.WANDERER
-        || this.type == FriendlySoldierType.WEAPON_CARRIER_WANDERER) 
+        || this.type == FriendlySoldierType.WEAPON_CARRIER_WANDERER)
             && --this.waving <= 0) {
       this.startWandering();
     }
   }
-  
+
   private computeOrientation(): void {
-    
+
     this.wobbleScaleX = Math.abs(this.directionY);
     this.wobbleScaleY = Math.abs(this.directionX);
-    
+
     if (this.wobbleScaleY > this.wobbleScaleX) {
       if (this.directionX > 0) {
         this.orientation = FriendlySoldier.ORIENTATION_RIGHT;
@@ -342,7 +306,7 @@ export class FriendlySoldier extends Enemy {
       }
     }
   }
-  
+
   private walkAtRightAngleToBarrier(): void {
     let direction = this.gameMode.suggestDirection(this.directionX, this.directionY);
     this.directionX = direction[0];
@@ -351,7 +315,7 @@ export class FriendlySoldier extends Enemy {
     this.vy = FriendlySoldier.WALK_SPEED * direction[1];
     this.computeOrientation();
   }
-  
+
   private updateLegs(): void {
     if (this.legFrames == 0) {
       this.legFrames = FriendlySoldier.LEG_FRAMES - 1;
@@ -363,116 +327,116 @@ export class FriendlySoldier extends Enemy {
     this.wobbleY = this.wobbleScaleY * FriendlySoldier.WOBBLES[this.legFrames];
     this.legFrames--;
   }
-  
+
   private enterLeft(): void {
     if (--this.entry <= 0) {
       this.startWaving(false, true);
       return;
     }
-    
+
     if (this.entry < 120) {
       this.x -= 1;
       this.updateLegs();
     }
   }
-  
+
   private enterRight(): void {
     if (--this.entry <= 0) {
       this.startWaving(false, false);
       return;
     }
-    
+
     if (this.entry < 120) {
       this.x += 1;
       this.updateLegs();
     }
-  }  
-  
+  }
+
   private enterDown(): void {
     if (--this.entry <= 0) {
       this.startWaving(true, false);
       return;
     }
-    
+
     if (this.entry < 79) {
       this.y += 2;
       this.updateLegs();
-    }    
+    }
   }
-  
+
   private walkToHelicopter(): void {
     this.x += this.vx;
     this.updateLegs();
-    
-    if ((this.vx <0&&this.x<=this.helicopter.x)||(this.vx> 0 && this.x >= this.helicopter.x)) {      
-      this.remove();      
+
+    if ((this.vx <0&&this.x<=this.helicopter.x)||(this.vx> 0 && this.x >= this.helicopter.x)) {
+      this.remove();
       this.helicopter.friendlySoldierPickedUp();
-    }     
+    }
   }
-  
+
   private convey(): void {
     if (this.gameMode.conveyorDelta > 0 && this.gameMode.isConveyor(this.x, this.y)) {
       let nextY = this.y + this.gameMode.conveyorDelta;
-      
+
       let walkable = true;
       if (this.gameMode.isDriveable(this.x - 16, nextY - 6, this.x + 16, nextY + 6)) {
 
         // avoid bumping into other enemies
         for(let i = this.solids.size() - 1; i >= 0; i--) {
           let solidLocal = this.solids.get(i);
-          if (solidLocal != this && solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, 
+          if (solidLocal != this && solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1,
               this.x + this.solidX2, nextY + this.solidY2)
-                  && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
-                        this.x + this.solidX2, this.y + this.solidY2)) {          
+                  && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1,
+                        this.x + this.solidX2, this.y + this.solidY2)) {
             walkable = false;
             break;
           }
-        } 
+        }
       } else {
         walkable = false;
       }
 
       if (walkable) {
-        this.y = nextY;   
+        this.y = nextY;
       }
     }
   }
-  
+
   private wander(): void {
     let nextX = this.x + this.vx;
     let nextY = this.y + this.vy;
     let walkable = true;
     if (this.gameMode.isDriveable(nextX - 16, nextY - 6, nextX + 16, nextY + 6)) {
-      
+
       // avoid bumping into other enemies
       for(let i = this.solids.size() - 1; i >= 0; i--) {
         let solidLocal = this.solids.get(i);
-        if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, 
+        if (solidLocal != this && solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1,
             nextX + this.solidX2, nextY + this.solidY2)
-                && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, 
-                       this.x + this.solidX2, this.y + this.solidY2)) {          
+                && !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1,
+                       this.x + this.solidX2, this.y + this.solidY2)) {
           walkable = false;
           break;
         }
-      } 
+      }
     } else {
       walkable = false;
     }
-    
+
     if (walkable) {
       this.x = nextX;
-      this.y = nextY;                  
+      this.y = nextY;
       this.updateLegs();
     } else {
       this.walkAtRightAngleToBarrier();
     }
-    
+
     if (--this.wandering <= 0) {
       this.startWaving(true, false);
     }
   }
 
-  public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {    
+  public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
     if (this.type != FriendlySoldierType.WALKING_TO_HELICOPTER
         && this.isMine(x1, y1, x2, y2)) {
       this.remove();
@@ -485,7 +449,7 @@ export class FriendlySoldier extends Enemy {
       if (this.brother != null) {
         this.brother.promote();
       }
-    } 
+    }
     return false;
   }
 
@@ -496,7 +460,7 @@ export class FriendlySoldier extends Enemy {
   // returns true if player bullet was absorbed by enemy
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
     return false;
-  }  
+  }
 
   public remove(): void {
     if (!this.removeFlag) {
@@ -505,20 +469,20 @@ export class FriendlySoldier extends Enemy {
     }
   }
 
-  public flatten(): void {    
-  }  
+  public flatten(): void {
+  }
 
-  public explode(): void {    
+  public explode(): void {
   }
 
   public update(): void {
-    
+
     if (this.gameMode.endingCameraPan || !this.gameMode.playing) {
       return;
     }
-    
+
     this.convey();
-    
+
     switch(this.state) {
       case FriendlySoldier.STATE_ENTRY_DOWN:
         this.enterDown();
@@ -545,9 +509,9 @@ export class FriendlySoldier extends Enemy {
     if (this.colorChanging) {
       this.colorIndex = (this.colorIndex + 1) & 3;
     }
-    this.main.draw(this.main.friendlySoldiers[this.colorIndex][this.orientation + this.legIndex], 
-        this.x + this.wobbleX - 16, this.y + this.wobbleY 
-            - (this.orientation == FriendlySoldier.ORIENTATION_LEFT 
+    this.main.draw(this.main.friendlySoldiers[this.colorIndex][this.orientation + this.legIndex],
+        this.x + this.wobbleX - 16, this.y + this.wobbleY
+            - (this.orientation == FriendlySoldier.ORIENTATION_LEFT
                 || this.orientation == FriendlySoldier.ORIENTATION_RIGHT ? 60 : 56));
-  }  
+  }
 }

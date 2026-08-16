@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Main.java.
-// Original Java imports: java.awt.geom.*, org.newdawn.slick.util.*, org.newdawn.slick.*, org.newdawn.slick.opengl.*, org.lwjgl.opengl.*, org.lwjgl.input.*, org.lwjgl.*, java.io.*, java.util.*, java.nio.*, java.net.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, BufferUtils, Color, Cursor, CursorLoader, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { BossHelicopter } from "./BossHelicopter.js";
@@ -65,54 +63,54 @@ export class Main extends BasicGame {  public constructor() {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly DISPLAY_WIDTH: number = 1024;
   public static readonly DISPLAY_HEIGHT: number = 960;
-  
+
   public static readonly FONT_WHITE: number = 0;
   public static readonly FONT_GRAY: number = 1;
-  public static readonly FONT_ORANGE: number = 2;  
-  public static readonly FONT_ORANGE_GRAY: number = 3; 
-  
+  public static readonly FONT_ORANGE: number = 2;
+  public static readonly FONT_ORANGE_GRAY: number = 3;
+
   public static readonly ISQRT2: number = javaFloat((1.0 / Math.sqrt(2)));
   public static readonly I_QUARTER_WIDTH: number = 4 / Main.DISPLAY_WIDTH;
   public static readonly I_WIDTH: number = 1 / Main.DISPLAY_WIDTH;
   public static readonly MINIMUM_SOUND_TIME: number = 125;
-  
+
   public static readonly CHARS: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'-0123456789©!:()&`\" ";
-    
+
   public static readonly TILES: any[] = [ 218, 235, 273, 233, 328, 330 ];
-  
+
   public static readonly FADES: any[] = javaArray(23, null);
-  
+
   static {
     for(let i = 0; i < Main.FADES.length; i++) {
-      Main.FADES[i] = new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1)); 
+      Main.FADES[i] = new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1));
     }
   }
-  
+
   public static mainInstance: any = null as any;
   public static gameMode: any = null as any;
-    
+
   public random: any = new Random();
   public buttonMapping: any = new ButtonMapping();
   public nextFrameTime: number = 0;
   public mode: any = null as any;
   public input: any = null as any;
-  public nativeCursor: any = null as any;  
+  public nativeCursor: any = null as any;
   public currentSong: any = null as any;
-  public requestedSong: any = null as any; 
+  public requestedSong: any = null as any;
   public loadIndex: number = 0;
-  
+
   public fadeListener: any = null as any;
   public fading: boolean = false;
   public fadeIndex: number = 0;
   public fadeOut: boolean = false;
-  
+
   public extraLives: number = 0;
   public extraLivesStr: string = null as any;
   public score: number = 0;
-  public scoreStr: string = null as any;  
+  public scoreStr: string = null as any;
   public stageIndex: number = 0;
   public hasMissiles: boolean = false;
   public missilePower: number = 0;
@@ -122,9 +120,9 @@ export class Main extends BasicGame {  public constructor() {
   public closeRequestedFlag: boolean = false;
   public controllerGrenadePressed: boolean = false;
   public controllerGunPressed: boolean = false;
-  
+
   public stages: any[] = javaArray(6, null);
-  
+
   public players: any[] = java2DArray(4, 5, null);
   public explosions: any[] = javaArray(4, null);
   public grenade: any = null as any;
@@ -200,21 +198,21 @@ export class Main extends BasicGame {  public constructor() {
   public suns: any[] = null as any;
   public waves: any[] = null as any;
   public rescueHelicopters: any[] = javaArray(3, null);
-  
-  public jeepHere: any = null as any;  
+
+  public jeepHere: any = null as any;
   public title: any = null as any;
   public map: any = null as any;
   public soldiers: any[] = javaArray(4, null);
   public sunset: any = null as any;
   public jeepYeah: any = null as any;
-  
+
   public bossIntro: any = null as any;
   public bossRepeat: any = null as any;
   public superTankIntro: any = null as any;
   public stage0Intro: any = null as any;
   public stage0Repeat: any = null as any;
-  public start: any = null as any;  
-  
+  public start: any = null as any;
+
   public bossSong: any = null as any;
   public continueSong: any = null as any;
   public cutsceneSong: any = null as any;
@@ -225,10 +223,10 @@ export class Main extends BasicGame {  public constructor() {
   public stageSong2: any = null as any;
   public superTankSong: any = null as any;
   public titleSong: any = null as any;
-  
+
   public bulletHitSound: any = null as any;
   public enemyHitSound: any = null as any;
-  public explodeSound: any = null as any;   
+  public explodeSound: any = null as any;
   public explodeSound2: any = null as any;
   public explodeSound3: any = null as any;
   public extraLifeSound: any = null as any;
@@ -249,15 +247,15 @@ export class Main extends BasicGame {  public constructor() {
   public planeSound: any = null as any;
   public soldierKilledSound: any = null as any;
   public throwSound: any = null as any;
-  public weaponUpgradeSound: any = null as any;  
+  public weaponUpgradeSound: any = null as any;
   public wellDoneSound: any = null as any;
-  
+
   public triggerSizes: any[] = null as any;
   public unitVector: any[] = javaArray(3, 0);
   public lastPlayTime: any = Collections.synchronizedMap(
       new HashMap<Sound,Long>());
   public konamiCode: any = null as any;
-  
+
   public gc: any = null as any;
   public appGameContainer: any = null as any;
   public scalableGame: any = null as any;
@@ -272,33 +270,31 @@ export class Main extends BasicGame {  public constructor() {
   public browserSuspendedMusicOn: boolean = true;
   public browserSuspendedSoundOn: boolean = true;
   private loadingFinishedNotified: boolean = false;
-  
-  
 
   public init(gc: any): void {
     Main.mainInstance = this;
     MainRuntimeState.mainInstance = this;
     this.gc = gc;
-    
+
     gc.setAlwaysRender(true);
     gc.setVSync(true);
     gc.setSmoothDeltas(false);
     gc.setShowFPS(false);
     gc.setClearEachFrame(true);
-    
+
     try {
       this.loadFont();
       this.loadClasses();
     } catch (t) {
       Log.error("Loading error", t);
     }
-        
+
     this.input = new HumanInput(this.buttonMapping, gc);
     this.konamiCode = new KonamiCode(this);
     this.startPlayer();
     this.resetNextFrameTime();
     this.completeLoadingImmediately(gc);
-  }  
+  }
 
   public update(gc: any, delta: any): void {
     if (this.browserSuspended) {
@@ -323,7 +319,7 @@ export class Main extends BasicGame {  public constructor() {
         }
       }
     }
-    
+
     if (this.currentSong != this.requestedSong) {
       if (this.currentSong != null) {
         this.currentSong.stop();
@@ -333,13 +329,13 @@ export class Main extends BasicGame {  public constructor() {
     }
     if (this.currentSong != null) {
       this.currentSong.update();
-    }    
-    
-    let count = 0;  
+    }
+
+    let count = 0;
     while(this.nextFrameTime <= Sys.getTime()) {
-      this.fullScreenToggleCheck(gc); 
+      this.fullScreenToggleCheck(gc);
       this.input.snap();
-      this.mode.update(gc);      
+      this.mode.update(gc);
       this.nextFrameTime += javaInt(((Sys.getTimerResolution() * 0.01) + 0.5));
       if (++count == 8) {
         this.resetNextFrameTime();
@@ -347,21 +343,21 @@ export class Main extends BasicGame {  public constructor() {
       }
     }
   }
-  
+
   public advancePlayerToHardMode(): void {
     this.hardMode = true;
-    
+
     this.friendlySoldiersPickedUp = 0;
-    
+
     FriendlySoldier.resetCount();
-    
+
     this.continued = true;
-    
+
     this.stageIndex = 0;
   }
-  
+
   public continuePlayer(): void {
-    
+
     if (this.konamiCode.enabled) {
       this.extraLives = 30;
       this.extraLivesStr = "30";
@@ -369,26 +365,26 @@ export class Main extends BasicGame {  public constructor() {
       this.extraLives = 4;
       this.extraLivesStr = "4";
     }
-    
+
     this.hasMissiles = false;
     this.missilePower = 0;
-    
+
     this.score = 0;
     this.scoreStr = "000000";
-    
+
     this.friendlySoldiersPickedUp = 0;
-    
+
     FriendlySoldier.resetCount();
-    
+
     this.continued = true;
   }
-  
+
   public startPlayer(): void {
     this.continuePlayer();
     this.continued = false;
     this.stageIndex = 0;
   }
-  
+
   private fullScreenToggleCheck(gc: any): void {
     let isEscape = this.input.isEscape();
     if (this.input.isFullscreenTogglePressed() || isEscape) {
@@ -415,15 +411,15 @@ export class Main extends BasicGame {  public constructor() {
   }
 
   public render(gc: any, g: any): void {
-    
+
     this.mode.render(gc, g);
-    
+
     if (this.fading) {
       g.setColor(Main.FADES[this.fadeIndex]);
       g.fillRect(0, 0, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT);
     }
   }
-  
+
   public upgradeWeapon(alwaysPlaySound: any): boolean {
     let soundPlayed = false;
     if (alwaysPlaySound) {
@@ -440,14 +436,14 @@ export class Main extends BasicGame {  public constructor() {
         }
       }
     } else if (this.hasMissiles) {
-      if (this.missilePower < 2) {        
+      if (this.missilePower < 2) {
         this.missilePower++;
         if (!alwaysPlaySound) {
           Main.mainInstance.playSound(Main.mainInstance.weaponUpgradeSound);
           soundPlayed = true;
         }
       }
-    } else {      
+    } else {
       this.hasMissiles = true;
       if (!alwaysPlaySound) {
         Main.mainInstance.playSound(Main.mainInstance.weaponUpgradeSound);
@@ -455,24 +451,24 @@ export class Main extends BasicGame {  public constructor() {
       }
     }
     return soundPlayed;
-  }  
-  
+  }
+
   public advanceStageIndex(): void {
     this.stageIndex++;
   }
-  
+
   public requestMode(mode: any, gc: any): void {
     if (this.isModeStateSaveInvalidating(mode)) {
       this.notifyStateSaveInvalidated();
     }
 
     switch(mode) {
-      case Modes.GAME: 
+      case Modes.GAME:
         Main.gameMode = new GameMode();
         MainRuntimeState.gameMode = Main.gameMode;
         Main.gameMode.setStage(this.stageIndex, this.stages[this.stageIndex], this.hardMode);
         this.setMode(Main.gameMode, gc);
-        break;      
+        break;
       case Modes.INTRO:
         this.setMode(new IntroMode(), gc);
         break;
@@ -511,23 +507,23 @@ export class Main extends BasicGame {  public constructor() {
         break;
     }
   }
-  
+
   public setMode(mode: any, gc: any): void {
     try {
       this.input.clearKeyPressedRecord();
       this.mode = mode;
       mode.init(this, gc);
-      mode.update(gc);      
+      mode.update(gc);
       this.resetNextFrameTime();
     } catch (t) {
       Log.error("setMode error", t);
     }
   }
-  
+
   public addPoints(points: any): void {
     let before = this.score;
     this.score += points;
-    if ((before <20000&&this.score>= 20000) 
+    if ((before <20000&&this.score>= 20000)
         || (javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))) {
       this.gainExtraLife();
     }
@@ -542,24 +538,24 @@ export class Main extends BasicGame {  public constructor() {
     }
     return digits;
   }
-  
+
   public loseLife(): void {
     this.extraLives--;
     this.extraLivesStr = Integer.toString(this.extraLives);
   }
-  
+
   public gainExtraLife(): void {
     this.extraLives++;
     this.extraLivesStr = Integer.toString(this.extraLives);
     this.playSoundAlways(this.extraLifeSound);
   }
-  
+
   public friendlySoldierPickedUp(): boolean {
     this.addPoints(500);
     this.friendlySoldiersPickedUp++;
     if ((this.friendlySoldiersPickedUp == 3 || this.friendlySoldiersPickedUp == 8
-        || this.friendlySoldiersPickedUp == 13 || this.friendlySoldiersPickedUp == 18)) {      
-      return this.upgradeWeapon(false);      
+        || this.friendlySoldiersPickedUp == 13 || this.friendlySoldiersPickedUp == 18)) {
+      return this.upgradeWeapon(false);
     }
     return false;
   }
@@ -592,23 +588,23 @@ export class Main extends BasicGame {  public constructor() {
       font[String.fromCharCode('0'.charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);
     }
   }
- 
+
   public startFade(fadeOut: any, fadeListener: any): void {
     this.fading = true;
     this.fadeOut = fadeOut;
     this.fadeListener = fadeListener;
-    
+
     if (fadeOut) {
       this.fadeIndex = 0;
     } else {
       this.fadeIndex = Main.FADES.length - 1;
     }
   }
-  
+
   public removeFadeListener(): void {
     this.fadeListener = null;
   }
-  
+
     public drawString(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 5 && typeof arg0 === "string" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
@@ -619,32 +615,32 @@ export class Main extends BasicGame {  public constructor() {
     }
     throw new Error(`No Java method overload matched drawString: ${argCount}`);
   }
-public drawString__overload0(string: any, length: any, x: any, y: any, color: any): void {
+  public drawString__overload0(string: any, length: any, x: any, y: any, color: any): void {
     let font = this.fonts[color];
     for(let i = 0; i < length; i++, x += 32) {
-      font[string.charAt(i)].draw(x, y);      
+      font[string.charAt(i)].draw(x, y);
     }
-  }  
-  
+  }
+
   public drawString__overload1(string: any, x: any, y: any, color: any): void {
     let font = this.fonts[color];
     let length = string.length;
     for(let i = 0; i < length; i++, x += 32) {
-      font[string.charAt(i)].draw(x, y);      
+      font[string.charAt(i)].draw(x, y);
     }
   }
-  
+
   public drawStringAlpha(string: any, x: any, y: any, color: any, alpha: any): void {
     let font = this.fonts[color];
     let length = string.length;
     for(let i = 0; i < length; i++, x += 32) {
       let image = font[string.charAt(i)];
       image.setAlpha(alpha);
-      image.draw(x, y);      
+      image.draw(x, y);
       image.setAlpha(1);
     }
-  }  
-  
+  }
+
     public draw(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
@@ -658,33 +654,33 @@ public drawString__overload0(string: any, length: any, x: any, y: any, color: an
     }
     throw new Error(`No Java method overload matched draw: ${argCount}`);
   }
-public draw__overload0(image: any, x: any, y: any): void {
+  public draw__overload0(image: any, x: any, y: any): void {
     image.draw(x, y);
-  }  
+  }
 
   public draw__overload1(image: any, x: any, y: any, alpha: any): void {
     image.setAlpha(alpha);
     image.draw(x, y);
     image.setAlpha(1);
   }
-  
+
   public playHitExplodeSound(): void {
     this.playSound(this.enemyHitSound, 0.6);
     this.playSound(this.explodeSound, 0.65);
   }
-  
+
   public playExplodeSound2(): void {
     this.playSound(this.explodeSound2, 0.65);
   }
-  
+
   public playExplodeSound3(): void {
     this.playSound(this.explodeSound3, 0.65);
-  } 
-   
+  }
+
   public isSoundPlaying(sound: any): boolean {
     return sound.playing();
   }
-  
+
     public playSound(arg0?: any, arg1?: any): any {
     const argCount = arguments.length;
     if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
@@ -695,7 +691,7 @@ public draw__overload0(image: any, x: any, y: any): void {
     }
     throw new Error(`No Java method overload matched playSound: ${argCount}`);
   }
-public playSound__overload0(sound: any): void {
+  public playSound__overload0(sound: any): void {
     if (this.closeRequestedFlag) {
       return;
     }
@@ -707,14 +703,14 @@ public playSound__overload0(sound: any): void {
       this.lastPlayTime.put(sound, now);
     }
   }
-  
+
   public playSoundAlways(sound: any): void {
     if (this.closeRequestedFlag) {
       return;
     }
     sound.play();
   }
-  
+
   public playSound__overload1(sound: any, volume: any): void {
     if (this.closeRequestedFlag) {
       return;
@@ -727,7 +723,7 @@ public playSound__overload0(sound: any): void {
       this.lastPlayTime.put(sound, now);
     }
   }
-  
+
     public playSoundIfNotPlaying(arg0?: any, arg1?: any): any {
     const argCount = arguments.length;
     if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
@@ -738,7 +734,7 @@ public playSound__overload0(sound: any): void {
     }
     throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${argCount}`);
   }
-public playSoundIfNotPlaying__overload0(sound: any): void {
+  public playSoundIfNotPlaying__overload0(sound: any): void {
     if (this.closeRequestedFlag) {
       return;
     }
@@ -746,7 +742,7 @@ public playSoundIfNotPlaying__overload0(sound: any): void {
       sound.play();
     }
   }
-  
+
   public playSoundIfNotPlaying__overload1(sound: any, volume: any): void {
     if (this.closeRequestedFlag) {
       return;
@@ -755,7 +751,7 @@ public playSoundIfNotPlaying__overload0(sound: any): void {
       sound.play(1, volume);
     }
   }
-  
+
     public stopSong(arg0?: any): any {
     const argCount = arguments.length;
     if (argCount === 1 && (arg0 === null || arg0 instanceof Song)) {
@@ -766,26 +762,26 @@ public playSoundIfNotPlaying__overload0(sound: any): void {
     }
     throw new Error(`No Java method overload matched stopSong: ${argCount}`);
   }
-public stopSong__overload0(song: any): void {
+  public stopSong__overload0(song: any): void {
     if (song != null) {
       song.stop();
     }
   }
-  
+
   public stopSound(sound: any): void {
     if (sound != null && sound.playing()) {
       sound.stop();
     }
-  }  
+  }
 
   public createUnitVector2(angle: any): any {
-    
+
     this.unitVector[0] = javaFloat(Math.cos(angle));
     this.unitVector[1] = javaFloat(Math.sin(angle));
-    
+
     return this.unitVector;
   }
-  
+
   public createUnitVector(angle: any): any {
     switch(angle) {
       case 0:
@@ -824,10 +820,10 @@ public stopSong__overload0(song: any): void {
         this.unitVector[1] = -Main.ISQRT2;
         break;
     }
-    
+
     return this.unitVector;
   }
-  
+
     public drawRotated(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any): any {
     const argCount = arguments.length;
     if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
@@ -850,14 +846,14 @@ public stopSong__overload0(song: any): void {
     }
     throw new Error(`No Java method overload matched drawRotated: ${argCount}`);
   }
-public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: any): void {
-    GL11.glPushMatrix();    
+  public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: any): void {
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     image.draw(centers[0], centers[1]);
     GL11.glPopMatrix();
   }
-  
+
     public drawRotatedScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any, arg8?: any): any {
     const argCount = arguments.length;
     if (argCount === 8 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number" && typeof arg5 === "number" && typeof arg6 === "number" && typeof arg7 === "number") {
@@ -868,69 +864,69 @@ public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: a
     }
     throw new Error(`No Java method overload matched drawRotatedScaled: ${argCount}`);
   }
-public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any): void {
-    GL11.glPushMatrix();    
+  public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any): void {
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scaleX, scaleY, 1);
     image.draw(centerX, centerY);
     GL11.glPopMatrix();
-  } 
-  
+  }
+
   public drawRotatedScaled__overload1(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scaleX, scaleY, 1);
     image.draw(centerX, centerY);
     GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
-  
+  }
+
   public drawRotated__overload1(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scale: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scale, scale, 1);
     image.draw(centerX, centerY);
     GL11.glPopMatrix();
-  }  
-  
+  }
+
   public drawRotated__overload2(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scale: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scale, scale, 1);
     image.draw(centerX, centerY);
     GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
-  
+  }
+
   public drawRotated__overload3(image: any, x: any, y: any, centerX: any, centerY: any, angle: any): void {
-    GL11.glPushMatrix(); 
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     image.draw(centerX, centerY);
     GL11.glPopMatrix();
-  }  
-  
+  }
+
   public drawRotated__overload4(image: any, x: any, y: any, angle: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
     GL11.glPopMatrix();
     image.setAlpha(1);
-  } 
-  
+  }
+
   public translateGraphics(x: any, y: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
   }
-  
+
     public rotateGraphics(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
     const argCount = arguments.length;
     if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
@@ -941,65 +937,65 @@ public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, ce
     }
     throw new Error(`No Java method overload matched rotateGraphics: ${argCount}`);
   }
-public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
-    GL11.glPushMatrix();    
+  public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scale, scale, 1);
-  }  
-  
+  }
+
   public scaleGraphics(x: any, y: any, scaleX: any, scaleY: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glScalef(scaleX, scaleY, 1);
-  }  
-  
+  }
+
   public rotateGraphics__overload1(x: any, y: any, angle: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
   }
-  
+
   public popGraphics(): void {
     GL11.glPopMatrix();
   }
-  
+
   public drawRotated__overload5(image: any, x: any, y: any, angle: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
     GL11.glPopMatrix();
-  }  
-  
+  }
+
   public drawRotatedAlpha(image: any, x: any, y: any, angle: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
     GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
-  
+  }
+
   public draw__overload2(image: any, x: any, y: any, angle: any, scale: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glRotatef(angle, 0, 0, 1);
     GL11.glScalef(scale, scale, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
     GL11.glPopMatrix();
   }
-  
+
   public drawCenteredAlpha(image: any, x: any, y: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();   
+    GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
-  
+  }
+
     public drawCentered(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
@@ -1016,24 +1012,24 @@ public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
     }
     throw new Error(`No Java method overload matched drawCentered: ${argCount}`);
   }
-public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
+  public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glScalef(scale, scale, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();   
+    GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
-  
+  }
+
   public drawCentered__overload1(image: any, x: any, y: any, scale: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glScalef(scale, scale, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();    
-  } 
-  
+    GL11.glPopMatrix();
+  }
+
     public drawOffset(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
     const argCount = arguments.length;
     if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
@@ -1044,27 +1040,27 @@ public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: an
     }
     throw new Error(`No Java method overload matched drawOffset: ${argCount}`);
   }
-public drawOffset__overload0(image: any, x: any, y: any): void {
+  public drawOffset__overload0(image: any, x: any, y: any): void {
     image.draw(x, y);
-  }  
-  
+  }
+
   public drawOffset__overload1(image: any, x: any, y: any, alpha: any): void {
     image.setAlpha(alpha);
     image.draw(x, y);
     image.setAlpha(1);
-  }  
-  
+  }
+
   public drawCentered__overload2(image: any): void {
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-  }  
-  
+  }
+
   public drawCentered__overload3(image: any, x: any, y: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();    
-  }  
-  
+    GL11.glPopMatrix();
+  }
+
     public drawScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 5 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
@@ -1075,24 +1071,24 @@ public drawOffset__overload0(image: any, x: any, y: any): void {
     }
     throw new Error(`No Java method overload matched drawScaled: ${argCount}`);
   }
-public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
+  public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
     image.setAlpha(alpha);
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glScalef(scale, scale, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();   
+    GL11.glPopMatrix();
     image.setAlpha(1);
-  }  
+  }
 
   public drawScaled__overload1(image: any, x: any, y: any, scale: any): void {
-    GL11.glPushMatrix();    
+    GL11.glPushMatrix();
     GL11.glTranslatef(x, y, 0);
     GL11.glScalef(scale, scale, 1);
     image.draw(-image.getWidth() * .5, -image.getHeight() * .5);
-    GL11.glPopMatrix();    
+    GL11.glPopMatrix();
   }
-  
+
     public drawVehicle(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 5 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
@@ -1106,13 +1102,13 @@ public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any)
     }
     throw new Error(`No Java method overload matched drawVehicle: ${argCount}`);
   }
-public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle: any): void {
-    
+  public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle: any): void {
+
     angle %= 360;
     if (angle < 0) {
       angle += 360;
-    }    
-    
+    }
+
     if (angle >= 337.5 || angle < 22.5) {
       this.drawRotated(sprites[0], x, y, centers[0], angle);
     } else if (angle < 67.5) {
@@ -1131,13 +1127,13 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       this.drawRotated(sprites[1], x, y, centers[1], angle + 45);
     }
   }
-  
+
   public drawVehicle__overload1(sprites: any, x: any, y: any, angle: any, alpha: any): void {
     angle %= 360;
     if (angle < 0) {
       angle += 360;
-    }    
-    
+    }
+
     if (angle >= 337.5 || angle < 22.5) {
       this.drawRotated(sprites[0], x, y, angle, alpha);
     } else if (angle < 67.5) {
@@ -1155,14 +1151,14 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     } else {
       this.drawRotated(sprites[1], x, y, angle + 45, alpha);
     }
-  }  
-  
+  }
+
   public drawVehicle__overload2(sprites: any, x: any, y: any, angle: any): void {
     angle %= 360;
     if (angle < 0) {
       angle += 360;
-    }    
-    
+    }
+
     if (angle >= 337.5 || angle < 22.5) {
       this.drawRotated(sprites[0], x, y, angle);
     } else if (angle < 67.5) {
@@ -1180,7 +1176,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     } else {
       this.drawRotated(sprites[1], x, y, angle + 45);
     }
-  }  
+  }
 
   public isSongPlaying(): boolean {
     return this.currentSong != null && this.currentSong.playing;
@@ -1193,7 +1189,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.requestedSong = null;
     this.currentSong = null;
   }
-  
+
   public stopAllSound(): void {
     this.stopSong(this.bossSong);
     this.stopSong(this.continueSong);
@@ -1244,25 +1240,25 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.nextFrameTime = Sys.getTime();
   }
 
-  public closeRequested(): boolean {    
+  public closeRequested(): boolean {
     if (!super.closeRequested()) {
       return false;
     }
     this.closeRequestedFlag = true;
     this.stopAllSound();
     return true;
-  } 
-  
+  }
+
   private getCharacterName(c: any): string {
     switch(c) {
       case '.':
         return "period";
       case ',':
-        return "comma";        
+        return "comma";
       case '\'':
         return "apostrophe";
       case '!':
-        return "exclamation";        
+        return "exclamation";
       case '-':
         return "hyphen";
       case '@':
@@ -1281,12 +1277,12 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       case '`':
         return "left-quote";
       case '"':
-        return "right-quote";        
+        return "right-quote";
       default:
         return JavaString.valueOf(c);
     }
   }
-  
+
   private loadFont(): void {
     let pack = new XMLPackedSheet(
         "images/font.png", "images/font.xml");
@@ -1307,8 +1303,8 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
           break;
       }
       for(let j = 0; j < Main.CHARS.length; j++) {
-        this.fonts[i][Character.toLowerCase(Main.CHARS.charAt(j))] 
-            = this.fonts[i][Main.CHARS.charAt(j)] 
+        this.fonts[i][Character.toLowerCase(Main.CHARS.charAt(j))]
+            = this.fonts[i][Main.CHARS.charAt(j)]
                 = pack.getSprite(JavaString.format("font-%s-%s.png",
                     color, this.getCharacterName(Main.CHARS.charAt(j))));
       }
@@ -1317,10 +1313,10 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
 
   private loadTiles(index: any, stage: any): void {
     let pack = new XMLPackedSheet(
-        JavaString.format("images/tiles-%d.png", index), 
+        JavaString.format("images/tiles-%d.png", index),
         JavaString.format("images/tiles-%d.xml", index));
     let size = Main.TILES[index];
-    stage.tiles = javaArray(size, null);   
+    stage.tiles = javaArray(size, null);
     for(let i = 0; i < size; i++) {
       if (i == 225) {
         if (index == 5) {
@@ -1330,7 +1326,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
         }
       }
       stage.tiles[i] = pack.getSprite(
-          JavaString.format("tile-%d-%03d.png", index, i));      
+          JavaString.format("tile-%d-%03d.png", index, i));
     }
     if (index == 5) {
       for(let i = 0; i < 16; i++) {
@@ -1338,7 +1334,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       }
     }
   }
-  
+
   private loadLargeImages(): void {
     this.sunset = this.loadExtraLargeImage("sunset", "large-0", "large-1");
     this.map = this.loadLargeImage("map", "large-1");
@@ -1347,20 +1343,20 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.soldiers[1] = this.loadLargeImage("soldier-1", "large-3");
     this.soldiers[2] = this.loadLargeImage("soldier-2", "large-3");
     this.soldiers[3] = this.loadLargeImage("soldier-3", "large-3");
-    this.jeepHere = this.loadLargeImage("jeep-here", "large-4");                 
-    this.title = this.loadLargeImage("title", "large-5");    
+    this.jeepHere = this.loadLargeImage("jeep-here", "large-4");
+    this.title = this.loadLargeImage("title", "large-5");
   }
-  
+
   private loadSprites(): void {
-    
+
     let pack1 = new XMLPackedSheet(
         "images/sprites-1.png", "images/sprites-1.xml");
-    
+
     for(let i = 0; i < 4; i++) {
       let COLORS = [ "green", "yellow", "brown", "gray" ];
       for(let j = 0; j < 3; j++) {
         this.players[i][j] = pack1.getSprite(JavaString.format(
-            "player-%s-%d.png", COLORS[i], j)); 
+            "player-%s-%d.png", COLORS[i], j));
       }
       this.players[i][3] = this.players[i][0].getFlippedCopy(true, false);
       this.players[i][4] = this.players[i][1].getFlippedCopy(true, false);
@@ -1374,10 +1370,10 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.whiteBullet = pack1.getSprite("white-bullet.png");
     this.yellowBullet = pack1.getSprite("yellow-bullet.png");
     this.bulletHit = pack1.getSprite("bullet-hit.png");
-    
-    this.grayGuns[0] = pack1.getSprite("gray-gun-4.png"); 
-    this.grayGuns[1] = pack1.getSprite("gray-gun-5.png"); 
-    
+
+    this.grayGuns[0] = pack1.getSprite("gray-gun-4.png");
+    this.grayGuns[1] = pack1.getSprite("gray-gun-5.png");
+
     for(let i = 0; i < 2; i++) {
       let color = i == 0 ? "brown" : "yellow";
       for(let j = 0; j < 8; j++) {
@@ -1388,66 +1384,66 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
           this.enemySoldiers[i][j] = this.enemySoldiers[i][j - 4]
               .getFlippedCopy(true, false);
         }
-      }      
+      }
     }
     this.deadEnemySoldier = pack1.getSprite("enemy-soldier-dead.png");
-    
+
     for(let i = 0; i < 3; i++) {
       this.brownTanks[i] = pack1.getSprite(JavaString.format(
-          "brown-tank-%d.png", i)); 
+          "brown-tank-%d.png", i));
     }
     this.brownTanks[3] = this.brownTanks[0].getFlippedCopy(true, false);
     this.brownTanks[4] = this.brownTanks[1].getFlippedCopy(true, false);
-    
+
     for(let i = 0; i < 3; i++) {
       this.grayJeeps[i] = pack1.getSprite(JavaString.format(
-          "gray-jeep-%d.png", i)); 
+          "gray-jeep-%d.png", i));
     }
     this.grayJeeps[3] = this.grayJeeps[0].getFlippedCopy(true, false);
-    this.grayJeeps[4] = this.grayJeeps[1].getFlippedCopy(true, false);   
-    
+    this.grayJeeps[4] = this.grayJeeps[1].getFlippedCopy(true, false);
+
     this.cannonball = pack1.getSprite("cannonball.png");
-    
+
     this.parkedGrayJeep = pack1.getSprite("gray-parked.png");
-    
+
     this.mines[0] = pack1.getSprite("mine-green.png");
     this.mines[1] = pack1.getSprite("mine-brown.png");
     this.mines[2] = pack1.getSprite("mine-gray.png");
     this.mines[3] = pack1.getSprite("mine-yellow.png");
-    
+
     this.lamps[0] = pack1.getSprite("lamp-blue-bright.png");
     this.lamps[1] = pack1.getSprite("lamp-blue-dark.png");
     this.lamps[2] = pack1.getSprite("lamp-red-bright.png");
-    this.lamps[3] = pack1.getSprite("lamp-red-dark.png");  
-    
+    this.lamps[3] = pack1.getSprite("lamp-red-dark.png");
+
     this.bomb = pack1.getSprite("bomb-large.png");
-    
+
     this.statueBlueEyes = pack1.getSprite("blue-eyes.png");
     this.statueBlueMouth = pack1.getSprite("blue-mouth.png");
     this.statueWhiteEyes = pack1.getSprite("white-eyes.png");
     this.statueWhiteMouth = pack1.getSprite("white-mouth.png");
     this.statueMissiles[0] = pack1.getSprite("statue-missile.png");
-    this.statueMissiles[1] = this.statueMissiles[0].getFlippedCopy(true, false); 
-    
+    this.statueMissiles[1] = this.statueMissiles[0].getFlippedCopy(true, false);
+
     this.lasers[0] = pack1.getSprite("laser-green.png");
     this.lasers[1] = pack1.getSprite("laser-brown.png");
     this.lasers[2] = pack1.getSprite("laser-gray.png");
     this.lasers[3] = pack1.getSprite("laser-yellow.png");
     this.lasers[4] = pack1.getSprite("laser-flash-0.png");
-    this.lasers[5] = pack1.getSprite("laser-flash-1.png");  
-    
+    this.lasers[5] = pack1.getSprite("laser-flash-1.png");
+
     this.swampMissiles[0] = pack1.getSprite("swamp-missile-0.png");
-    
+
     this.parkedBrownTank = pack1.getSprite("brown-parked.png");
-    
+
     let pack2 = new XMLPackedSheet(
         "images/sprites-2.png", "images/sprites-2.xml");
 
     this.swampMissiles[1] = pack2.getSprite("missile-splash-0.png");
     this.swampMissiles[2] = this.swampMissiles[1].getFlippedCopy(true, false);
     this.swampMissiles[3] = pack2.getSprite("missile-splash-1.png");
-    this.swampMissiles[4] = pack2.getSprite("missile-splash-2.png");    
-    
+    this.swampMissiles[4] = pack2.getSprite("missile-splash-2.png");
+
     for(let i = 0; i < 4; i++) {
       let color = null;
       switch(i) {
@@ -1465,8 +1461,8 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
           break;
       }
       this.friendlySoldiers[i][1] = pack2.getSprite(
-          JavaString.format("friendly-soldier-%s-0.png", color)); 
-      this.friendlySoldiers[i][0] 
+          JavaString.format("friendly-soldier-%s-0.png", color));
+      this.friendlySoldiers[i][0]
           = this.friendlySoldiers[i][1].getFlippedCopy(true, false);
       this.friendlySoldiers[i][2] = pack2.getSprite(
           JavaString.format("friendly-soldier-%s-1.png", color));
@@ -1474,58 +1470,58 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
           JavaString.format("friendly-soldier-%s-2.png", color));
       this.friendlySoldiers[i][4] = pack2.getSprite(
           JavaString.format("friendly-soldier-%s-3.png", color));
-      this.friendlySoldiers[i][5] 
+      this.friendlySoldiers[i][5]
           = this.friendlySoldiers[i][4].getFlippedCopy(true, false);
-      this.friendlySoldiers[i][6] 
+      this.friendlySoldiers[i][6]
           = this.friendlySoldiers[i][2].getFlippedCopy(true, false);
-      this.friendlySoldiers[i][7] 
+      this.friendlySoldiers[i][7]
           = this.friendlySoldiers[i][3].getFlippedCopy(true, false);
       this.friendlySoldiers[i][8] = pack2.getSprite(
           JavaString.format("friendly-soldier-%s-4.png", color));
       this.friendlySoldiers[i][9] = pack2.getSprite(
           JavaString.format("friendly-soldier-%s-5.png", color));
-      this.friendlySoldiers[i][10] 
+      this.friendlySoldiers[i][10]
           = this.friendlySoldiers[i][8].getFlippedCopy(true, false);
-      this.friendlySoldiers[i][11] 
+      this.friendlySoldiers[i][11]
           = this.friendlySoldiers[i][9].getFlippedCopy(true, false);
-    }    
-    
+    }
+
     this.help = pack2.getSprite("help.png");
-    
+
     this.greenBoats[0] = pack2.getSprite("green-boat-0.png");
     this.greenBoats[1] = pack2.getSprite("green-boat-1.png");
-    
+
     this.stars[0] = pack2.getSprite("star-brown.png");
     this.stars[1] = pack2.getSprite("star-gray.png");
     this.stars[2] = pack2.getSprite("star-green.png");
     this.stars[3] = pack2.getSprite("star-yellow.png");
-    
+
     this.friendlyHelicopters[0] = pack2.getSprite("friendly-helicopter-large.png");
     this.friendlyHelicopters[1] = pack2.getSprite("friendly-helicopter-shadow.png");
     this.friendlyHelicopters[2] = pack2.getSprite("friendly-helicopter-wing-15.png");
     this.friendlyHelicopters[3] = pack2.getSprite("friendly-helicopter-wing-30.png");
-    
+
     this.airplanes[0][0] = pack2.getSprite("airplane.png");
     this.airplanes[0][1] = pack2.getSprite("airplane-shadow.png");
     this.airplanes[1][0] = this.airplanes[0][0].getFlippedCopy(false, true);
     this.airplanes[1][1] = this.airplanes[0][1].getFlippedCopy(false, true);
-    
+
     this.columns[0] = pack2.getSprite("column-0.png").getFlippedCopy(true, false);
     this.columns[1] = pack2.getSprite("column-0.png").getFlippedCopy(false, true);
-    
+
     this.grayBoats[0] = pack2.getSprite("gray-boat-0.png");
     this.grayBoats[1] = pack2.getSprite("gray-boat-1.png");
     this.grayBoats[2] = pack2.getSprite("gray-boat-2.png");
-    
+
     this.playerWakes[0] = pack2.getSprite("player-wake-0.png");
     this.playerWakes[1] = this.playerWakes[0].getFlippedCopy(true, false);
     this.playerWakes[2] = pack2.getSprite("player-wake-2.png");
     this.playerWakes[3] = this.playerWakes[2].getFlippedCopy(false, true);
     this.playerWakes[4] = pack2.getSprite("player-wake-1.png");
     this.playerWakes[5] = this.playerWakes[4].getFlippedCopy(true, false);
-    
-    this.rock = pack2.getSprite("rock-large.png");   
-    
+
+    this.rock = pack2.getSprite("rock-large.png");
+
     for(let i = 0; i < 2; i++) {
       let color = i == 0 ? "brown" : "yellow";
       for(let j = 0; j < 8; j++) {
@@ -1536,20 +1532,20 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
           this.swampSoldiers[i][j] = this.swampSoldiers[i][j - 4]
               .getFlippedCopy(true, false);
         }
-      }      
-    }   
-    
-    this.cliffMissileLauncher = pack2.getSprite("missile-launcher.png");    
-    
+      }
+    }
+
+    this.cliffMissileLauncher = pack2.getSprite("missile-launcher.png");
+
     let pack3 = new XMLPackedSheet(
         "images/sprites-3.png", "images/sprites-3.xml");
-    
+
     for(let j = 0; j < 2; j++) {
       let color = j == 0 ? "blue" : "brown";
       let k = j << 1;
       for(let i = 0; i < 3; i++) {
         this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format(
-            "boss-%s-tank-%d.png", color, i << 1)); 
+            "boss-%s-tank-%d.png", color, i << 1));
       }
       this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
       this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
@@ -1557,81 +1553,81 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       k++;
       for(let i = 0; i < 3; i++) {
         this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format(
-            "boss-%s-tank-%d.png", color, (i << 1) + 1)); 
+            "boss-%s-tank-%d.png", color, (i << 1) + 1));
       }
       this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
       this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
     }
-    
+
     for(let i = 0; i < 3; i++) {
       this.grayTanks[i] = pack3.getSprite(JavaString.format(
-          "gray-tank-%d.png", i)); 
+          "gray-tank-%d.png", i));
     }
     this.grayTanks[3] = this.grayTanks[0].getFlippedCopy(true, false);
     this.grayTanks[4] = this.grayTanks[1].getFlippedCopy(true, false);
-    
+
     this.troopsTruck = pack3.getSprite("troops-truck.png");
-    
+
     this.cannonTruck[0][0] = pack3.getSprite("cannon-truck-0.png");
     this.cannonTruck[0][1] = pack3.getSprite("cannon-truck-1.png");
     this.cannonTruck[1][0] = this.cannonTruck[0][0].getFlippedCopy(true, false);
-    this.cannonTruck[1][1] = this.cannonTruck[0][1].getFlippedCopy(true, false);   
-    
+    this.cannonTruck[1][1] = this.cannonTruck[0][1].getFlippedCopy(true, false);
+
     this.tankShack = pack3.getSprite("gray-tank-shack.png");
-    
+
     for(let i = 0; i < 7; i++) {
       this.sparks[0][i] = pack3.getSprite(JavaString.format("spark-%d.png", i));
       this.sparks[1][i] = this.sparks[0][i].getFlippedCopy(true, false);
     }
-    
-    this.greenGuns[0] = pack3.getSprite("green-gun-4.png"); 
-    this.greenGuns[1] = pack3.getSprite("green-gun-5.png"); 
-    this.brownGuns[0] = pack3.getSprite("brown-gun-4.png"); 
-    this.brownGuns[1] = pack3.getSprite("brown-gun-5.png");     
-    
+
+    this.greenGuns[0] = pack3.getSprite("green-gun-4.png");
+    this.greenGuns[1] = pack3.getSprite("green-gun-5.png");
+    this.brownGuns[0] = pack3.getSprite("brown-gun-4.png");
+    this.brownGuns[1] = pack3.getSprite("brown-gun-5.png");
+
     let pack4 = new XMLPackedSheet(
         "images/sprites-4.png", "images/sprites-4.xml");
-    
+
     for(let i = 0; i < 4; i++) {
       this.submarines[i] = pack4.getSprite(JavaString.format(
-          "submarine-%d.png", i)); 
+          "submarine-%d.png", i));
     }
-    
+
     this.floorGuns[0] = pack4.getSprite("floor-gun-gray.png");
     this.floorGuns[1] = pack4.getSprite("floor-gun-yellow.png");
     this.floorGuns[2] = pack4.getSprite("floor-gun-brown.png");
     this.floorGuns[3] = pack4.getSprite("floor-gun-green.png");
     this.floorGuns[4] = pack4.getSprite("floor-gun-background-black.png");
-    this.floorGuns[5] = pack4.getSprite("floor-gun-background-red.png");    
+    this.floorGuns[5] = pack4.getSprite("floor-gun-background-red.png");
     this.floorGuns[6] = pack4.getSprite("floor-gun-stripes-mask.png");
     this.floorGuns[7] = pack4.getSprite("floor-gun-striped-panel.png");
-    
+
     this.shipGuns[0] = pack4.getSprite("ship-gun-mask.png");
     this.shipGuns[1] = pack4.getSprite("ship-gun-upper-panel.png");
     this.shipGuns[2] = pack4.getSprite("ship-gun-lower-panel.png");
-    
+
     this.plainFloorGuns[0] = pack4.getSprite("floor-gun-plain-mask.png");
     this.plainFloorGuns[1] = pack4.getSprite("floor-gun-plain-panel.png");
-    
+
     this.trains[0] = pack4.getSprite("train-0.png");
     this.trains[1] = pack4.getSprite("train-1.png");
     this.trains[2] = pack4.getSprite("tunnel.png");
-    
+
     this.bossHelicopters[0] = pack4.getSprite("boss-helicopter-0.png");
     this.bossHelicopters[1] = this.bossHelicopters[0].getFlippedCopy(true, false);
     this.bossHelicopters[2] = pack4.getSprite("boss-helicopter-blade.png");
     this.bossHelicopters[3] = pack4.getSprite("boss-helicopter-tail-0.png");
     this.bossHelicopters[4] = pack4.getSprite("boss-helicopter-tail-1.png");
     this.bossHelicopters[5] = pack4.getSprite("boss-helicopter-shadow.png");
-    
+
     for(let i = 0; i < 5; i++) {
       this.parachutes[i] = pack4.getSprite(JavaString.format("parachute-%d.png", i));
     }
-    
+
     for(let i = 0; i < 5; i++) {
       this.cliffGuns[i] = pack4.getSprite(JavaString.format("cliff-gun-%d.png", i));
     }
-    
+
     for(let i = 0; i < 3; i++) {
       this.fires[0][i] = pack4.getSprite(JavaString.format("fire-%d.png", i));
       if (i == 2) {
@@ -1640,33 +1636,33 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
         this.fires[1][i] = this.fires[0][i].getFlippedCopy(true, true);
       }
     }
-    
+
     for(let i = 0; i < 3; i++) {
       this.fireTanks[i] = pack4.getSprite(JavaString.format(
-          "fire-tank-%d.png", i)); 
+          "fire-tank-%d.png", i));
     }
     this.fireTanks[3] = this.fireTanks[0].getFlippedCopy(true, false);
     this.fireTanks[4] = this.fireTanks[1].getFlippedCopy(true, false);
-    
+
     for(let i = 0; i < 5; i++) {
       this.garages[i] = pack4.getSprite(JavaString.format("door-%d.png", i));
     }
-    
+
     let pack5 = new XMLPackedSheet(
         "images/sprites-5.png", "images/sprites-5.xml");
-    
+
     for(let i = 0; i < 4; i++) {
       this.floorMissileLauncher[i] = pack5.getSprite(JavaString.format(
           "missile-launcher-floor-%d.png", i));
     }
-    
+
     this.enemyHelicopters[0] = pack5.getSprite("enemy-helicopter-body.png");
     this.enemyHelicopters[1] = pack5.getSprite("enemy-helicopter-blade.png");
     this.enemyHelicopters[2] = pack5.getSprite("enemy-helicopter-shadow.png");
-    
+
     this.headquartersLights[0] = pack5.getSprite("headquarters-light-yellow.png");
     this.headquartersLights[1] = pack5.getSprite("headquarters-light-brown.png");
-    
+
     this.elephantGuns[1] = pack5.getSprite("elephant-gun-0.png");
     this.elephantGuns[2] = pack5.getSprite("elephant-gun-1.png");
     this.elephantGuns[0] = this.elephantGuns[2].getFlippedCopy(true, false);
@@ -1676,52 +1672,52 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.elephantGuns[6] = pack5.getSprite("elephant-gun-4.png");
     this.elephantGuns[7] = this.elephantGuns[6].getFlippedCopy(true, false);
     this.elephantGuns[8] = pack5.getSprite("elephant-missile.png");
-    
+
     this.superTanks[0][0] = pack5.getSprite("super-tank-tread-yellow.png");
     this.superTanks[0][1] = pack5.getSprite("super-tank-wheel-yellow.png");
     this.superTanks[0][2] = pack5.getSprite("super-tank-top-yellow.png");
     this.superTanks[0][3] = pack5.getSprite("super-tank-middle-yellow.png");
     this.superTanks[0][4] = pack5.getSprite("super-tank-bottom-yellow.png");
-    
+
     this.superFires[0][0] = pack5.getSprite("super-fire-0.png");
     this.superFires[0][1] = pack5.getSprite("super-fire-1.png");
     this.superFires[0][2] = this.superFires[0][0].getFlippedCopy(false, true);
     this.superFires[1][0] = pack5.getSprite("super-fire-2.png");
     this.superFires[1][1] = pack5.getSprite("super-fire-3.png");
     this.superFires[1][2] = this.superFires[0][0].getFlippedCopy(false, true);
-    
+
     this.superGuns[0] = pack5.getSprite("super-tank-gun-green-0.png");
     this.superGuns[1] = pack5.getSprite("super-tank-gun-brown-0.png");
-    
+
     let pack6 = new XMLPackedSheet(
         "images/sprites-6.png", "images/sprites-6.xml");
-    
+
     this.superTanks[1][0] = pack6.getSprite("super-tank-tread-orange.png");
     this.superTanks[1][1] = pack6.getSprite("super-tank-wheel-orange.png");
     this.superTanks[1][2] = pack6.getSprite("super-tank-top-orange.png");
     this.superTanks[1][3] = pack6.getSprite("super-tank-middle-orange.png");
     this.superTanks[1][4] = pack6.getSprite("super-tank-bottom-orange.png");
-    
+
     this.superTanks[2][0] = pack6.getSprite("super-tank-tread-red.png");
     this.superTanks[2][1] = pack6.getSprite("super-tank-wheel-red.png");
     this.superTanks[2][2] = pack6.getSprite("super-tank-top-red.png");
     this.superTanks[2][3] = pack6.getSprite("super-tank-middle-red.png");
-    this.superTanks[2][4] = pack6.getSprite("super-tank-bottom-red.png");  
-    
+    this.superTanks[2][4] = pack6.getSprite("super-tank-bottom-red.png");
+
     let pack7 = new XMLPackedSheet(
         "images/sprites-7.png", "images/sprites-7.xml");
-    
+
     this.superTanks[3][0] = this.superTanks[2][0];
     this.superTanks[3][1] = this.superTanks[2][1];
     this.superTanks[3][2] = pack7.getSprite("super-tank-top-smashed.png");
     this.superTanks[3][3] = pack7.getSprite("super-tank-middle-smashed.png");
-    this.superTanks[3][4] = pack7.getSprite("super-tank-bottom-smashed.png"); 
-    
+    this.superTanks[3][4] = pack7.getSprite("super-tank-bottom-smashed.png");
+
     this.chinooks[0] = pack7.getSprite("chinook-body.png");
     this.chinooks[1] = this.chinooks[0].getFlippedCopy(false, true);
     this.chinooks[2] = pack7.getSprite("chinook-blade.png");
     this.chinooks[3] = pack7.getSprite("chinook-shadow.png");
-    
+
     this.heres[0] = pack7.getSprite("here-0.png");
     this.heres[1] = pack7.getSprite("here-1.png");
     this.smoke = pack7.getSprite("smoke.png");
@@ -1732,47 +1728,47 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     this.yeahs[0] = pack7.getSprite("yeah-0.png");
     this.yeahs[1] = pack7.getSprite("yeah-1.png");
     this.yeahs[2] = pack7.getSprite("yeah-2.png");
-    this.yeahs[3] = pack7.getSprite("yeah-3.png");    
-    
+    this.yeahs[3] = pack7.getSprite("yeah-3.png");
+
     let pack8 = new XMLPackedSheet(
         "images/sprites-8.png", "images/sprites-8.xml");
-    
+
     let sun = pack8.getSprite("sun.png");
     this.suns = javaArray(sun.getHeight(), null);
     for(let i = this.suns.length - 1; i >= 0; i--) {
       this.suns[i] = sun.getSubImage(0, i, sun.getWidth(), 1);
     }
-    
+
     let wave = pack8.getSprite("waves-0.png");
     this.waves = javaArray(wave.getHeight(), null);
     for(let i = this.waves.length - 1; i >= 0; i--) {
       this.waves[i] = wave.getSubImage(0, i, wave.getWidth(), 1);
     }
-    
+
     this.rescueHelicopters[0] = pack8.getSprite("rescue-helicopter-body-0.png");
     this.rescueHelicopters[1] = pack8.getSprite("rescue-helicopter-body-1.png");
     this.rescueHelicopters[2] = pack8.getSprite("rescue-helicopter-blade.png");
   }
-  
+
   private loadExtraLargeImage(name: any, ...packNames: any[]): any {
-    
+
     let packs = javaArray(packNames.length, null);
     for(let i = 0; i < packNames.length; i++) {
       packs[i] = new XMLPackedSheet(
-          "images/" + packNames[i] + ".png", 
+          "images/" + packNames[i] + ".png",
           "images/" + packNames[i] + ".xml");
     }
-    
+
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
         classLoader.getResourceAsStream(
             JavaString.format("images/%s.dat", name))));
-    
+
     let width = dis.readShort();
     let height = dis.readShort();
     let tileCount = dis.readShort();
     let mapLocal = java2DArray(width * height, 3, 0);
-    
+
     for(let y = 0; y < height; y++) {
       let Y = width * y;
       let y2 = y << 5;
@@ -1784,7 +1780,7 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
       }
     }
     Arrays.sort(mapLocal, (cell1: any, cell2: any) => cell1[0] - cell2[0]);
-    
+
     let tiles = javaArray(tileCount, null);
     for(let i = 0, j = 0; i < tileCount; i++) {
       while(true) {
@@ -1796,40 +1792,40 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
         }
       }
     }
-    
+
     return new ExtraLargeImage(this, tiles, mapLocal);
-  }  
-  
+  }
+
   private loadLargeImage(name: any, packName: any): any {
-    
+
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
         classLoader.getResourceAsStream(
             JavaString.format("images/%s.dat", name))));
-    
+
     let width = dis.readShort();
     let height = dis.readShort();
     let tileCount = dis.readShort();
     let mapLocal = java2DArray(height, width, 0);
-    
+
     for(let y = 0; y < height; y++) {
       for(let x = 0; x < width; x++) {
         mapLocal[y][x] = dis.readShort();
       }
     }
-    
+
     let pack = new XMLPackedSheet(
-        "images/" + packName + ".png", 
+        "images/" + packName + ".png",
         "images/" + packName + ".xml");
-    
+
     let tiles = javaArray(tileCount, null);
     for(let i = 0; i < tileCount; i++) {
       tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i));
     }
-    
+
     return new LargeImage(this, tiles, mapLocal, width, height);
   }
-  
+
     private loadTriggerMap(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
     const argCount = arguments.length;
     if (argCount === 4 && typeof arg0 === "number" && Array.isArray(arg1) && typeof arg2 === "number" && (arg3 === null || arg3 instanceof Stage)) {
@@ -1840,21 +1836,21 @@ public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle:
     }
     throw new Error(`No Java method overload matched loadTriggerMap: ${argCount}`);
   }
-private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any, stage: any): void {
-    
+  private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any, stage: any): void {
+
     this.loadTriggerMap(height, enemySizes, stageIndex, stage, false);
     this.loadTriggerMap(height, enemySizes, stageIndex, stage, true);
   }
-  
+
   private loadTriggerMap__overload1(height: any, enemySizes: any, stageIndex: any, stage: any, hard: any): void {
-    let lists = javaArray(height, null); 
+    let lists = javaArray(height, null);
     for(let i = 0; i < height; i++) {
       lists[i] = new ArrayList<int[]>();
     }
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
         classLoader.getResourceAsStream(
-            JavaString.format("maps/enemies%s-%d.dat", 
+            JavaString.format("maps/enemies%s-%d.dat",
                 hard ? "-hard" : "", stageIndex))));
     let count = dis.readShort();
     for(let i = 0; i < count; i++) {
@@ -1880,8 +1876,8 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
       }
     }
   }
-  
-  private loadSizes(): void {    
+
+  private loadSizes(): void {
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
         classLoader.getResourceAsStream("maps/sizes.dat")));
@@ -1890,36 +1886,36 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
     for(let i = 0; i < count; i++) {
       let width = dis.readShort();
       let height = dis.readShort();
-      
+
       if (i == Triggers.BOSS_BLUE_TANKS
           || i == Triggers.BOSS_GARAGE
           || i == Triggers.BOSS_HEADQUARTERS
           || i == Triggers.BOSS_HELICOPTER
           || i == Triggers.BOSS_SHIP
-          || i == Triggers.BOSS_STATUES) {        
+          || i == Triggers.BOSS_STATUES) {
         height -= 4;
       }
-      
+
       this.triggerSizes[i][0] = width;
       this.triggerSizes[i][1] = height;
     }
-    dis.close();  
+    dis.close();
   }
-  
+
   private loadMaps(index: any, stage: any): void {
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
         classLoader.getResourceAsStream(
             JavaString.format("maps/map-%d.dat", index))));
     stage.mapWidth = dis.readShort();
-    stage.mapHeight = dis.readShort();     
+    stage.mapHeight = dis.readShort();
     stage.tileMap = java2DArray(stage.mapHeight + 1, stage.mapWidth, 0);
     stage.groupsMap = java2DArray(stage.mapHeight + 1, stage.mapWidth, 0);
     for(let y = 0; y < stage.mapHeight; y++) {
       for(let x = 0; x < stage.mapWidth; x++) {
         stage.tileMap[y][x] = dis.readShort();
       }
-    }          
+    }
     let groupCount = dis.readShort();
     stage.groups = javaArray(groupCount, null);
     for(let i = 0; i < groupCount; i++) {
@@ -1927,14 +1923,14 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
       stage.groups[i] = java2DArray(groupSize, 4, 0);
       for(let j = 0; j < groupSize; j++) {
         for(let k = 0; k < 3; k++) {
-          stage.groups[i][j][k] = dis.readShort(); // { x, y, tile }            
+          stage.groups[i][j][k] = dis.readShort(); // { x, y, tile }
         }
         stage.groupsMap[stage.groups[i][j][1]][stage.groups[i][j][0]] = javaByte(i);
       }
     }
-    dis.close();  
+    dis.close();
   }
-  
+
   private loadTypes(index: any, stage: any): void {
 
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
@@ -1942,44 +1938,44 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         classLoader.getResourceAsStream(
             JavaString.format("maps/types-%d.dat", index))));
     stage.mapWidth = dis.readShort();
-    stage.mapHeight = dis.readShort();      
+    stage.mapHeight = dis.readShort();
     stage.typesMap = java2DArray(stage.mapHeight + 1, stage.mapWidth, 0);
     for(let y = 0; y < stage.mapHeight; y++) {
       for(let x = 0; x < stage.mapWidth; x++) {
         stage.typesMap[y][x] = dis.readShort();
       }
-    }      
+    }
     for(let x = 0; x < stage.mapWidth; x++) {
       stage.typesMap[stage.mapHeight][x] = GameMode.TYPE_WATER;
     }
     stage.mapHeight++;
-    let groupCount = dis.readShort();      
+    let groupCount = dis.readShort();
     for(let i = 0; i < groupCount; i++) {
-      let groupSize = dis.readShort();        
+      let groupSize = dis.readShort();
       for(let j = 0; j < groupSize; j++) {
         dis.readShort(); // x
-        dis.readShort(); // y         
+        dis.readShort(); // y
         stage.groups[i][j][3] = dis.readShort(); // type
       }
     }
-    dis.close();   
+    dis.close();
   }
-  
+
   private loadStages(stages: any): void {
     for(let i = 0; i < 6; i++) {
       stages[i] = new Stage();
       this.loadStage(i, stages[i]);
     }
   }
-  
-  private loadStage(index: any, stage: any): void { 
+
+  private loadStage(index: any, stage: any): void {
     this.loadTiles(index, stage);
     this.loadMaps(index, stage);
-    this.loadTypes(index, stage);    
+    this.loadTypes(index, stage);
     this.loadDirections(index, stage);
     this.loadTriggerMap(stage.mapHeight, this.triggerSizes, index, stage);
   }
-  
+
   private loadDirections(index: any, stage: any): void {
     let classLoader = ({ getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) });
     let dis = new DataInputStream(new BufferedInputStream(
@@ -2000,9 +1996,9 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
     }
     dis.close();
   }
-  
+
   public loadNext(): number {
-    
+
     switch(this.loadIndex) {
       case 0:
         this.bossIntro = new Music("music/boss_intro.ogg", Song.STREAMING);
@@ -2027,7 +2023,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.bossSong = new Song(this.bossIntro, this.bossRepeat);
         this.continueSong = new Song("music/continue.ogg");
         break;
-      case 7:  
+      case 7:
         this.cutsceneSong = new Song("music/cutscene.ogg");
         break;
       case 8:
@@ -2037,7 +2033,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
       case 9:
         this.introSong = new Song(this.start, this.stage0Intro, this.stage0Repeat);
         this.stageSong0 = new Song(this.stage0Intro, this.stage0Repeat);
-        this.stageSong1 = new Song("music/stage1_intro.ogg", 
+        this.stageSong1 = new Song("music/stage1_intro.ogg",
             "music/stage1_repeat.ogg");
         break;
       case 10:
@@ -2051,7 +2047,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.superTankIntro = null;
         this.stage0Intro = null;
         this.stage0Repeat = null;
-        this.start = null;        
+        this.start = null;
         break;
       case 12:
         this.bulletHitSound = new Sound("soundeffects/bullet_hit.ogg");
@@ -2060,7 +2056,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.enemyHitSound = new Sound("soundeffects/enemy_hit.ogg");
         break;
       case 14:
-        this.explodeSound = new Sound("soundeffects/explode.ogg");  
+        this.explodeSound = new Sound("soundeffects/explode.ogg");
         break;
       case 15:
         this.explodeSound2 = new Sound("soundeffects/explode2.ogg");
@@ -2126,7 +2122,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.weaponUpgradeSound = new Sound("soundeffects/weapon_upgrade.ogg");
         break;
       case 36:
-        this.wellDoneSound = new Sound("soundeffects/well_done.ogg");        
+        this.wellDoneSound = new Sound("soundeffects/well_done.ogg");
         break;
       case 37:
         this.loadSprites();
@@ -2138,9 +2134,9 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         this.loadSizes();
         break;
       case 40:
-        this.loadStages(this.stages);        
-        break;        
-      case 41:        
+        this.loadStages(this.stages);
+        break;
+      case 41:
         let loadingHandled = false;
         if (this.loadingCompleteHandler != null) {
           loadingHandled = this.loadingCompleteHandler(this.gc) == true;
@@ -2151,7 +2147,7 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
         }
         break;
     }
-    
+
     return ++this.loadIndex / 42;
   }
 
@@ -2266,18 +2262,18 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
     Class.forName("jackal.SunsetMode");
     Class.forName("jackal.HardEndingMode");
   }
-  
+
   public static rotate(x: any, y: any, angle: any): any {
     let cos = javaFloat(Math.cos(angle));
     let sin = javaFloat(Math.sin(angle));
     return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
-  }  
-  
+  }
+
   public static javaMain(args: any): void {
     java.awt.Toolkit.getDefaultToolkit();
-    
+
     let mainLocal = new Main();
-    
+
     let appGameContainer = new ApplicationGameContainer(
         new ScalableGame(mainLocal, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true),
             Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, false);
@@ -2288,5 +2284,5 @@ private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any,
     }
     appGameContainer.setResizable(true);
     appGameContainer.start();
-  }  
+  }
 }

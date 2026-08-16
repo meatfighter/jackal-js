@@ -7,10 +7,8 @@ The desktop Java archive vendors the runtime files that shipped with the origina
 - `lib/lwjgl_util.jar`
 - `lib/jinput.jar`
 - `lib/jorbis.jar`
-- `lib/lwjgl_applet.jar`
-- `lib/lwjgl_util_applet.jar`
 
-Only the first five jars are placed on the desktop application runtime classpath. The applet jars are preserved for historical completeness because they were present in the original distribution.
+These jars are placed on the desktop application runtime classpath.
 
 Native libraries are unpacked from the original native jars into:
 

@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/SwampMissileLauncher.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -30,43 +28,37 @@ export class SwampMissileLauncher extends Enemy {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly LAUNCH_DELAY: number = 3 * 91;
-  
-  public static readonly splashIndices: any[] = [ true, true, false, true, false, false]; 
 
-
-
-
-  
-  
+  public static readonly splashIndices: any[] = [ true, true, false, true, false, false];
 
   public init(): void {
-    super.init();  
-    
+    super.init();
+
     this.layer = 3;
-    
+
     this.bulletHits = 4;
-    
+
     this.hitX1 = 12;
     this.hitY1 = 4;
     this.hitX2 = 52;
     this.hitY2 = 28;
-    
+
     this.mine = true;
     this.mineX1 = 16;
     this.mineY1 = 8;
     this.mineX2 = 48;
     this.mineY2 = 24;
-    
+
     this.solid = true;
     this.solidX1 = 0;
     this.solidY1 = 0;
     this.solidX2 = 64;
     this.solidY2 = 32;
-    
+
     this.points = 2000;
-    
+
     this.explosionX = 32;
     this.explosionY = 16;
   }
@@ -88,12 +80,12 @@ export class SwampMissileLauncher extends Enemy {
         this.ready = true;
       }
     }
-  } 
-  
+  }
+
   // returns true if attack successful
 
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
-    if ((attackSource == AttackSource.PLAYER_WEAPON 
+    if ((attackSource == AttackSource.PLAYER_WEAPON
           || attackSource == AttackSource.TRAVELING_EXPLOSION)
         && this.hit(x1, y1, x2, y2)) {
       this.remove();
@@ -103,13 +95,13 @@ export class SwampMissileLauncher extends Enemy {
     } else {
       return false;
     }
-  }  
-  
+  }
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
     return false;
-  }  
+  }
 
   public render(): void {
     if (this.splashing > 8) {
@@ -119,7 +111,7 @@ export class SwampMissileLauncher extends Enemy {
     } else {
       if (++this.splashIndex == 6) {
         this.splashIndex = 0;
-      }    
+      }
       if (SwampMissileLauncher.splashIndices[this.splashIndex]) {
         this.main.draw(this.main.swampMissiles[2], this.x + 8, this.y);
       } else {

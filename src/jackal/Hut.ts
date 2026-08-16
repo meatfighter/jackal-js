@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Hut.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -32,16 +30,16 @@ export class Hut extends Enemy {
                 this.y = yLocal;
                 this.shack = shackLocal;
                 this.tank = tankLocal;
-    
+
                 let X = (javaInt(xLocal)) >> 5;
                 let Y = (javaInt(yLocal)) >> 5;
-              
+
                 if (shackLocal) {
-                  this.groupIndex = this.gameMode.groupsMap[Y + 3][X + 2]; 
+                  this.groupIndex = this.gameMode.groupsMap[Y + 3][X + 2];
                 } else {
-                  this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1]; 
+                  this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
                 }
-    
+
                 for(let i = shackLocal ? 5 : 4; i >= 0; i--) {
                   for(let j = 0; j < 6; j++) {
                     this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
@@ -52,25 +50,20 @@ export class Hut extends Enemy {
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
 
-
-
-  
-  
-
   public init(): void {
     super.init();
-    
+
     this.layer = 0;
-    
+
     this.hitX1 = 0;
     this.hitY1 = 0;
     this.hitX2 = 192;
-    this.hitY2 = this.shack ? 192 : 160;   
+    this.hitY2 = this.shack ? 192 : 160;
   }
 
   // returns true if attack successful
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
-    if (attackSource <= AttackSource.TRAVELING_EXPLOSION 
+    if (attackSource <= AttackSource.TRAVELING_EXPLOSION
         && this.hit(x1, y1, x2, y2)) {
       this.playSoundOnRemove = false;
       this.main.playSound(this.main.hutSound);
@@ -82,7 +75,7 @@ export class Hut extends Enemy {
         this.main.addPoints(500);
       } else {
         new FriendlySoldier(
-            this.x + 96, this.y + 48 + (this.shack ? 64 : 0), 
+            this.x + 96, this.y + 48 + (this.shack ? 64 : 0),
                 FriendlySoldierType.WEAPON_CARRIER, 0, this.shack);
         this.main.addPoints(300);
       }
@@ -91,23 +84,23 @@ export class Hut extends Enemy {
       return false;
     }
   }
-  
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
-    if (this.hit(x1, y1, x2, y2)) {             
+    if (this.hit(x1, y1, x2, y2)) {
       return true;
     } else {
       return false;
     }
-  }  
+  }
 
   public explode(): void {
-  }  
+  }
 
   public update(): void {
   }
 
   public render(): void {
-  }  
+  }
 }

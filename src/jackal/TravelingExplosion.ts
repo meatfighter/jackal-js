@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/TravelingExplosion.java.
-// Original Java imports: java.util.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -32,32 +30,24 @@ export class TravelingExplosion extends GameElement {
                 this.notifier = notifierLocal;
                 this.vx = TravelingExplosion.VELOCITY * vxLocal;
                 this.vy = TravelingExplosion.VELOCITY * vyLocal;
-    
+
                 this.enemies = this.gameMode.enemies;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly DISTANCE: number = 320;
   public static readonly TRAVEL_TIME: number = 64;
   public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);
   public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);
   public static readonly VELOCITY: number = TravelingExplosion.DISTANCE / TravelingExplosion.TRAVEL_TIME;
   public static readonly ALPHA: number = 0.6;
-  
+
   public static readonly K0: number = 1.25 / TravelingExplosion.PERIOD0;
   public static readonly K1: number = 0.75 / (TravelingExplosion.PERIOD1 - TravelingExplosion.PERIOD0);
   public static readonly K2: number = 0.333 / (TravelingExplosion.TRAVEL_TIME - TravelingExplosion.PERIOD1);
 
-
-
-
-
-
-  
-    
-  
   public init(): void {
     this.layer = 4;
   }
@@ -66,7 +56,7 @@ export class TravelingExplosion extends GameElement {
 
     this.x += this.vx;
     this.y += this.vy;
-    
+
     if (++this.t > TravelingExplosion.TRAVEL_TIME) {
       this.removeFlag = true;
       if (this.notifier) {
@@ -74,7 +64,7 @@ export class TravelingExplosion extends GameElement {
       }
     } else {
       let margin = 0;
-      if (this.t < TravelingExplosion.PERIOD0) {      
+      if (this.t < TravelingExplosion.PERIOD0) {
         this.scale = 2.25 - this.t * TravelingExplosion.K0;
         margin = 28 * this.scale;
       } else if (this.t < TravelingExplosion.PERIOD1) {
@@ -84,7 +74,7 @@ export class TravelingExplosion extends GameElement {
         this.scale = 1.333 - (this.t - TravelingExplosion.PERIOD1) * TravelingExplosion.K2;
         margin = 16 * this.scale;
       }
-       
+
       let x1 = this.x - margin;
       let y1 = this.y - margin;
       let x2 = this.x + margin;
@@ -93,7 +83,7 @@ export class TravelingExplosion extends GameElement {
         for(let i = this.enemies.size() - 1; i >= 0; i--) {
           let enemyLocal = this.enemies.get(i);
           if (!enemyLocal.removeFlag) {
-            enemyLocal.attack(x1, y1, x2, y2, 
+            enemyLocal.attack(x1, y1, x2, y2,
                 AttackSource.TRAVELING_EXPLOSION);
           }
         }
@@ -102,7 +92,7 @@ export class TravelingExplosion extends GameElement {
   }
 
   public render(): void {
-    if (this.t < TravelingExplosion.PERIOD0) {      
+    if (this.t < TravelingExplosion.PERIOD0) {
       this.main.drawScaled(this.main.explosions[1], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
     } else if (this.t < TravelingExplosion.PERIOD1) {
       this.main.drawScaled(this.main.explosions[0], this.x, this.y, this.scale, TravelingExplosion.ALPHA);

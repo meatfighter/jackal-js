@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Explosion.java.
-// Original Java imports: java.util.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -62,9 +60,9 @@ export class Explosion extends GameElement {
         let playerExplosion = arg2;
             this.x = xLocal;
                 this.y = yLocal;
-                this.type = playerExplosion 
+                this.type = playerExplosion
                     ? AttackSource.PLAYER_EXPLOSION : AttackSource.EXPLOSION;
-    
+
                 this.enemies = this.gameMode.enemies;
         return;
     }
@@ -72,48 +70,32 @@ export class Explosion extends GameElement {
   }
 
   public static readonly GROW_RATE: number = 1.03;
-  
+
   public size: number = 32;
-
-
 
   public damagesEnemies: boolean = true;
 
-
-
-
   public alpha: number = 1;
 
-
-
-  
-    
-  
-  
-  
-  
-  
-  
-  
   public setAlpha(alpha: any): void {
     this.alpha = alpha;
   }
-  
+
   public setTiny(tiny: any): void {
     this.tiny = tiny;
     if (tiny) {
       this.setDamagesEnemies(false);
     }
   }
-  
-  public setDelayed(delay: any): void {    
+
+  public setDelayed(delay: any): void {
     this.delay = delay;
   }
-  
+
   public setDamagesEnemies(damagesEnemies: any): void {
     this.damagesEnemies = damagesEnemies;
   }
-  
+
   public setGrenadeExplosion(grenadeExplosion: any): void {
     this.grenadeExplosion = grenadeExplosion;
   }
@@ -133,9 +115,9 @@ export class Explosion extends GameElement {
         return;
       }
     }
-    
+
     this.size *= Explosion.GROW_RATE;
-    
+
     if (this.size >= 80) {
       this.spriteIndex = 2;
       this.scale = this.size / 128;
@@ -146,7 +128,7 @@ export class Explosion extends GameElement {
       this.spriteIndex = 0;
       this.scale = this.size / 32;
     }
-    
+
     let margin = this.size * 0.35;
     let x1 = this.x - margin;
     let y1 = this.y - margin;
@@ -160,13 +142,13 @@ export class Explosion extends GameElement {
         }
       }
     }
-    
-    if ((this.tiny && this.size > 68) || this.size > 128) {      
+
+    if ((this.tiny && this.size > 68) || this.size > 128) {
       this.removeFlag = true;
       if (this.grenadeExplosion) {
         this.gameMode.player.setWeaponArmed(true);
       }
-    }   
+    }
   }
 
   public render(): void {

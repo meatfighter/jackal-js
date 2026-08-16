@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossShipManager.java.
-// Original Java imports: java.util.ArrayList.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -9,7 +7,7 @@ import { BrownTank } from "./BrownTank.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
-export class BossShipManager 
+export class BossShipManager
     extends GameElement implements ICameraPanListener, ITankTracker {
   protected __initializeJavaSubclassDefaults(): void {
     super.__initializeJavaSubclassDefaults();
@@ -37,17 +35,14 @@ export class BossShipManager
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly MAX_TANKS: number = 5;
   public static readonly TRIGGER_DELAY: number = 4 * 91;
 
   public brownTankDelay: number = 45;
   public shipGuns: any = new ArrayList<BossShipGun>();
-  
-  public triggerDelay: number = 1;
 
-  
-  
+  public triggerDelay: number = 1;
 
   public init(): void {
     this.gameMode.startBossCameraPan(this);
@@ -57,24 +52,24 @@ export class BossShipManager
     this.ready = true;
   }
 
-  public tankCreated(): void { 
+  public tankCreated(): void {
     this.tanks++;
   }
 
-  public tankDestroyed(): void { 
+  public tankDestroyed(): void {
     this.tanks--;
-  }  
+  }
 
   public update(): void {
     if (!this.ready) {
       return;
     }
-    
+
     if (--this.triggerDelay == 0) {
       this.triggerGuns();
       this.triggerDelay = BossShipManager.TRIGGER_DELAY;
     }
-    
+
     if (!this.shipGuns.isEmpty() && --this.brownTankDelay < 0) {
       if (this.tanks >= BossShipManager.MAX_TANKS) {
         this.brownTankDelay = 91;
@@ -86,11 +81,11 @@ export class BossShipManager
         } else if (xLocal > 1472) {
           xLocal = 1472;
         }
-        new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);        
+        new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);
       }
     }
   }
-  
+
   private triggerGuns(): void {
     if (this.shipGuns.isEmpty()) {
       return;
@@ -107,15 +102,15 @@ export class BossShipManager
       }
     }
   }
-  
+
   public gunDestroyed(bossShipGun: any): void {
     this.shipGuns.remove(bossShipGun);
     if (this.shipGuns.isEmpty()) {
       this.gameMode.destroyAll();
-      this.gameMode.stageCompleted();   
+      this.gameMode.stageCompleted();
     }
   }
 
   public render(): void {
-  }  
+  }
 }

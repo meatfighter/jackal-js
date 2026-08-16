@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Fire.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Flame } from "./Flame.js";
@@ -43,7 +41,7 @@ export class Fire extends GameElement {
                 this.vy = Fire.SPEED * vyLocal;
                 this.angle = angleLocal;
                 this.enemy = enemyLocal;
-    
+
                 this.enemyBullet = true;
         return;
     }
@@ -53,25 +51,14 @@ export class Fire extends GameElement {
   public static readonly STATE_GROWING: number = 0;
   public static readonly STATE_TRAVELING: number = 1;
   public static readonly STATE_SHRINKING: number = 2;
-  
+
   public static readonly SPEED: number = 3;
   public static readonly MAX_LENGTH: number = 128;
   public static readonly TRAVEL_TIME: number = 60;
 
-
-
-
-
-
   public state: number = Fire.STATE_GROWING;
 
-
-
   public alpha: number = 1;
-
-
-  
-  
 
   public init(): void {
     this.layer = 4;
@@ -82,11 +69,11 @@ export class Fire extends GameElement {
     switch(this.state) {
       case Fire.STATE_GROWING: {
         this.length += Fire.SPEED;
-        if (this.length >= Fire.MAX_LENGTH || this.enemy.removeFlag) { 
+        if (this.length >= Fire.MAX_LENGTH || this.enemy.removeFlag) {
           this.state = Fire.STATE_TRAVELING;
           this.delay = Fire.TRAVEL_TIME;
         }
-        for(let i = 0; i <= 5; i++) {  
+        for(let i = 0; i <= 5; i++) {
           let mag = 0.2 * i * this.length;
           this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
         }
@@ -101,7 +88,7 @@ export class Fire extends GameElement {
           this.y += this.dy * this.length;
           new Flame(this.x, this.y);
         } else {
-          for(let i = 0; i <= 5; i++) {  
+          for(let i = 0; i <= 5; i++) {
             let mag = 0.2 * i * this.length;
             this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
           }
@@ -113,12 +100,12 @@ export class Fire extends GameElement {
         if (this.length <= 0) {
           this.remove();
         }
-        for(let i = 0; i <= 5; i++) {  
+        for(let i = 0; i <= 5; i++) {
           let mag = -0.2 * i * this.length;
           this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
         }
         break;
-    }     
+    }
   }
 
   public render(): void {
@@ -137,7 +124,7 @@ export class Fire extends GameElement {
     if (this.state == Fire.STATE_SHRINKING) {
       scale = -scale;
     }
-    this.main.drawRotatedScaled(this.main.fires[this.flickerIndex][index], 
+    this.main.drawRotatedScaled(this.main.fires[this.flickerIndex][index],
         this.x, this.y, 0, -8, this.angle, scale, 1, this.alpha);
-  }  
+  }
 }

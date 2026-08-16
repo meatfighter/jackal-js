@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Menu.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -19,36 +17,36 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
         let optionsLocal = [arg6, arg7, arg8].slice(0, Math.max(0, argCount - 6));
             this.x = xLocal;
                 this.y = yLocal;
-                this.main = mainLocal;      
+                this.main = mainLocal;
                 this.selectedIndex = selectedIndexLocal;
                 this.icon = iconLocal;
                 this.menuListener = menuListenerLocal;
-                this.options = optionsLocal;          
-    
-                this.input = mainLocal.input;    
+                this.options = optionsLocal;
+
+                this.input = mainLocal.input;
                 this.iconY = 16 + (selectedIndexLocal << 6);
-    
+
                 this.input.clearKeyPressedRecord();
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly ICON_JEEP: number = 0;
   public static readonly ICON_GRENADE: number = 1;
   public static readonly ICON_MISSILE: number = 2;
   public static readonly ICON_EXPLOSION: number = 3;
   public static readonly ICON_TANK: number = 4;
   public static readonly ICON_BROWN_TANK: number = 5;
-  
+
   private static readonly SELECT_STATE_STATIONARY: number = 0;
   private static readonly SELECT_STATE_ACCELERATING: number = 1;
   private static readonly SELECT_STATE_DECELERATING: number = 2;
-  
+
   private static readonly SELECT_TIME: number = 8;
-  
+
   private static readonly I_SELECT_TIME2: number = 1 / (Menu.SELECT_TIME * Menu.SELECT_TIME);
-  
+
   public main: any = null as any;
   public options: any[] = null as any;
   public input: any = null as any;
@@ -67,17 +65,15 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
   public selectionMade: boolean = false;
   public inputEnabled: boolean = true;
   public konamiCodeTest: boolean = false;
-  
-  
-  
+
   public enableKonamiCodeTest(): void {
     this.konamiCodeTest = true;
   }
-  
+
   public setInputEnabled(inputEnabled: any): void {
     this.inputEnabled = inputEnabled;
   }
-  
+
   private moveIcon(): void {
     if (this.menuListener != null) {
       this.menuListener.selectionChanged(this.selectedIndex);
@@ -86,28 +82,28 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
     this.targetY = 16 + (this.selectedIndex << 6);
     this.iconMidY = 0.5 * (this.iconY + this.targetY);
     this.iconVy = 0;
-    this.iconA = 2 * (this.targetY - this.iconY) * Menu.I_SELECT_TIME2; 
+    this.iconA = 2 * (this.targetY - this.iconY) * Menu.I_SELECT_TIME2;
   }
 
   public update(): void {
-    
+
     if (this.konamiCodeTest) {
       this.main.konamiCode.update();
-      if (this.main.konamiCode.gettingClose() 
+      if (this.main.konamiCode.gettingClose()
           || (this.main.konamiCode.enabled && !this.main.konamiCode.keyReleased)) {
         return;
       }
     }
-    
-    if (!(this.input.isDown() || this.input.isUp() 
+
+    if (!(this.input.isDown() || this.input.isUp()
         || this.input.isShoot() || this.input.isFire())) {
       this.buttonReleased = true;
     }
-    
+
     if (this.buttonReleased) {
       if (this.input.isDown()) {
         this.buttonReleased = false;
-        if (this.inputEnabled && !this.selectionMade 
+        if (this.inputEnabled && !this.selectionMade
             && this.selectedIndex != this.options.length - 1) {
           this.selectedIndex++;
           this.moveIcon();
@@ -120,22 +116,22 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
         }
       } else if (this.input.isFire() || this.input.isShoot()) {
         this.buttonReleased = false;
-        if (!this.selectionMade && this.inputEnabled) { 
+        if (!this.selectionMade && this.inputEnabled) {
           this.selectionMade = true;
           if (this.menuListener != null) {
             this.menuListener.optionSelected(this.selectedIndex);
           }
         }
-      }  
-    }  
-    
-    if (!this.selectionMade && this.input.isEnter() && this.inputEnabled) { 
+      }
+    }
+
+    if (!this.selectionMade && this.input.isEnter() && this.inputEnabled) {
       this.selectionMade = true;
       if (this.menuListener != null) {
         this.menuListener.optionSelected(this.selectedIndex);
       }
     }
-    
+
     switch(this.selectState) {
       case Menu.SELECT_STATE_ACCELERATING:
         this.iconVy += this.iconA;
@@ -173,7 +169,7 @@ export class Menu {  public constructor(arg0?: any, arg1?: any, arg2?: any, arg3
     for(let i = this.options.length - 1; i >= 0; i--) {
       this.main.drawString(this.options[i], 0, i << 6, MainConstants.FONT_GRAY);
     }
-    
+
     switch(this.icon) {
       case Menu.ICON_JEEP:
         this.main.drawRotated(this.main.players[0][0], -72, this.iconY, 0);

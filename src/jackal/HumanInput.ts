@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/HumanInput.java.
-// Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { ButtonMapping } from "./ButtonMapping.js";
@@ -40,8 +38,6 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   private fire: boolean = false;
   private shoot: boolean = false;
 
-  
-  
   public snap(): void {
     this.up = this.input.isKeyDown(this.buttonMapping.keyUp)
         || this.isControllerBindingDown(this.buttonMapping.controllerUp);
@@ -50,7 +46,7 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
     this.left = this.input.isKeyDown(this.buttonMapping.keyLeft)
         || this.isControllerBindingDown(this.buttonMapping.controllerLeft);
     this.right = this.input.isKeyDown(this.buttonMapping.keyRight)
-        || this.isControllerBindingDown(this.buttonMapping.controllerRight);  
+        || this.isControllerBindingDown(this.buttonMapping.controllerRight);
     this.fire = this.input.isKeyDown(this.buttonMapping.keyGrenade)
         || this.isAnyControllerButtonDown(this.buttonMapping.controllerGrenade);
     this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun)
@@ -244,11 +240,11 @@ export class HumanInput implements IInput {  public constructor(arg0?: any, arg1
   public isRight(): boolean {
     return this.right;
   }
-  
+
   public isFire(): boolean {
     return this.fire;
   }
-  
+
   public isShoot(): boolean {
     return this.shoot;
   }

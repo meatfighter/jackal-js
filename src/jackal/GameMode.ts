@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/GameMode.java.
-// Original Java imports: java.util.*, org.lwjgl.opengl.*, org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -60,7 +58,7 @@ import { TrainManager } from "./TrainManager.js";
 import { Triggers } from "./Triggers.js";
 import { TroopsTruck } from "./TroopsTruck.js";
 export class GameMode implements IMode, IFadeListener {
-  
+
   public static readonly CAMERA_MARGIN_NORTH: number = 384;
   public static readonly CAMERA_MARGIN_SOUTH: number = 192;
   public static readonly CAMERA_MARGIN_SIDES: number = 256;
@@ -70,14 +68,14 @@ export class GameMode implements IMode, IFadeListener {
   public static readonly ENDING_PAN_CAMERA_SPEED: number = 2;
   public static readonly CONVEYOR_SPEED: number = Player.SPEED / 3;
   public static readonly STAGE_COMPLETED_DELAY: number = 228;
-  
+
   public static readonly TYPE_SOLID: number = 0;
   public static readonly TYPE_EMPTY: number = 1;
   public static readonly TYPE_SHIELD: number = 2;
   public static readonly TYPE_WATER: number = 3;
   public static readonly TYPE_SWAMP: number = 4;
   public static readonly TYPE_CONVEYOR: number = 5;
-  
+
   public static readonly DIR_UP: number = 0;
   public static readonly DIR_DOWN: number = 1;
   public static readonly DIR_LEFT: number = 2;
@@ -85,8 +83,8 @@ export class GameMode implements IMode, IFadeListener {
   public static readonly DIR_UP_LEFT: number = 4;
   public static readonly DIR_UP_RIGHT: number = 5;
   public static readonly DIR_DOWN_LEFT: number = 6;
-  public static readonly DIR_DOWN_RIGHT: number = 7;  
-  
+  public static readonly DIR_DOWN_RIGHT: number = 7;
+
   public static readonly DIRECTION_RADIANS: any[] = [
     javaFloat((3.0 * Math.PI / 2.0)),
     javaFloat((Math.PI / 2.0)),
@@ -97,39 +95,39 @@ export class GameMode implements IMode, IFadeListener {
     javaFloat((3.0 * Math.PI / 4.0)),
     javaFloat((Math.PI / 4.0)),
   ];
-  
+
   public static readonly DIRECTION_DEGREES: any[] = [
     270,
     90,
     180,
-    0,    
+    0,
     225,
     315,
     135,
-    45,    
-  ];  
-  
+    45,
+  ];
+
   public static readonly WATER_ALPHAS_PERIOD: number = 136;
   public static readonly WATER_ALPHAS: any[] = javaArray(GameMode.WATER_ALPHAS_PERIOD, 0);
   static {
     for(let i = 0; i < GameMode.WATER_ALPHAS_PERIOD; i++) {
-      GameMode.WATER_ALPHAS[i] = 0.5 + 0.5 
+      GameMode.WATER_ALPHAS[i] = 0.5 + 0.5
           * javaFloat(Math.sin(2.0 * Math.PI * i / javaDouble(GameMode.WATER_ALPHAS_PERIOD)));
     }
   }
-  
+
   public main: any = null as any;
   public gc: any = null as any;
   public input: any = null as any;
-    
+
   public stage: any = null as any;
-  
+
   public tileMap: any[] = null as any;         // mutable during gameplay
   public typesMap: any[] = null as any;        // mutable during gameplay
   public triggedGroups: any[] = null as any; // mutable during gameplay
-  
+
   public tiles: any[] = null as any;
-  public groups: any[] = null as any;  
+  public groups: any[] = null as any;
   public triggerMap: any[] = null as any;
   public groupsMap: any[] = null as any;
   public mapWidth: number = 0;
@@ -137,32 +135,32 @@ export class GameMode implements IMode, IFadeListener {
   public directions: any[] = null as any;
   public directionsDecoded: Uint8Array = null as any;
   public directionsWidth: number = 0;
-  public directionsHeight: number = 0;  
+  public directionsHeight: number = 0;
   public g: any = null as any;
   public waterAlphaIndex: number = 0;
   public conveyorOffset: number = 0;
   public conveyorLastIndex: number = 0;
   public conveyorDelta: number = 0;
-  
-  public player: any = null as any;  
+
+  public player: any = null as any;
   public cameraX: number = 0;
   public cameraY: number = 0;
   public maxCameraX: number = 0;
-  public maxCameraY: number = 0; 
+  public maxCameraY: number = 0;
   public paused: boolean = false;
   public triggerY: number = 0;
   public bossCameraPan: boolean = false;
   public endingCameraPan: boolean = false;
   public playing: boolean = true;
   public cameraPanListener: any = null as any;
-  
+
   public stageIndex: number = 0;
-  
+
   public stageCompletedFlag: boolean = false;
   public stageCompletedDelay: number = GameMode.STAGE_COMPLETED_DELAY;
-  
+
   public elements: any[] = javaArray(8, null);
-  
+
   public enemies: any = new ArrayList<Enemy>(256);
   public solids: any = new ArrayList<Enemy>(256);
   public mines: any = new ArrayList<Enemy>(256);
@@ -171,30 +169,30 @@ export class GameMode implements IMode, IFadeListener {
     this.main = main;
     this.gc = gc;
     this.input = main.input;
-    
+
     main.friendlySoldiersPickedUp = 0;
     FriendlySoldier.resetCount();
-    
-    for(let i = 0; i < this.elements.length; i++) {      
+
+    for(let i = 0; i < this.elements.length; i++) {
       this.elements[i] = new ArrayList<GameElement>(256);
-    }  
-    
+    }
+
     this.triggerY = this.mapHeight;
     this.maxCameraX = (this.mapWidth - 32) * 32;
-    this.maxCameraY = (this.mapHeight - 31) * 32; 
+    this.maxCameraY = (this.mapHeight - 31) * 32;
     this.cameraX = 0;
     this.cameraY = this.maxCameraY;
 
     this.player = new Player();
-    this.player.y = this.cameraY + 2 * MainConstants.DISPLAY_HEIGHT;        
+    this.player.y = this.cameraY + 2 * MainConstants.DISPLAY_HEIGHT;
   }
-  
+
   public setStage(stageIndex: any, stage: any, hard: any): void {
     this.stageIndex = stageIndex;
     this.stage = stage;
-    
+
     this.tiles = stage.tiles;
-    this.groups = stage.groups;  
+    this.groups = stage.groups;
     this.triggerMap = stage.triggerMap[hard ? 1 : 0];
     this.groupsMap = stage.groupsMap;
     this.mapWidth = stage.mapWidth;
@@ -202,46 +200,46 @@ export class GameMode implements IMode, IFadeListener {
     this.directions = stage.directions;
     this.directionsDecoded = stage.directionsDecoded;
     this.directionsWidth = stage.directionsWidth;
-    this.directionsHeight = stage.directionsHeight;  
-    
+    this.directionsHeight = stage.directionsHeight;
+
     this.tileMap = java2DArray(stage.tileMap.length, stage.tileMap[0].length, 0);
     for(let i = stage.tileMap.length - 1; i >= 0; i--) {
-      System.arraycopy(stage.tileMap[i], 0, this.tileMap[i], 0, 
+      System.arraycopy(stage.tileMap[i], 0, this.tileMap[i], 0,
           stage.tileMap[i].length);
     }
-    
+
     this.typesMap = java2DArray(stage.typesMap.length, stage.typesMap[0].length, 0);
     for(let i = stage.typesMap.length - 1; i >= 0; i--) {
-      System.arraycopy(stage.typesMap[i], 0, this.typesMap[i], 0, 
+      System.arraycopy(stage.typesMap[i], 0, this.typesMap[i], 0,
           stage.typesMap[i].length);
     }
-    
+
     this.triggedGroups = javaArray(this.groups.length, false);
-  }  
-  
+  }
+
   public startBossCameraPan(cameraPanListener: any): void {
     this.bossCameraPan = true;
     this.cameraPanListener = cameraPanListener;
   }
-  
+
   public startEndingCameraPan(cameraPanListener: any): void {
     this.playing = false;
     this.endingCameraPan = true;
     this.cameraPanListener = cameraPanListener;
   }
-  
+
   public rotate(v: any, angle: any): void {
 
     let cos = javaFloat(Math.cos(angle));
     let sin = javaFloat(Math.sin(angle));
-    
+
     let x = v[0];
     let y = v[1];
-    
+
     v[0] = x * cos - y * sin;
     v[1] = x * sin + y * cos;
   }
-  
+
   public triggerGroup(groupIndex: any): void {
     if (!this.triggedGroups[groupIndex]) {
       this.triggedGroups[groupIndex] = true;
@@ -257,7 +255,7 @@ export class GameMode implements IMode, IFadeListener {
       }
     }
   }
-  
+
   // rotates 90+ degrees, used after a collision
     public suggestDirection(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): any {
     const argCount = arguments.length;
@@ -272,10 +270,10 @@ export class GameMode implements IMode, IFadeListener {
     }
     throw new Error(`No Java method overload matched suggestDirection: ${argCount}`);
   }
-public suggestDirection__overload0(vx: any, vy: any): any {
-    
+  public suggestDirection__overload0(vx: any, vy: any): any {
+
     let clockwise = true;
-    
+
     if (vy >= 0) {
       if (vx >= 0) {
         if (vy > vx) {
@@ -285,7 +283,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         if (-vx > vy) {
           clockwise = false;
         }
-      } 
+      }
     } else {
       if (vx >= 0) {
         if (vx > -vy) {
@@ -296,68 +294,68 @@ public suggestDirection__overload0(vx: any, vy: any): any {
           clockwise = false;
         }
       }
-    }  
-    
+    }
+
     let angle = 1.571 + 0.4 * this.main.random.nextFloat();
     let v = this.main.unitVector;
     v[0] = vx;
     v[1] = vy;
     if (clockwise) {
       this.rotate(v, angle);
-    } else {      
+    } else {
       this.rotate(v, -angle);
     }
-    
+
     return v;
   }
-  
+
   public straightDirection(x1: any, y1: any, x2: any, y2: any): any {
-    
+
     let angle = javaFloat(((Math.atan2(y2 - y1, x2 - x1)) * 180 / Math.PI));
     if (angle < 0) {
       angle += 360;
-    }    
-    
+    }
+
     let ang = 45 * javaRoundFloat(angle / 45);
     let v =  this.main.createUnitVector(ang);
     v[2] = ang;
-    
+
     return v;
-  }  
-  
+  }
+
   public suggestDirection__overload1(x1: any, y1: any, x2: any, y2: any, currentAngle: any, addRandomness: any): any {
-    
+
     let v: any = null as any;
-    
+
     let X1 = (javaInt(x1)) >> 7;
     let Y1 = (javaInt(y1)) >> 7;
     let X2 = (javaInt(x2)) >> 7;
     let Y2 = (javaInt(y2)) >> 7;
-    
-    if (X1 < 0 || Y1 < 0 
+
+    if (X1 < 0 || Y1 < 0
         || X1 >= this.directionsWidth || Y1 >= this.directionsHeight
-        || X2 < 0 || Y2 < 0 
+        || X2 < 0 || Y2 < 0
         || X2 >= this.directionsWidth || Y2 >= this.directionsHeight) {
       return this.straightDirection(x1, y1, x2, y2);
     }
-    
+
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
     let index = (i / 21) | 0;
-    
+
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
     }
-    
+
     let direction = this.directionsDecoded[i];
-    
+
     if (addRandomness) {
-      let angle = GameMode.DIRECTION_RADIANS[direction] 
+      let angle = GameMode.DIRECTION_RADIANS[direction]
           + (this.main.random.nextFloat() - 0.5) * 0.7854;
 
       v = this.main.createUnitVector2(angle);
       v[2] = angle;
     } else {
-      let targetAngle = GameMode.DIRECTION_DEGREES[direction];            
+      let targetAngle = GameMode.DIRECTION_DEGREES[direction];
       let deltaAngle = (targetAngle - currentAngle + 180) % 360;
       if (deltaAngle < 0) {
         deltaAngle += 180;
@@ -375,42 +373,42 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         } else if (currentAngle >= 360) {
           currentAngle -= 360;
         }
-      }            
-      
+      }
+
       v = this.main.createUnitVector(currentAngle);
       v[2] = currentAngle;
     }
-    
+
     return v;
-  } 
-  
+  }
+
   public suggestDirection__overload2(x1: any, y1: any, x2: any, y2: any, addRandomness: any): any {
-    
+
     let v: any = null as any;
-    
+
     let X1 = (javaInt(x1)) >> 7;
     let Y1 = (javaInt(y1)) >> 7;
     let X2 = (javaInt(x2)) >> 7;
     let Y2 = (javaInt(y2)) >> 7;
-    
-    if (X1 < 0 || Y1 < 0 
+
+    if (X1 < 0 || Y1 < 0
         || X1 >= this.directionsWidth || Y1 >= this.directionsHeight
-        || X2 < 0 || Y2 < 0 
+        || X2 < 0 || Y2 < 0
         || X2 >= this.directionsWidth || Y2 >= this.directionsHeight) {
       return this.straightDirection(x1, y1, x2, y2);
     }
-    
+
     let i = (((Y1 << 4) + X1) << 4) * this.directionsHeight + ((Y2 << 4) + X2);
     let index = (i / 21) | 0;
-    
+
     if (index <0||index>= this.directions.length) {
       return this.straightDirection(x1, y1, x2, y2);
-    }    
-    
+    }
+
     let direction = this.directionsDecoded[i];
-    
+
     if (addRandomness) {
-      let angle = GameMode.DIRECTION_RADIANS[direction] 
+      let angle = GameMode.DIRECTION_RADIANS[direction]
           + (this.main.random.nextFloat() - 0.5) * 0.7854;
 
       v = this.main.createUnitVector2(angle);
@@ -420,10 +418,10 @@ public suggestDirection__overload0(vx: any, vy: any): any {
       v = this.main.createUnitVector(angle);
       v[2] = GameMode.DIRECTION_DEGREES[direction];
     }
-    
+
     return v;
   }
-  
+
   private cameraTrackPlayer(): void {
     if (this.player.x - this.cameraX < GameMode.CAMERA_MARGIN_SIDES) {
       this.cameraX = this.player.x - GameMode.CAMERA_MARGIN_SIDES;
@@ -436,7 +434,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         this.cameraX = this.maxCameraX;
       }
     }
-    
+
     if (this.player.y - this.cameraY < GameMode.CAMERA_MARGIN_NORTH) {
       this.cameraY = this.player.y - GameMode.CAMERA_MARGIN_NORTH;
       if (this.cameraY < 0) {
@@ -448,17 +446,17 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         this.cameraY = this.maxCameraY;
       }
     }
-    
+
     let maxY = this.cameraY + GameMode.CAMERA_BOUND;
     if (maxY < this.maxCameraY) {
       this.maxCameraY = maxY;
     }
   }
-  
+
   private processTriggers(): void {
     let row = ((javaInt(this.cameraY)) >> 5) - 1;
     if (row >= 0) {
-      while(this.triggerY > row) {        
+      while(this.triggerY > row) {
         let triggers = this.triggerMap[--this.triggerY];
         for(let i = triggers.length - 1; i >= 0; i--) {
           let trigger = triggers[i];
@@ -467,10 +465,10 @@ public suggestDirection__overload0(vx: any, vy: any): any {
       }
     }
   }
-  
+
   private processTrigger(index: any, x: any, y: any): void {
-    
-    switch(index) {      
+
+    switch(index) {
       case Triggers.GRAY_GUN:
         new RotatingGun(x + 64, y + 64, true);
         break;
@@ -487,7 +485,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         new BrownTank(x + 32, y + 48);
         break;
       case Triggers.FRIENDLY_HELICOPTER_LANDING:
-        new FriendlyHelicopter(this.cameraX + MainConstants.DISPLAY_WIDTH / 2, 
+        new FriendlyHelicopter(this.cameraX + MainConstants.DISPLAY_WIDTH / 2,
             this.cameraY + MainConstants.DISPLAY_HEIGHT + 128, true, false);
         break;
       case Triggers.YELLOW_GUN:
@@ -501,7 +499,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         break;
       case Triggers.STAR_FLASHING:
         new InvisibleStar(x + 32, y + 32, Star.TYPE_FLASHING);
-        break;        
+        break;
       case Triggers.AIRPLANE:
         new Airplane(x + 60, y + 62);
         break;
@@ -567,7 +565,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         break;
       case Triggers.TANK_SHACK:
         new Hut(x, y, true, true);
-        break;   
+        break;
       case Triggers.CLIFF_GUN:
         new CliffGun(x, y);
         break;
@@ -581,7 +579,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         new ParkedBrownTank(x + 32, y + 40);
         break;
       case Triggers.PLAYER:
-        this.createPlayer(x + 48, y + 48);       
+        this.createPlayer(x + 48, y + 48);
         this.main.startFade(false, null);
         switch(this.main.stageIndex) {
           case 3:
@@ -595,7 +593,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
           case 5:
             this.main.requestSong(this.main.stageSong2);
             break;
-        }        
+        }
         break;
       case Triggers.GREEN_GUN:
         new RotatingGun(x + 48, y + 44, RotatingGun.TYPE_GREEN);
@@ -642,7 +640,7 @@ public suggestDirection__overload0(vx: any, vy: any): any {
       case Triggers.LANDING_PORT_CIRCLE:
         new LandingPort(x, y, LandingPort.TYPE_CIRCLE);
         break;
-      case Triggers.BOSS_BLUE_TANKS:        
+      case Triggers.BOSS_BLUE_TANKS:
         new BossBlueTanksManager();
         this.main.requestSong(this.main.bossSong);
         break;
@@ -681,22 +679,22 @@ public suggestDirection__overload0(vx: any, vy: any): any {
         break;
     }
   }
-  
+
   private createPlayer(x: any, y: any): void {
     this.cameraX = x - GameMode.CAMERA_MARGIN_NORTH - 48;
     if (this.cameraX < 0) {
       this.cameraX = 0;
     }
     this.player.x = x;
-    this.player.y = y;    
+    this.player.y = y;
     this.player.makeInvincible();
   }
-  
+
   public isMissileTarget(x: any, y: any): boolean {
     let type = this.getTileType(x, y);
     return type == GameMode.TYPE_SOLID || type == GameMode.TYPE_SHIELD;
   }
-  
+
     public isDriveable(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
     const argCount = arguments.length;
     if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
@@ -707,51 +705,51 @@ public suggestDirection__overload0(vx: any, vy: any): any {
     }
     throw new Error(`No Java method overload matched isDriveable: ${argCount}`);
   }
-public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
-    return this.isDriveable(x1, y1) 
+  public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
+    return this.isDriveable(x1, y1)
         && this.isDriveable(x2, y2)
         && this.isDriveable(x1, y2)
-        && this.isDriveable(x2, y1);       
+        && this.isDriveable(x2, y1);
   }
-  
+
   public isSolidTile(x: any, y: any): boolean {
     return this.typesMap[y][x] == GameMode.TYPE_SOLID;
-  }  
-  
+  }
+
   public isDriveable__overload1(x: any, y: any): boolean {
     let type = this.getTileType(x, y);
     return type == GameMode.TYPE_EMPTY || type == GameMode.TYPE_SWAMP || type == GameMode.TYPE_CONVEYOR;
   }
-  
+
   public isDriveableLand(x: any, y: any): boolean {
     let type = this.getTileType(x, y);
     return type == GameMode.TYPE_EMPTY || type == GameMode.TYPE_CONVEYOR;
-  }  
-  
+  }
+
   public isSolid(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_SOLID;
   }
-  
+
   public isEmpty(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_EMPTY;
-  } 
-  
+  }
+
   public isShield(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_SHIELD;
   }
-  
+
   public isWater(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_WATER;
   }
-  
+
   public isSwamp(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_SWAMP;
-  }  
-  
+  }
+
   public isConveyor(x: any, y: any): boolean {
     return this.getTileType(x, y) == GameMode.TYPE_CONVEYOR;
   }
-  
+
     public isOutsideOfFrame(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
     const argCount = arguments.length;
     if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
@@ -762,16 +760,16 @@ public isDriveable__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
     }
     throw new Error(`No Java method overload matched isOutsideOfFrame: ${argCount}`);
   }
-public isOutsideOfFrame__overload0(x: any, y: any): boolean {
+  public isOutsideOfFrame__overload0(x: any, y: any): boolean {
     return y > this.cameraY + MainConstants.DISPLAY_HEIGHT || x < this.cameraX || y < this.cameraY
         || x > this.cameraX + MainConstants.DISPLAY_WIDTH;
   }
-  
+
   public isOutsideOfFrame__overload1(x1: any, y1: any, x2: any, y2: any): boolean {
     return y1 > this.cameraY + MainConstants.DISPLAY_HEIGHT || x2 < this.cameraX || y2 < this.cameraY
         || x1 > this.cameraX + MainConstants.DISPLAY_WIDTH;
   }
-  
+
   public distanceOutsideOfFrame(x: any, y: any): number {
     if (y < this.cameraY) {
       return this.cameraY - y;
@@ -787,7 +785,7 @@ public isOutsideOfFrame__overload0(x: any, y: any): boolean {
     }
     return 0;
   }
-  
+
   public audioVolume(x: any, y: any): number {
     let d = this.distanceOutsideOfFrame(x, y);
     if (d == 0) {
@@ -798,7 +796,7 @@ public isOutsideOfFrame__overload0(x: any, y: any): boolean {
       return 1 - d / 256;
     }
   }
-  
+
     public destroyAll(arg0?: any): any {
     const argCount = arguments.length;
     if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
@@ -809,13 +807,13 @@ public isOutsideOfFrame__overload0(x: any, y: any): boolean {
     }
     throw new Error(`No Java method overload matched destroyAll: ${argCount}`);
   }
-public destroyAll__overload0(exceptEnemy: any): void {
+  public destroyAll__overload0(exceptEnemy: any): void {
     for(let i = this.enemies.size() - 1; i >= 0; i--) {
       let enemy = this.enemies.get(i);
       if (enemy != exceptEnemy) {
         enemy.explode();
       }
-    }    
+    }
     for(let i = 7; i >= 0; i--) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
@@ -824,25 +822,25 @@ public destroyAll__overload0(exceptEnemy: any): void {
           element.removeFlag = true;
         }
       }
-    }    
-  }  
-  
+    }
+  }
+
   public destroyAll__overload1(): void {
     for(let i = this.enemies.size() - 1; i >= 0; i--) {
       let enemy = this.enemies.get(i);
       enemy.explode();
-    }    
+    }
     for(let i = 7; i >= 0; i--) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
         let element = list.get(j);
-        if (element.enemyBullet) {          
+        if (element.enemyBullet) {
           element.remove();
         }
       }
-    }    
-  }  
-  
+    }
+  }
+
   public destroyAllWithinFrame(): void {
     for(let i = this.enemies.size() - 1; i >= 0; i--) {
       let enemy = this.enemies.get(i);
@@ -850,7 +848,7 @@ public destroyAll__overload0(exceptEnemy: any): void {
           enemy.x + enemy.hitX2, enemy.y + enemy.hitY2)) {
         enemy.explode();
       }
-    }    
+    }
     for(let i = 7; i >= 0; i--) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
@@ -859,11 +857,11 @@ public destroyAll__overload0(exceptEnemy: any): void {
           element.removeFlag = true;
         }
       }
-    }    
+    }
   }
-  
+
   public getTileType(x: any, y: any): number {
-    
+
     let X = (javaInt(x)) >> 5;
     let Y = (javaInt(y)) >> 5;
     if (X < 0) {
@@ -876,10 +874,10 @@ public destroyAll__overload0(exceptEnemy: any): void {
     } else if (Y >= this.mapHeight) {
       Y = this.mapHeight - 1;
     }
-    
+
     return this.typesMap[Y][X];
   }
-  
+
     public add(arg0?: any): any {
     const argCount = arguments.length;
     if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
@@ -890,7 +888,7 @@ public destroyAll__overload0(exceptEnemy: any): void {
     }
     throw new Error(`No Java method overload matched add: ${argCount}`);
   }
-public add__overload0(enemy: any): void {
+  public add__overload0(enemy: any): void {
     this.elements[enemy.layer].add(enemy);
     this.enemies.add(enemy);
     if (enemy.solid) {
@@ -900,7 +898,7 @@ public add__overload0(enemy: any): void {
       this.mines.add(enemy);
     }
   }
-  
+
   public add__overload1(gameElement: any): void {
     if (gameElement.enemy) {
       this.add(gameElement);
@@ -908,22 +906,22 @@ public add__overload0(enemy: any): void {
       this.elements[gameElement.layer].add(gameElement);
     }
   }
-  
+
   public stageCompleted(): void {
     this.stageCompletedFlag = true;
     this.main.stopSong();
   }
 
-  public fadeCompleted(): void { 
+  public fadeCompleted(): void {
     if (this.stageIndex == 5) {
       this.main.requestMode(Modes.SUNSET, this.gc);
     } else {
       CutsceneSequence.requestCutscene(this.gc);
     }
-  }  
+  }
 
-  public update(gc: any): void {  
-    
+  public update(gc: any): void {
+
     if (this.paused) {
       if (this.input.isPause()) {
         this.paused = false;
@@ -931,17 +929,17 @@ public add__overload0(enemy: any): void {
       }
       this.main.resetNextFrameTime();
       return;
-    } else if (this.input.isPause() && !this.stageCompletedFlag && this.playing 
+    } else if (this.input.isPause() && !this.stageCompletedFlag && this.playing
         && this.main.isSongPlaying()) {
       this.paused = true;
       this.main.playSound(this.main.pauseSound);
       gc.setMusicOn(false);
-    }    
-    
+    }
+
     if (++this.waterAlphaIndex == GameMode.WATER_ALPHAS_PERIOD) {
       this.waterAlphaIndex = 0;
     }
-    
+
     if (this.stageIndex == 5) {
       this.conveyorOffset += GameMode.CONVEYOR_SPEED;
       if (this.conveyorOffset >= 16) {
@@ -955,8 +953,8 @@ public add__overload0(enemy: any): void {
       this.tiles[0] = this.main.conveyors[conveyorIndex];
       this.conveyorLastIndex = conveyorIndex;
     }
-    
-    if (this.bossCameraPan && this.cameraY != 0) {     
+
+    if (this.bossCameraPan && this.cameraY != 0) {
       this.cameraY -= GameMode.BOSS_PAN_CAMERA_SPEED;
       if (this.cameraY <= 0) {
         this.maxCameraY = this.cameraY = 0;
@@ -966,7 +964,7 @@ public add__overload0(enemy: any): void {
         return;
       }
     }
-    
+
     if (this.endingCameraPan) {
       if (this.cameraX > 512) {
         this.cameraX -= GameMode.ENDING_PAN_CAMERA_SPEED;
@@ -988,11 +986,11 @@ public add__overload0(enemy: any): void {
         }
       }
     }
-    
+
     this.processTriggers();
-    
+
     let maxBoundY = this.maxCameraY + GameMode.REMOVE_BOUND;
-    
+
     for(let i = 7; i >= 0; i--) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
@@ -1026,39 +1024,39 @@ public add__overload0(enemy: any): void {
         }
       }
     }
-     
+
     if (this.playing) {
       this.player.update();
       this.cameraTrackPlayer();
     }
-    
+
     if (this.stageCompletedFlag && --this.stageCompletedDelay == 0) {
-      this.main.startFade(true, this);    
-    }    
+      this.main.startFade(true, this);
+    }
   }
-  
+
   private drawBackground(): void {
     let xOffset = this.cameraX % 32;
     let yOffset = this.cameraY % 32;
     let xTile = javaInt((this.cameraX / 32));
-    let yTile = javaInt((this.cameraY / 32));  
+    let yTile = javaInt((this.cameraY / 32));
     let xStart = 32 + xTile == this.mapWidth ? 31 : 32;
     let main = this.main;
     let tiles = this.tiles;
     let tileMap = this.tileMap;
-    
+
     if (this.stageIndex > 0) {
-      
+
       if (this.stageIndex == 2) {
         for(let i = 0; i < 4; i++) {
           tiles[i].setAlpha(GameMode.WATER_ALPHAS[this.waterAlphaIndex]);
         }
         // tile sheet 2 (includes water rendering)
-        for(let y = 30; y >= 0; y--) {   
+        for(let y = 30; y >= 0; y--) {
           let Y = (y << 5) - yOffset;
           for(let x = xStart; x >= 0; x--) {
             let tile = tileMap[y + yTile][x + xTile];
-            let X = (x << 5) - xOffset;            
+            let X = (x << 5) - xOffset;
             if (tile < 32) {
               let water = (((y + yTile) & 1) << 1) + ((x + xTile) & 1);
               main.draw__overload0(tiles[water + 4], X, Y);
@@ -1071,7 +1069,7 @@ public add__overload0(enemy: any): void {
         }
       } else {
         // tile sheet [stage index]
-        for(let y = 30; y >= 0; y--) { 
+        for(let y = 30; y >= 0; y--) {
           let Y = (y << 5) - yOffset;
           for(let x = xStart; x >= 0; x--) {
             let tile = tileMap[y + yTile][x + xTile];
@@ -1079,11 +1077,11 @@ public add__overload0(enemy: any): void {
               main.draw__overload0(tiles[tile], (x << 5) - xOffset, Y);
             }
           }
-        }        
+        }
       }
-      
+
       // tile sheet 6
-      for(let y = 30; y >= 0; y--) { 
+      for(let y = 30; y >= 0; y--) {
         let Y = (y << 5) - yOffset;
         for(let x = xStart; x >= 0; x--) {
           let tile = tileMap[y + yTile][x + xTile];
@@ -1092,10 +1090,10 @@ public add__overload0(enemy: any): void {
           }
         }
       }
-    } else {    
-      
+    } else {
+
       // tile sheet [stage index]
-      for(let y = 30; y >= 0; y--) {      
+      for(let y = 30; y >= 0; y--) {
         for(let x = xStart; x >= 0; x--) {
           main.draw__overload0(tiles[tileMap[y + yTile][x + xTile]],
               (x << 5) - xOffset, (y << 5) - yOffset);
@@ -1103,36 +1101,36 @@ public add__overload0(enemy: any): void {
       }
     }
   }
-  
+
   private drawSprites(): void {
-    GL11.glPushMatrix();    
-    GL11.glTranslatef(-this.cameraX, -this.cameraY, 0); 
+    GL11.glPushMatrix();
+    GL11.glTranslatef(-this.cameraX, -this.cameraY, 0);
 
     for(let i = 0; i < 4; i++) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
         let element = list.get(j);
         if (!element.removeFlag) {
-          element.render();      
+          element.render();
         }
       }
     }
-    
+
     this.player.render();
-        
+
     for(let i = 4; i < 8; i++) {
       let list = this.elements[i];
       for(let j = list.size() - 1; j >= 0; j--) {
         let element = list.get(j);
         if (!element.removeFlag) {
-          element.render();      
-        }      
+          element.render();
+        }
       }
-    }   
-    
+    }
+
     GL11.glPopMatrix();
   }
-  
+
   private drawScore(): void {
     this.main.drawString("1P", 64, 804, MainConstants.FONT_WHITE);
     this.main.drawString(this.main.scoreStr, 160, 804, MainConstants.FONT_WHITE);
@@ -1141,14 +1139,14 @@ public add__overload0(enemy: any): void {
   }
 
   public render(gc: any, g: any): void {
-    
+
     this.g = g;
-    
-    this.drawBackground();  
+
+    this.drawBackground();
     this.drawSprites();
-    
+
     if (this.playing) {
-      this.drawScore();    
+      this.drawScore();
     }
   }
 }

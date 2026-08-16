@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/ButtonMapping.java.
-// Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 export class ButtonMapping {
@@ -29,7 +27,7 @@ export class ButtonMapping {
   public static readonly DEFAULT_CONTROLLER_GRENADE: number = 0;
   public static readonly DEFAULT_CONTROLLER_GUN: number = 2;
   public static readonly DEFAULT_CONTROLLER_START: number = 9;
-  
+
   public keyUp: number = ButtonMapping.DEFAULT_KEY_UP;
   public keyDown: number = ButtonMapping.DEFAULT_KEY_DOWN;
   public keyLeft: number = ButtonMapping.DEFAULT_KEY_LEFT;
@@ -37,9 +35,9 @@ export class ButtonMapping {
   public keyGrenade: number = ButtonMapping.DEFAULT_KEY_GRENADE;
   public keyGun: number = ButtonMapping.DEFAULT_KEY_GUN;
   public keyStart: number = ButtonMapping.DEFAULT_KEY_START;
-  
+
   public controller: boolean = true;
-  public controllerIndex: number = 0;  
+  public controllerIndex: number = 0;
   public controllerUp: number = ButtonMapping.DEFAULT_CONTROLLER_UP;
   public controllerDown: number = ButtonMapping.DEFAULT_CONTROLLER_DOWN;
   public controllerLeft: number = ButtonMapping.DEFAULT_CONTROLLER_LEFT;
@@ -47,7 +45,7 @@ export class ButtonMapping {
   public controllerGrenade: number = ButtonMapping.DEFAULT_CONTROLLER_GRENADE;
   public controllerGun: number = ButtonMapping.DEFAULT_CONTROLLER_GUN;
   public controllerStart: number = ButtonMapping.DEFAULT_CONTROLLER_START;
-  
+
   public gunKeyMapped: boolean = true;
 
   public resetToDefaults(): void {

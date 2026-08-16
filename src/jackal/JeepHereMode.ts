@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/JeepHereMode.java.
-// Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -13,15 +11,15 @@ export class JeepHereMode implements IMode, IFadeListener {
   public static readonly STATE_SLIDE: number = 1;
   public static readonly STATE_HERE: number = 2;
   public static readonly STATE_FADE_OUT: number = 3;
-  public static readonly STATE_DONE: number = 4;  
-  
+  public static readonly STATE_DONE: number = 4;
+
   public static readonly COLOR_CYAN: any = new Color(0xFF007C8D);
-  
+
   public static readonly SLIDE_TIME: number = 91;
   public static readonly HERE_DELAY: number = 3 * 91;
-  
+
   public static readonly SLIDE_SPEED: number = (MainConstants.DISPLAY_WIDTH - 224) / javaFloat(JeepHereMode.SLIDE_TIME);
-  
+
   public main: any = null as any;
   public gc: any = null as any;
   public state: number = JeepHereMode.STATE_FADE_IN;
@@ -31,7 +29,7 @@ export class JeepHereMode implements IMode, IFadeListener {
   public init(main: any, gc: any): void {
     this.main = main;
     this.gc = gc;
-    
+
     main.startFade(false, this);
     main.requestSong(main.cutsceneSong);
   }
@@ -43,7 +41,7 @@ export class JeepHereMode implements IMode, IFadeListener {
       this.state = JeepHereMode.STATE_DONE;
       this.main.requestMode(Modes.MAP, this.gc);
     }
-  }  
+  }
 
   public update(gc: any): void {
     switch(this.state) {
@@ -66,20 +64,20 @@ export class JeepHereMode implements IMode, IFadeListener {
   public render(gc: any, g: any): void {
     g.setColor(Color.black);
     g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
-    
+
     if (this.state == JeepHereMode.STATE_DONE) {
       return;
     }
-    
+
     g.setColor(JeepHereMode.COLOR_CYAN);
     g.fillRect(0, 288, MainConstants.DISPLAY_WIDTH, 416);
     g.setColor(Color.white);
     g.fillRect(0, 264, MainConstants.DISPLAY_WIDTH, 16);
     g.setColor(Color.white);
     g.fillRect(0, 712, MainConstants.DISPLAY_WIDTH, 16);
-        
+
     this.main.jeepHere.draw(this.jeepHereX, 320);
-    
+
     if (this.state >= JeepHereMode.STATE_HERE) {
       this.main.draw(this.main.heres[0], 160, 320);
       this.main.draw(this.main.heres[1], 287, 416);

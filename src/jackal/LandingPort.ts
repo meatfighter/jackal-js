@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/LandingPort.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { FriendlyHelicopter } from "./FriendlyHelicopter.js";
@@ -25,7 +23,7 @@ export class LandingPort extends GameElement {
             this.x = xLocal;
                 this.y = yLocal;
                 this.type = typeLocal;
-    
+
                 switch(typeLocal) {
                   case LandingPort.TYPE_LEFT:
                     new FriendlyHelicopter(xLocal + 320, yLocal + 192, false, true);
@@ -45,16 +43,16 @@ export class LandingPort extends GameElement {
   public static readonly TYPE_LEFT: number = 0;
   public static readonly TYPE_RIGHT: number = 1;
   public static readonly TYPE_CIRCLE: number = 2;
-  
+
   public static readonly CIRCLE_LIGHTS: any[] = [
     [ 392, 112 ],
     [ 328, 48 ],
     [ 264, 16 ],
     [ 168, 16 ],
     [ 104, 48 ],
-    [ 40, 112 ], 
-    [ 8, 208 ], 
-    [ 8, 272 ], 
+    [ 40, 112 ],
+    [ 8, 208 ],
+    [ 8, 272 ],
     [ 40, 368 ],
     [ 104, 432 ],
     [ 168, 464 ],
@@ -64,7 +62,7 @@ export class LandingPort extends GameElement {
   ];
 
   private static ALPHAS: any[] = javaArray(182, 0);
-  
+
   static {
     for(let i = 0; i < 182; i++) {
       LandingPort.ALPHAS[i] = 0.5 + (javaFloat(Math.sin(Math.PI * i / 91))) / 2;
@@ -73,8 +71,6 @@ export class LandingPort extends GameElement {
 
   public redIndex: number = 0;
   public blueIndex: number = 91;
-  
-  
 
   public init(): void {
     this.layer = 0;
@@ -105,7 +101,7 @@ export class LandingPort extends GameElement {
             this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
             this.main.draw(this.main.lamps[1], X, Y + 320);
             this.main.draw(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
-          }                       
+          }
         }
         for(let i = 0; i < 3; i++) {
           let X = this.x + 488;
@@ -116,7 +112,7 @@ export class LandingPort extends GameElement {
           } else {
             this.main.draw(this.main.lamps[1], X, Y);
             this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
-          }          
+          }
         }
         break;
       case LandingPort.TYPE_RIGHT:
@@ -133,7 +129,7 @@ export class LandingPort extends GameElement {
             this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
             this.main.draw(this.main.lamps[1], X, Y + 320);
             this.main.draw(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
-          }                       
+          }
         }
         for(let i = 0; i < 3; i++) {
           let X = this.x + 8;
@@ -144,7 +140,7 @@ export class LandingPort extends GameElement {
           } else {
             this.main.draw(this.main.lamps[1], X, Y);
             this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
-          }          
+          }
         }
         break;
       case LandingPort.TYPE_CIRCLE:

@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/EnemyHelicopter.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -36,103 +34,88 @@ export class EnemyHelicopter extends Enemy {
   private __construct_EnemyHelicopter(argCount: number, arg0?: any): void {
     if (argCount === 1 && typeof arg0 === "boolean") {
         let downLocal = arg0;
-            this.x = this.gameMode.player.x 
+            this.x = this.gameMode.player.x
                     + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE);
                 if (this.x - 96 < this.gameMode.cameraX) {
                   this.x = this.gameMode.player.x + EnemyHelicopter.APPEAR_DISTANCE;
                 } else if (this.x + 96 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
                   this.x = this.gameMode.player.x - EnemyHelicopter.APPEAR_DISTANCE;
                 }
-    
+
                 if (downLocal) {
-                  this.angle = 90; 
+                  this.angle = 90;
                   this.y = this.gameMode.cameraY - 60;
                 } else {
                   this.angle = 270;
                   this.y = this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 60;
                 }
-    
-                this.enteringAcceleration = 2 * (this.y - (this.gameMode.cameraY 
-                        + 0.5 * MainConstants.DISPLAY_HEIGHT)) 
-                    / ((javaFloat(EnemyHelicopter.ENTERING_TIME)) * javaFloat(EnemyHelicopter.ENTERING_TIME));    
+
+                this.enteringAcceleration = 2 * (this.y - (this.gameMode.cameraY
+                        + 0.5 * MainConstants.DISPLAY_HEIGHT))
+                    / ((javaFloat(EnemyHelicopter.ENTERING_TIME)) * javaFloat(EnemyHelicopter.ENTERING_TIME));
                 this.vy = -this.enteringAcceleration * javaFloat(EnemyHelicopter.ENTERING_TIME);
-    
+
                 this.down = downLocal;
                 this.player = this.gameMode.player;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly APPEAR_DISTANCE: number = 192;
-  
+
   public static readonly STATE_ENTERING: number = 0;
   public static readonly STATE_PAUSED: number = 1;
   public static readonly STATE_EXITING: number = 2;
-  
-  public static readonly ENTERING_TIME: number = 2 * 91;  
-  public static readonly PAUSED_TIME: number = 45;  
+
+  public static readonly ENTERING_TIME: number = 2 * 91;
+  public static readonly PAUSED_TIME: number = 45;
   public static readonly ROTATION_TIME: number = 91;
-  
-  public static readonly ROTATION_ACCELERATION: number = 90 
-      / ((javaFloat(EnemyHelicopter.ROTATION_TIME)) *javaFloat(EnemyHelicopter.ROTATION_TIME));  
+
+  public static readonly ROTATION_ACCELERATION: number = 90
+      / ((javaFloat(EnemyHelicopter.ROTATION_TIME)) *javaFloat(EnemyHelicopter.ROTATION_TIME));
   public static readonly TO_RADIANS: number = javaFloat((Math.PI / 180));
-  
+
   public static readonly SHOOT_DELAY: number = 68;
-  
+
   public static readonly BULLET_SPEED: number = 1.75;
-  public static readonly BULLET_TRAVEL_TIME: number = 91;  
+  public static readonly BULLET_TRAVEL_TIME: number = 91;
 
-
-
-
-  
   public state: number = EnemyHelicopter.STATE_ENTERING;
-  
-
-
-
-
-
-
-
-
 
   public shootDelay: number = EnemyHelicopter.SHOOT_DELAY;
 
-  
-
   public init(): void {
     super.init();
-    
+
     this.layer = 7;
 
     this.hitX1 = -24;
     this.hitY1 = -71;
     this.hitX2 = 24;
     this.hitY2 = 41;
-    
-    this.points = 2000;    
+
+    this.points = 2000;
   }
 
   public remove(): void {
     this.removeFlag = true;
     this.main.stopSound(this.main.helicopterSound2);
     if (this.playSoundOnRemove) {
-      this.main.playHitExplodeSound(); 
+      this.main.playHitExplodeSound();
     }
   }
-  
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
     return false;
-  }  
+  }
 
   public update(): void {
-    
+
     this.main.playSoundIfNotPlaying(this.main.helicopterSound2);
-    
+
     if (--this.shootDelay < 0) {
       this.shootDelay = EnemyHelicopter.SHOOT_DELAY;
       let dx = this.player.x - this.x;
@@ -140,10 +123,10 @@ export class EnemyHelicopter extends Enemy {
       let imag = EnemyHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
       dx *= imag;
       dy *= imag;
-      
+
       new EnemyBullet(this.x + dx, this.y + dy, dx, dy, EnemyHelicopter.BULLET_TRAVEL_TIME, true);
     }
-    
+
     if (--this.positionDriftTime <= 0) {
       this.positionDriftTime = BossHelicopter.POSITION_DRIFT_TIME - 1;
       let driftAngle = BossHelicopter.PI2 * this.main.random.nextFloat();
@@ -151,10 +134,10 @@ export class EnemyHelicopter extends Enemy {
       this.positionDriftDy = javaFloat(Math.sin(driftAngle));
     }
     this.x += this.positionDriftDx * BossHelicopter.POSITIONS[this.positionDriftTime];
-    this.y += this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime]; 
-    
+    this.y += this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime];
+
     switch(this.state) {
-      case EnemyHelicopter.STATE_ENTERING: 
+      case EnemyHelicopter.STATE_ENTERING:
         let lastVy = this.vy;
         this.vy += this.enteringAcceleration;
         this.y += this.vy;
@@ -203,7 +186,7 @@ export class EnemyHelicopter extends Enemy {
               }
             } else {
               this.va += EnemyHelicopter.ROTATION_ACCELERATION;
-            }                        
+            }
           } else {
             if (this.angle <= this.targetHalfAngle) {
               this.va += EnemyHelicopter.ROTATION_ACCELERATION;
@@ -213,13 +196,13 @@ export class EnemyHelicopter extends Enemy {
             } else {
               this.va -= EnemyHelicopter.ROTATION_ACCELERATION;
             }
-          } 
+          }
         }
         let ang = EnemyHelicopter.TO_RADIANS * this.angle;
         this.v += this.enteringAcceleration;
         this.x += this.v * javaFloat(Math.cos(ang));
         this.y += this.v * javaFloat(Math.sin(ang));
-        if (this.gameMode.isOutsideOfFrame(this.x - 96, this.y - 96, this.x + 96, this.y + 96)) {          
+        if (this.gameMode.isOutsideOfFrame(this.x - 96, this.y - 96, this.x + 96, this.y + 96)) {
           this.playSoundOnRemove = false;
           this.remove();
         }
@@ -227,7 +210,7 @@ export class EnemyHelicopter extends Enemy {
     }
   }
 
-  public checkBounds(maxY: any): void {    
+  public checkBounds(maxY: any): void {
   }
 
   public render(): void {
@@ -235,16 +218,16 @@ export class EnemyHelicopter extends Enemy {
     if (this.rotorAngle == -90) {
       this.rotorAngle = 0;
     }
-    
-    let ang = this.angle - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime] 
+
+    let ang = this.angle - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime]
         * this.positionDriftDx;
-    
+
     this.main.drawRotated(this.main.enemyHelicopters[2], this.x + 32, this.y + 40, -30, -11, ang);
     this.main.drawRotated(this.main.enemyHelicopters[0], this.x, this.y, -74, -28, ang);
-    
+
     for(let i = 0; i < 4; i++) {
-      this.main.drawRotated(this.main.enemyHelicopters[1], this.x, this.y, 0, -18, 
+      this.main.drawRotated(this.main.enemyHelicopters[1], this.x, this.y, 0, -18,
           90 * i + this.rotorAngle);
     }
-  }  
+  }
 }

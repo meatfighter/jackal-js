@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossHelicopter.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -44,7 +42,7 @@ export class BossHelicopter extends Enemy {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly STATE_ENTERING: number = 0;
   public static readonly STATE_HOVERING: number = 1;
   public static readonly STATE_RELEASING: number = 2;
@@ -80,8 +78,8 @@ export class BossHelicopter extends Enemy {
   public static readonly MAX_SOLDIERS: number = 32;
   public static readonly BULLET_DELAY: number = 68;
   public static readonly BULLET_SPEED: number = 1.75;
-  public static readonly BULLET_TRAVEL_TIME: number = 91;  
-  
+  public static readonly BULLET_TRAVEL_TIME: number = 91;
+
   static {
     let XS = javaArray(BossHelicopter.POSITION_DRIFT_TIME + 1, 0);
     let HALF_TIME = javaIntDiv(BossHelicopter.POSITION_DRIFT_TIME, 2);
@@ -89,18 +87,18 @@ export class BossHelicopter extends Enemy {
     let a = BossHelicopter.POSITION_DRIFT_DISTANCE / (T * T);
     for(let i = 0; i <= HALF_TIME; i++) {
       XS[i] = 0.5 * a * i * i;
-      XS[BossHelicopter.POSITION_DRIFT_TIME - i - 1] 
+      XS[BossHelicopter.POSITION_DRIFT_TIME - i - 1]
           = BossHelicopter.POSITION_DRIFT_DISTANCE - XS[i];
-    }    
+    }
     for(let i = 0; i < BossHelicopter.POSITION_DRIFT_TIME; i++) {
-      BossHelicopter.POSITIONS[i] = XS[i + 1] - XS[i]; 
+      BossHelicopter.POSITIONS[i] = XS[i + 1] - XS[i];
       let ang = 2 * Math.PI * i / javaDouble(BossHelicopter.POSITION_DRIFT_TIME) - Math.PI;
       BossHelicopter.DRIFT_ANGLES[i] = BossHelicopter.DRIFT_ANGLE * javaFloat((0.5 + 0.5 * Math.cos(ang)));
     }
     BossHelicopter.POSITIONS[BossHelicopter.POSITION_DRIFT_TIME - 1] = 0;
-    
+
     XS = javaArray(BossHelicopter.ENTERING_TIME + 1, 0);
-    BossHelicopter.ENTER_ACCELERATION = 2 * (BossHelicopter.MAX_Y - BossHelicopter.MIN_Y) / javaFloat((XS.length * XS.length));    
+    BossHelicopter.ENTER_ACCELERATION = 2 * (BossHelicopter.MAX_Y - BossHelicopter.MIN_Y) / javaFloat((XS.length * XS.length));
     for(let i = 0; i < XS.length; i++) {
       let t = XS.length - 1 - i;
       XS[i] = BossHelicopter.MAX_Y - 0.5 * BossHelicopter.ENTER_ACCELERATION * t * t;
@@ -110,7 +108,7 @@ export class BossHelicopter extends Enemy {
     }
     XS = javaArray(BossHelicopter.SHUTTER_TIME + 1, 0);
     for(let i = 0; i < XS.length; i++) {
-      XS[i] = javaFloat((((XS.length - 1 - i) 
+      XS[i] = javaFloat((((XS.length - 1 - i)
           * BossHelicopter.SHUTTER_AMPLITUDE / javaDouble(XS.length))
               * Math.sin(i * 2 * Math.PI * BossHelicopter.SHUTTER_CYCLES / javaDouble(XS.length))));
     }
@@ -119,46 +117,26 @@ export class BossHelicopter extends Enemy {
     }
   }
 
-
-
-
-
-
-
-
-
   public state: number = BossHelicopter.STATE_ENTERING;
-
-
-
-
-
-
-
-
-
-
-  
-  
 
   public init(): void {
     super.init();
-    
-    this.player = this.gameMode.player;    
-    
+
+    this.player = this.gameMode.player;
+
     this.layer = 6;
-    
+
     this.hitX1 = -24;
     this.hitY1 = -40;
     this.hitX2 = 24;
     this.hitY2 = 80;
-    
+
     this.points = 5000;
-  }  
-  
+  }
+
   private randomizeLocation(): void {
     this.y = BossHelicopter.MIN_Y;
-    this.x = this.player.x + this.main.random.nextInt(2 * BossHelicopter.MAX_APPEAR_DISTANCE) 
+    this.x = this.player.x + this.main.random.nextInt(2 * BossHelicopter.MAX_APPEAR_DISTANCE)
         - BossHelicopter.MAX_APPEAR_DISTANCE;
     if (this.x < 672) {
       this.x = 672;
@@ -168,15 +146,15 @@ export class BossHelicopter extends Enemy {
     this.hitX1 = -24;
     this.hitY1 = -40;
     this.hitX2 = 24;
-    this.hitY2 = 80;    
+    this.hitY2 = 80;
   }
 
   public update(): void {
-    
+
     if (this.state != BossHelicopter.STATE_HIDDEN) {
       this.main.playSoundIfNotPlaying(this.main.helicopterSound2);
     }
-    
+
     if (--this.bulletDelay < 0) {
       this.bulletDelay = BossHelicopter.BULLET_DELAY;
       let dx = this.player.x - this.x;
@@ -184,30 +162,30 @@ export class BossHelicopter extends Enemy {
       let imag = BossHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
       dx *= imag;
       dy *= imag;
-      
+
       new EnemyBullet(this.x + dx, this.y + dy, dx, dy, BossHelicopter.BULLET_TRAVEL_TIME, true);
-    }    
-    
+    }
+
     if (this.tinyExplosions > 0) {
       if (--this.tinyExplosionsDelay <= 0) {
-        let ang = BossHelicopter.TO_RADIANS * (this.angle + 90 - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime] 
+        let ang = BossHelicopter.TO_RADIANS * (this.angle + 90 - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime]
             * this.positionDriftDx);
         let dx = javaFloat(Math.cos(ang));
         let dy = javaFloat(Math.sin(ang));
         let d = this.tinyExplosions * 40 - 232;
         let explosion = new Explosion(this.x + d * dx, this.y + d * dy);
-        explosion.setTiny(true);   
+        explosion.setTiny(true);
         explosion.changeLayer(7);
         explosion.setAlpha(0.5);
         this.tinyExplosionsDelay = 4;
         this.tinyExplosions--;
       }
-    } 
+    }
     if (this.shuttering > 0) {
       this.shuttering--;
       this.x += BossHelicopter.SHUTTERS[this.shuttering];
     }
-    
+
     if (--this.positionDriftTime <= 0) {
       this.positionDriftTime = BossHelicopter.POSITION_DRIFT_TIME - 1;
       let driftAngle = BossHelicopter.PI2 * this.main.random.nextFloat();
@@ -216,7 +194,7 @@ export class BossHelicopter extends Enemy {
     }
     this.x += this.positionDriftDx * BossHelicopter.POSITIONS[this.positionDriftTime];
     this.y += this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime];
-    
+
     switch(this.state) {
       case BossHelicopter.STATE_ENTERING:
         this.y += BossHelicopter.ENTERINGS[this.delay];
@@ -238,7 +216,7 @@ export class BossHelicopter extends Enemy {
             this.delay = 0;
             this.vy = 0;
             this.va = 0;
-            this.rotateCW = this.main.random.nextBoolean();  
+            this.rotateCW = this.main.random.nextBoolean();
             this.parachutes = 0;
           } else {
             if (this.soldiers < BossHelicopter.MAX_SOLDIERS) {
@@ -246,7 +224,7 @@ export class BossHelicopter extends Enemy {
               this.soldiers++;
             }
             this.delay = BossHelicopter.RELEASING_TIME_MIN + this.main.random.nextInt(
-                BossHelicopter.RELEASING_TIME_MAX - BossHelicopter.RELEASING_TIME_MIN);            
+                BossHelicopter.RELEASING_TIME_MAX - BossHelicopter.RELEASING_TIME_MIN);
           }
         }
         break;
@@ -257,7 +235,7 @@ export class BossHelicopter extends Enemy {
           this.delay = 0;
           this.state = BossHelicopter.STATE_HIDDEN;
           this.main.stopSound(this.main.helicopterSound2);
-        }     
+        }
         if (this.rotateCW) {
           if (this.angle > 68 && this.angle < 112) {
             this.hitX1 = -24;
@@ -275,9 +253,9 @@ export class BossHelicopter extends Enemy {
             this.angle += this.va;
           } else if (this.angle < 180) {
             this.va -= BossHelicopter.ROTATE_ACCELERATION;
-            this.angle += this.va;          
+            this.angle += this.va;
           } else {
-            this.angle = 180;            
+            this.angle = 180;
           }
         } else {
           if (this.angle <-68&&this.angle> -112) {
@@ -296,7 +274,7 @@ export class BossHelicopter extends Enemy {
             this.angle -= this.va;
           } else if (this.angle > -180) {
             this.va -= BossHelicopter.ROTATE_ACCELERATION;
-            this.angle -= this.va;          
+            this.angle -= this.va;
           } else {
             this.angle = -180;
             this.hitX1 = -24;
@@ -316,33 +294,33 @@ export class BossHelicopter extends Enemy {
         break;
     }
   }
-  
+
   // returns true if player bumped into the enemy
-  public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {  
+  public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
     return false;
-  }  
-  
+  }
+
   // returns true if attack successful
 
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
     if (this.tinyExplosions == 0 && attackSource == AttackSource.PLAYER_WEAPON
-        && this.hit(x1, y1, x2, y2)) { 
+        && this.hit(x1, y1, x2, y2)) {
       this.main.playHitExplodeSound();
       if (++this.hits == BossHelicopter.HITS) {
         this.main.stopSound(this.main.helicopterSound2);
         this.remove();
-        let ang = BossHelicopter.TO_RADIANS * (this.angle + 90 - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime] 
+        let ang = BossHelicopter.TO_RADIANS * (this.angle + 90 - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime]
             * this.positionDriftDx);
         let dx = javaFloat(Math.cos(ang));
         let dy = javaFloat(Math.sin(ang));
-        for(let i = 0; i < 4; i++) {                  
+        for(let i = 0; i < 4; i++) {
           let d = i * 80 - 232;
           new Explosion(this.x + d * dx, this.y + d * dy).setDelayed(3 * (3 - i));
         }
         this.main.addPoints(this.points);
         this.gameMode.destroyAll();
         this.gameMode.stageCompleted();
-      } 
+      }
       this.tinyExplosions = 8;
       this.tinyExplosionsDelay = 0;
       this.shuttering = BossHelicopter.SHUTTER_TIME;
@@ -351,22 +329,22 @@ export class BossHelicopter extends Enemy {
       return false;
     }
   }
-  
+
   public soldierKilled(): void {
     this.soldiers--;
   }
-  
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
     return false;
-  }  
+  }
 
   public checkBounds(maxY: any): void {
-  }  
+  }
 
   public render(): void {
-    
+
     this.rotorAngle -= 30;
     if (this.rotorAngle == -90) {
       this.rotorAngle = 0;
@@ -375,16 +353,16 @@ export class BossHelicopter extends Enemy {
     if (this.tailIndexCounter) {
       this.tailIndex = this.tailIndex == 3 ? 4 : 3;
     }
-    
+
     let ang = this.angle - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime] * this.positionDriftDx;
-    
+
     this.main.drawRotated(this.main.bossHelicopters[5], this.x + 64, this.y + 64, -18, -65, ang);
     this.main.drawRotated(this.main.bossHelicopters[0], this.x, this.y, -64, -232, ang);
     this.main.drawRotated(this.main.bossHelicopters[1], this.x, this.y, 0, -232, ang);
     this.main.drawRotated(this.main.bossHelicopters[this.tailIndex], this.x, this.y, -16, -224, ang);
     for(let i = 0; i < 4; i++) {
-      this.main.drawRotated(this.main.bossHelicopters[2], this.x, this.y, 0, -32, 
+      this.main.drawRotated(this.main.bossHelicopters[2], this.x, this.y, 0, -32,
           90 * i + this.rotorAngle);
     }
-  }  
+  }
 }

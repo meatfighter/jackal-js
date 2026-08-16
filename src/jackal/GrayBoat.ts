@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/GrayBoat.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -33,7 +31,7 @@ export class GrayBoat extends Enemy {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
   public static readonly UPDATE_GUN_FRAMES: number = 4;
   public static readonly BULLET_DELAY: number = 91;
@@ -42,29 +40,22 @@ export class GrayBoat extends Enemy {
   public static readonly MOVEMENT_TIME: number = 227;
   public static readonly TO_DEGREES: number = 180 / javaFloat(Math.PI);
 
-
-
-
-  public movementDelay: number = GrayBoat.MOVEMENT_TIME; 
-
-
-  
-  
+  public movementDelay: number = GrayBoat.MOVEMENT_TIME;
 
   public init(): void {
     super.init();
-    
-    this.player = this.gameMode.player;    
-    
+
+    this.player = this.gameMode.player;
+
     this.layer = 3;
-    
+
     this.bulletHits = 8;
-    
+
     this.hitX1 = 8;
     this.hitY1 = 8;
     this.hitX2 = 56;
-    this.hitY2 = 184;    
-    
+    this.hitY2 = 184;
+
     this.points = 800;
   }
 
@@ -75,7 +66,7 @@ export class GrayBoat extends Enemy {
     }
     if (--this.spriteIndexCounter < 0) {
       this.spriteIndexCounter = GrayBoat.SPRITE_TOGGLE_FRAMES;
-      this.spriteIndex ^= 1;      
+      this.spriteIndex ^= 1;
     }
     if (--this.updateGun < 0) {
       this.updateGun = GrayBoat.UPDATE_GUN_FRAMES;
@@ -91,16 +82,16 @@ export class GrayBoat extends Enemy {
       let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
       dx *= imag;
       dy *= imag;
-      
-      new EnemyBullet(X + 34 * dx, Y + 34 * dy, 
+
+      new EnemyBullet(X + 34 * dx, Y + 34 * dy,
           dx, dy, GrayBoat.BULLET_TRAVEL_TIME, true);
     }
   }
-  
+
   // returns true if attack successful
 
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
-    if (attackSource < AttackSource.PLAYER_EXPLOSION 
+    if (attackSource < AttackSource.PLAYER_EXPLOSION
         && this.hit(x1, y1, x2, y2)) {
       this.remove();
       new Explosion(this.x + 32, this.y + 96);
@@ -110,24 +101,24 @@ export class GrayBoat extends Enemy {
       return false;
     }
   }
-  
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
-    if (this.hit(x1, y1, x2, y2)) {       
+    if (this.hit(x1, y1, x2, y2)) {
       if (--this.bulletHits <= 0) {
         this.remove();
         new Explosion(this.x + 32, this.y + 96);
         this.main.addPoints(this.points);
-      }      
+      }
       return true;
     } else {
       return false;
     }
-  }  
+  }
 
   public render(): void {
     this.main.draw(this.main.grayBoats[this.spriteIndex], this.x, this.y);
     this.main.drawRotated(this.main.grayBoats[2], this.x + 32, this.y + 131, -14, -13, this.gunAngle);
-  }  
+  }
 }

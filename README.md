@@ -20,4 +20,4 @@ npm.cmd run build:desktop
 npm.cmd run run:desktop
 ```
 
-`desktop/src` is copied from the original NetBeans SlickJackal project for preservation. The Maven/fallback desktop build is packaging support and should not be used as a source of new TypeScript gameplay behavior.
+`desktop/src` preserves the Java desktop source and resources. The Maven/fallback desktop build is packaging support and should not be used as a source of new TypeScript gameplay behavior.

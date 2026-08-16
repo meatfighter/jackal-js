@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/Song.java.
-// Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 export class Song {  public constructor(arg0?: any, arg1?: any, arg2?: any) {
@@ -53,7 +51,7 @@ export class Song {  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly STREAMING: boolean = false;
 
   public intro: any = null as any;
@@ -61,18 +59,6 @@ export class Song {  public constructor(arg0?: any, arg1?: any, arg2?: any) {
   public loop: any = null as any;
   public playing: boolean = false;
   public playedIntro2: boolean = false;
-
-  
-  
-  
-  
-  
-  
-  
-  
-    
-  
-  
 
   public stop(): void {
     if (this.intro != null && this.intro.playing()) {
@@ -84,11 +70,11 @@ export class Song {  public constructor(arg0?: any, arg1?: any, arg2?: any) {
     if (this.loop != null && this.loop.playing()) {
       this.loop.stop();
     }
-    this.playing = false;  
+    this.playing = false;
     this.playedIntro2 = false;
   }
 
-  public play(): void {    
+  public play(): void {
     if (this.playing) {
       return;
     }
@@ -114,10 +100,10 @@ export class Song {  public constructor(arg0?: any, arg1?: any, arg2?: any) {
           this.loop.loop();
         }
       }
-      if (this.loop == null && !this.intro.playing() 
+      if (this.loop == null && !this.intro.playing()
           && (this.intro2 == null || !this.intro2.playing())) {
-        this.stop();        
-      }      
+        this.stop();
+      }
     }
   }
 }

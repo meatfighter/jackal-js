@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/OptionsMode.java.
-// Original Java imports: org.newdawn.slick.*.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -15,10 +13,10 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
   public static readonly STATE_MENU: number = 1;
   public static readonly STATE_FADE_OUT: number = 2;
   public static readonly STATE_DONE: number = 3;
-  
+
   public main: any = null as any;
   public gc: any = null as any;
-  public input: any = null as any;  
+  public input: any = null as any;
   public state: number = OptionsMode.STATE_FADE_IN;
   public menu: any = null as any;
   public optionSelectedFlag: boolean = false;
@@ -28,10 +26,10 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
     this.main = main;
     this.gc = gc;
     this.input = main.input;
-    
-    this.menu = new Menu(448, 512, main, 0, 
+
+    this.menu = new Menu(448, 512, main, 0,
         Menu.ICON_TANK, this, "input", "difficulty", "done");
-    
+
     main.startFade(false, this);
   }
 
@@ -52,7 +50,7 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
           break;
       }
     }
-  }  
+  }
 
   public selectionChanged(selectedIndex: any): void {
   }
@@ -61,11 +59,11 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
     this.optionSelectedFlag = true;
     this.selectedIndex = selectedIndex;
     this.main.playSound(this.main.missileSound);
-  }  
+  }
 
   public update(gc: any): void {
     this.menu.update();
-    
+
     if (this.state == OptionsMode.STATE_MENU && this.optionSelectedFlag) {
       this.state = OptionsMode.STATE_FADE_OUT;
       this.main.startFade(true, this);
@@ -73,14 +71,14 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
   }
 
   public render(gc: any, g: any): void {
-    
+
     g.setColor(Color.black);
     g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
-    
+
     if (this.state == OptionsMode.STATE_DONE) {
       return;
     }
-    
+
     this.main.drawString("options", 400, 384, MainConstants.FONT_GRAY);
     this.menu.render();
   }

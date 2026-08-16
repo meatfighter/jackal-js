@@ -1,10 +1,11 @@
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const javaRoot = "C:/NetBeansProjects/SlickJackal/src/jackal";
+const sourceRoot = process.env.SLICKJACKAL_JAVA_SOURCE_ROOT ?? "desktop/src";
+const javaRoot = path.join(sourceRoot, "jackal");
 const outRoot = "src/jackal";
 const appManifestPath = "src/app/ResourceManifest.ts";
-const assetRoot = "C:/NetBeansProjects/SlickJackal/src";
+const assetRoot = sourceRoot;
 
 const slickImports = [
     "AppGameContainer",
@@ -187,21 +188,37 @@ await writeFile(path.join(outRoot, "index.ts"), `${indexLines.join("\n")}\n`, "u
 await writeFile(appManifestPath, buildManifestSource(await collectAssets(assetRoot)), "utf8");
 
 function convertJavaFile(source, className) {
-    const importMatches = Array.from(source.matchAll(/^\s*import\s+([^;]+);/gm), (match) => match[1]);
     const javaBody = stripPackageAndImports(source);
     const converted = convertTopLevel(javaBody, className);
     const dependencyImports = buildDependencyImports(converted, className);
     const header = [
         "// @ts-nocheck",
-        `// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/${className}.java.`,
-        `// Original Java imports: ${importMatches.length ? importMatches.join(", ") : "none"}.`,
         `import { ${slickImports.join(", ")} } from "slick2d-ts";`,
         `import { ${runtimeImports.join(", ")} } from "../java/JavaRuntime.js";`,
         ...dependencyImports,
         ""
     ].join("\n");
 
-    return `${header}${converted.trim()}\n`;
+    return normalizeBlankLines(`${header}${converted.trim()}\n`);
+}
+
+function normalizeBlankLines(source) {
+    const lines = source.replace(/\r\n/g, "\n").split("\n");
+    const normalized = [];
+    let previousBlank = false;
+    for (const line of lines) {
+        const trimmedLine = line.trimEnd();
+        const blank = trimmedLine.length === 0;
+        if (blank) {
+            if (!previousBlank) {
+                normalized.push("");
+            }
+        } else {
+            normalized.push(trimmedLine);
+        }
+        previousBlank = blank;
+    }
+    return normalized.join("\n");
 }
 
 function stripPackageAndImports(source) {

@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/GreenBoat.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
@@ -29,34 +27,29 @@ export class GreenBoat extends Enemy {
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
   public static readonly BULLET_DELAY: number = 91;
   public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
   public static readonly SPEED: number = 0.75;
   public static readonly MOVEMENT_TIME: number = 181;
 
-
-
-
   public movementDelay: number = GreenBoat.MOVEMENT_TIME;
-  
-  
 
   public init(): void {
     super.init();
-    
-    this.player = this.gameMode.player;    
-    
+
+    this.player = this.gameMode.player;
+
     this.layer = 3;
-    
+
     this.bulletHits = 6;
-    
+
     this.hitX1 = -40;
     this.hitY1 = -40;
     this.hitX2 = 40;
-    this.hitY2 = 40;    
-    
+    this.hitY2 = 40;
+
     this.points = 800;
   }
 
@@ -77,7 +70,7 @@ export class GreenBoat extends Enemy {
       let dx = this.player.x - X;
       let dy = this.player.y - Y;
       let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
-      
+
       new EnemyBullet(X, Y, dx * imag, dy * imag, GreenBoat.BULLET_TRAVEL_TIME, true);
     }
   }

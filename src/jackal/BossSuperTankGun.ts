@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossSuperTankGun.java.
-// Original Java imports: org.newdawn.slick.Image.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
@@ -43,17 +41,17 @@ export class BossSuperTankGun extends Enemy {
   public static readonly BULLET_DISTANCE: number = 480;
   public static readonly GARAGE_BULLET_DISTANCE: number = 464;
   public static readonly YELLOW_BULLET_SPEED: number = 1.75 * EnemyBullet.SPEED;
-  public static readonly BULLET_TRAVEL_TIME: number = javaInt((BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED));  
+  public static readonly BULLET_TRAVEL_TIME: number = javaInt((BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED));
   public static readonly X_OFFSET: number = 244;
   public static readonly Y_OFFSET: number = 88;
-  
+
   static {
     for(let i = 1; i <= BossSuperTankGun.RECOIL_DURATION; i++) {
-      BossSuperTankGun.recoils[i - 1] = BossSuperTankGun.RECOIL_AMPLITUDE 
-          * javaFloat(Math.sin(i * Math.PI / (BossSuperTankGun.RECOIL_DURATION + 1)));      
-    }       
+      BossSuperTankGun.recoils[i - 1] = BossSuperTankGun.RECOIL_AMPLITUDE
+          * javaFloat(Math.sin(i * Math.PI / (BossSuperTankGun.RECOIL_DURATION + 1)));
+    }
   }
-  
+
   public state: any = RotatingGunState.PAUSED_BETWEEN_FIRING;
   public angle: number = 90;
 
@@ -61,21 +59,17 @@ export class BossSuperTankGun extends Enemy {
 
   public groupSize: number = BossSuperTankGun.GROUP_SIZE;
 
-
-  
-  
-
   public init(): void {
     super.init();
-    
+
     this.layer = 3;
   }
 
-  public update(): void {  
-    
+  public update(): void {
+
     this.x = this.bossSuperTank.x + BossSuperTankGun.X_OFFSET;
     this.y = this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET;
-    
+
     switch(this.state) {
       case RotatingGunState.FIRING:
         if (--this.recoilIndex < 0) {
@@ -90,7 +84,7 @@ export class BossSuperTankGun extends Enemy {
             this.pause = BossSuperTankGun.PAUSE_AFTER_RECOIL;
           }
         } else {
-          this.recoil = BossSuperTankGun.recoils[this.recoilIndex]; 
+          this.recoil = BossSuperTankGun.recoils[this.recoilIndex];
         }
         break;
       case RotatingGunState.PAUSED_BETWEEN_FIRING:
@@ -103,10 +97,10 @@ export class BossSuperTankGun extends Enemy {
       case RotatingGunState.TRACKING: {
         if (this.pause > 0) {
           this.pause--;
-        } 
+        }
         let player = this.gameMode.player;
         let targetAngle = javaFloat(((
-            Math.atan2(player.y - (this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET), 
+            Math.atan2(player.y - (this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET),
                 player.x - (this.bossSuperTank.x + BossSuperTankGun.X_OFFSET))) * 180 / Math.PI));
         let deltaAngle = (targetAngle - this.angle + 180) % 360;
         if (deltaAngle < 0) {
@@ -129,12 +123,12 @@ export class BossSuperTankGun extends Enemy {
         break;
       }
     }
-    
+
     if (this.bossSuperTank.removeFlag) {
       this.remove();
     }
   }
-  
+
   private fire(): void {
     this.state = RotatingGunState.FIRING;
     this.recoilIndex = BossSuperTankGun.RECOIL_DURATION - 1;
@@ -142,29 +136,29 @@ export class BossSuperTankGun extends Enemy {
     let cos = javaFloat(Math.cos(ang));
     let sin = javaFloat(Math.sin(ang));
     new EnemyBullet(
-        this.bossSuperTank.x + BossSuperTankGun.X_OFFSET + 93 * cos, 
-        this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET + 93 * sin, 
-        BossSuperTankGun.YELLOW_BULLET_SPEED * cos + this.bossSuperTank.vx, 
-        BossSuperTankGun.YELLOW_BULLET_SPEED * sin, 
+        this.bossSuperTank.x + BossSuperTankGun.X_OFFSET + 93 * cos,
+        this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET + 93 * sin,
+        BossSuperTankGun.YELLOW_BULLET_SPEED * cos + this.bossSuperTank.vx,
+        BossSuperTankGun.YELLOW_BULLET_SPEED * sin,
         BossSuperTankGun.BULLET_TRAVEL_TIME, false, false);
   }
-  
+
   // returns true if attack successful
 
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
     return false;
   }
-  
+
   // returns true if player bullet was absorbed by enemy
 
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
     return false;
-  }  
+  }
 
-  public render(): void {  
-    this.main.drawRotated(this.main.superGuns[this.bossSuperTank.colorIndex == 0 ? 0 : 1], 
-        this.bossSuperTank.x + BossSuperTankGun.X_OFFSET, this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET, 
+  public render(): void {
+    this.main.drawRotated(this.main.superGuns[this.bossSuperTank.colorIndex == 0 ? 0 : 1],
+        this.bossSuperTank.x + BossSuperTankGun.X_OFFSET, this.bossSuperTank.y + BossSuperTankGun.Y_OFFSET,
         -this.recoil - 34, -32, this.angle);
   }
-  
+
 }

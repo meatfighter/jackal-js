@@ -1,6 +1,4 @@
 // @ts-nocheck
-// Converted mechanically from C:/NetBeansProjects/SlickJackal/src/jackal/BossStatue.java.
-// Original Java imports: none.
 import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
 import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
@@ -32,43 +30,37 @@ export class BossStatue extends Enemy {
             this.x = xLocal;
                 this.y = yLocal;
                 this.bossStatuesManager = bossStatuesManagerLocal;
-    
+
                 let X = (javaInt(xLocal)) >> 5;
-                let Y = (javaInt(yLocal)) >> 5; 
-    
-                this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];  
-    
+                let Y = (javaInt(yLocal)) >> 5;
+
+                this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
+
                 this.delay += startDelay;
         return;
     }
     throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
   }
-  
+
   public static readonly PAUSE_TIME: number = 4 * 91;
   public static readonly EYES_FLASHING_TIME: number = 45;
   public static readonly MOUTH_OPEN_TIME: number = 45;
   public static readonly MISSILE_TIME: number = 35;
-  
+
   public static readonly STATE_PAUSED: number = 0;
   public static readonly STATE_EYES_FLASHING: number = 1;
   public static readonly STATE_MOUTH_OPEN: number = 2;
-  
-  public static readonly HITS: number = 3;
 
+  public static readonly HITS: number = 3;
 
   public state: number = BossStatue.STATE_PAUSED;
   public delay: number = 91;
 
-
-
-  
-  
-
   public init(): void {
     super.init();
-    
+
     this.layer = 3;
-    
+
     this.hitX1 = 8;
     this.hitY1 = 0;
     this.hitX2 = 88;
@@ -78,16 +70,16 @@ export class BossStatue extends Enemy {
   // returns true if attack successful
   public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
     if (attackSource == AttackSource.PLAYER_WEAPON
-        && this.hit(x1, y1, x2, y2)) {    
+        && this.hit(x1, y1, x2, y2)) {
       if (++this.hits == BossStatue.HITS) {
         this.remove();
-        this.bossStatuesManager.statueDestroyed();        
+        this.bossStatuesManager.statueDestroyed();
         new Explosion(this.x + 48, this.y + 64);
         this.gameMode.triggerGroup(this.groupIndex);
         this.main.addPoints(800);
       } else {
-        this.main.playHitExplodeSound(); 
-        let X = 0.5 * (x1 + x2);  
+        this.main.playHitExplodeSound();
+        let X = 0.5 * (x1 + x2);
         if (X < this.x + 32) {
           X = this.x + 32;
         } else if (X > this.x + 64) {
@@ -95,8 +87,8 @@ export class BossStatue extends Enemy {
         }
         for(let i = 0; i < 5; i++) {
           new Explosion(
-              X + this.main.random.nextInt(8) - 4, 
-              this.y + 156 + this.main.random.nextInt(8) - (i << 5), 
+              X + this.main.random.nextInt(8) - 4,
+              this.y + 156 + this.main.random.nextInt(8) - (i << 5),
               true, (i + 1) * 4, 0.5);
         }
       }
@@ -104,16 +96,16 @@ export class BossStatue extends Enemy {
     } else {
       return false;
     }
-  }  
-  
+  }
+
   // returns true if player bullet was absorbed by enemy
   public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
-    if (this.hit(x1, y1, x2, y2)) {           
+    if (this.hit(x1, y1, x2, y2)) {
       return true;
     } else {
       return false;
     }
-  }  
+  }
 
   public update(): void {
     switch(this.state) {
@@ -127,7 +119,7 @@ export class BossStatue extends Enemy {
         if (--this.delay == 0) {
           this.state = BossStatue.STATE_MOUTH_OPEN;
           this.delay = BossStatue.MOUTH_OPEN_TIME;
-        }        
+        }
         break;
       case BossStatue.STATE_MOUTH_OPEN:
         if (this.delay == BossStatue.MISSILE_TIME) {
@@ -136,17 +128,17 @@ export class BossStatue extends Enemy {
         if (--this.delay == 0) {
           this.state = BossStatue.STATE_PAUSED;
           this.delay = BossStatue.PAUSE_TIME;
-        }        
+        }
         break;
     }
   }
 
   public render(): void {
-    
+
     switch(this.state) {
-      case BossStatue.STATE_EYES_FLASHING:        
+      case BossStatue.STATE_EYES_FLASHING:
         if (this.eyesVisible < 2) {
-          this.main.draw(this.main.statueWhiteEyes, this.x + 32, this.y + 64); 
+          this.main.draw(this.main.statueWhiteEyes, this.x + 32, this.y + 64);
         }
         if (++this.eyesVisible == 4) {
           this.eyesVisible = 0;
@@ -156,5 +148,5 @@ export class BossStatue extends Enemy {
         this.main.draw(this.main.statueWhiteMouth, this.x + 32, this.y + 96);
         break;
     }
-  }  
+  }
 }
