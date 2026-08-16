@@ -48,7 +48,8 @@ import {
     type JeepYeahModeExtraSnapshot,
     type MenuSnapshot,
     type MusicSnapshot,
-    type RandomSnapshot
+    type RandomSnapshot,
+    type SongSnapshot
 } from "./GameStateSnapshot.js";
 import { GAME_ELEMENT_TYPES, type GameElementConstructor } from "./GameElementTypeRegistry.js";
 
@@ -68,6 +69,8 @@ type RestoreContext = {
     entitiesById: Map<number, object>;
     audioState: AudioStateSnapshot;
 };
+
+type UnknownRecord = Record<string, unknown>;
 
 const MAIN_FIELD_NAMES = [
     "nextFrameTime",
@@ -275,6 +278,13 @@ const SONG_IDS = [
     "titleSong"
 ];
 
+const STANDALONE_MODE_IDS = ["INTRO", "HERE", "YEAH", "WE_MADE_IT", "SUNSET", "HARD_ENDING", "MAP", "CONTINUE", "DIFFICULTY", "OPTIONS", "INPUT", "INTRO_MAP"];
+const MENU_EXTRA_MODE_IDS = ["INTRO", "CONTINUE", "DIFFICULTY", "OPTIONS"];
+const JEEP_YEAH_EXTRA_MODE_IDS = ["YEAH", "WE_MADE_IT"];
+const MUSIC_ID_SUFFIXES = ["intro", "intro2", "loop"];
+const GAME_MODE_LAYER_COUNT = 8;
+const STAGE_COUNT = 6;
+
 export class JackalGameStateSerializer {
     public createSnapshot(main: Main, appVersion: string): JackalGameStateSnapshot {
         const activeMode = main.mode as object | null;
@@ -301,19 +311,293 @@ export class JackalGameStateSerializer {
         this.restoreStandaloneModeSnapshot(main, gc, snapshot);
     }
 
-    public isSupportedSnapshot(snapshot: JackalGameStateSnapshot): boolean {
-        if (
-            snapshot.version !== GAME_STATE_VERSION ||
-            snapshot.random === undefined ||
-            snapshot.mainFields === undefined ||
-            snapshot.audioState === undefined
-        ) {
+    public isSupportedSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
+        if (!this.isRecord(snapshot) || snapshot.version !== GAME_STATE_VERSION || (snapshot.kind !== "game" && snapshot.kind !== "mode")) {
+            return false;
+        }
+        if (!this.isBaseSnapshot(snapshot, snapshot.kind)) {
             return false;
         }
         if (snapshot.kind === "game") {
-            return snapshot.gameMode !== undefined && Array.isArray(snapshot.gameMode.entities) && Array.isArray(snapshot.gameMode.elements);
+            return this.isGameStateSnapshot(snapshot);
         }
-        return snapshot.kind === "mode" && typeof snapshot.modeId === "string" && snapshot.modeFields !== undefined;
+        return this.isStandaloneStateSnapshot(snapshot);
+    }
+
+    private isBaseSnapshot(snapshot: UnknownRecord, kind: "game" | "mode"): boolean {
+        return (
+            typeof snapshot.appVersion === "string" &&
+            typeof snapshot.savedAt === "string" &&
+            this.isEncodedRecord(snapshot.mainFields, new Set<number>()) &&
+            this.hasEncodedFields(snapshot.mainFields, MAIN_FIELD_NAMES, new Set<number>()) &&
+            this.isRestorableMainFields(snapshot.mainFields as EncodedRecord, kind) &&
+            (snapshot.konamiCodeFields === null || this.isEncodedRecord(snapshot.konamiCodeFields, new Set<number>())) &&
+            this.isRandomSnapshot(snapshot.random) &&
+            this.isNonNegativeInteger(snapshot.friendlySoldierCount) &&
+            this.isNullableSongId(snapshot.currentSongId) &&
+            this.isNullableSongId(snapshot.requestedSongId) &&
+            this.isSongSnapshot(snapshot.currentSongState) &&
+            this.isAudioStateSnapshot(snapshot.audioState)
+        );
+    }
+
+    private isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameModeStateSnapshot {
+        if (
+            !this.isRecord(snapshot.gameMode) ||
+            !this.isEncodedRecord(snapshot.gameMode.fields) ||
+            !this.hasEncodedFields(snapshot.gameMode.fields, GAME_MODE_FIELD_NAMES)
+        ) {
+            return false;
+        }
+        if (!Array.isArray(snapshot.gameMode.entities) || !Array.isArray(snapshot.gameMode.elements) || !this.isEncodedRecord(snapshot.playerFields)) {
+            return false;
+        }
+
+        const entityIds = new Set<number>();
+        for (const entitySnapshot of snapshot.gameMode.entities) {
+            if (
+                !this.isRecord(entitySnapshot) ||
+                !this.isNonNegativeInteger(entitySnapshot.id) ||
+                entityIds.has(entitySnapshot.id) ||
+                !this.isGameElementType(entitySnapshot.type)
+            ) {
+                return false;
+            }
+            entityIds.add(entitySnapshot.id);
+        }
+
+        if (!this.isEncodedRecord(snapshot.playerFields, entityIds) || !this.isEncodedRecord(snapshot.gameMode.fields, entityIds)) {
+            return false;
+        }
+
+        for (const entitySnapshot of snapshot.gameMode.entities) {
+            if (!this.isRecord(entitySnapshot) || !this.isEncodedRecord(entitySnapshot.fields, entityIds)) {
+                return false;
+            }
+        }
+
+        return this.isElementLayers(snapshot.gameMode.elements, entityIds);
+    }
+
+    private isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalStandaloneModeStateSnapshot {
+        if (!this.isStandaloneModeId(snapshot.modeId) || !this.isEncodedRecord(snapshot.modeFields, new Set<number>())) {
+            return false;
+        }
+        if (!this.hasEncodedFields(snapshot.modeFields, this.modeFieldsForModeId(snapshot.modeId), new Set<number>())) {
+            return false;
+        }
+        return this.isModeExtraSnapshot(snapshot.modeId, snapshot.modeExtra);
+    }
+
+    private isRestorableMainFields(fields: EncodedRecord, _kind: "game" | "mode"): boolean {
+        return (
+            this.isNonNegativeInteger(fields.loadIndex) &&
+            fields.loadIndex >= 42 &&
+            this.isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) &&
+            typeof fields.hardMode === "boolean"
+        );
+    }
+
+    private isElementLayers(value: unknown, entityIds: Set<number>): boolean {
+        if (!Array.isArray(value) || value.length !== GAME_MODE_LAYER_COUNT) {
+            return false;
+        }
+        const layerRefs = new Set<number>();
+        for (const layer of value) {
+            if (!Array.isArray(layer)) {
+                return false;
+            }
+            for (const id of layer) {
+                if (!this.isNonNegativeInteger(id) || !entityIds.has(id) || layerRefs.has(id)) {
+                    return false;
+                }
+                layerRefs.add(id);
+            }
+        }
+        return true;
+    }
+
+    private isModeExtraSnapshot(modeId: string, extra: unknown): boolean {
+        if (MENU_EXTRA_MODE_IDS.includes(modeId)) {
+            return this.isRecord(extra) && this.isMenuSnapshot(extra.menu);
+        }
+        if (modeId === "INPUT") {
+            return this.isRecord(extra) && this.isInputModeExtraSnapshot(extra.input);
+        }
+        if (JEEP_YEAH_EXTRA_MODE_IDS.includes(modeId)) {
+            return this.isRecord(extra) && this.isJeepYeahModeExtraSnapshot(extra.jeepYeah);
+        }
+        return typeof extra === "undefined";
+    }
+
+    private isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
+        if (value === null) {
+            return true;
+        }
+        return this.isRecord(value) && this.hasEncodedFields(value.fields, MENU_FIELD_NAMES, new Set<number>());
+    }
+
+    private isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot | null {
+        if (value === null) {
+            return true;
+        }
+        return this.isRecord(value) && this.hasEncodedFields(value.fields, BUTTON_MAPPING_FIELD_NAMES, new Set<number>());
+    }
+
+    private isInputModeExtraSnapshot(value: unknown): value is InputModeExtraSnapshot {
+        return (
+            this.isRecord(value) &&
+            this.isMenuSnapshot(value.menu) &&
+            this.isButtonMappingSnapshot(value.draftButtonMapping) &&
+            this.isIntegerArray(value.assignedKeys) &&
+            this.isIntegerArray(value.assignedControllerButtons)
+        );
+    }
+
+    private isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtraSnapshot {
+        if (!this.isRecord(value) || !Array.isArray(value.bullets)) {
+            return false;
+        }
+        if (
+            !this.isNullableEncodedRecord(value.explosion) ||
+            !this.isNullableEncodedRecord(value.leftPlane) ||
+            !this.isNullableEncodedRecord(value.rightPlane) ||
+            !this.isNullableEncodedRecord(value.fireLeft) ||
+            !this.isNullableEncodedRecord(value.fireRight)
+        ) {
+            return false;
+        }
+        return value.bullets.every((bullet) => this.isEncodedRecord(bullet, new Set<number>()));
+    }
+
+    private isNullableEncodedRecord(value: unknown): value is EncodedRecord | null {
+        return value === null || this.isEncodedRecord(value, new Set<number>());
+    }
+
+    private hasEncodedFields(value: unknown, fields: readonly string[], entityIds?: Set<number>): boolean {
+        if (!this.isEncodedRecord(value, entityIds)) {
+            return false;
+        }
+        const record = value as UnknownRecord;
+        return fields.every((field) => Object.prototype.hasOwnProperty.call(record, field));
+    }
+
+    private isEncodedRecord(value: unknown, entityIds?: Set<number>): value is EncodedRecord {
+        if (!this.isRecord(value)) {
+            return false;
+        }
+        return Object.values(value).every((entry) => this.isEncodedValue(entry, entityIds));
+    }
+
+    private isEncodedValue(value: unknown, entityIds?: Set<number>): value is EncodedValue {
+        if (value === null || typeof value === "string" || typeof value === "boolean") {
+            return true;
+        }
+        if (typeof value === "number") {
+            return Number.isFinite(value);
+        }
+        if (!this.isRecord(value) || typeof value.kind !== "string") {
+            return false;
+        }
+
+        switch (value.kind) {
+            case "nonFiniteNumber":
+                return value.value === "NaN" || value.value === "Infinity" || value.value === "-Infinity";
+            case "bigint":
+                return typeof value.value === "string" && /^-?\d+$/.test(value.value);
+            case "array":
+            case "arrayList":
+                return Array.isArray(value.items) && value.items.every((item) => this.isEncodedValue(item, entityIds));
+            case "entityRef":
+                return this.isNonNegativeInteger(value.id) && (typeof entityIds === "undefined" || entityIds.has(value.id));
+            case "playerRef":
+            case "mainRef":
+            case "gameModeRef":
+            case "nullRef":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private isRandomSnapshot(value: unknown): value is RandomSnapshot {
+        return this.isRecord(value) && Number.isFinite(value.seed0) && Number.isFinite(value.seed1) && Number.isFinite(value.seed2);
+    }
+
+    private isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
+        return this.isRecord(value) && typeof value.musicOn === "boolean" && typeof value.soundOn === "boolean";
+    }
+
+    private isSongSnapshot(value: unknown): value is SongSnapshot | null {
+        if (value === null) {
+            return true;
+        }
+        return (
+            this.isRecord(value) &&
+            this.isSongId(value.id) &&
+            typeof value.playing === "boolean" &&
+            typeof value.playedIntro2 === "boolean" &&
+            this.isMusicSnapshot(value.activeMusic)
+        );
+    }
+
+    private isMusicSnapshot(value: unknown): value is MusicSnapshot | null {
+        if (value === null) {
+            return true;
+        }
+        return (
+            this.isRecord(value) &&
+            this.isMusicId(value.id) &&
+            typeof value.looped === "boolean" &&
+            typeof value.paused === "boolean" &&
+            typeof value.playing === "boolean" &&
+            Number.isFinite(value.playbackRate) &&
+            Number.isFinite(value.position) &&
+            Number.isFinite(value.volume)
+        );
+    }
+
+    private isNullableSongId(value: unknown): value is string | null {
+        return value === null || this.isSongId(value);
+    }
+
+    private isSongId(value: unknown): value is string {
+        return typeof value === "string" && SONG_IDS.includes(value);
+    }
+
+    private isMusicId(value: unknown): value is string {
+        if (typeof value !== "string") {
+            return false;
+        }
+        const dot = value.lastIndexOf(".");
+        if (dot < 0) {
+            return false;
+        }
+        return SONG_IDS.includes(value.substring(0, dot)) && MUSIC_ID_SUFFIXES.includes(value.substring(dot + 1));
+    }
+
+    private isStandaloneModeId(value: unknown): value is string {
+        return typeof value === "string" && STANDALONE_MODE_IDS.includes(value);
+    }
+
+    private isGameElementType(value: unknown): value is string {
+        return typeof value === "string" && GAME_ELEMENT_TYPES[value] !== undefined;
+    }
+
+    private isIntegerArray(value: unknown): value is number[] {
+        return Array.isArray(value) && value.every((entry) => this.isNonNegativeInteger(entry));
+    }
+
+    private isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
+        return typeof value === "number" && Number.isInteger(value) && value >= minimum && value <= maximum;
+    }
+
+    private isNonNegativeInteger(value: unknown): value is number {
+        return typeof value === "number" && Number.isInteger(value) && value >= 0;
+    }
+
+    private isRecord(value: unknown): value is UnknownRecord {
+        return value !== null && typeof value === "object" && !Array.isArray(value);
     }
 
     private createGameModeSnapshot(main: Main, gameMode: GameMode, player: Player, appVersion: string): JackalGameModeStateSnapshot {

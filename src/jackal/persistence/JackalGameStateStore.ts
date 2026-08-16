@@ -1,6 +1,6 @@
 import type { GameContainer } from "slick2d-ts";
 import type { Main } from "../Main.js";
-import { GAME_STATE_VERSION, type JackalGameStateSnapshot } from "./GameStateSnapshot.js";
+import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
 
 export class JackalGameStateStore {
@@ -62,8 +62,8 @@ export class JackalGameStateStore {
             return null;
         }
 
-        const snapshot = JSON.parse(text) as JackalGameStateSnapshot;
-        if (snapshot.version !== GAME_STATE_VERSION || !this.serializer.isSupportedSnapshot(snapshot)) {
+        const snapshot = JSON.parse(text) as unknown;
+        if (!this.serializer.isSupportedSnapshot(snapshot)) {
             this.clear();
             return null;
         }

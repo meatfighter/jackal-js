@@ -213,6 +213,11 @@ export class JackalWebApp {
     }
 
     private async launchPreparedGame(runtime: PreparedRuntime, restoreSavedGame: boolean): Promise<void> {
+        if (restoreSavedGame && !this.getGameStateStore(runtime).hasValidSave()) {
+            this.showMenu();
+            return;
+        }
+
         const host = this.showGameShell();
         this.activeGameHost = host;
         runtime.slick.Display.setParent(host);
@@ -851,23 +856,157 @@ function isAudioResourceRef(ref: string): boolean {
     return ref.endsWith(".ogg");
 }
 
+const POTENTIAL_STANDALONE_MODE_IDS = [
+    "INTRO",
+    "HERE",
+    "YEAH",
+    "WE_MADE_IT",
+    "SUNSET",
+    "HARD_ENDING",
+    "MAP",
+    "CONTINUE",
+    "DIFFICULTY",
+    "OPTIONS",
+    "INPUT",
+    "INTRO_MAP"
+];
+
 function isPotentialGameStateSnapshot(snapshot: unknown): boolean {
-    if (snapshot === null || typeof snapshot !== "object") {
+    if (!isRecord(snapshot)) {
         return false;
     }
-    const record = snapshot as Record<string, unknown>;
-    if (record.version !== GAME_STATE_VERSION || record.random === undefined) {
+    if (snapshot.version !== GAME_STATE_VERSION || (snapshot.kind !== "game" && snapshot.kind !== "mode")) {
         return false;
     }
-    if (record.kind === "game") {
-        const gameMode = record.gameMode;
-        if (gameMode === null || typeof gameMode !== "object") {
+    if (!isPotentialBaseSnapshot(snapshot)) {
+        return false;
+    }
+    if (snapshot.kind === "game") {
+        return isPotentialGameModeSnapshot(snapshot.gameMode) && isPotentialEncodedRecord(snapshot.playerFields, collectPotentialEntityIds(snapshot.gameMode));
+    }
+    return POTENTIAL_STANDALONE_MODE_IDS.includes(String(snapshot.modeId)) && isPotentialEncodedRecord(snapshot.modeFields, new Set<number>());
+}
+
+function isPotentialBaseSnapshot(snapshot: Record<string, unknown>): boolean {
+    const emptyEntityIds = new Set<number>();
+    return (
+        isPotentialEncodedRecord(snapshot.mainFields, emptyEntityIds) &&
+        isPotentialMainFields(snapshot.mainFields) &&
+        (snapshot.konamiCodeFields === null || isPotentialEncodedRecord(snapshot.konamiCodeFields, emptyEntityIds)) &&
+        isPotentialRandomSnapshot(snapshot.random) &&
+        isNonNegativeInteger(snapshot.friendlySoldierCount) &&
+        isPotentialAudioStateSnapshot(snapshot.audioState)
+    );
+}
+
+function isPotentialMainFields(value: unknown): boolean {
+    if (!isRecord(value)) {
+        return false;
+    }
+    return isNonNegativeInteger(value.loadIndex) && value.loadIndex >= 42 && isIntegerInRange(value.stageIndex, 0, 5) && typeof value.hardMode === "boolean";
+}
+
+function isPotentialGameModeSnapshot(value: unknown): boolean {
+    if (!isRecord(value) || !Array.isArray(value.entities) || !Array.isArray(value.elements)) {
+        return false;
+    }
+    const entityIds = collectPotentialEntityIds(value);
+    if (entityIds === null || !isPotentialEncodedRecord(value.fields, entityIds)) {
+        return false;
+    }
+    for (const entity of value.entities) {
+        if (!isRecord(entity) || typeof entity.type !== "string" || !isPotentialEncodedRecord(entity.fields, entityIds)) {
             return false;
         }
-        const gameModeRecord = gameMode as Record<string, unknown>;
-        return Array.isArray(gameModeRecord.entities) && Array.isArray(gameModeRecord.elements);
     }
-    return record.kind === "mode" && typeof record.modeId === "string" && record.modeFields !== undefined;
+    return isPotentialElementLayers(value.elements, entityIds);
+}
+
+function collectPotentialEntityIds(gameMode: unknown): Set<number> | null {
+    if (!isRecord(gameMode) || !Array.isArray(gameMode.entities)) {
+        return null;
+    }
+    const ids = new Set<number>();
+    for (const entity of gameMode.entities) {
+        if (!isRecord(entity) || !isNonNegativeInteger(entity.id) || ids.has(entity.id) || typeof entity.type !== "string") {
+            return null;
+        }
+        ids.add(entity.id);
+    }
+    return ids;
+}
+
+function isPotentialElementLayers(value: unknown, entityIds: Set<number> | null): boolean {
+    if (entityIds === null || !Array.isArray(value) || value.length !== 8) {
+        return false;
+    }
+    const layerRefs = new Set<number>();
+    for (const layer of value) {
+        if (!Array.isArray(layer)) {
+            return false;
+        }
+        for (const id of layer) {
+            if (!isNonNegativeInteger(id) || !entityIds.has(id) || layerRefs.has(id)) {
+                return false;
+            }
+            layerRefs.add(id);
+        }
+    }
+    return true;
+}
+
+function isPotentialEncodedRecord(value: unknown, entityIds: Set<number> | null): boolean {
+    return isRecord(value) && Object.values(value).every((entry) => isPotentialEncodedValue(entry, entityIds));
+}
+
+function isPotentialEncodedValue(value: unknown, entityIds: Set<number> | null): boolean {
+    if (value === null || typeof value === "string" || typeof value === "boolean") {
+        return true;
+    }
+    if (typeof value === "number") {
+        return Number.isFinite(value);
+    }
+    if (!isRecord(value) || typeof value.kind !== "string") {
+        return false;
+    }
+    switch (value.kind) {
+        case "nonFiniteNumber":
+            return value.value === "NaN" || value.value === "Infinity" || value.value === "-Infinity";
+        case "bigint":
+            return typeof value.value === "string" && /^-?\d+$/.test(value.value);
+        case "array":
+        case "arrayList":
+            return Array.isArray(value.items) && value.items.every((item) => isPotentialEncodedValue(item, entityIds));
+        case "entityRef":
+            return isNonNegativeInteger(value.id) && entityIds !== null && entityIds.has(value.id);
+        case "playerRef":
+        case "mainRef":
+        case "gameModeRef":
+        case "nullRef":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function isPotentialRandomSnapshot(value: unknown): boolean {
+    return isRecord(value) && Number.isFinite(value.seed0) && Number.isFinite(value.seed1) && Number.isFinite(value.seed2);
+}
+
+function isPotentialAudioStateSnapshot(value: unknown): boolean {
+    return isRecord(value) && typeof value.musicOn === "boolean" && typeof value.soundOn === "boolean";
+}
+
+function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= minimum && value <= maximum;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function volumeIconSvg(value: number): string {
