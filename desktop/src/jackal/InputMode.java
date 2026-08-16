@@ -139,6 +139,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
         break;
       case OPTION_RESET:
         buttonMapping.resetToDefaults();
+        buttonMapping.save();
         createMenu(OPTION_RESET);
         break;
       case OPTION_DONE:
@@ -528,6 +529,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
           if (++nameIndex == NAMES.length) {
             removeInputListeners();
             commitDraftButtonMapping();
+            buttonMapping.save();
             gc.getInput().clearKeyPressedRecord();
             gc.getInput().clearControlPressedRecord();
             message = "SAVED";

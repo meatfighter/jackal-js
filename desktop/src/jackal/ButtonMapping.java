@@ -1,8 +1,11 @@
 package jackal;
 
+import java.util.prefs.Preferences;
 import org.newdawn.slick.*;
 
 public class ButtonMapping {
+
+  private static final int VERSION = 1;
 
   public static final int NO_BINDING = -1;
   public static final int ACTION_UP = 0;
@@ -48,6 +51,68 @@ public class ButtonMapping {
   public int controllerStart = DEFAULT_CONTROLLER_START;
   
   public boolean gunKeyMapped = true;
+
+  public static ButtonMapping load() {
+    ButtonMapping mapping = new ButtonMapping();
+    try {
+      Preferences prefs = Preferences.userNodeForPackage(ButtonMapping.class);
+      if (prefs.getInt("inputMappingVersion", 0) != VERSION) {
+        return mapping;
+      }
+      mapping.keyUp = prefs.getInt("keyUp", DEFAULT_KEY_UP);
+      mapping.keyDown = prefs.getInt("keyDown", DEFAULT_KEY_DOWN);
+      mapping.keyLeft = prefs.getInt("keyLeft", DEFAULT_KEY_LEFT);
+      mapping.keyRight = prefs.getInt("keyRight", DEFAULT_KEY_RIGHT);
+      mapping.keyGrenade = prefs.getInt("keyGrenade", DEFAULT_KEY_GRENADE);
+      mapping.keyGun = prefs.getInt("keyGun", DEFAULT_KEY_GUN);
+      mapping.keyStart = prefs.getInt("keyStart", DEFAULT_KEY_START);
+      mapping.controller = prefs.getBoolean("controller", true);
+      mapping.controllerIndex = prefs.getInt("controllerIndex", 0);
+      mapping.controllerUp = prefs.getInt(
+          "controllerUp", DEFAULT_CONTROLLER_UP);
+      mapping.controllerDown = prefs.getInt(
+          "controllerDown", DEFAULT_CONTROLLER_DOWN);
+      mapping.controllerLeft = prefs.getInt(
+          "controllerLeft", DEFAULT_CONTROLLER_LEFT);
+      mapping.controllerRight = prefs.getInt(
+          "controllerRight", DEFAULT_CONTROLLER_RIGHT);
+      mapping.controllerGrenade = prefs.getInt(
+          "controllerGrenade", DEFAULT_CONTROLLER_GRENADE);
+      mapping.controllerGun = prefs.getInt(
+          "controllerGun", DEFAULT_CONTROLLER_GUN);
+      mapping.controllerStart = prefs.getInt(
+          "controllerStart", DEFAULT_CONTROLLER_START);
+      mapping.gunKeyMapped = prefs.getBoolean("gunKeyMapped", true);
+    } catch(Throwable t) {
+    }
+    return mapping;
+  }
+
+  public void save() {
+    try {
+      Preferences prefs = Preferences.userNodeForPackage(ButtonMapping.class);
+      prefs.putInt("inputMappingVersion", VERSION);
+      prefs.putInt("keyUp", keyUp);
+      prefs.putInt("keyDown", keyDown);
+      prefs.putInt("keyLeft", keyLeft);
+      prefs.putInt("keyRight", keyRight);
+      prefs.putInt("keyGrenade", keyGrenade);
+      prefs.putInt("keyGun", keyGun);
+      prefs.putInt("keyStart", keyStart);
+      prefs.putBoolean("controller", controller);
+      prefs.putInt("controllerIndex", controllerIndex);
+      prefs.putInt("controllerUp", controllerUp);
+      prefs.putInt("controllerDown", controllerDown);
+      prefs.putInt("controllerLeft", controllerLeft);
+      prefs.putInt("controllerRight", controllerRight);
+      prefs.putInt("controllerGrenade", controllerGrenade);
+      prefs.putInt("controllerGun", controllerGun);
+      prefs.putInt("controllerStart", controllerStart);
+      prefs.putBoolean("gunKeyMapped", gunKeyMapped);
+      prefs.flush();
+    } catch(Throwable t) {
+    }
+  }
 
   public void resetToDefaults() {
     keyUp = DEFAULT_KEY_UP;
