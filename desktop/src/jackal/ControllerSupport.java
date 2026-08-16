@@ -4,7 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
@@ -22,6 +24,7 @@ public final class ControllerSupport {
   private static final float AXIS_THRESHOLD = 0.5f;
   private static final float AXIS_RECENTER_THRESHOLD = 0.05f;
   private static final long CONTROLLER_POLL_INTERVAL_NANOS = 1000000L;
+  private static final long CONTROLLER_REFRESH_INTERVAL_NANOS = 3000000000L;
   private static final int UNKNOWN_BUTTON_DIRECTION = Integer.MIN_VALUE;
   private static final Object POLL_LOG_FILTER_LOCK = new Object();
 
@@ -38,6 +41,7 @@ public final class ControllerSupport {
   private static boolean controllersCreateAttempted;
   private static boolean controllersUnavailable;
   private static long lastControllerPollNanos = Long.MIN_VALUE;
+  private static long lastControllerRefreshNanos = Long.MIN_VALUE;
   private static final boolean[] controllerCandidateKnown =
       new boolean[CONTROLLER_INDEX_LIMIT];
   private static final boolean[] controllerCandidate =
@@ -169,6 +173,28 @@ public final class ControllerSupport {
     }
     return button >= ButtonMapping.DEFAULT_CONTROLLER_UP
         && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+  }
+
+  public static boolean refreshControllersIfNeeded() {
+    boolean createAttemptedBefore =
+        controllersCreateAttempted || Controllers.isCreated();
+    if (hasUsableGameController()) {
+      return false;
+    }
+
+    long now = System.nanoTime();
+    if (!createAttemptedBefore) {
+      lastControllerRefreshNanos = now;
+      return false;
+    }
+    if (lastControllerRefreshNanos != Long.MIN_VALUE
+        && now - lastControllerRefreshNanos
+        < CONTROLLER_REFRESH_INTERVAL_NANOS) {
+      return false;
+    }
+    lastControllerRefreshNanos = now;
+
+    return refreshControllers();
   }
 
   private static boolean isAnyControllerUp() {
@@ -851,6 +877,16 @@ public final class ControllerSupport {
         || mapping.controllerRight == button;
   }
 
+  private static boolean hasUsableGameController() {
+    int controllerCount = getControllerCount();
+    for(int controller = 0; controller < controllerCount; controller++) {
+      if (getGameController(controller) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static Controller getGameController(int controllerIndex) {
     if (!isGameController(controllerIndex)) {
       return null;
@@ -1007,6 +1043,92 @@ public final class ControllerSupport {
     } catch(Throwable t) {
       controllersUnavailable = true;
     }
+  }
+
+  private static boolean refreshControllers() {
+    synchronized(ControllerSupport.class) {
+      try {
+        resetLwjglControllers();
+        resetJInputDefaultEnvironment();
+        resetControllerState();
+        controllersCreateAttempted = true;
+        Controllers.create();
+      } catch(Throwable t) {
+        controllersUnavailable = true;
+        return false;
+      }
+    }
+    return hasUsableGameController();
+  }
+
+  private static void resetLwjglControllers() throws Exception {
+    setStaticObjectField(Controllers.class, "controllers", new ArrayList());
+    setStaticObjectField(Controllers.class, "events", new ArrayList());
+    setStaticObjectField(Controllers.class, "event", null);
+    setStaticIntField(Controllers.class, "controllerCount", 0);
+    setStaticBooleanField(Controllers.class, "created", false);
+  }
+
+  private static void resetJInputDefaultEnvironment() throws Exception {
+    Class<?> environmentClass =
+        Class.forName("net.java.games.input.ControllerEnvironment");
+    setStaticObjectField(environmentClass, "defaultEnvironment",
+        createDefaultControllerEnvironment());
+  }
+
+  private static Object createDefaultControllerEnvironment() throws Exception {
+    Class<?> environmentClass =
+        Class.forName("net.java.games.input.DefaultControllerEnvironment");
+    Constructor<?> constructor = environmentClass.getDeclaredConstructor();
+    constructor.setAccessible(true);
+    return constructor.newInstance();
+  }
+
+  private static void resetControllerState() {
+    jinputReflectionInitialized = false;
+    jinputAxesField = null;
+    jinputButtonsField = null;
+    jinputPovField = null;
+    jinputXAxisField = null;
+    jinputYAxisField = null;
+    jinputRXAxisField = null;
+    jinputRYAxisField = null;
+    globalPollFailureDetected = false;
+    controllersCreateAttempted = false;
+    controllersUnavailable = false;
+    lastControllerPollNanos = Long.MIN_VALUE;
+
+    for(int controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
+      controllerCandidateKnown[controller] = false;
+      controllerCandidate[controller] = false;
+      for(int axis = 0; axis < GAMEPAD_AXIS_LIMIT; axis++) {
+        horizontalAxisKnown[controller][axis] = false;
+        horizontalAxis[controller][axis] = false;
+        verticalAxisKnown[controller][axis] = false;
+        verticalAxis[controller][axis] = false;
+      }
+      for(int button = 0; button < GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
+        buttonDirections[controller][button] = UNKNOWN_BUTTON_DIRECTION;
+      }
+    }
+  }
+
+  private static void setStaticObjectField(Class<?> clazz, String name,
+      Object value) throws Exception {
+    Field field = getAccessibleField(clazz, name);
+    field.set(null, value);
+  }
+
+  private static void setStaticIntField(Class<?> clazz, String name,
+      int value) throws Exception {
+    Field field = getAccessibleField(clazz, name);
+    field.setInt(null, value);
+  }
+
+  private static void setStaticBooleanField(Class<?> clazz, String name,
+      boolean value) throws Exception {
+    Field field = getAccessibleField(clazz, name);
+    field.setBoolean(null, value);
   }
 
   private static void pollControllers() {

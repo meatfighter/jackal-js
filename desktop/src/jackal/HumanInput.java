@@ -22,8 +22,11 @@ public class HumanInput implements IInput {
     this.input = gc.getInput();
     syncControllerPressedRecord();
   }
-  
+
   public void snap() {
+    if (ControllerSupport.refreshControllersIfNeeded()) {
+      syncControllerPressedRecord();
+    }
     mappedStartWasDown = mappedStartDown;
     nonDirectionalButtonWasDown = nonDirectionalButtonDown;
 
@@ -131,6 +134,7 @@ public class HumanInput implements IInput {
   }
 
   private void syncControllerPressedRecord() {
+    ControllerSupport.refreshControllersIfNeeded();
     mappedStartDown = ControllerSupport.isButtonDown(
         buttonMapping.controllerStart);
     mappedStartWasDown = mappedStartDown;

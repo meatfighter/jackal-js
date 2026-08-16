@@ -490,6 +490,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   }
 
   private void syncControllerInputState() {
+    ControllerSupport.refreshControllersIfNeeded();
     controllerUpDown = ControllerSupport.isUpDown();
     controllerDownDown = ControllerSupport.isDownDown();
     controllerLeftDown = ControllerSupport.isLeftDown();

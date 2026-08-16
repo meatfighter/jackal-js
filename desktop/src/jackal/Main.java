@@ -2148,7 +2148,7 @@ public class Main extends BasicGame {
     } catch(Throwable t) {
       Log.error("Icon error", t);
     }
-    main.appGameContainer.setResizable(true);
+    main.appGameContainer.setResizable(false);
     main.appGameContainer.start();
   }
 }
