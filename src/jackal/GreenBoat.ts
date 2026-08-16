@@ -1,81 +1,135 @@
 // @ts-nocheck
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import {
+    AppGameContainer,
+    ApplicationGameContainer,
+    BasicGame,
+    Color,
+    Cursor,
+    Display,
+    GameContainer,
+    GL11,
+    Graphics,
+    Image,
+    Input,
+    Log,
+    Music,
+    Mouse,
+    ResourceLoader,
+    ScalableGame,
+    SlickException,
+    Sound,
+    SoundStore,
+    Sys,
+    XMLPackedSheet
+} from "slick2d-ts";
+import {
+    ArrayList,
+    Arrays,
+    BufferedInputStream,
+    Character,
+    Class,
+    Collections,
+    DataInputStream,
+    HashMap,
+    Integer,
+    JAVA_LONG_LOW_3_BITS,
+    JAVA_LONG_PACKED_3BIT_SHIFTS,
+    JavaString,
+    Point2D,
+    Random,
+    System,
+    java2DArray,
+    java3DArray,
+    java4DArray,
+    javaArray,
+    javaByte,
+    javaChar,
+    javaDouble,
+    javaFloat,
+    javaInt,
+    javaIntDiv,
+    javaLong,
+    javaRoundFloat,
+    javaShort,
+    rotatePoint
+} from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 export class GreenBoat extends Enemy {
-  protected __initializeJavaSubclassDefaults(): void {
-    super.__initializeJavaSubclassDefaults();
-    this.player = null as any;
-    this.spriteIndex = 0;
-    this.spriteIndexCounter = 0;
-    this.bulletDelay = 0;
-    this.movementDelay = 0;
-  }
-  public constructor(arg0?: any, arg1?: any) {
-    super();
-    const argCount = arguments.length;
-    this.__construct_GreenBoat(argCount, arg0, arg1);
-  }
-  private __construct_GreenBoat(argCount: number, arg0?: any, arg1?: any): void {
-    if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-        let xLocal = arg0;
-        let yLocal = arg1;
+    protected __initializeJavaSubclassDefaults(): void {
+        super.__initializeJavaSubclassDefaults();
+        this.player = null as any;
+        this.spriteIndex = 0;
+        this.spriteIndexCounter = 0;
+        this.bulletDelay = 0;
+        this.movementDelay = 0;
+    }
+
+    public constructor(arg0?: any, arg1?: any) {
+        super();
+        const argCount = arguments.length;
+        this.__construct_GreenBoat(argCount, arg0, arg1);
+    }
+
+    private __construct_GreenBoat(argCount: number, arg0?: any, arg1?: any): void {
+        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
+            let xLocal = arg0;
+            let yLocal = arg1;
             this.x = xLocal;
-                this.y = yLocal;
-        return;
+            this.y = yLocal;
+            return;
+        }
+        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
-    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
-  }
 
-  public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
-  public static readonly BULLET_DELAY: number = 91;
-  public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
-  public static readonly SPEED: number = 0.75;
-  public static readonly MOVEMENT_TIME: number = 181;
+    public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
+    public static readonly BULLET_DELAY: number = 91;
+    public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
+    public static readonly SPEED: number = 0.75;
+    public static readonly MOVEMENT_TIME: number = 181;
 
-  public movementDelay: number = GreenBoat.MOVEMENT_TIME;
+    public movementDelay: number = GreenBoat.MOVEMENT_TIME;
 
-  public init(): void {
-    super.init();
+    public init(): void {
+        super.init();
 
-    this.player = this.gameMode.player;
+        this.player = this.gameMode.player;
 
-    this.layer = 3;
+        this.layer = 3;
 
-    this.bulletHits = 6;
+        this.bulletHits = 6;
 
-    this.hitX1 = -40;
-    this.hitY1 = -40;
-    this.hitX2 = 40;
-    this.hitY2 = 40;
+        this.hitX1 = -40;
+        this.hitY1 = -40;
+        this.hitX2 = 40;
+        this.hitY2 = 40;
 
-    this.points = 800;
-  }
-
-  public update(): void {
-    if (this.movementDelay > 0) {
-      this.movementDelay--;
-      this.x -= GreenBoat.SPEED;
-      this.y += GreenBoat.SPEED;
+        this.points = 800;
     }
-    if (--this.spriteIndexCounter < 0) {
-      this.spriteIndexCounter = GreenBoat.SPRITE_TOGGLE_FRAMES;
-      this.spriteIndex ^= 1;
-    }
-    if (--this.bulletDelay < 0) {
-      this.bulletDelay = GreenBoat.BULLET_DELAY;
-      let X = this.x - 16;
-      let Y = this.y + 16;
-      let dx = this.player.x - X;
-      let dy = this.player.y - Y;
-      let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
 
-      new EnemyBullet(X, Y, dx * imag, dy * imag, GreenBoat.BULLET_TRAVEL_TIME, true);
-    }
-  }
+    public update(): void {
+        if (this.movementDelay > 0) {
+            this.movementDelay--;
+            this.x -= GreenBoat.SPEED;
+            this.y += GreenBoat.SPEED;
+        }
+        if (--this.spriteIndexCounter < 0) {
+            this.spriteIndexCounter = GreenBoat.SPRITE_TOGGLE_FRAMES;
+            this.spriteIndex ^= 1;
+        }
+        if (--this.bulletDelay < 0) {
+            this.bulletDelay = GreenBoat.BULLET_DELAY;
+            let X = this.x - 16;
+            let Y = this.y + 16;
+            let dx = this.player.x - X;
+            let dy = this.player.y - Y;
+            let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
 
-  public render(): void {
-    this.main.draw(this.main.greenBoats[this.spriteIndex], this.x - 58, this.y - 64);
-  }
+            new EnemyBullet(X, Y, dx * imag, dy * imag, GreenBoat.BULLET_TRAVEL_TIME, true);
+        }
+    }
+
+    public render(): void {
+        this.main.draw(this.main.greenBoats[this.spriteIndex], this.x - 58, this.y - 64);
+    }
 }

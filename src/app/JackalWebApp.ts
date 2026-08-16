@@ -129,10 +129,7 @@ export class JackalWebApp {
     }
 
     private hasLiveSuspendedGame(): boolean {
-        return this.liveMenuOpen
-            && this.menuOverlay !== null
-            && this.game !== null
-            && this.container !== null;
+        return this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
     }
 
     private showLiveMenuOverlay(): void {
@@ -397,10 +394,7 @@ export class JackalWebApp {
     }
 
     private scheduleBackgroundPreparation(): void {
-        if (this.preparedRuntime !== null
-            || this.preparationPromise !== null
-            || this.preparationError !== null
-            || this.backgroundPreparationScheduled) {
+        if (this.preparedRuntime !== null || this.preparationPromise !== null || this.preparationError !== null || this.backgroundPreparationScheduled) {
             return;
         }
         this.backgroundPreparationScheduled = true;
@@ -443,10 +437,7 @@ export class JackalWebApp {
     }
 
     private async prepareRuntime(): Promise<PreparedRuntime> {
-        const [slick, resourceManifestModule] = await Promise.all([
-            import("slick2d-ts"),
-            import("./ResourceManifest.js")
-        ]);
+        const [slick, resourceManifestModule] = await Promise.all([import("slick2d-ts"), import("./ResourceManifest.js")]);
         const mainModule = await import("../jackal/Main.js");
         const gameStateStoreModule = await import("../jackal/persistence/JackalGameStateStore.js");
         await this.preloadPreparedResources(resourceManifestModule.RESOURCE_MANIFEST);
@@ -573,11 +564,10 @@ export class JackalWebApp {
 
         const displayMode = this.getResponsiveWindowedDisplayMode();
         try {
-            void Promise.resolve(this.container.setDisplayMode(displayMode.width, displayMode.height, false))
-                .catch((error) => {
-                    console.error(error);
-                    this.showError("Unable to resize the game. Reload the page and try again.");
-                });
+            void Promise.resolve(this.container.setDisplayMode(displayMode.width, displayMode.height, false)).catch((error) => {
+                console.error(error);
+                this.showError("Unable to resize the game. Reload the page and try again.");
+            });
         } catch (error) {
             console.error(error);
             this.showError("Unable to resize the game. Reload the page and try again.");
@@ -612,7 +602,8 @@ export class JackalWebApp {
         if (this.activeGameShell === null || this.isGameShellFullscreen() || !this.activeGameShell.requestFullscreen) {
             return;
         }
-        void this.activeGameShell.requestFullscreen()
+        void this.activeGameShell
+            .requestFullscreen()
             .then(() => {
                 this.updateHamburgerVisibility();
                 this.scheduleResponsiveGameResize();
@@ -626,7 +617,8 @@ export class JackalWebApp {
         if (!this.isGameShellFullscreen() || !document.exitFullscreen) {
             return;
         }
-        void document.exitFullscreen()
+        void document
+            .exitFullscreen()
             .then(() => {
                 this.updateHamburgerVisibility();
                 this.scheduleResponsiveGameResize();
@@ -873,20 +865,18 @@ function isPotentialGameStateSnapshot(snapshot: unknown): boolean {
             return false;
         }
         const gameModeRecord = gameMode as Record<string, unknown>;
-        return Array.isArray(gameModeRecord.entities)
-            && Array.isArray(gameModeRecord.elements);
+        return Array.isArray(gameModeRecord.entities) && Array.isArray(gameModeRecord.elements);
     }
-    return record.kind === "mode"
-        && typeof record.modeId === "string"
-        && record.modeFields !== undefined;
+    return record.kind === "mode" && typeof record.modeId === "string" && record.modeFields !== undefined;
 }
 
 function volumeIconSvg(value: number): string {
-    const waves = Math.round(value * 100) === 0
-        ? `<path d="M18 9l5 5m0-5l-5 5"></path>`
-        : value < 0.33
-            ? `<path d="M17 10a4 4 0 0 1 0 4"></path>`
-            : value < 0.66
+    const waves =
+        Math.round(value * 100) === 0
+            ? `<path d="M18 9l5 5m0-5l-5 5"></path>`
+            : value < 0.33
+              ? `<path d="M17 10a4 4 0 0 1 0 4"></path>`
+              : value < 0.66
                 ? `<path d="M17 8a6 6 0 0 1 0 8"></path><path d="M20 6a9 9 0 0 1 0 12"></path>`
                 : `<path d="M17 8a6 6 0 0 1 0 8"></path><path d="M20 6a9 9 0 0 1 0 12"></path><path d="M23 4a12 12 0 0 1 0 16"></path>`;
 
@@ -933,10 +923,5 @@ function isElementHovered(element: HTMLElement): boolean {
 }
 
 function escapeHtml(value: string): string {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll("\"", "&quot;")
-        .replaceAll("'", "&#039;");
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }

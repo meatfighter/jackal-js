@@ -3,11 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default [
     {
-        ignores: [
-            "dist/**",
-            "node_modules/**",
-            "public/resources/**"
-        ]
+        ignores: ["dist/**", "node_modules/**", "public/resources/**"]
     },
     js.configs.recommended,
     ...tseslint.configs.recommended,
@@ -27,7 +23,8 @@ export default [
             "prefer-const": "off",
             "no-useless-assignment": "off",
             "no-unexpected-multiline": "off",
-            "no-useless-escape": "off"
+            "no-useless-escape": "off",
+            "lines-between-class-members": ["error", "always", { exceptAfterSingleLine: true }]
         }
     },
     {

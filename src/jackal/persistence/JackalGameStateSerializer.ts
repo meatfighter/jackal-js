@@ -164,11 +164,7 @@ const INTRO_MODE_FIELD_NAMES = [
     "selectedIndex"
 ];
 
-const SIMPLE_MENU_MODE_FIELD_NAMES = [
-    "state",
-    "optionSelectedFlag",
-    "selectedIndex"
-];
+const SIMPLE_MENU_MODE_FIELD_NAMES = ["state", "optionSelectedFlag", "selectedIndex"];
 
 const INPUT_MODE_FIELD_NAMES = [
     "state",
@@ -184,41 +180,15 @@ const INPUT_MODE_FIELD_NAMES = [
     "extraAxisRightDown"
 ];
 
-const INTRO_MAP_MODE_FIELD_NAMES = [
-    "delay",
-    "state"
-];
+const INTRO_MAP_MODE_FIELD_NAMES = ["delay", "state"];
 
-const MAP_MODE_FIELD_NAMES = [
-    "state",
-    "delay",
-    "jeepY",
-    "soldierDelay",
-    "targetJeepY"
-];
+const MAP_MODE_FIELD_NAMES = ["state", "delay", "jeepY", "soldierDelay", "targetJeepY"];
 
-const JEEP_HERE_MODE_FIELD_NAMES = [
-    "state",
-    "jeepHereX",
-    "delay"
-];
+const JEEP_HERE_MODE_FIELD_NAMES = ["state", "jeepHereX", "delay"];
 
-const JEEP_YEAH_MODE_FIELD_NAMES = [
-    "smokeX",
-    "smokeY",
-    "bulletDelay",
-    "yeahVisible",
-    "yeah",
-    "state"
-];
+const JEEP_YEAH_MODE_FIELD_NAMES = ["smokeX", "smokeY", "bulletDelay", "yeahVisible", "yeah", "state"];
 
-const JEEP_YEAH_PLANE_FIELD_NAMES = [
-    "x",
-    "y",
-    "z",
-    "left",
-    "angle"
-];
+const JEEP_YEAH_PLANE_FIELD_NAMES = ["x", "y", "z", "left", "angle"];
 
 const JEEP_YEAH_EXPLOSION_FIELD_NAMES = [
     "size",
@@ -238,24 +208,9 @@ const JEEP_YEAH_EXPLOSION_FIELD_NAMES = [
     "removeFlag"
 ];
 
-const JEEP_YEAH_FIRE_FIELD_NAMES = [
-    "scale",
-    "state",
-    "x",
-    "y",
-    "delay"
-];
+const JEEP_YEAH_FIRE_FIELD_NAMES = ["scale", "state", "x", "y", "delay"];
 
-const JEEP_YEAH_BULLET_FIELD_NAMES = [
-    "x",
-    "y",
-    "vx",
-    "vy",
-    "angle",
-    "remove",
-    "removeFlag",
-    "scale"
-];
+const JEEP_YEAH_BULLET_FIELD_NAMES = ["x", "y", "vx", "vy", "angle", "remove", "removeFlag", "scale"];
 
 const SUNSET_MODE_FIELD_NAMES = [
     "sunOffset",
@@ -273,18 +228,7 @@ const SUNSET_MODE_FIELD_NAMES = [
     "lineLength"
 ];
 
-const HARD_ENDING_MODE_FIELD_NAMES = [
-    "finalScore",
-    "finalScoreX",
-    "state",
-    "lineIndex",
-    "lineLength",
-    "cardIndex",
-    "delay",
-    "creditsY",
-    "jeepX",
-    "rumble"
-];
+const HARD_ENDING_MODE_FIELD_NAMES = ["finalScore", "finalScoreX", "state", "lineIndex", "lineLength", "cardIndex", "delay", "creditsY", "jeepX", "rumble"];
 
 const SKIPPED_INSTANCE_FIELDS = new Set([
     "main",
@@ -358,28 +302,21 @@ export class JackalGameStateSerializer {
     }
 
     public isSupportedSnapshot(snapshot: JackalGameStateSnapshot): boolean {
-        if (snapshot.version !== GAME_STATE_VERSION
-            || snapshot.random === undefined
-            || snapshot.mainFields === undefined
-            || snapshot.audioState === undefined) {
+        if (
+            snapshot.version !== GAME_STATE_VERSION ||
+            snapshot.random === undefined ||
+            snapshot.mainFields === undefined ||
+            snapshot.audioState === undefined
+        ) {
             return false;
         }
         if (snapshot.kind === "game") {
-            return snapshot.gameMode !== undefined
-                && Array.isArray(snapshot.gameMode.entities)
-                && Array.isArray(snapshot.gameMode.elements);
+            return snapshot.gameMode !== undefined && Array.isArray(snapshot.gameMode.entities) && Array.isArray(snapshot.gameMode.elements);
         }
-        return snapshot.kind === "mode"
-            && typeof snapshot.modeId === "string"
-            && snapshot.modeFields !== undefined;
+        return snapshot.kind === "mode" && typeof snapshot.modeId === "string" && snapshot.modeFields !== undefined;
     }
 
-    private createGameModeSnapshot(
-        main: Main,
-        gameMode: GameMode,
-        player: Player,
-        appVersion: string
-    ): JackalGameModeStateSnapshot {
+    private createGameModeSnapshot(main: Main, gameMode: GameMode, player: Player, appVersion: string): JackalGameModeStateSnapshot {
         const context = this.createEntityContext(main, gameMode, gameMode.player);
         const entities = context.entities.map((entity) => this.createEntitySnapshot(entity, context));
         return {
@@ -412,9 +349,7 @@ export class JackalGameStateSerializer {
             appVersion,
             savedAt: new Date().toISOString(),
             mainFields: this.encodeNamedFields(main, MAIN_FIELD_NAMES, context),
-            konamiCodeFields: main.konamiCode === null
-                ? null
-                : this.encodeObjectFields(main.konamiCode, context),
+            konamiCodeFields: main.konamiCode === null ? null : this.encodeObjectFields(main.konamiCode, context),
             random: this.snapshotRandom(main.random),
             friendlySoldierCount: FriendlySoldier.count,
             currentSongId: this.songIdFor(main, main.currentSong),
@@ -443,7 +378,11 @@ export class JackalGameStateSerializer {
         Main.gameMode = gameMode;
         MainRuntimeState.mainInstance = main;
         MainRuntimeState.gameMode = gameMode;
-        gameMode.setStage(snapshot.mainFields.stageIndex as number, main.stages[snapshot.mainFields.stageIndex as number], snapshot.mainFields.hardMode as boolean);
+        gameMode.setStage(
+            snapshot.mainFields.stageIndex as number,
+            main.stages[snapshot.mainFields.stageIndex as number],
+            snapshot.mainFields.hardMode as boolean
+        );
         gameMode.init(main, gc);
         const player = gameMode.player as Player;
 
@@ -769,8 +708,7 @@ export class JackalGameStateSerializer {
             mode.removeInputListeners();
         }
         mode.listeningForInput = false;
-        if ((mode.state === InputMode.STATE_READING || mode.state === InputMode.STATE_READ_FADE)
-            && typeof mode.addInputListeners === "function") {
+        if ((mode.state === InputMode.STATE_READING || mode.state === InputMode.STATE_READ_FADE) && typeof mode.addInputListeners === "function") {
             mode.addInputListeners();
         }
     }
@@ -790,11 +728,7 @@ export class JackalGameStateSerializer {
         }
     }
 
-    private restoreNullableTypedRecord<T extends object>(
-        constructor: { prototype: T },
-        snapshot: EncodedRecord | null,
-        context: RestoreContext
-    ): T | null {
+    private restoreNullableTypedRecord<T extends object>(constructor: { prototype: T }, snapshot: EncodedRecord | null, context: RestoreContext): T | null {
         if (snapshot === null) {
             return null;
         }
@@ -1273,9 +1207,7 @@ export class JackalGameStateSerializer {
             return;
         }
 
-        const currentSong = currentSongState === null
-            ? null
-            : this.songById(context.main, currentSongState.id);
+        const currentSong = currentSongState === null ? null : this.songById(context.main, currentSongState.id);
         const requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
         context.main.currentSong = currentSong;
         context.main.requestedSong = requestedSong;
@@ -1376,18 +1308,21 @@ export class JackalGameStateSerializer {
             music.play(snapshot.playbackRate, snapshot.volume);
         }
 
-        void music.ready().then(() => {
-            globalThis.setTimeout(() => {
-                music.setPosition(this.normalizeMusicPosition(music, position, snapshot.looped));
-                music.setVolume(snapshot.volume);
-                if (snapshot.paused) {
-                    music.pause();
-                }
+        void music
+            .ready()
+            .then(() => {
+                globalThis.setTimeout(() => {
+                    music.setPosition(this.normalizeMusicPosition(music, position, snapshot.looped));
+                    music.setVolume(snapshot.volume);
+                    if (snapshot.paused) {
+                        music.pause();
+                    }
+                    this.restoreAudioEnabledForSnapshot(context);
+                }, 0);
+            })
+            .catch(() => {
                 this.restoreAudioEnabledForSnapshot(context);
-            }, 0);
-        }).catch(() => {
-            this.restoreAudioEnabledForSnapshot(context);
-        });
+            });
     }
 
     private restoreAudioEnabledForSnapshot(context: RestoreContext): void {

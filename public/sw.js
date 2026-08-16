@@ -2,29 +2,16 @@ const APP_VERSION = "0.1.17";
 const BUILD_STAMP = "20260815T013000Z";
 const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
 const APP_INDEX = "/index.html";
-const APP_SHELL = [
-    "/",
-    APP_INDEX,
-    "/manifest.webmanifest",
-    "/favicon.ico",
-    "/resources/icons/32x32.png",
-    `/index.html?v=${encodeURIComponent(BUILD_STAMP)}`
-];
+const APP_SHELL = ["/", APP_INDEX, "/manifest.webmanifest", "/favicon.ico", "/resources/icons/32x32.png", `/index.html?v=${encodeURIComponent(BUILD_STAMP)}`];
 const MAX_FETCH_RETRIES = 5;
 
 self.addEventListener("install", (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-    );
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
     self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) => Promise.all(
-            keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-        ))
-    );
+    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
     self.clients.claim();
 });
 
@@ -48,7 +35,7 @@ async function networkFirstNavigation(request) {
         }
         return response;
     } catch (error) {
-        const cached = await cache.match(APP_INDEX) || await cache.match("/");
+        const cached = (await cache.match(APP_INDEX)) || (await cache.match("/"));
         if (cached) {
             return cached;
         }

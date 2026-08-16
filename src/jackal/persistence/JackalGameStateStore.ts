@@ -8,8 +8,7 @@ export class JackalGameStateStore {
 
     private readonly serializer = new JackalGameStateSerializer();
 
-    public constructor(private readonly appVersion: string) {
-    }
+    public constructor(private readonly appVersion: string) {}
 
     public save(main: Main): boolean {
         if (!main.isStateSaveReady()) {
@@ -54,8 +53,7 @@ export class JackalGameStateStore {
     public clear(): void {
         try {
             localStorage.removeItem(JackalGameStateStore.STORAGE_KEY);
-        } catch {
-        }
+        } catch {}
     }
 
     private readSnapshot(): JackalGameStateSnapshot | null {

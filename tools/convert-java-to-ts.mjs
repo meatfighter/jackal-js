@@ -78,17 +78,7 @@ const mainConstantNames = new Set([
     "TILES"
 ]);
 
-const primitiveTypes = new Set([
-    "boolean",
-    "byte",
-    "char",
-    "double",
-    "float",
-    "int",
-    "long",
-    "short",
-    "String"
-]);
+const primitiveTypes = new Set(["boolean", "byte", "char", "double", "float", "int", "long", "short", "String"]);
 
 const numericTypes = new Set(["byte", "char", "double", "float", "int", "long", "short"]);
 const booleanTypes = new Set(["boolean"]);
@@ -151,9 +141,7 @@ await mkdir(outRoot, { recursive: true });
 await rm(outRoot, { recursive: true, force: true });
 await mkdir(outRoot, { recursive: true });
 
-const javaFiles = (await readdir(javaRoot))
-    .filter((file) => file.endsWith(".java"))
-    .sort();
+const javaFiles = (await readdir(javaRoot)).filter((file) => file.endsWith(".java")).sort();
 const classNames = javaFiles.map((file) => path.basename(file, ".java"));
 const classNameSet = new Set(classNames);
 const sourceByClass = new Map();
@@ -288,56 +276,55 @@ function convertTopLevel(source, className) {
 function rewriteKnownPackedDirectionLongAccess(text) {
     return text
         .replace(/\blet index = i \/ 21;/g, "let index = (i / 21) | 0;")
-        .replace(/\blet shift = 3 \* \(i % 21\);/g,
-            "let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];")
-        .replace(/javaInt\(\(\(this\.directions\[index\] >> shift\) & 7\)\)/g,
-            "Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)")
-        .replace(/\(\(this\.directions\[index\] >> shift\) & 7\)/g,
-            "((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)");
+        .replace(/\blet shift = 3 \* \(i % 21\);/g, "let shift = JAVA_LONG_PACKED_3BIT_SHIFTS[i % 21];")
+        .replace(/javaInt\(\(\(this\.directions\[index\] >> shift\) & 7\)\)/g, "Number((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)")
+        .replace(/\(\(this\.directions\[index\] >> shift\) & 7\)/g, "((this.directions[index] >> shift) & JAVA_LONG_LOW_3_BITS)");
 }
 
 function rewriteKnownJavaIntDivision(text) {
     return text
-        .replace(/public static readonly HALF_TIME: number = Bomb\.TRAVEL_TIME \/ 2;/g,
-            "public static readonly HALF_TIME: number = javaIntDiv(Bomb.TRAVEL_TIME, 2);")
-        .replace(/public static readonly HALF_TIME: number = Grenade\.TRAVEL_TIME \/ 2;/g,
-            "public static readonly HALF_TIME: number = javaIntDiv(Grenade.TRAVEL_TIME, 2);")
-        .replace(/let HALF_TIME = BossHelicopter\.POSITION_DRIFT_TIME \/ 2;/g,
-            "let HALF_TIME = javaIntDiv(BossHelicopter.POSITION_DRIFT_TIME, 2);")
-        .replace(/public static readonly PERIOD0: number = TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
-            "public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);")
-        .replace(/public static readonly PERIOD1: number = 2 \* TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
-            "public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);")
-        .replace(/new Color\(0, 0, 0, 255 \* i \/ \(Main\.FADES\.length - 1\)\)/g,
-            "new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1))")
-        .replace(/\(\(before - 20000\) \/ 50000 != \(this\.score - 20000\) \/ 50000\)/g,
-            "(javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))");
+        .replace(
+            /public static readonly HALF_TIME: number = Bomb\.TRAVEL_TIME \/ 2;/g,
+            "public static readonly HALF_TIME: number = javaIntDiv(Bomb.TRAVEL_TIME, 2);"
+        )
+        .replace(
+            /public static readonly HALF_TIME: number = Grenade\.TRAVEL_TIME \/ 2;/g,
+            "public static readonly HALF_TIME: number = javaIntDiv(Grenade.TRAVEL_TIME, 2);"
+        )
+        .replace(/let HALF_TIME = BossHelicopter\.POSITION_DRIFT_TIME \/ 2;/g, "let HALF_TIME = javaIntDiv(BossHelicopter.POSITION_DRIFT_TIME, 2);")
+        .replace(
+            /public static readonly PERIOD0: number = TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
+            "public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);"
+        )
+        .replace(
+            /public static readonly PERIOD1: number = 2 \* TravelingExplosion\.TRAVEL_TIME \/ 3;/g,
+            "public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);"
+        )
+        .replace(/new Color\(0, 0, 0, 255 \* i \/ \(Main\.FADES\.length - 1\)\)/g, "new Color(0, 0, 0, javaIntDiv(255 * i, Main.FADES.length - 1))")
+        .replace(
+            /\(\(before - 20000\) \/ 50000 != \(this\.score - 20000\) \/ 50000\)/g,
+            "(javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000))"
+        );
 }
 
 function rewriteKnownJavaCharArithmetic(text) {
     return text
-        .replace(/for\(let i = 0; i < digits; i\+\+, x -= 32, value \/= 10\) \{\n\s*font\['0' \+ \(value % 10\)\]\.draw\(x, y\);/g,
-            "for(let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {\n      font[String.fromCharCode('0'.charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);")
-        .replace("case '@':\n        return \"copyright\";",
-            "case '@':\n      case '\\u00a9':\n        return \"copyright\";");
+        .replace(
+            /for\(let i = 0; i < digits; i\+\+, x -= 32, value \/= 10\) \{\n\s*font\['0' \+ \(value % 10\)\]\.draw\(x, y\);/g,
+            "for(let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {\n      font[String.fromCharCode('0'.charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);"
+        )
+        .replace("case '@':\n        return \"copyright\";", "case '@':\n      case '\\u00a9':\n        return \"copyright\";");
 }
 
 function rewriteKnownJavaFloatRound(text) {
     return text
-        .replace(/javaInt\(Math\.round\(d \/ BossBlueTank\.SPEED\)\)/g,
-            "javaRoundFloat(d / BossBlueTank.SPEED)")
-        .replace(/javaInt\(Math\.round\(d \/ BrownTank\.SPEED\)\)/g,
-            "javaRoundFloat(d / BrownTank.SPEED)")
-        .replace(/javaInt\(Math\.round\(d \/ FireTank\.SPEED\)\)/g,
-            "javaRoundFloat(d / FireTank.SPEED)")
-        .replace(/javaInt\(Math\.round\(d \/ GrayJeep\.SPEED\)\)/g,
-            "javaRoundFloat(d / GrayJeep.SPEED)")
-        .replace(/javaInt\(Math\.round\(d \/ GrayTank\.SPEED\)\)/g,
-            "javaRoundFloat(d / GrayTank.SPEED)")
-        .replace(/javaInt\(Math\.round\(angle \/ 45\)\)/g,
-            "javaRoundFloat(angle / 45)")
-        .replace(/Math\.round\(ang \/ 45\)/g,
-            "javaRoundFloat(ang / 45)");
+        .replace(/javaInt\(Math\.round\(d \/ BossBlueTank\.SPEED\)\)/g, "javaRoundFloat(d / BossBlueTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ BrownTank\.SPEED\)\)/g, "javaRoundFloat(d / BrownTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ FireTank\.SPEED\)\)/g, "javaRoundFloat(d / FireTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ GrayJeep\.SPEED\)\)/g, "javaRoundFloat(d / GrayJeep.SPEED)")
+        .replace(/javaInt\(Math\.round\(d \/ GrayTank\.SPEED\)\)/g, "javaRoundFloat(d / GrayTank.SPEED)")
+        .replace(/javaInt\(Math\.round\(angle \/ 45\)\)/g, "javaRoundFloat(angle / 45)")
+        .replace(/Math\.round\(ang \/ 45\)/g, "javaRoundFloat(ang / 45)");
 }
 
 function convertInterface(body, className) {
@@ -359,9 +346,12 @@ function convertInterface(body, className) {
     const converted = body
         .replace(/^\s*public\s+/gm, "    ")
         .replace(/\bthrows\s+[A-Za-z0-9_.,\s]+(?=;)/g, "")
-        .replace(/^\s*(void|boolean|byte|char|double|float|int|long|short|String|[A-Z]\w*(?:\[\])?)\s+(\w+)\s*\(([^)]*)\)\s*;/gm, (_match, returnType, name, params) => {
-            return `    ${name}(${convertParams(params)}): ${convertReturnType(returnType)};`;
-        });
+        .replace(
+            /^\s*(void|boolean|byte|char|double|float|int|long|short|String|[A-Z]\w*(?:\[\])?)\s+(\w+)\s*\(([^)]*)\)\s*;/gm,
+            (_match, returnType, name, params) => {
+                return `    ${name}(${convertParams(params)}): ${convertReturnType(returnType)};`;
+            }
+        );
     return `export interface ${className} {\n${converted.trim()}\n}\n`;
 }
 
@@ -403,7 +393,8 @@ function buildMetadata(source, className) {
         fields.push({ name, type, static: Boolean(match[2]) || Boolean(interfaceMatch) });
     }
 
-    const methodRegex = /^[ \t]{0,2}(public|private|protected)\s+(static\s+)?(?:final\s+)?(?:abstract\s+)?([A-Za-z_][A-Za-z0-9_<>,.\[\]\s]*?)\s+(\w+)\s*\(([^)]*)\)/gm;
+    const methodRegex =
+        /^[ \t]{0,2}(public|private|protected)\s+(static\s+)?(?:final\s+)?(?:abstract\s+)?([A-Za-z_][A-Za-z0-9_<>,.\[\]\s]*?)\s+(\w+)\s*\(([^)]*)\)/gm;
     for (const match of stripped.matchAll(methodRegex)) {
         const name = match[4];
         if (name === className) {
@@ -473,16 +464,11 @@ function rewriteQualifiedNestedEnumReferences(text) {
     let output = text;
     for (const [ownerClassName, metadata] of metadataByClass.entries()) {
         for (const enumName of metadata.nestedEnums.keys()) {
-            const simpleName = enumName.startsWith(ownerClassName)
-                ? enumName.slice(ownerClassName.length)
-                : enumName;
+            const simpleName = enumName.startsWith(ownerClassName) ? enumName.slice(ownerClassName.length) : enumName;
             if (!simpleName) {
                 continue;
             }
-            const pattern = new RegExp(
-                `\\b${escapeRegExp(ownerClassName)}\\.${escapeRegExp(simpleName)}\\b`,
-                "g"
-            );
+            const pattern = new RegExp(`\\b${escapeRegExp(ownerClassName)}\\.${escapeRegExp(simpleName)}\\b`, "g");
             output = output.replace(pattern, enumName);
         }
     }
@@ -518,10 +504,7 @@ function rewriteQualifiedNestedEnumFieldValues(text, className) {
 }
 
 function collapseSplitFieldInitializers(text) {
-    return text.replace(
-        /^(\s*(?:public|private|protected)\s+(?:static\s+)?(?:final\s+)?[A-Za-z0-9_<>,.\[\]]+\s+\w+)\s*\n\s*=/gm,
-        "$1 ="
-    );
+    return text.replace(/^(\s*(?:public|private|protected)\s+(?:static\s+)?(?:final\s+)?[A-Za-z0-9_<>,.\[\]]+\s+\w+)\s*\n\s*=/gm, "$1 =");
 }
 
 function sanitizeGenericTypeSpacing(text) {
@@ -598,9 +581,7 @@ function convertConstructors(text, className) {
         let body = ctor.body
             .replace(/^(\s*)this\s*\(([^;]*)\);/m, (_match, leadingWhitespace, args) => {
                 const trimmedArgs = args.trim();
-                const delegatedArity = trimmedArgs === ""
-                    ? 0
-                    : splitTopLevel(trimmedArgs, ",").filter((arg) => arg.trim().length > 0).length;
+                const delegatedArity = trimmedArgs === "" ? 0 : splitTopLevel(trimmedArgs, ",").filter((arg) => arg.trim().length > 0).length;
                 const delegatedArgs = trimmedArgs === "" ? "" : `, ${trimmedArgs}`;
                 return `${leadingWhitespace}this.${helperName}(${delegatedArity}${delegatedArgs});`;
             })
@@ -631,7 +612,9 @@ function convertConstructors(text, className) {
         "    throw new Error(`No Java constructor overload matched arguments: ${argCount}`);",
         "  }",
         ""
-    ].filter((line) => line !== "").join("\n");
+    ]
+        .filter((line) => line !== "")
+        .join("\n");
     return `${stripped.slice(0, insertAt)}${dispatch}${stripped.slice(insertAt)}`;
 }
 
@@ -666,9 +649,7 @@ function findMaxConstructorCallArity(className) {
             const openParen = source.indexOf("(", match.index);
             const closeParen = findMatchingParen(source, openParen);
             const args = source.slice(openParen + 1, closeParen).trim();
-            const arity = args === ""
-                ? 0
-                : splitTopLevel(args, ",").filter((arg) => arg.trim().length > 0).length;
+            const arity = args === "" ? 0 : splitTopLevel(args, ",").filter((arg) => arg.trim().length > 0).length;
             maxArity = Math.max(maxArity, arity);
             pattern.lastIndex = closeParen + 1;
         }
@@ -679,12 +660,8 @@ function findMaxConstructorCallArity(className) {
 function buildConstructorBranch(params, body, index, argNames) {
     const fixedParams = params.filter((param) => !param.varargs);
     const minimumLength = fixedParams.length;
-    const lengthCheck = params.some((param) => param.varargs)
-        ? `argCount >= ${minimumLength}`
-        : `argCount === ${params.length}`;
-    const guards = fixedParams
-        .map((param, paramIndex) => primitiveGuard(param.type, argNames[paramIndex] ?? `arguments[${paramIndex + 1}]`))
-        .filter(Boolean);
+    const lengthCheck = params.some((param) => param.varargs) ? `argCount >= ${minimumLength}` : `argCount === ${params.length}`;
+    const guards = fixedParams.map((param, paramIndex) => primitiveGuard(param.type, argNames[paramIndex] ?? `arguments[${paramIndex + 1}]`)).filter(Boolean);
     const condition = [lengthCheck, ...guards].join(" && ");
     const declarations = params.map((param, paramIndex) => {
         if (param.varargs) {
@@ -693,13 +670,7 @@ function buildConstructorBranch(params, body, index, argNames) {
         }
         return `let ${param.name} = ${argNames[paramIndex]};`;
     });
-    return [
-        `    if (${condition}) {`,
-        ...declarations.map((line) => `        ${line}`),
-        body,
-        `        return;`,
-        `    }`
-    ].filter(Boolean).join("\n");
+    return [`    if (${condition}) {`, ...declarations.map((line) => `        ${line}`), body, `        return;`, `    }`].filter(Boolean).join("\n");
 }
 
 function primitiveGuard(type, argExpression) {
@@ -760,12 +731,7 @@ function convertFieldDeclarations(text, metadata, className) {
 
 function applyGameElementFieldDefaultSemantics(text, className) {
     if (className === "GameElement") {
-        text = insertClassMember(text, className, [
-            "",
-            "  protected __initializeJavaSubclassDefaults(): void {",
-            "  }",
-            ""
-        ].join("\n"));
+        text = insertClassMember(text, className, ["", "  protected __initializeJavaSubclassDefaults(): void {", "  }", ""].join("\n"));
         return text.replace(
             /(\s*this\.gameMode = Main\.gameMode;\s*\n)(\s*this\.init\(\);)/,
             "$1\n                this.__initializeJavaSubclassDefaults();\n$2"
@@ -818,7 +784,10 @@ function convertArrayAllocations(text) {
     let output = text;
     output = output
         .replace(/new\s+int\s*\[stage\.tileMap\.length\]\s*\[stage\.tileMap\[0\]\.length\]/g, "java2DArray(stage.tileMap.length, stage.tileMap[0].length, 0)")
-        .replace(/new\s+int\s*\[stage\.typesMap\.length\]\s*\[stage\.typesMap\[0\]\.length\]/g, "java2DArray(stage.typesMap.length, stage.typesMap[0].length, 0)");
+        .replace(
+            /new\s+int\s*\[stage\.typesMap\.length\]\s*\[stage\.typesMap\[0\]\.length\]/g,
+            "java2DArray(stage.typesMap.length, stage.typesMap[0].length, 0)"
+        );
     output = output.replace(/new\s+([A-Za-z_]\w*(?:\.\w+)?)\s*\[([^\]]+)\]\s*\[([^\]]+)\]\s*\[([^\]]+)\]\s*\[([^\]]+)\]/g, (_match, type, a, b, c, d) => {
         return `java4DArray(${a}, ${b}, ${c}, ${d}, ${defaultArrayValue(type)})`;
     });
@@ -839,28 +808,19 @@ function convertArrayAllocations(text) {
 
 function convertLocalDeclarations(text) {
     let output = text;
-    output = output.replace(
-        /for\s*\(\s*(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*=/g,
-        "for(let $2 ="
-    );
-    output = output.replace(
-        /^(\s*)(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n=]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*=/gm,
-        (match, indentText, type, name) => {
-            if (!isLikelyType(type)) {
-                return match;
-            }
-            return `${indentText}let ${name} =`;
+    output = output.replace(/for\s*\(\s*(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*=/g, "for(let $2 =");
+    output = output.replace(/^(\s*)(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n=]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*=/gm, (match, indentText, type, name) => {
+        if (!isLikelyType(type)) {
+            return match;
         }
-    );
-    output = output.replace(
-        /^(\s*)(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n=]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*;/gm,
-        (match, indentText, type, name) => {
-            if (!isLikelyType(type)) {
-                return match;
-            }
-            return `${indentText}let ${name}: any = ${defaultValue(type)};`;
+        return `${indentText}let ${name} =`;
+    });
+    output = output.replace(/^(\s*)(?:final\s+)?([A-Za-z_]\w*(?:\.\w+)?(?:<[^;\n=]+>)?(?:\[\])*)\s+([A-Za-z_]\w*)\s*;/gm, (match, indentText, type, name) => {
+        if (!isLikelyType(type)) {
+            return match;
         }
-    );
+        return `${indentText}let ${name}: any = ${defaultValue(type)};`;
+    });
     return output;
 }
 
@@ -874,22 +834,16 @@ function convertCasts(text) {
         ["long", "javaLong"],
         ["short", "javaShort"]
     ]);
-    const removableTypes = [
-        ...classNames,
-        "boolean",
-        "String",
-        "Image",
-        "Music",
-        "Sound",
-        "Stage",
-        "Point2D.Float"
-    ].sort((a, b) => b.length - a.length).map(escapeRegExp).join("|");
+    const removableTypes = [...classNames, "boolean", "String", "Image", "Music", "Sound", "Stage", "Point2D.Float"]
+        .sort((a, b) => b.length - a.length)
+        .map(escapeRegExp)
+        .join("|");
     const removableCast = new RegExp(`^\\(\\s*(?:${removableTypes})(?:\\[\\])*\\s*\\)`);
     let output = "";
     let index = 0;
     while (index < text.length) {
         const ch = text[index];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             const end = readStringLike(text, index, ch);
             output += text.slice(index, end);
             index = end;
@@ -989,7 +943,7 @@ function findMatchingBracket(text, openIndex, openChar, closeChar) {
     let depth = 0;
     for (let i = openIndex; i < text.length; i++) {
         const ch = text[i];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             i = readStringLike(text, i, ch) - 1;
             continue;
         }
@@ -1168,13 +1122,10 @@ function emptyMembers() {
 }
 
 function rewriteFieldInitializers(text, className, members) {
-    return text.replace(
-        /^(\s*(?:public|private|protected)\s+(?:static\s+)?(?:readonly\s+)?\w+\s*:[^=]+?=\s*)([^;]+);/gm,
-        (match, prefix, initializer) => {
-            const isStatic = /\sstatic\s/.test(prefix);
-            return `${prefix}${replaceIdentifiers(initializer, new Set(), className, members, isStatic)};`;
-        }
-    );
+    return text.replace(/^(\s*(?:public|private|protected)\s+(?:static\s+)?(?:readonly\s+)?\w+\s*:[^=]+?=\s*)([^;]+);/gm, (match, prefix, initializer) => {
+        const isStatic = /\sstatic\s/.test(prefix);
+        return `${prefix}${replaceIdentifiers(initializer, new Set(), className, members, isStatic)};`;
+    });
 }
 
 function rewriteStaticBlocks(text, className, members, metadata) {
@@ -1260,7 +1211,7 @@ function findLocalScopeEnd(source, declarationStart) {
     let depth = declarationDepth;
     while (index < source.length) {
         const ch = source[index];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             index = readStringLike(source, index, ch);
             continue;
         }
@@ -1292,7 +1243,7 @@ function braceDepthAt(source, targetIndex) {
     let index = 0;
     while (index < targetIndex) {
         const ch = source[index];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             index = readStringLike(source, index, ch);
             continue;
         }
@@ -1325,7 +1276,7 @@ function renameIdentifierInRange(source, name, replacement, start, end) {
             continue;
         }
         const ch = source[index];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             const next = readStringLike(source, index, ch);
             result += source.slice(index, next);
             index = next;
@@ -1384,7 +1335,7 @@ function replaceIdentifiers(source, locals, className, members, isStaticContext,
     let index = 0;
     while (index < source.length) {
         const ch = source[index];
-        if (ch === "\"" || ch === "'" || ch === "`") {
+        if (ch === '"' || ch === "'" || ch === "`") {
             const end = readStringLike(source, index, ch);
             result += source.slice(index, end);
             index = end;
@@ -1425,7 +1376,7 @@ function replacementForToken(source, start, end, token, locals, className, membe
         return token;
     }
     const previous = previousNonWhitespace(source, start);
-    if (previous === "." || previous === "\"" || previous === "'") {
+    if (previous === "." || previous === '"' || previous === "'") {
         return token;
     }
     const next = nextNonWhitespace(source, end);
@@ -1459,20 +1410,22 @@ function replacementForToken(source, start, end, token, locals, className, membe
 }
 
 function shouldNeverRewrite(token) {
-    return reservedWords.has(token)
-        || classNameSet.has(token)
-        || slickImports.includes(token)
-        || runtimeImports.includes(token)
-        || token === "console"
-        || token === "Error"
-        || token === "Array"
-        || token === "Math"
-        || token === "Date"
-        || token === "Number"
-        || token === "String"
-        || token === "Boolean"
-        || token === "BigInt"
-        || token === "ResourceLoader";
+    return (
+        reservedWords.has(token) ||
+        classNameSet.has(token) ||
+        slickImports.includes(token) ||
+        runtimeImports.includes(token) ||
+        token === "console" ||
+        token === "Error" ||
+        token === "Array" ||
+        token === "Math" ||
+        token === "Date" ||
+        token === "Number" ||
+        token === "String" ||
+        token === "Boolean" ||
+        token === "BigInt" ||
+        token === "ResourceLoader"
+    );
 }
 
 function previousNonWhitespace(source, index) {
@@ -1548,10 +1501,7 @@ function collapseDuplicateMethods(text, className) {
         dispatcherByStart.set(sortedGroup[0].start, buildMethodDispatcher(sortedGroup, overloadMetadata, className));
         for (let i = 0; i < sortedGroup.length; i++) {
             const method = sortedGroup[i];
-            const renamed = method.source.replace(
-                new RegExp(`\\b${escapeRegExp(method.name)}\\s*\\(`),
-                `${method.name}__overload${i}(`
-            );
+            const renamed = method.source.replace(new RegExp(`\\b${escapeRegExp(method.name)}\\s*\\(`), `${method.name}__overload${i}(`);
             duplicateMethods.set(method.start, { ...method, source: renamed });
         }
     }
@@ -1602,10 +1552,7 @@ function buildMethodDispatcher(group, overloadMetadata, className) {
     const maxArity = Math.max(...arities);
     const argNames = Array.from({ length: maxArity }, (_value, index) => `arg${index}`);
     const signatureParams = argNames.map((name) => `${name}?: any`).join(", ");
-    const lines = [
-        `  ${first.access}${staticText} ${first.name}(${signatureParams}): any {`,
-        "    const argCount = arguments.length;"
-    ];
+    const lines = [`  ${first.access}${staticText} ${first.name}(${signatureParams}): any {`, "    const argCount = arguments.length;"];
     for (let i = 0; i < group.length; i++) {
         const method = group[i];
         const params = splitTopLevel(method.params, ",").filter((param) => param.trim().length > 0);
@@ -1624,37 +1571,41 @@ function buildMethodDispatcher(group, overloadMetadata, className) {
 }
 
 function buildOverloadGuards(types, argNames) {
-    return types.map((type, index) => {
-        const arg = argNames[index] ?? `arguments[${index}]`;
-        const normalized = normalizeType(type);
-        if (numericTypes.has(normalized)) {
-            return `typeof ${arg} === "number"`;
-        }
-        if (normalized === "boolean") {
-            return `typeof ${arg} === "boolean"`;
-        }
-        if (normalized === "String") {
-            return `typeof ${arg} === "string"`;
-        }
-        if (normalized.endsWith("[]")) {
-            return `Array.isArray(${arg})`;
-        }
-        const bare = normalized.replace(/<.*>/g, "");
-        if (classNameSet.has(bare) || slickImports.includes(bare)) {
-            return `(${arg} === null || ${arg} instanceof ${bare})`;
-        }
-        return "";
-    }).filter(Boolean);
+    return types
+        .map((type, index) => {
+            const arg = argNames[index] ?? `arguments[${index}]`;
+            const normalized = normalizeType(type);
+            if (numericTypes.has(normalized)) {
+                return `typeof ${arg} === "number"`;
+            }
+            if (normalized === "boolean") {
+                return `typeof ${arg} === "boolean"`;
+            }
+            if (normalized === "String") {
+                return `typeof ${arg} === "string"`;
+            }
+            if (normalized.endsWith("[]")) {
+                return `Array.isArray(${arg})`;
+            }
+            const bare = normalized.replace(/<.*>/g, "");
+            if (classNameSet.has(bare) || slickImports.includes(bare)) {
+                return `(${arg} === null || ${arg} instanceof ${bare})`;
+            }
+            return "";
+        })
+        .filter(Boolean);
 }
 
 function convertParams(params) {
     const parsed = parseParams(params);
-    return parsed.map((param) => {
-        if (param.varargs) {
-            return `...${param.name}: any[]`;
-        }
-        return `${param.name}: any`;
-    }).join(", ");
+    return parsed
+        .map((param) => {
+            if (param.varargs) {
+                return `...${param.name}: any[]`;
+            }
+            return `${param.name}: any`;
+        })
+        .join(", ");
 }
 
 function parseParams(params) {
@@ -1667,7 +1618,10 @@ function parseParams(params) {
         const varargs = clean.includes("...");
         const parts = clean.replace("...", " ... ").trim().split(/\s+/);
         const name = parts[parts.length - 1];
-        const type = parts.slice(0, -1).join(" ").replace(/\s+\.\.\.\s*$/, "");
+        const type = parts
+            .slice(0, -1)
+            .join(" ")
+            .replace(/\s+\.\.\.\s*$/, "");
         return {
             type: type.replace("...", "").trim(),
             name,
@@ -1764,12 +1718,14 @@ function normalizeType(type) {
 
 function isLikelyType(type) {
     const normalized = normalizeType(type);
-    return primitiveTypes.has(normalized)
-        || normalized.endsWith("[]")
-        || classNameSet.has(normalized)
-        || slickImports.includes(normalized)
-        || runtimeImports.includes(normalized)
-        || /^[A-Z]\w*(?:\.\w+)?$/.test(normalized);
+    return (
+        primitiveTypes.has(normalized) ||
+        normalized.endsWith("[]") ||
+        classNameSet.has(normalized) ||
+        slickImports.includes(normalized) ||
+        runtimeImports.includes(normalized) ||
+        /^[A-Z]\w*(?:\.\w+)?$/.test(normalized)
+    );
 }
 
 function findMatchingBrace(text, openIndex) {
@@ -1788,7 +1744,7 @@ function findMatchingBrace(text, openIndex) {
             }
             continue;
         }
-        if (ch === "\"" || ch === "'") {
+        if (ch === '"' || ch === "'") {
             stringQuote = ch;
             continue;
         }
@@ -1807,7 +1763,7 @@ function findMatchingBrace(text, openIndex) {
 function buildDependencyImports(text, className) {
     const imports = [];
     if (/\bMainConstants\./.test(text)) {
-        imports.push("import { MainConstants } from \"../java/MainConstants.js\";");
+        imports.push('import { MainConstants } from "../java/MainConstants.js";');
     }
     for (const name of classNames) {
         if (name === className) {
@@ -1849,7 +1805,10 @@ function indent(text, spaces) {
         return "";
     }
     const pad = " ".repeat(spaces);
-    return text.split("\n").map((line) => line.trim() ? `${pad}${line}` : line).join("\n");
+    return text
+        .split("\n")
+        .map((line) => (line.trim() ? `${pad}${line}` : line))
+        .join("\n");
 }
 
 function escapeRegExp(value) {

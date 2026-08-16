@@ -1,68 +1,118 @@
 // @ts-nocheck
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import {
+    AppGameContainer,
+    ApplicationGameContainer,
+    BasicGame,
+    Color,
+    Cursor,
+    Display,
+    GameContainer,
+    GL11,
+    Graphics,
+    Image,
+    Input,
+    Log,
+    Music,
+    Mouse,
+    ResourceLoader,
+    ScalableGame,
+    SlickException,
+    Sound,
+    SoundStore,
+    Sys,
+    XMLPackedSheet
+} from "slick2d-ts";
+import {
+    ArrayList,
+    Arrays,
+    BufferedInputStream,
+    Character,
+    Class,
+    Collections,
+    DataInputStream,
+    HashMap,
+    Integer,
+    JAVA_LONG_LOW_3_BITS,
+    JAVA_LONG_PACKED_3BIT_SHIFTS,
+    JavaString,
+    Point2D,
+    Random,
+    System,
+    java2DArray,
+    java3DArray,
+    java4DArray,
+    javaArray,
+    javaByte,
+    javaChar,
+    javaDouble,
+    javaFloat,
+    javaInt,
+    javaIntDiv,
+    javaLong,
+    javaRoundFloat,
+    javaShort,
+    rotatePoint
+} from "../java/JavaRuntime.js";
 export class Triggers {
-
-  public static readonly GRAY_GUN: number = 0;
-  public static readonly SOLDIER_WALKER: number = 1;
-  public static readonly SOLDIER_STATIONARY: number = 2;
-  public static readonly GREEN_BOAT: number = 3;
-  public static readonly BROWN_TANK: number = 4;
-  public static readonly FRIENDLY_HELICOPTER_LANDING: number = 5;
-  public static readonly YELLOW_GUN: number = 6;
-  public static readonly STAR_BROWN: number = 7;
-  public static readonly GRAY_TANK: number = 8;
-  public static readonly STAR_FLASHING: number = 9;
-  public static readonly AIRPLANE: number = 10;
-  public static readonly GRAY_JEEP: number = 11;
-  public static readonly PARKED_GRAY_JEEP: number = 12;
-  public static readonly GRAY_BOAT: number = 13;
-  public static readonly APPEARING_SOLDIER: number = 14;
-  public static readonly APPEARING_BROWN_TANK: number = 15;
-  public static readonly SUBMARINE: number = 16;
-  public static readonly TROOPS_TRUCK: number = 17;
-  public static readonly FLOOR_GUN: number = 18;
-  public static readonly SWAMP_MISSILE_LAUNCHER: number = 19;
-  public static readonly ROCK: number = 20;
-  public static readonly CANNON_TRUCK_RIGHT: number = 21;
-  public static readonly MINE: number = 22;
-  public static readonly CLIFF_MISSILE_LAUNCHER: number = 23;
-  public static readonly TRAIN: number = 24;
-  public static readonly CANNON_TRUCK_LEFT: number = 25;
-  public static readonly HOUSE_LEFT: number = 26;
-  public static readonly HOUSE_RIGHT: number = 27;
-  public static readonly HUT: number = 28;
-  public static readonly SHACK: number = 29;
-  public static readonly GATE: number = 30;
-  public static readonly TANK_SHACK: number = 31;
-  public static readonly CLIFF_GUN: number = 32;
-  public static readonly FIRE_TANK: number = 33;
-  public static readonly SOLDIER_FIRE: number = 34;
-  public static readonly PARKED_BROWN_TANK: number = 35;
-  public static readonly PLAYER: number = 36;
-  public static readonly GREEN_GUN: number = 37;
-  public static readonly APPEARING_PLANE: number = 38;
-  public static readonly ENEMY_HELICOPTER: number = 39;
-  public static readonly FLOOR_GUN_PLAIN: number = 40;
-  public static readonly BROWN_GUN: number = 41;
-  public static readonly APPEARING_ENEMY_HELICOPTER: number = 42;
-  public static readonly APPEARING_GRAY_JEEP: number = 43;
-  public static readonly FLOOR_MISSILE_LAUNCHER: number = 44;
-  public static readonly STATUE_NONE: number = 45;
-  public static readonly STATUE_LEFT: number = 46;
-  public static readonly STATUE_RIGHT: number = 47;
-  public static readonly COLUMN: number = 48;
-  public static readonly LANDING_PORT_LEFT: number = 49;
-  public static readonly LANDING_PORT_RIGHT: number = 50;
-  public static readonly LANDING_PORT_CIRCLE: number = 51;
-  public static readonly BOSS_BLUE_TANKS: number = 52;
-  public static readonly BOSS_STATUES: number = 53;
-  public static readonly LASER: number = 54;
-  public static readonly BOSS_SHIP: number = 55;
-  public static readonly BOSS_HELICOPTER: number = 56;
-  public static readonly STAR_GREEN: number = 57;
-  public static readonly BOSS_GARAGE: number = 58;
-  public static readonly BOSS_HEADQUARTERS: number = 59;
-  public static readonly CHINOOK: number = 60;
-
+    public static readonly GRAY_GUN: number = 0;
+    public static readonly SOLDIER_WALKER: number = 1;
+    public static readonly SOLDIER_STATIONARY: number = 2;
+    public static readonly GREEN_BOAT: number = 3;
+    public static readonly BROWN_TANK: number = 4;
+    public static readonly FRIENDLY_HELICOPTER_LANDING: number = 5;
+    public static readonly YELLOW_GUN: number = 6;
+    public static readonly STAR_BROWN: number = 7;
+    public static readonly GRAY_TANK: number = 8;
+    public static readonly STAR_FLASHING: number = 9;
+    public static readonly AIRPLANE: number = 10;
+    public static readonly GRAY_JEEP: number = 11;
+    public static readonly PARKED_GRAY_JEEP: number = 12;
+    public static readonly GRAY_BOAT: number = 13;
+    public static readonly APPEARING_SOLDIER: number = 14;
+    public static readonly APPEARING_BROWN_TANK: number = 15;
+    public static readonly SUBMARINE: number = 16;
+    public static readonly TROOPS_TRUCK: number = 17;
+    public static readonly FLOOR_GUN: number = 18;
+    public static readonly SWAMP_MISSILE_LAUNCHER: number = 19;
+    public static readonly ROCK: number = 20;
+    public static readonly CANNON_TRUCK_RIGHT: number = 21;
+    public static readonly MINE: number = 22;
+    public static readonly CLIFF_MISSILE_LAUNCHER: number = 23;
+    public static readonly TRAIN: number = 24;
+    public static readonly CANNON_TRUCK_LEFT: number = 25;
+    public static readonly HOUSE_LEFT: number = 26;
+    public static readonly HOUSE_RIGHT: number = 27;
+    public static readonly HUT: number = 28;
+    public static readonly SHACK: number = 29;
+    public static readonly GATE: number = 30;
+    public static readonly TANK_SHACK: number = 31;
+    public static readonly CLIFF_GUN: number = 32;
+    public static readonly FIRE_TANK: number = 33;
+    public static readonly SOLDIER_FIRE: number = 34;
+    public static readonly PARKED_BROWN_TANK: number = 35;
+    public static readonly PLAYER: number = 36;
+    public static readonly GREEN_GUN: number = 37;
+    public static readonly APPEARING_PLANE: number = 38;
+    public static readonly ENEMY_HELICOPTER: number = 39;
+    public static readonly FLOOR_GUN_PLAIN: number = 40;
+    public static readonly BROWN_GUN: number = 41;
+    public static readonly APPEARING_ENEMY_HELICOPTER: number = 42;
+    public static readonly APPEARING_GRAY_JEEP: number = 43;
+    public static readonly FLOOR_MISSILE_LAUNCHER: number = 44;
+    public static readonly STATUE_NONE: number = 45;
+    public static readonly STATUE_LEFT: number = 46;
+    public static readonly STATUE_RIGHT: number = 47;
+    public static readonly COLUMN: number = 48;
+    public static readonly LANDING_PORT_LEFT: number = 49;
+    public static readonly LANDING_PORT_RIGHT: number = 50;
+    public static readonly LANDING_PORT_CIRCLE: number = 51;
+    public static readonly BOSS_BLUE_TANKS: number = 52;
+    public static readonly BOSS_STATUES: number = 53;
+    public static readonly LASER: number = 54;
+    public static readonly BOSS_SHIP: number = 55;
+    public static readonly BOSS_HELICOPTER: number = 56;
+    public static readonly STAR_GREEN: number = 57;
+    public static readonly BOSS_GARAGE: number = 58;
+    public static readonly BOSS_HEADQUARTERS: number = 59;
+    public static readonly CHINOOK: number = 60;
 }

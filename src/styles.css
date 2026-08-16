@@ -169,7 +169,13 @@ button {
 }
 
 #volume-input::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, var(--title-cream) 0%, var(--title-cream) var(--thumb-position, 50%), var(--title-mountain-brown) var(--thumb-position, 50%), var(--title-mountain-brown) 100%);
+    background: linear-gradient(
+        to right,
+        var(--title-cream) 0%,
+        var(--title-cream) var(--thumb-position, 50%),
+        var(--title-mountain-brown) var(--thumb-position, 50%),
+        var(--title-mountain-brown) 100%
+    );
     border-radius: 10px;
     height: 8px;
 }
@@ -331,7 +337,9 @@ button {
 }
 
 .hamburger-button span {
-    box-shadow: 0 7px 0 #ffffff, 0 -7px 0 #ffffff;
+    box-shadow:
+        0 7px 0 #ffffff,
+        0 -7px 0 #ffffff;
 }
 
 .hamburger-button::before,
@@ -348,7 +356,9 @@ button {
 .hamburger-button:hover span,
 .hamburger-button:focus-visible span {
     background: #ffffff;
-    box-shadow: 0 7px 0 #ffffff, 0 -7px 0 #ffffff;
+    box-shadow:
+        0 7px 0 #ffffff,
+        0 -7px 0 #ffffff;
 }
 
 .hamburger-button[hidden] {

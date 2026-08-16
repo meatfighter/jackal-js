@@ -115,6 +115,4 @@ export type JackalStandaloneModeStateSnapshot = JackalBaseStateSnapshot & {
     modeExtra?: GenericModeExtraSnapshot;
 };
 
-export type JackalGameStateSnapshot =
-    | JackalGameModeStateSnapshot
-    | JackalStandaloneModeStateSnapshot;
+export type JackalGameStateSnapshot = JackalGameModeStateSnapshot | JackalStandaloneModeStateSnapshot;

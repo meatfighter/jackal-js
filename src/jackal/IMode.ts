@@ -1,8 +1,60 @@
 // @ts-nocheck
-import { AppGameContainer, ApplicationGameContainer, BasicGame, Color, Cursor, Display, GameContainer, GL11, Graphics, Image, Input, Log, Music, Mouse, ResourceLoader, ScalableGame, SlickException, Sound, SoundStore, Sys, XMLPackedSheet } from "slick2d-ts";
-import { ArrayList, Arrays, BufferedInputStream, Character, Class, Collections, DataInputStream, HashMap, Integer, JAVA_LONG_LOW_3_BITS, JAVA_LONG_PACKED_3BIT_SHIFTS, JavaString, Point2D, Random, System, java2DArray, java3DArray, java4DArray, javaArray, javaByte, javaChar, javaDouble, javaFloat, javaInt, javaIntDiv, javaLong, javaRoundFloat, javaShort, rotatePoint } from "../java/JavaRuntime.js";
+import {
+    AppGameContainer,
+    ApplicationGameContainer,
+    BasicGame,
+    Color,
+    Cursor,
+    Display,
+    GameContainer,
+    GL11,
+    Graphics,
+    Image,
+    Input,
+    Log,
+    Music,
+    Mouse,
+    ResourceLoader,
+    ScalableGame,
+    SlickException,
+    Sound,
+    SoundStore,
+    Sys,
+    XMLPackedSheet
+} from "slick2d-ts";
+import {
+    ArrayList,
+    Arrays,
+    BufferedInputStream,
+    Character,
+    Class,
+    Collections,
+    DataInputStream,
+    HashMap,
+    Integer,
+    JAVA_LONG_LOW_3_BITS,
+    JAVA_LONG_PACKED_3BIT_SHIFTS,
+    JavaString,
+    Point2D,
+    Random,
+    System,
+    java2DArray,
+    java3DArray,
+    java4DArray,
+    javaArray,
+    javaByte,
+    javaChar,
+    javaDouble,
+    javaFloat,
+    javaInt,
+    javaIntDiv,
+    javaLong,
+    javaRoundFloat,
+    javaShort,
+    rotatePoint
+} from "../java/JavaRuntime.js";
 export interface IMode {
-init(main: any, gc: any): void;
+    init(main: any, gc: any): void;
     update(gc: any): void;
     render(gc: any, g: any): void;
 }

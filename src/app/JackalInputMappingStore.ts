@@ -27,26 +27,29 @@ export class JackalInputMappingStore {
 
     public save(buttonMapping: ButtonMapping): boolean {
         try {
-            localStorage.setItem(JackalInputMappingStore.STORAGE_KEY, JSON.stringify({
-                version: JackalInputMappingStore.SNAPSHOT_VERSION,
-                keyUp: buttonMapping.keyUp,
-                keyDown: buttonMapping.keyDown,
-                keyLeft: buttonMapping.keyLeft,
-                keyRight: buttonMapping.keyRight,
-                keyGrenade: buttonMapping.keyGrenade,
-                keyGun: buttonMapping.keyGun,
-                keyStart: buttonMapping.keyStart,
-                controller: buttonMapping.controller,
-                controllerIndex: buttonMapping.controllerIndex,
-                controllerUp: buttonMapping.controllerUp,
-                controllerDown: buttonMapping.controllerDown,
-                controllerLeft: buttonMapping.controllerLeft,
-                controllerRight: buttonMapping.controllerRight,
-                controllerGrenade: buttonMapping.controllerGrenade,
-                controllerGun: buttonMapping.controllerGun,
-                controllerStart: buttonMapping.controllerStart,
-                gunKeyMapped: buttonMapping.gunKeyMapped
-            } satisfies JackalInputMappingSnapshot));
+            localStorage.setItem(
+                JackalInputMappingStore.STORAGE_KEY,
+                JSON.stringify({
+                    version: JackalInputMappingStore.SNAPSHOT_VERSION,
+                    keyUp: buttonMapping.keyUp,
+                    keyDown: buttonMapping.keyDown,
+                    keyLeft: buttonMapping.keyLeft,
+                    keyRight: buttonMapping.keyRight,
+                    keyGrenade: buttonMapping.keyGrenade,
+                    keyGun: buttonMapping.keyGun,
+                    keyStart: buttonMapping.keyStart,
+                    controller: buttonMapping.controller,
+                    controllerIndex: buttonMapping.controllerIndex,
+                    controllerUp: buttonMapping.controllerUp,
+                    controllerDown: buttonMapping.controllerDown,
+                    controllerLeft: buttonMapping.controllerLeft,
+                    controllerRight: buttonMapping.controllerRight,
+                    controllerGrenade: buttonMapping.controllerGrenade,
+                    controllerGun: buttonMapping.controllerGun,
+                    controllerStart: buttonMapping.controllerStart,
+                    gunKeyMapped: buttonMapping.gunKeyMapped
+                } satisfies JackalInputMappingSnapshot)
+            );
             return true;
         } catch (error) {
             console.warn("Unable to save Jackal input mapping.", error);
@@ -109,26 +112,28 @@ export class JackalInputMappingStore {
     }
 
     private isSupportedSnapshot(snapshot: JackalInputMappingSnapshot): boolean {
-        return snapshot !== null
-            && typeof snapshot === "object"
-            && snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION
-            && this.isInteger(snapshot.keyUp)
-            && this.isInteger(snapshot.keyDown)
-            && this.isInteger(snapshot.keyLeft)
-            && this.isInteger(snapshot.keyRight)
-            && this.isInteger(snapshot.keyGrenade)
-            && this.isInteger(snapshot.keyGun)
-            && this.isInteger(snapshot.keyStart)
-            && typeof snapshot.controller === "boolean"
-            && this.isInteger(snapshot.controllerIndex)
-            && this.isInteger(snapshot.controllerUp)
-            && this.isInteger(snapshot.controllerDown)
-            && this.isInteger(snapshot.controllerLeft)
-            && this.isInteger(snapshot.controllerRight)
-            && this.isInteger(snapshot.controllerGrenade)
-            && this.isInteger(snapshot.controllerGun)
-            && this.isInteger(snapshot.controllerStart)
-            && typeof snapshot.gunKeyMapped === "boolean";
+        return (
+            snapshot !== null &&
+            typeof snapshot === "object" &&
+            snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
+            this.isInteger(snapshot.keyUp) &&
+            this.isInteger(snapshot.keyDown) &&
+            this.isInteger(snapshot.keyLeft) &&
+            this.isInteger(snapshot.keyRight) &&
+            this.isInteger(snapshot.keyGrenade) &&
+            this.isInteger(snapshot.keyGun) &&
+            this.isInteger(snapshot.keyStart) &&
+            typeof snapshot.controller === "boolean" &&
+            this.isInteger(snapshot.controllerIndex) &&
+            this.isInteger(snapshot.controllerUp) &&
+            this.isInteger(snapshot.controllerDown) &&
+            this.isInteger(snapshot.controllerLeft) &&
+            this.isInteger(snapshot.controllerRight) &&
+            this.isInteger(snapshot.controllerGrenade) &&
+            this.isInteger(snapshot.controllerGun) &&
+            this.isInteger(snapshot.controllerStart) &&
+            typeof snapshot.gunKeyMapped === "boolean"
+        );
     }
 
     private isInteger(value: unknown): value is number {

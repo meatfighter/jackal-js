@@ -118,8 +118,7 @@ export class Collections {
     }
 }
 
-export class Random extends JavaRandom {
-}
+export class Random extends JavaRandom {}
 
 export class System {
     public static arraycopy(source: any[], sourcePosition: number, target: any[], targetPosition: number, length: number): void {
@@ -192,8 +191,7 @@ export class DataInputStream extends BinaryReader {
 }
 
 export class Class {
-    public static forName(_name: string): void {
-    }
+    public static forName(_name: string): void {}
 }
 
 export class Point2D {

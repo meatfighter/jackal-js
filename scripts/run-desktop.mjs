@@ -13,11 +13,12 @@ if (!existsSync(jarPath)) {
     process.exit(1);
 }
 
-const script = process.platform === "win32"
-    ? join(desktopDir, "run-windows.cmd")
-    : process.platform === "darwin"
-        ? join(desktopDir, "run-macos.sh")
-        : join(desktopDir, "run-linux.sh");
+const script =
+    process.platform === "win32"
+        ? join(desktopDir, "run-windows.cmd")
+        : process.platform === "darwin"
+          ? join(desktopDir, "run-macos.sh")
+          : join(desktopDir, "run-linux.sh");
 
 const result = spawnSync(script, {
     cwd: desktopDir,
