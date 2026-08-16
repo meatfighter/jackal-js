@@ -1,5 +1,5 @@
-const APP_VERSION = "0.1.17";
-const BUILD_STAMP = "20260815T013000Z";
+const APP_VERSION = "1.0.0";
+const BUILD_STAMP = "20260816T150846Z";
 const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
 const APP_INDEX = "/index.html";
 const APP_SHELL = ["/", APP_INDEX, "/manifest.webmanifest", "/favicon.ico", "/resources/icons/32x32.png", `/index.html?v=${encodeURIComponent(BUILD_STAMP)}`];
