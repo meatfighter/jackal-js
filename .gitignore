@@ -1,4 +1,7 @@
 dist/
 desktop/target/
 node_modules/
+releases/*.zip
+releases/*.tmp
+releases/*.log
 vite-dev*.log

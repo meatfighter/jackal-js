@@ -9,7 +9,10 @@
         "dev": "vite",
         "build": "tsc -p tsconfig.json && vite build",
         "build:desktop": "node scripts/build-desktop.mjs",
+        "release:web": "npm run stamp && npm run build",
+        "release:desktop": "npm run build:desktop && node scripts/copy-desktop-release.mjs",
         "run:desktop": "node scripts/run-desktop.mjs",
+        "stamp": "node scripts/stamp-build.mjs",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",
@@ -20,6 +23,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@types/node": "^26.2.0",
         "eslint": "^10.8.0",
         "prettier": "^3.9.6",
         "typescript": "^5.9.0",

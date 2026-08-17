@@ -2,7 +2,7 @@
 
 This project depends on slick2d-ts for the browser runtime. slick2d-ts is distributed under the BSD 3-Clause License and includes attribution for selected Slick2D API behavior.
 
-Desktop Java runtime dependencies are documented separately in desktop/RUNTIME_DEPENDENCIES.md where present.
+Desktop Java runtime dependencies are documented separately in desktop/RUNTIME_DEPENDENCIES.md where present. The desktop distribution includes third-party runtime jars and native libraries for Slick2D, LWJGL 2, JInput, and JOrbis/Jogg.
 
 ## slick2d-ts
 
@@ -69,3 +69,15 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## LWJGL 2
+
+The desktop build includes `lwjgl.jar`, `lwjgl_util.jar`, and native LWJGL/OpenAL runtime libraries from the LWJGL 2 runtime set. LWJGL 2 is distributed under a BSD-style license by the Lightweight Java Game Library Project.
+
+## JInput
+
+The desktop build includes `jinput.jar` and JInput native libraries. JInput is distributed under a BSD license by the JInput project.
+
+## JOrbis/Jogg
+
+The desktop build includes `jorbis.jar`, which contains JCraft JOrbis and Jogg classes for Ogg Vorbis decoding. JOrbis is distributed under the GNU Lesser General Public License by JCraft, Inc.

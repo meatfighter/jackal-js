@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+*.cmd text eol=lf
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.png binary
+*.ico binary
+*.ogg binary
+*.jar binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.jnilib binary
+*.zip binary

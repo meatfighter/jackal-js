@@ -1,8 +1,20 @@
-const APP_VERSION = "1.0.0";
-const BUILD_STAMP = "20260816T150846Z";
-const CACHE_NAME = `jackal-${APP_VERSION}-${BUILD_STAMP}`;
-const APP_INDEX = "/index.html";
-const APP_SHELL = ["/", APP_INDEX, "/manifest.webmanifest", "/favicon.ico", "/resources/icons/32x32.png", `/index.html?v=${encodeURIComponent(BUILD_STAMP)}`];
+const APP_VERSION = "__APP_VERSION__";
+const BUILD_STAMP = "__BUILD_STAMP__";
+const CACHE_PREFIX = "jackal-";
+const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}-${BUILD_STAMP}`;
+const SCOPE_URL = new URL(self.registration.scope);
+const APP_ROOT = appUrl("./");
+const APP_INDEX = appUrl("index.html");
+const APP_SHELL = [
+    APP_ROOT,
+    APP_INDEX,
+    appUrl("manifest.webmanifest"),
+    appUrl("favicon.ico"),
+    appUrl("resources/icons/32x32.png"),
+    appUrl("resources/icons/192x192.png"),
+    appUrl("resources/icons/512x512.png"),
+    appUrl(`index.html?v=${encodeURIComponent(BUILD_STAMP)}`)
+];
 const MAX_FETCH_RETRIES = 5;
 
 self.addEventListener("install", (event) => {
@@ -11,7 +23,9 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))));
+    event.waitUntil(
+        caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map((key) => caches.delete(key))))
+    );
     self.clients.claim();
 });
 
@@ -35,7 +49,7 @@ async function networkFirstNavigation(request) {
         }
         return response;
     } catch (error) {
-        const cached = (await cache.match(APP_INDEX)) || (await cache.match("/"));
+        const cached = (await cache.match(APP_INDEX)) || (await cache.match(APP_ROOT));
         if (cached) {
             return cached;
         }
@@ -62,13 +76,18 @@ async function networkFirstWithRetry(request) {
 
 function shouldCache(request, response) {
     const url = new URL(request.url);
-    if (url.origin !== self.location.origin) {
+    if (url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) {
         return false;
     }
-    if (url.pathname === "/sw.js" || url.pathname.startsWith("/src/") || url.pathname.startsWith("/@vite") || url.pathname.includes("/node_modules/")) {
+    const scopedPath = url.pathname.slice(SCOPE_URL.pathname.length);
+    if (scopedPath === "sw.js" || scopedPath.startsWith("src/") || scopedPath.startsWith("@vite") || scopedPath.includes("node_modules/")) {
         return false;
     }
     return response.type === "basic" || response.type === "default";
+}
+
+function appUrl(path) {
+    return new URL(path, self.registration.scope).href;
 }
 
 async function fetchWithRetry(request) {

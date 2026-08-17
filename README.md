@@ -9,18 +9,22 @@ npm.cmd run dev
 npm.cmd run typecheck
 npm.cmd run lint
 npm.cmd run build
+npm.cmd run release:web
 ```
 
 The PWA version and cache stamp live in `version.json` and are mirrored into static files that browsers cache.
+Run `npm.cmd run stamp` before a production deployment when you need a new cache-busting build stamp without changing the app version.
 
 ## Desktop Java
 
 ```sh
 npm.cmd run build:desktop
+npm.cmd run release:desktop
 npm.cmd run run:desktop
 ```
 
 `desktop/src` preserves the Java desktop source and resources. The Maven/fallback desktop build is packaging support and should not be used as a source of new TypeScript gameplay behavior.
+The desktop release zip is copied into `releases/` by `npm.cmd run release:desktop`; generated zip files are ignored unless a release process intentionally publishes them.
 
 ## License
 

@@ -4,9 +4,10 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="theme-color" content="#000000" />
-        <meta name="app-version" content="0.1.17" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/resources/icons/32x32.png?v=20260815T013000Z" />
-        <link rel="manifest" href="/manifest.webmanifest?v=20260815T013000Z" />
+        <meta name="app-version" content="__APP_VERSION__" />
+        <link rel="icon" type="image/png" sizes="32x32" href="__BASE_URL__resources/icons/32x32.png?v=__BUILD_STAMP__" />
+        <link rel="apple-touch-icon" sizes="192x192" href="__BASE_URL__resources/icons/192x192.png?v=__BUILD_STAMP__" />
+        <link rel="manifest" href="__BASE_URL__manifest.webmanifest?v=__BUILD_STAMP__" />
         <title>Jackal</title>
         <style>
             html,
@@ -147,6 +148,63 @@
                 }
             </style>
         </noscript>
+        <script>
+            (function () {
+                window.__jackalBooted = false;
+
+                function getBootScreen() {
+                    return document.getElementById("static-boot-screen");
+                }
+
+                function showStaticBootFailure() {
+                    if (window.__jackalBooted) {
+                        return;
+                    }
+                    var boot = getBootScreen();
+                    if (!boot) {
+                        window.addEventListener("DOMContentLoaded", showStaticBootFailure, { once: true });
+                        return;
+                    }
+                    if (!boot.isConnected) {
+                        return;
+                    }
+                    boot.classList.add("static-boot-failed");
+                }
+
+                function hasSameOriginUrl(urlText) {
+                    try {
+                        var url = new URL(urlText, window.location.href);
+                        return url.origin === window.location.origin;
+                    } catch (error) {
+                        return false;
+                    }
+                }
+
+                function isInitialAssetFailure(target) {
+                    if (!target || window.__jackalBooted) {
+                        return false;
+                    }
+                    if (target instanceof HTMLScriptElement) {
+                        return target.type === "module" && hasSameOriginUrl(target.src);
+                    }
+                    if (target instanceof HTMLLinkElement) {
+                        return target.rel === "stylesheet" && hasSameOriginUrl(target.href);
+                    }
+                    return false;
+                }
+
+                window.addEventListener(
+                    "error",
+                    function (event) {
+                        if (isInitialAssetFailure(event.target) || (!window.__jackalBooted && event.target === window)) {
+                            showStaticBootFailure();
+                        }
+                    },
+                    true
+                );
+                window.addEventListener("unhandledrejection", showStaticBootFailure);
+            })();
+        </script>
     </head>
     <body>
         <div id="app">
@@ -164,32 +222,6 @@
                 </section>
             </main>
         </div>
-        <script>
-            (function () {
-                var boot = document.getElementById("static-boot-screen");
-                if (!boot) {
-                    return;
-                }
-
-                function showStaticBootFailure() {
-                    if (!boot.isConnected) {
-                        return;
-                    }
-                    boot.classList.add("static-boot-failed");
-                }
-
-                window.addEventListener(
-                    "error",
-                    function (event) {
-                        var target = event.target;
-                        if (target && target.id === "app-module-script") {
-                            showStaticBootFailure();
-                        }
-                    },
-                    true
-                );
-            })();
-        </script>
-        <script id="app-module-script" type="module" src="/src/main.ts?v=20260815T013000Z"></script>
+        <script type="module" src="__BASE_URL__src/main.ts?v=__BUILD_STAMP__"></script>
     </body>
 </html>

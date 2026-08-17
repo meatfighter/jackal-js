@@ -19,4 +19,4 @@ Native libraries are unpacked from the original native jars into:
 
 The Windows folder contains both 32-bit and 64-bit natives. The launch scripts intentionally point Java at the folder and let LWJGL/JInput load the matching native library for the active JVM architecture. For modern Windows 11 use, run with a 64-bit JVM.
 
-The original `jorbis.jar` contains both `com.jcraft.jorbis` and `com.jcraft.jogg`, so this project does not split it into separate JOrbis/JOrbis dependency jars.
+The original `jorbis.jar` contains both `com.jcraft.jorbis` and `com.jcraft.jogg`, so this project does not split it into separate JOrbis/Jogg dependency jars.

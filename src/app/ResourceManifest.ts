@@ -1,5 +1,7 @@
 export const RESOURCE_MANIFEST: string[] = [
     "icons/32x32.png",
+    "icons/192x192.png",
+    "icons/512x512.png",
     "images/font.png",
     "images/font.xml",
     "images/jeep-here.dat",

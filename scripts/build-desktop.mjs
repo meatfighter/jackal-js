@@ -1,7 +1,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { distDir, readVersion, rootDir } from "./build-utils.mjs";
+import { readVersion, rootDir } from "./build-utils.mjs";
 
 const version = readVersion();
 const desktopDir = join(rootDir, "desktop");
@@ -259,6 +259,3 @@ if (!tryNativeMaven() && !tryWslMaven()) {
 
 console.log(`Built ${relative(rootDir, stableJarPath)}`);
 console.log(`Built ${relative(rootDir, stableZipPath)}`);
-if (existsSync(distDir)) {
-    console.log("Run npm run build:desktop again after web builds if you want to copy the zip manually into dist/downloads.");
-}

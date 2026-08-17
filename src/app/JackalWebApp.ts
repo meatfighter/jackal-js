@@ -2,6 +2,7 @@ import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import type { Main } from "../jackal/Main.js";
+import { GAME_STATE_VERSION } from "../jackal/persistence/GameStateSnapshot.js";
 import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
@@ -12,7 +13,6 @@ const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
 const GAME_STATE_STORAGE_KEY = "jackal.game-state";
-const GAME_STATE_VERSION = 3;
 const DEFAULT_VOLUME = 0.1;
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 2;
@@ -494,7 +494,7 @@ export class JackalWebApp {
 
     private configureResourceLoader(): void {
         ResourceLoader.removeAllResourceLocations();
-        ResourceLoader.addResourceLocation("/resources/");
+        ResourceLoader.addResourceLocation(getAppUrl("resources/"));
         ResourceLoader.setCacheBust(versionInfo.buildStamp);
         ResourceLoader.setRetryOptions(RESOURCE_CACHE_RETRY_COUNT, RESOURCE_CACHE_RETRY_DELAY_MS);
     }
@@ -850,6 +850,10 @@ function normalizeDisplayMode(width: number, height: number): { width: number; h
         width: Math.max(1, Math.trunc(width)),
         height: Math.max(1, Math.trunc(height))
     };
+}
+
+function getAppUrl(path: string): string {
+    return new URL(path, new URL(import.meta.env.BASE_URL, window.location.href)).toString();
 }
 
 function isAudioResourceRef(ref: string): boolean {

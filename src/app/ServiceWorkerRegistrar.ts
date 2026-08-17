@@ -7,9 +7,16 @@ export function registerServiceWorker(buildStamp: string): void {
         return;
     }
     window.addEventListener("load", () => {
-        void navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(buildStamp)}`).then((registration) => {
-            void registration.update();
-        });
+        const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href);
+        const serviceWorkerUrl = new URL(`sw.js?v=${encodeURIComponent(buildStamp)}`, appBaseUrl);
+        void navigator.serviceWorker
+            .register(serviceWorkerUrl, { scope: appBaseUrl.pathname })
+            .then((registration) => {
+                void registration.update();
+            })
+            .catch((error: unknown) => {
+                console.warn("Unable to register Jackal service worker.", error);
+            });
     });
 }
 
