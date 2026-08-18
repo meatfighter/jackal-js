@@ -29,3 +29,11 @@ export function copyDirectory(source, target) {
     }
     cpSync(source, target, { recursive: true });
 }
+
+export function renderTemplate(template, replacements) {
+    let output = template;
+    for (const [token, value] of Object.entries(replacements)) {
+        output = output.replaceAll(token, String(value));
+    }
+    return output;
+}

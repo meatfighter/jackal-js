@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default [
     {
-        ignores: ["dist/**", "node_modules/**", "public/resources/**"]
+        ignores: ["dist/**", "node_modules/**", "public/resources/**", "pwa/public/resources/**"]
     },
     js.configs.recommended,
     ...tseslint.configs.recommended,
@@ -28,7 +28,7 @@ export default [
         }
     },
     {
-        files: ["src/jackal/**/*.ts"],
+        files: ["pwa/src/jackal/**/*.ts"],
         rules: {
             "@typescript-eslint/no-empty-function": "off",
             "no-empty": "off",

@@ -3,8 +3,8 @@ import path from "node:path";
 
 const sourceRoot = process.env.SLICKJACKAL_JAVA_SOURCE_ROOT ?? "desktop/src";
 const javaRoot = path.join(sourceRoot, "jackal");
-const outRoot = "src/jackal";
-const appManifestPath = "src/app/ResourceManifest.ts";
+const outRoot = "pwa/src/jackal";
+const appManifestPath = "pwa/src/app/ResourceManifest.ts";
 const assetRoot = sourceRoot;
 
 const slickImports = [
