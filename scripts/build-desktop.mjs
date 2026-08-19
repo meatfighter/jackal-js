@@ -1,9 +1,8 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { readVersion, rootDir } from "./build-utils.mjs";
+import { rootDir } from "./build-utils.mjs";
 
-const version = readVersion();
 const desktopDir = join(rootDir, "desktop");
 const sourceDir = join(desktopDir, "src");
 const libDir = join(desktopDir, "lib");
@@ -14,9 +13,7 @@ const targetLibDir = join(targetDir, "lib");
 const targetNativeDir = join(targetDir, "natives");
 const distributionRoot = join(targetDir, "distribution");
 const distributionName = "jackal-desktop";
-const versionedJarPath = join(targetDir, `${distributionName}-${version.version}.jar`);
 const stableJarPath = join(targetDir, `${distributionName}.jar`);
-const versionedZipPath = join(targetDir, `${distributionName}-${version.version}.zip`);
 const stableZipPath = join(targetDir, `${distributionName}.zip`);
 const sourcesFile = join(targetDir, "sources.txt");
 const manifestPath = join(targetDir, "MANIFEST.MF");
@@ -148,6 +145,19 @@ function copyRuntimeToTarget() {
     copyDirectoryContents(nativeDir, targetNativeDir);
 }
 
+function removeVersionedTargetArtifacts() {
+    if (!existsSync(targetDir)) {
+        return;
+    }
+
+    const versionedArtifactPattern = new RegExp(`^${distributionName}-\\d.*\\.(?:jar|zip)$`);
+    for (const entry of readdirSync(targetDir)) {
+        if (versionedArtifactPattern.test(entry)) {
+            rmSync(join(targetDir, entry), { force: true });
+        }
+    }
+}
+
 function createDistribution() {
     const distributionDir = join(distributionRoot, distributionName);
     rmSync(distributionRoot, { recursive: true, force: true });
@@ -162,24 +172,19 @@ function createDistribution() {
     copyFileSync(join(rootDir, "LICENSE"), join(distributionDir, "LICENSE"));
     copyFileSync(join(rootDir, "THIRD_PARTY_NOTICES.md"), join(distributionDir, "THIRD_PARTY_NOTICES.md"));
 
-    rmSync(versionedZipPath, { force: true });
     rmSync(stableZipPath, { force: true });
-    run("jar", ["cf", versionedZipPath, distributionName], distributionRoot);
-    copyFileSync(versionedZipPath, stableZipPath);
+    run("jar", ["cf", stableZipPath, distributionName], distributionRoot);
 }
 
 function normalizeMavenOutputs() {
-    const mavenVersionedZip = join(targetDir, `${distributionName}-${version.version}.zip`);
     const mavenStableJar = join(targetDir, `${distributionName}.jar`);
+    const mavenStableZip = join(targetDir, `${distributionName}.zip`);
     if (!existsSync(mavenStableJar)) {
         throw new Error(`Maven did not create ${mavenStableJar}`);
     }
-    if (!existsSync(mavenVersionedZip)) {
-        throw new Error(`Maven did not create ${mavenVersionedZip}`);
+    if (!existsSync(mavenStableZip)) {
+        throw new Error(`Maven did not create ${mavenStableZip}`);
     }
-    copyFileSync(mavenStableJar, stableJarPath);
-    copyFileSync(mavenStableJar, versionedJarPath);
-    copyFileSync(mavenVersionedZip, stableZipPath);
 }
 
 function quoteSh(value) {
@@ -247,12 +252,12 @@ function buildWithJavacFallback() {
 
     copyResources(sourceDir, classesDir);
     writeManifest();
-    run("jar", ["cfm", versionedJarPath, manifestPath, "-C", classesDir, "."]);
-    copyFileSync(versionedJarPath, stableJarPath);
+    run("jar", ["cfm", stableJarPath, manifestPath, "-C", classesDir, "."]);
     createDistribution();
 }
 
 verifyRuntimeDependencies();
+removeVersionedTargetArtifacts();
 if (!tryNativeMaven() && !tryWslMaven()) {
     buildWithJavacFallback();
 }

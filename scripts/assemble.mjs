@@ -6,7 +6,7 @@ const version = readVersion();
 const downloadsDir = join(distDir, "downloads");
 const desktopTargetDir = join(rootDir, "desktop", "target");
 const distributionName = "jackal-desktop";
-const sourceZip = join(desktopTargetDir, `${distributionName}-${version.version}.zip`);
+const sourceZip = join(desktopTargetDir, `${distributionName}.zip`);
 const stableZip = join(downloadsDir, `${distributionName}.zip`);
 const versionedZip = join(downloadsDir, `${distributionName}-${version.version}.zip`);
 

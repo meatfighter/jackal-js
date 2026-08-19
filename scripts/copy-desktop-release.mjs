@@ -5,7 +5,7 @@ import { ensureDirectory, readVersion, rootDir } from "./build-utils.mjs";
 const version = readVersion();
 const releasesDir = join(rootDir, "releases");
 const distributionName = "jackal-desktop";
-const sourceZip = join(rootDir, "desktop", "target", `${distributionName}-${version.version}.zip`);
+const sourceZip = join(rootDir, "desktop", "target", `${distributionName}.zip`);
 const releaseZip = join(releasesDir, `${distributionName}-${version.version}.zip`);
 
 if (!existsSync(sourceZip)) {

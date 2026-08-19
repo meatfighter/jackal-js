@@ -137,7 +137,7 @@
                     <descriptors>
                         <descriptor>${project.basedir}/assembly.xml</descriptor>
                     </descriptors>
-                    <finalName>${project.artifactId}-${project.version}</finalName>
+                    <finalName>${project.artifactId}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
