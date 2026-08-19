@@ -1,3 +1,5 @@
+import type { GameElementTypeId } from "./GameElementTypeRegistry.js";
+
 export const GAME_STATE_VERSION = 3;
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -47,7 +49,7 @@ export type EncodedRecord = Record<string, EncodedValue>;
 
 export type EntitySnapshot = {
     id: number;
-    type: string;
+    type: GameElementTypeId;
     fields: EncodedRecord;
 };
 

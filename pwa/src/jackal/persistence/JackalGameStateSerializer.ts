@@ -4,6 +4,7 @@ import { BossGarage } from "../BossGarage.js";
 import { EnemyBullet } from "../EnemyBullet.js";
 import { FloorGun } from "../FloorGun.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
+import type { GameElement } from "../GameElement.js";
 import { GameMode } from "../GameMode.js";
 import { HardEndingMode } from "../HardEndingMode.js";
 import { InputMode } from "../InputMode.js";
@@ -51,14 +52,14 @@ import {
     type RandomSnapshot,
     type SongSnapshot
 } from "./GameStateSnapshot.js";
-import { GAME_ELEMENT_TYPES, type GameElementConstructor } from "./GameElementTypeRegistry.js";
+import { GAME_ELEMENT_TYPES, getGameElementTypeId, isGameElementTypeId, type GameElementConstructor, type GameElementTypeId } from "./GameElementTypeRegistry.js";
 
 type EntityContext = {
     main: Main;
     gameMode: GameMode | null;
     player: Player | null;
     ids: Map<object, number>;
-    entities: object[];
+    entities: GameElement[];
 };
 
 type RestoreContext = {
@@ -580,8 +581,8 @@ export class JackalGameStateSerializer {
         return typeof value === "string" && STANDALONE_MODE_IDS.includes(value);
     }
 
-    private isGameElementType(value: unknown): value is string {
-        return typeof value === "string" && GAME_ELEMENT_TYPES[value] !== undefined;
+    private isGameElementType(value: unknown): value is GameElementTypeId {
+        return isGameElementTypeId(value);
     }
 
     private isIntegerArray(value: unknown): value is number[] {
@@ -1045,7 +1046,7 @@ export class JackalGameStateSerializer {
 
     private createEntityContext(main: Main, gameMode: GameMode, player: Player): EntityContext {
         const ids = new Map<object, number>();
-        const entities: object[] = [];
+        const entities: GameElement[] = [];
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
             const list = gameMode.elements[layer];
             for (let i = 0; i < list.size(); i++) {
@@ -1059,14 +1060,11 @@ export class JackalGameStateSerializer {
         return { main, gameMode, player, ids, entities };
     }
 
-    private createEntitySnapshot(entity: object, context: EntityContext): EntitySnapshot {
-        const type = entity.constructor?.name;
-        if (!type || GAME_ELEMENT_TYPES[type] === undefined) {
-            throw new Error(`Unsupported Jackal entity type: ${type}`);
-        }
+    private createEntitySnapshot(entity: GameElement, context: EntityContext): EntitySnapshot {
+        const type = getGameElementTypeId(entity);
         const id = context.ids.get(entity);
         if (id === undefined) {
-            throw new Error(`Unregistered Jackal entity type: ${type}`);
+            throw new Error(`Unregistered Jackal entity: ${type}`);
         }
         const fields = this.encodeObjectFields(entity, context);
         this.encodeEntityRuntimeFields(entity, fields, context);
@@ -1410,7 +1408,7 @@ export class JackalGameStateSerializer {
         return random;
     }
 
-    private constructorFor(type: string): GameElementConstructor {
+    private constructorFor(type: GameElementTypeId): GameElementConstructor {
         const constructor = GAME_ELEMENT_TYPES[type];
         if (constructor === undefined) {
             throw new Error(`Unsupported Jackal entity type: ${type}`);

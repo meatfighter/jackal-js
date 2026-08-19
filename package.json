@@ -22,7 +22,7 @@
         "preview": "npm run preview:pwa",
         "preview:pwa": "vite preview --config pwa/vite.config.ts --host 127.0.0.1",
         "preview:dist": "vite preview --host 127.0.0.1 --outDir dist",
-        "test": "node --test scripts/test-input-mapping-store.mjs",
+        "test": "node --test scripts/test-*.mjs",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",

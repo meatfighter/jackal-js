@@ -78,10 +78,11 @@ import { Train } from "../Train.js";
 import { TrainManager } from "../TrainManager.js";
 import { TravelingExplosion } from "../TravelingExplosion.js";
 import { TroopsTruck } from "../TroopsTruck.js";
+import type { GameElement } from "../GameElement.js";
 
 export type GameElementConstructor = new (...args: never[]) => object;
 
-export const GAME_ELEMENT_TYPES: Record<string, GameElementConstructor> = {
+export const GAME_ELEMENT_TYPES = {
     Airplane,
     AppearingBrownTank,
     AppearingEnemyHelicopter,
@@ -162,4 +163,25 @@ export const GAME_ELEMENT_TYPES: Record<string, GameElementConstructor> = {
     TrainManager,
     TravelingExplosion,
     TroopsTruck
-};
+} as const satisfies Record<string, GameElementConstructor>;
+
+export type GameElementTypeId = keyof typeof GAME_ELEMENT_TYPES;
+
+const GAME_ELEMENT_TYPE_IDS = new Set<GameElementTypeId>(Object.keys(GAME_ELEMENT_TYPES) as GameElementTypeId[]);
+
+export const GAME_ELEMENT_TYPE_ID_BY_CONSTRUCTOR: ReadonlyMap<GameElementConstructor, GameElementTypeId> = new Map(
+    (Object.entries(GAME_ELEMENT_TYPES) as [GameElementTypeId, GameElementConstructor][]).map(([typeId, constructor]) => [constructor, typeId])
+);
+
+export function isGameElementTypeId(value: unknown): value is GameElementTypeId {
+    return typeof value === "string" && GAME_ELEMENT_TYPE_IDS.has(value as GameElementTypeId);
+}
+
+export function getGameElementTypeId(entity: GameElement): GameElementTypeId {
+    const constructor = entity.constructor as unknown as GameElementConstructor;
+    const typeId = GAME_ELEMENT_TYPE_ID_BY_CONSTRUCTOR.get(constructor);
+    if (typeId === undefined) {
+        throw new Error(`Unsupported Jackal entity type: ${constructor.name}`);
+    }
+    return typeId;
+}
