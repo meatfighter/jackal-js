@@ -58,6 +58,7 @@
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}</finalName>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <resources>
             <resource>
@@ -91,7 +92,6 @@
                             <Class-Path>${runtime.classpath}</Class-Path>
                         </manifestEntries>
                     </archive>
-                    <finalName>${project.artifactId}</finalName>
                 </configuration>
             </plugin>
             <plugin>

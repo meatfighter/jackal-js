@@ -96,7 +96,7 @@ function versionedStaticAssets(): Plugin {
             });
         },
         closeBundle() {
-            if (resolvedConfig === null) {
+            if (resolvedConfig === null || resolvedConfig.command !== "build") {
                 return;
             }
             const outDir = resolve(resolvedConfig.root, resolvedConfig.build.outDir);
