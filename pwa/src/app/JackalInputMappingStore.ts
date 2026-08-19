@@ -1,5 +1,7 @@
 import type { ButtonMapping } from "../jackal/ButtonMapping.js";
 
+const NO_BINDING = -1;
+
 interface JackalInputMappingSnapshot {
     version: number;
     keyUp: number;
@@ -116,27 +118,31 @@ export class JackalInputMappingStore {
             snapshot !== null &&
             typeof snapshot === "object" &&
             snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
-            this.isInteger(snapshot.keyUp) &&
-            this.isInteger(snapshot.keyDown) &&
-            this.isInteger(snapshot.keyLeft) &&
-            this.isInteger(snapshot.keyRight) &&
-            this.isInteger(snapshot.keyGrenade) &&
-            this.isInteger(snapshot.keyGun) &&
-            this.isInteger(snapshot.keyStart) &&
+            this.isBinding(snapshot.keyUp) &&
+            this.isBinding(snapshot.keyDown) &&
+            this.isBinding(snapshot.keyLeft) &&
+            this.isBinding(snapshot.keyRight) &&
+            this.isBinding(snapshot.keyGrenade) &&
+            this.isBinding(snapshot.keyGun) &&
+            this.isBinding(snapshot.keyStart) &&
             typeof snapshot.controller === "boolean" &&
             this.isInteger(snapshot.controllerIndex) &&
-            this.isInteger(snapshot.controllerUp) &&
-            this.isInteger(snapshot.controllerDown) &&
-            this.isInteger(snapshot.controllerLeft) &&
-            this.isInteger(snapshot.controllerRight) &&
-            this.isInteger(snapshot.controllerGrenade) &&
-            this.isInteger(snapshot.controllerGun) &&
-            this.isInteger(snapshot.controllerStart) &&
+            this.isBinding(snapshot.controllerUp) &&
+            this.isBinding(snapshot.controllerDown) &&
+            this.isBinding(snapshot.controllerLeft) &&
+            this.isBinding(snapshot.controllerRight) &&
+            this.isBinding(snapshot.controllerGrenade) &&
+            this.isBinding(snapshot.controllerGun) &&
+            this.isBinding(snapshot.controllerStart) &&
             typeof snapshot.gunKeyMapped === "boolean"
         );
     }
 
     private isInteger(value: unknown): value is number {
         return typeof value === "number" && Number.isInteger(value) && value >= 0;
+    }
+
+    private isBinding(value: unknown): value is number {
+        return value === NO_BINDING || this.isInteger(value);
     }
 }

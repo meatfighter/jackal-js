@@ -1,6 +1,6 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 import type { Plugin, ResolvedConfig } from "vite";
 import versionInfo from "../version.json";
@@ -22,6 +22,33 @@ function applyBuildTokens(content: string, baseUrl: string): string {
         .replaceAll(APP_VERSION_TOKEN, versionInfo.version)
         .replaceAll(BUILD_STAMP_TOKEN, versionInfo.buildStamp)
         .replaceAll(BASE_URL_TOKEN, normalizeBaseUrl(baseUrl));
+}
+
+function collectPrecacheResources(dir: string, baseDir = dir): string[] {
+    const resources: string[] = [];
+    for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
+        const path = join(dir, entry);
+        const stat = statSync(path);
+        if (stat.isDirectory()) {
+            resources.push(...collectPrecacheResources(path, baseDir));
+            continue;
+        }
+
+        const ref = relative(baseDir, path).replaceAll("\\", "/");
+        if (ref === "sw.js") {
+            continue;
+        }
+        resources.push(`./${ref}`);
+    }
+    return resources;
+}
+
+function applyServiceWorkerBuildOutput(content: string, outDir: string, baseUrl: string): string {
+    const resources = Array.from(new Set(["./", ...collectPrecacheResources(outDir)]));
+    return applyBuildTokens(content, baseUrl).replace(
+        /const APP_STATIC_RESOURCES = \[[\s\S]*?\];/,
+        `const APP_STATIC_RESOURCES = ${JSON.stringify(resources, null, 4)};`
+    );
 }
 
 function versionedStaticAssets(): Plugin {
@@ -73,11 +100,14 @@ function versionedStaticAssets(): Plugin {
                 return;
             }
             const outDir = resolve(resolvedConfig.root, resolvedConfig.build.outDir);
-            for (const fileName of ["sw.js", "manifest.webmanifest"]) {
-                const filePath = join(outDir, fileName);
-                if (existsSync(filePath)) {
-                    writeFileSync(filePath, applyBuildTokens(readFileSync(filePath, "utf8"), resolvedConfig.base));
-                }
+            const serviceWorkerPath = join(outDir, "sw.js");
+            if (existsSync(serviceWorkerPath)) {
+                writeFileSync(serviceWorkerPath, applyServiceWorkerBuildOutput(readFileSync(serviceWorkerPath, "utf8"), outDir, resolvedConfig.base));
+            }
+
+            const manifestPath = join(outDir, "manifest.webmanifest");
+            if (existsSync(manifestPath)) {
+                writeFileSync(manifestPath, applyBuildTokens(readFileSync(manifestPath, "utf8"), resolvedConfig.base));
             }
         }
     };
