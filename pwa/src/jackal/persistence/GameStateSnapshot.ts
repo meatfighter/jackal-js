@@ -1,6 +1,6 @@
 import type { GameElementTypeId } from "./GameElementTypeRegistry.js";
 
-export const GAME_STATE_VERSION = 3;
+export { GAME_STATE_VERSION } from "./GameStateSchema.js";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
