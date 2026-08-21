@@ -1,6 +1,8 @@
 const APP_VERSION = "__APP_VERSION__";
 const BUILD_STAMP = "__BUILD_STAMP__";
-const CACHE_PREFIX = "jackal-";
+const SCOPE_PATH = new URL(self.registration.scope).pathname;
+const SCOPE_CACHE_ID = SCOPE_PATH.replace(/[^a-zA-Z0-9._-]/g, "_");
+const CACHE_PREFIX = `jackal-${SCOPE_CACHE_ID}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}-${BUILD_STAMP}`;
 const APP_ROOT = appUrl("./");
 const APP_INDEX = appUrl("index.html");

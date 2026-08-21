@@ -7,10 +7,9 @@ export function registerServiceWorker(buildStamp: string): void {
         return;
     }
     window.addEventListener("load", () => {
-        const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href);
-        const serviceWorkerUrl = new URL(`sw.js?v=${encodeURIComponent(buildStamp)}`, appBaseUrl);
+        const serviceWorkerUrl = new URL(`./sw.js?v=${encodeURIComponent(buildStamp)}`, window.location.href);
         void navigator.serviceWorker
-            .register(serviceWorkerUrl, { scope: appBaseUrl.pathname })
+            .register(serviceWorkerUrl, { scope: "./" })
             .then((registration) => {
                 void registration.update();
             })

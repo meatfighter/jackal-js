@@ -36,7 +36,14 @@ function countReachableStampCommands(scriptName, visited = new Set()) {
 function embeddedServiceWorkerCacheName(buildStamp) {
     const header = serviceWorkerSource.slice(0, serviceWorkerSource.indexOf("const APP_ROOT"));
     const source = header.replaceAll("__APP_VERSION__", versionJson.version).replaceAll("__BUILD_STAMP__", buildStamp);
-    const context = {};
+    const context = {
+        URL,
+        self: {
+            registration: {
+                scope: "https://example.test/pwa/"
+            }
+        }
+    };
     vm.runInNewContext(`${source}\nglobalThis.CACHE_NAME = CACHE_NAME;`, context);
     return context.CACHE_NAME;
 }

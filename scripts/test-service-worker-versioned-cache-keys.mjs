@@ -5,13 +5,16 @@ import vm from "node:vm";
 
 const SERVICE_WORKER_SOURCE = readFileSync(new URL("../pwa/public/sw.js", import.meta.url), "utf8");
 const SCOPE = "https://example.test/pwa/";
+const STAGING_SCOPE = "https://example.test/stage/pwa/";
+const PRODUCTION_SCOPE = "https://example.test/production/pwa/";
 
 function loadServiceWorker({
     appVersion = "1.0.0",
     buildStamp = "current",
     cacheBackend = createCacheBackend(),
     fetchHandler = async () => createResponse("network"),
-    selfLocation = SCOPE
+    scope = SCOPE,
+    selfLocation = scope
 } = {}) {
     const listeners = new Map();
     const claimCalls = [];
@@ -19,7 +22,7 @@ function loadServiceWorker({
     const self = {
         location: new URL(selfLocation),
         registration: {
-            scope: SCOPE
+            scope
         },
         clients: {
             claim: async () => {
@@ -41,7 +44,7 @@ function loadServiceWorker({
     };
     const source = SERVICE_WORKER_SOURCE.replaceAll("__APP_VERSION__", appVersion).replaceAll("__BUILD_STAMP__", buildStamp);
 
-    vm.runInNewContext(`${source}\nglobalThis.__worker = { APP_STATIC_RESOURCES, CACHE_NAME, createCacheUrl };`, context);
+    vm.runInNewContext(`${source}\nglobalThis.__worker = { APP_STATIC_RESOURCES, CACHE_NAME, CACHE_PREFIX, createCacheUrl };`, context);
 
     return {
         ...context.__worker,
@@ -185,12 +188,19 @@ test("install does not bypass the browser's waiting-worker lifecycle", async () 
 });
 
 test("activation deletes superseded Jackal caches and claims clients", async () => {
-    const cacheBackend = createCacheBackend([], ["jackal-1.0.0-current", "jackal-1.0.0-old", "jackal-legacy", "other-cache"]);
+    const cacheBackend = createCacheBackend([], [
+        "jackal-_pwa_-1.0.0-current",
+        "jackal-_pwa_-1.0.0-old",
+        "jackal-_pwa_-legacy",
+        "jackal-_production_pwa_-1.0.0-old",
+        "jackal-1.0.0-old",
+        "other-cache"
+    ]);
     const worker = loadServiceWorker({ buildStamp: "current", cacheBackend });
 
     await runActivate(worker);
 
-    assert.deepEqual(cacheBackend.deletedNames, ["jackal-1.0.0-old", "jackal-legacy"]);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal-_pwa_-1.0.0-old", "jackal-_pwa_-legacy"]);
     assert.equal(worker.claimCalls.length, 1);
 });
 
@@ -201,7 +211,43 @@ test("cache name uses embedded build tokens even from a stale worker URL", () =>
         selfLocation: `${SCOPE}sw.js?v=old`
     });
 
-    assert.equal(worker.CACHE_NAME, "jackal-2.3.4-current");
+    assert.equal(worker.CACHE_NAME, "jackal-_pwa_-2.3.4-current");
+});
+
+test("service worker cache names are isolated by deployment scope", () => {
+    const stagingWorker = loadServiceWorker({ buildStamp: "same", scope: STAGING_SCOPE });
+    const productionWorker = loadServiceWorker({ buildStamp: "same", scope: PRODUCTION_SCOPE });
+
+    assert.equal(stagingWorker.CACHE_PREFIX, "jackal-_stage_pwa_-");
+    assert.equal(productionWorker.CACHE_PREFIX, "jackal-_production_pwa_-");
+    assert.notEqual(stagingWorker.CACHE_NAME, productionWorker.CACHE_NAME);
+});
+
+test("side-by-side deployment activation only cleans the current scope", async () => {
+    const cacheBackend = createCacheBackend([], [
+        "jackal-_stage_pwa_-1.0.0-current",
+        "jackal-_stage_pwa_-1.0.0-old",
+        "jackal-_production_pwa_-1.0.0-current",
+        "jackal-_production_pwa_-1.0.0-old"
+    ]);
+    const stagingWorker = loadServiceWorker({ buildStamp: "current", scope: STAGING_SCOPE, cacheBackend });
+    const productionWorker = loadServiceWorker({ buildStamp: "current", scope: PRODUCTION_SCOPE, cacheBackend });
+
+    await runActivate(stagingWorker);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal-_stage_pwa_-1.0.0-old"]);
+
+    await runActivate(productionWorker);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal-_stage_pwa_-1.0.0-old", "jackal-_production_pwa_-1.0.0-old"]);
+});
+
+test("service worker resource cache URLs resolve under the current deployment scope", () => {
+    const stagingWorker = loadServiceWorker({ buildStamp: "current", scope: STAGING_SCOPE });
+    const productionWorker = loadServiceWorker({ buildStamp: "current", scope: PRODUCTION_SCOPE });
+
+    assert.equal(stagingWorker.createCacheUrl("./resources/images/map.dat"), `${STAGING_SCOPE}resources/images/map.dat?v=current`);
+    assert.equal(productionWorker.createCacheUrl("./resources/images/map.dat"), `${PRODUCTION_SCOPE}resources/images/map.dat?v=current`);
+    assert.equal(stagingWorker.createCacheUrl("./resources/images/map.dat?v=new"), `${STAGING_SCOPE}resources/images/map.dat?v=new`);
+    assert.notEqual(stagingWorker.createCacheUrl("./resources/images/map.dat?v=new"), stagingWorker.createCacheUrl("./resources/images/map.dat"));
 });
 
 test("old worker cache does not satisfy a request for a newer deployment version", async () => {

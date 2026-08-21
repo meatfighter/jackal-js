@@ -115,7 +115,7 @@ function versionedStaticAssets(): Plugin {
 
 export default defineConfig(({ command }) => ({
     root: rootDir,
-    base: command === "build" ? "/pwa/" : "/",
+    base: command === "build" ? "./" : "/",
     plugins: [versionedStaticAssets()],
     define: {
         __APP_VERSION__: JSON.stringify(versionInfo.version),
