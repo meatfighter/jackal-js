@@ -4,6 +4,7 @@ import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import type { Main } from "../jackal/Main.js";
 import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "../jackal/persistence/GameStateSchema.js";
 import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
+import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
 import versionInfo from "../../../version.json";
@@ -319,7 +320,7 @@ export class JackalWebApp {
 
     private clearStoredGameState(): void {
         try {
-            localStorage.removeItem(GAME_STATE_STORAGE_KEY);
+            localStorage.removeItem(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY));
         } catch {
             // Storage can be disabled in hardened/private browser contexts.
         }
@@ -509,7 +510,7 @@ export class JackalWebApp {
 
     private hasPotentialSavedGameState(): boolean {
         try {
-            const text = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+            const text = localStorage.getItem(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY));
             if (text === null) {
                 return false;
             }
@@ -1035,7 +1036,7 @@ function volumeIconSvg(value: number): string {
 
 function safeReadVolume(): number {
     try {
-        const value = Number.parseInt(localStorage.getItem(VOLUME_STORAGE_KEY) ?? String(Math.round(DEFAULT_VOLUME * 100)), 10);
+        const value = Number.parseInt(localStorage.getItem(getDeploymentStorageKey(VOLUME_STORAGE_KEY)) ?? String(Math.round(DEFAULT_VOLUME * 100)), 10);
         if (!Number.isFinite(value)) {
             return DEFAULT_VOLUME;
         }
@@ -1047,7 +1048,7 @@ function safeReadVolume(): number {
 
 function writeVolume(value: number): void {
     try {
-        localStorage.setItem(VOLUME_STORAGE_KEY, String(Math.round(value * 100)));
+        localStorage.setItem(getDeploymentStorageKey(VOLUME_STORAGE_KEY), String(Math.round(value * 100)));
     } catch {
         // Storage can be disabled in hardened/private browser contexts.
     }

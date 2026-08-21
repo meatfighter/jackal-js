@@ -17,6 +17,9 @@ test("game-state schema constants have one runtime source", () => {
 test("PWA shell and store use shared game-state schema constants", () => {
     assert.match(webAppSource, /from "\.\.\/jackal\/persistence\/GameStateSchema\.js";/);
     assert.match(storeSource, /from "\.\/GameStateSchema\.js";/);
+    assert.match(webAppSource, /getDeploymentStorageKey\(GAME_STATE_STORAGE_KEY\)/);
+    assert.match(webAppSource, /getDeploymentStorageKey\(VOLUME_STORAGE_KEY\)/);
+    assert.match(storeSource, /getDeploymentStorageKey\(GAME_STATE_STORAGE_KEY\)/);
     assert.doesNotMatch(webAppSource, /const GAME_STATE_STORAGE_KEY =/);
     assert.doesNotMatch(webAppSource, /from "\.\.\/jackal\/persistence\/GameStateSnapshot\.js";/);
     assert.doesNotMatch(storeSource, /STORAGE_KEY = "jackal\.game-state"/);

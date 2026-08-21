@@ -1,4 +1,5 @@
 import type { ButtonMapping } from "../jackal/ButtonMapping.js";
+import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
 
 const NO_BINDING = -1;
 
@@ -30,7 +31,7 @@ export class JackalInputMappingStore {
     public save(buttonMapping: ButtonMapping): boolean {
         try {
             localStorage.setItem(
-                JackalInputMappingStore.STORAGE_KEY,
+                JackalInputMappingStore.getStorageKey(),
                 JSON.stringify({
                     version: JackalInputMappingStore.SNAPSHOT_VERSION,
                     keyUp: buttonMapping.keyUp,
@@ -92,14 +93,14 @@ export class JackalInputMappingStore {
 
     public clear(): void {
         try {
-            localStorage.removeItem(JackalInputMappingStore.STORAGE_KEY);
+            localStorage.removeItem(JackalInputMappingStore.getStorageKey());
         } catch {
             // Storage can be disabled in hardened/private browser contexts.
         }
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
-        const text = localStorage.getItem(JackalInputMappingStore.STORAGE_KEY);
+        const text = localStorage.getItem(JackalInputMappingStore.getStorageKey());
         if (text === null) {
             return null;
         }
@@ -144,5 +145,9 @@ export class JackalInputMappingStore {
 
     private isBinding(value: unknown): value is number {
         return value === NO_BINDING || this.isInteger(value);
+    }
+
+    private static getStorageKey(): string {
+        return getDeploymentStorageKey(JackalInputMappingStore.STORAGE_KEY);
     }
 }

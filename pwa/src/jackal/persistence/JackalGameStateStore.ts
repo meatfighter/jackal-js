@@ -1,4 +1,5 @@
 import type { GameContainer } from "slick2d-ts";
+import { getDeploymentStorageKey } from "../../app/DeploymentStorageKeys.js";
 import type { Main } from "../Main.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
 import { GAME_STATE_STORAGE_KEY } from "./GameStateSchema.js";
@@ -16,7 +17,7 @@ export class JackalGameStateStore {
 
         try {
             const snapshot = this.serializer.createSnapshot(main, this.appVersion);
-            localStorage.setItem(GAME_STATE_STORAGE_KEY, JSON.stringify(snapshot));
+            localStorage.setItem(this.getStorageKey(), JSON.stringify(snapshot));
             return true;
         } catch (error) {
             console.warn("Unable to save Jackal game state.", error);
@@ -51,12 +52,12 @@ export class JackalGameStateStore {
 
     public clear(): void {
         try {
-            localStorage.removeItem(GAME_STATE_STORAGE_KEY);
+            localStorage.removeItem(this.getStorageKey());
         } catch {}
     }
 
     private readSnapshot(): JackalGameStateSnapshot | null {
-        const text = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+        const text = localStorage.getItem(this.getStorageKey());
         if (text === null) {
             return null;
         }
@@ -68,5 +69,9 @@ export class JackalGameStateStore {
         }
 
         return snapshot;
+    }
+
+    private getStorageKey(): string {
+        return getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
     }
 }
