@@ -29,6 +29,8 @@ const requiredRootEntries = [
     "run-linux.sh",
     "run-macos.sh"
 ];
+const executableZipEntries = new Set([`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`]);
+const forbiddenOuterManifestEntries = new Set(["META-INF/MANIFEST.MF", `${distributionName}/META-INF/MANIFEST.MF`]);
 
 function assertFile(path, label) {
     if (!existsSync(path)) {
@@ -45,11 +47,50 @@ export function requiredDesktopZipEntries() {
     ];
 }
 
+export function requiredDesktopZipEntryModes() {
+    return new Map(requiredDesktopZipEntries().map((entry) => [entry, executableZipEntries.has(entry) ? 0o755 : 0o644]));
+}
+
+function normalizeZipEntry(entry) {
+    if (typeof entry === "string") {
+        return {
+            name: entry.replaceAll("\\", "/"),
+            unixMode: null
+        };
+    }
+    return {
+        name: entry.name.replaceAll("\\", "/"),
+        unixMode: entry.unixMode
+    };
+}
+
+function formatMode(mode) {
+    return `0${(mode & 0o777).toString(8)}`;
+}
+
 export function verifyDesktopZipEntries(entries) {
-    const entrySet = new Set(entries.map((entry) => entry.replaceAll("\\", "/")));
+    const normalizedEntries = entries.map(normalizeZipEntry);
+    const entrySet = new Set(normalizedEntries.map((entry) => entry.name));
+    const entryMap = new Map(normalizedEntries.map((entry) => [entry.name, entry]));
     const missing = requiredDesktopZipEntries().filter((entry) => !entrySet.has(entry));
     if (missing.length > 0) {
         throw new Error(`Desktop ZIP is missing required entries: ${missing.join(", ")}`);
+    }
+
+    const outerManifests = normalizedEntries.filter((entry) => forbiddenOuterManifestEntries.has(entry.name)).map((entry) => entry.name);
+    if (outerManifests.length > 0) {
+        throw new Error(`Desktop ZIP contains outer manifest entries: ${outerManifests.join(", ")}`);
+    }
+
+    for (const [entryName, expectedMode] of requiredDesktopZipEntryModes()) {
+        const entry = entryMap.get(entryName);
+        if (entry?.unixMode === null || entry?.unixMode === undefined) {
+            throw new Error(`Desktop ZIP entry mode is unavailable for ${entryName}.`);
+        }
+        const actualMode = entry.unixMode & 0o777;
+        if (actualMode !== expectedMode) {
+            throw new Error(`Desktop ZIP entry ${entryName} has mode ${formatMode(actualMode)}; expected ${formatMode(expectedMode)}.`);
+        }
     }
 }
 
@@ -64,7 +105,7 @@ export function verifyDesktopZip(releaseDir, version) {
         throw new Error("Stable and versioned desktop ZIP downloads differ.");
     }
 
-    verifyDesktopZipEntries(listZipEntries(stableZip).map((entry) => entry.name));
+    verifyDesktopZipEntries(listZipEntries(stableZip));
 }
 
 export function verifyReleaseCandidate(releaseDir = distDir) {

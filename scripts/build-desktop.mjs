@@ -2,6 +2,7 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statS
 import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { rootDir } from "./build-utils.mjs";
+import { writeZipFromDirectory } from "./zip-utils.mjs";
 
 const desktopDir = join(rootDir, "desktop");
 const sourceDir = join(desktopDir, "src");
@@ -18,6 +19,7 @@ const stableZipPath = join(targetDir, `${distributionName}.zip`);
 const sourcesFile = join(targetDir, "sources.txt");
 const manifestPath = join(targetDir, "MANIFEST.MF");
 const runtimeJars = ["slick.jar", "lwjgl.jar", "lwjgl_util.jar", "jinput.jar", "jorbis.jar"];
+const executableDistributionEntries = [`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`];
 
 function commandExists(command) {
     const finder = process.platform === "win32" ? "where.exe" : "which";
@@ -173,7 +175,10 @@ function createDistribution() {
     copyFileSync(join(rootDir, "THIRD_PARTY_NOTICES.md"), join(distributionDir, "THIRD_PARTY_NOTICES.md"));
 
     rmSync(stableZipPath, { force: true });
-    run("jar", ["cf", stableZipPath, distributionName], distributionRoot);
+    writeZipFromDirectory(distributionDir, stableZipPath, {
+        executableEntries: executableDistributionEntries,
+        rootName: distributionName
+    });
 }
 
 function normalizeMavenOutputs() {
@@ -185,6 +190,7 @@ function normalizeMavenOutputs() {
     if (!existsSync(mavenStableZip)) {
         throw new Error(`Maven did not create ${mavenStableZip}`);
     }
+    createDistribution();
 }
 
 function quoteSh(value) {

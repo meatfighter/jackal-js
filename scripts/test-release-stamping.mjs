@@ -36,7 +36,8 @@ test("release PWA build uses the noncanonical component wrapper", () => {
 
 test("component and full release scripts route through hardened wrappers", () => {
     assert.equal(scripts["build:about"], "node scripts/build-about.mjs .release-components/web");
-    assert.equal(scripts["assemble"], "node scripts/assemble.mjs .release-components/web");
+    assert.equal(scripts.assemble, undefined);
+    assert.equal(scripts["_assemble"], "node scripts/assemble.mjs .release-components/web");
     assert.equal(scripts["build:web"], "npm run verify && node scripts/build-web-release.mjs");
     assert.equal(scripts["build"], "npm run verify && node scripts/build-release.mjs");
     assert.equal(scripts["verify:release"], "node scripts/verify-release-candidate.mjs");

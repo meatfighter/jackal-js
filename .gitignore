@@ -1,7 +1,13 @@
 dist/
 .release-components/
 .release-work/
+.release-test-*/
 .release-version-stamp.lock/
+.release-secrets/
+.release-candidates/
+.dist-pending-*/
+.dist-previous-*/
+.dist-active-before-*/
 desktop/target/
 node_modules/
 releases/*.zip

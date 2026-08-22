@@ -8,6 +8,11 @@ export default [
             ".release-components/**",
             ".release-work/**",
             ".release-test-*/**",
+            ".release-secrets/**",
+            ".release-candidates/**",
+            ".dist-pending-*/**",
+            ".dist-previous-*/**",
+            ".dist-active-before-*/**",
             "node_modules/**",
             "public/resources/**",
             "pwa/public/resources/**"
