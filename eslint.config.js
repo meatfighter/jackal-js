@@ -3,7 +3,15 @@ import tseslint from "typescript-eslint";
 
 export default [
     {
-        ignores: ["dist/**", "node_modules/**", "public/resources/**", "pwa/public/resources/**"]
+        ignores: [
+            "dist/**",
+            ".release-components/**",
+            ".release-work/**",
+            ".release-test-*/**",
+            "node_modules/**",
+            "public/resources/**",
+            "pwa/public/resources/**"
+        ]
     },
     js.configs.recommended,
     ...tseslint.configs.recommended,

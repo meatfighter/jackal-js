@@ -1,17 +1,14 @@
 import { createServer } from "node:http";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
-import { distDir } from "./build-utils.mjs";
+import { distDir, rootDir } from "./build-utils.mjs";
 
-const pwaDistDir = join(distDir, "pwa");
+const pwaDistDir = resolve(rootDir, process.argv[2] ?? process.env.JACKAL_PWA_DIST_DIR ?? join(distDir, "pwa"));
+const pwaDistLabel = relative(rootDir, pwaDistDir).replaceAll("\\", "/") || pwaDistDir;
 const serviceWorkerPath = join(pwaDistDir, "sw.js");
 const indexPath = join(pwaDistDir, "index.html");
 const manifestPath = join(pwaDistDir, "manifest.webmanifest");
-const deploymentRoots = [
-    "https://example.invalid/jackal/pwa/",
-    "https://example.invalid/jackal-staging/pwa/",
-    "https://example.invalid/foo/bar/baz/pwa/"
-];
+const deploymentRoots = ["https://example.invalid/jackal/pwa/", "https://example.invalid/jackal-staging/pwa/", "https://example.invalid/foo/bar/baz/pwa/"];
 const disallowedRuntimePathFragments = ["/pwa/", "/jackal/", "/jackal-staging/"];
 
 function collectPrecacheResources(dir, baseDir = dir) {
@@ -54,7 +51,7 @@ function collectFiles(dir, baseDir = dir) {
 function parseStaticResources(source) {
     const match = /const APP_STATIC_RESOURCES = (\[[\s\S]*?\]);/.exec(source);
     if (match === null) {
-        throw new Error("Unable to find APP_STATIC_RESOURCES in dist/pwa/sw.js.");
+        throw new Error(`Unable to find APP_STATIC_RESOURCES in ${pwaDistLabel}/sw.js.`);
     }
     const resources = JSON.parse(match[1]);
     if (!Array.isArray(resources) || resources.some((resource) => typeof resource !== "string")) {
@@ -115,13 +112,18 @@ function htmlLinkHref(html, rel) {
             return hrefMatch[1];
         }
     }
-    throw new Error(`Unable to find <link rel="${rel}"> in dist/pwa/index.html.`);
+    throw new Error(`Unable to find <link rel="${rel}"> in ${pwaDistLabel}/index.html.`);
 }
 
 function runtimeTextFiles(files) {
     return files.filter(({ ref }) => {
         const extension = extname(ref);
-        return ref === "./index.html" || ref === "./manifest.webmanifest" || ref === "./sw.js" || (ref.startsWith("./assets/") && [".css", ".js"].includes(extension));
+        return (
+            ref === "./index.html" ||
+            ref === "./manifest.webmanifest" ||
+            ref === "./sw.js" ||
+            (ref.startsWith("./assets/") && [".css", ".js"].includes(extension))
+        );
     });
 }
 
@@ -248,7 +250,7 @@ async function verifySameBytesRelocationPreview(indexHtml) {
 }
 
 if (!existsSync(serviceWorkerPath) || !existsSync(indexPath) || !existsSync(manifestPath)) {
-    throw new Error("Missing dist/pwa release output. Run the PWA build before verifying the precache list.");
+    throw new Error(`Missing ${pwaDistLabel} release output. Run the PWA build before verifying the precache list.`);
 }
 
 const listedResources = parseStaticResources(readFileSync(serviceWorkerPath, "utf8"));
@@ -277,4 +279,4 @@ verifyRelocatableUrls(indexHtml, manifest, listedResources);
 verifyBuiltServiceWorkerRegistration(generatedFiles);
 await verifySameBytesRelocationPreview(indexHtml);
 
-console.log(`Verified ${listedResources.length} PWA precache entries and relocatable PWA output against dist/pwa.`);
+console.log(`Verified ${listedResources.length} PWA precache entries and relocatable PWA output against ${pwaDistLabel}.`);

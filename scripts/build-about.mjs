@@ -1,8 +1,9 @@
 import { copyDirectory, distDir, ensureDirectory, readVersion, renderTemplate, rootDir } from "./build-utils.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 const version = readVersion();
+const outputDir = resolve(rootDir, process.argv[2] ?? process.env.JACKAL_WEB_OUT_DIR ?? distDir);
 const encodedBuildStamp = encodeURIComponent(version.buildStamp);
 const replacements = {
     __APP_VERSION__: version.version,
@@ -14,8 +15,8 @@ const replacements = {
 
 const aboutDir = join(rootDir, "about");
 
-ensureDirectory(distDir);
-writeFileSync(join(distDir, "index.html"), renderTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), replacements));
-writeFileSync(join(distDir, "styles.css"), renderTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), replacements));
-copyDirectory(join(aboutDir, "assets"), join(distDir, "assets"));
+ensureDirectory(outputDir);
+writeFileSync(join(outputDir, "index.html"), renderTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), replacements));
+writeFileSync(join(outputDir, "styles.css"), renderTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), replacements));
+copyDirectory(join(aboutDir, "assets"), join(outputDir, "assets"));
 console.log("Built about page");

@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 export const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const distDir = join(rootDir, "dist");
+export const componentReleaseDir = join(rootDir, ".release-components");
+export const releaseWorkDir = join(rootDir, ".release-work");
 export const versionPath = join(rootDir, "version.json");
 
 export function readVersion() {

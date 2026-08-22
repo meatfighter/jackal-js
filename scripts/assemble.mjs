@@ -1,9 +1,10 @@
 import { copyFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { distDir, ensureDirectory, readVersion, rootDir } from "./build-utils.mjs";
 
 const version = readVersion();
-const downloadsDir = join(distDir, "downloads");
+const releaseDir = resolve(rootDir, process.argv[2] ?? process.env.JACKAL_WEB_OUT_DIR ?? distDir);
+const downloadsDir = join(releaseDir, "downloads");
 const desktopTargetDir = join(rootDir, "desktop", "target");
 const distributionName = "jackal-desktop";
 const sourceZip = join(desktopTargetDir, `${distributionName}.zip`);

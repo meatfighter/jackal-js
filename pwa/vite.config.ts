@@ -9,6 +9,7 @@ const APP_VERSION_TOKEN = "__APP_VERSION__";
 const BUILD_STAMP_TOKEN = "__BUILD_STAMP__";
 const BASE_URL_TOKEN = "__BASE_URL__";
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
+const pwaOutDir = process.env.JACKAL_PWA_OUT_DIR ?? "../dist/pwa";
 
 function normalizeBaseUrl(baseUrl: string): string {
     if (baseUrl.length === 0) {
@@ -122,7 +123,7 @@ export default defineConfig(({ command }) => ({
         __BUILD_STAMP__: JSON.stringify(versionInfo.buildStamp)
     },
     build: {
-        outDir: "../dist/pwa",
+        outDir: pwaOutDir,
         emptyOutDir: true,
         target: "es2022",
         sourcemap: false

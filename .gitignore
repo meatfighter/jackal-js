@@ -1,4 +1,7 @@
 dist/
+.release-components/
+.release-work/
+.release-version-stamp.lock/
 desktop/target/
 node_modules/
 releases/*.zip
