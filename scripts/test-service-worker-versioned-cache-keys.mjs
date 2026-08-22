@@ -7,6 +7,8 @@ const SERVICE_WORKER_SOURCE = readFileSync(new URL("../pwa/public/sw.js", import
 const SCOPE = "https://example.test/pwa/";
 const STAGING_SCOPE = "https://example.test/stage/pwa/";
 const PRODUCTION_SCOPE = "https://example.test/production/pwa/";
+const PREFIX_PARENT_SCOPE = "https://example.test/a/pwa/";
+const PREFIX_CHILD_SCOPE = "https://example.test/a/pwa/-stage/pwa/";
 
 function loadServiceWorker({
     appVersion = "1.0.0",
@@ -188,19 +190,23 @@ test("install does not bypass the browser's waiting-worker lifecycle", async () 
 });
 
 test("activation deletes superseded Jackal caches and claims clients", async () => {
-    const cacheBackend = createCacheBackend([], [
-        "jackal-%2Fpwa%2F-1.0.0-current",
-        "jackal-%2Fpwa%2F-1.0.0-old",
-        "jackal-%2Fpwa%2F-legacy",
-        "jackal-%2Fproduction%2Fpwa%2F-1.0.0-old",
-        "jackal-1.0.0-old",
-        "other-cache"
-    ]);
+    const cacheBackend = createCacheBackend(
+        [],
+        [
+            "jackal|%2Fpwa%2F|1.0.0-current",
+            "jackal|%2Fpwa%2F|1.0.0-old",
+            "jackal|%2Fpwa%2F|legacy",
+            "jackal|%2Fproduction%2Fpwa%2F|1.0.0-old",
+            "jackal-%2Fpwa%2F-legacy",
+            "jackal-1.0.0-old",
+            "other-cache"
+        ]
+    );
     const worker = loadServiceWorker({ buildStamp: "current", cacheBackend });
 
     await runActivate(worker);
 
-    assert.deepEqual(cacheBackend.deletedNames, ["jackal-%2Fpwa%2F-1.0.0-old", "jackal-%2Fpwa%2F-legacy"]);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal|%2Fpwa%2F|1.0.0-old", "jackal|%2Fpwa%2F|legacy"]);
     assert.equal(worker.claimCalls.length, 1);
 });
 
@@ -211,44 +217,80 @@ test("cache name uses embedded build tokens even from a stale worker URL", () =>
         selfLocation: `${SCOPE}sw.js?v=old`
     });
 
-    assert.equal(worker.CACHE_NAME, "jackal-%2Fpwa%2F-2.3.4-current");
+    assert.equal(worker.CACHE_NAME, "jackal|%2Fpwa%2F|2.3.4-current");
 });
 
 test("service worker cache names are isolated by deployment scope", () => {
     const stagingWorker = loadServiceWorker({ buildStamp: "same", scope: STAGING_SCOPE });
     const productionWorker = loadServiceWorker({ buildStamp: "same", scope: PRODUCTION_SCOPE });
 
-    assert.equal(stagingWorker.CACHE_PREFIX, "jackal-%2Fstage%2Fpwa%2F-");
-    assert.equal(productionWorker.CACHE_PREFIX, "jackal-%2Fproduction%2Fpwa%2F-");
+    assert.equal(stagingWorker.CACHE_PREFIX, "jackal|%2Fstage%2Fpwa%2F|");
+    assert.equal(productionWorker.CACHE_PREFIX, "jackal|%2Fproduction%2Fpwa%2F|");
     assert.notEqual(stagingWorker.CACHE_NAME, productionWorker.CACHE_NAME);
 });
 
-test("service worker cache prefixes do not collide for slash, underscore, and plus paths", () => {
+test("service worker cache prefixes do not collide for slash, underscore, plus, or prefix-containing paths", () => {
     const nestedWorker = loadServiceWorker({ scope: "https://example.test/a/b/" });
     const underscoreWorker = loadServiceWorker({ scope: "https://example.test/a_b/" });
     const plusWorker = loadServiceWorker({ scope: "https://example.test/a+b/" });
+    const prefixParentWorker = loadServiceWorker({ scope: PREFIX_PARENT_SCOPE });
+    const prefixChildWorker = loadServiceWorker({ scope: PREFIX_CHILD_SCOPE });
 
-    assert.equal(nestedWorker.CACHE_PREFIX, "jackal-%2Fa%2Fb%2F-");
-    assert.equal(underscoreWorker.CACHE_PREFIX, "jackal-%2Fa_b%2F-");
-    assert.equal(plusWorker.CACHE_PREFIX, "jackal-%2Fa%2Bb%2F-");
-    assert.equal(new Set([nestedWorker.CACHE_PREFIX, underscoreWorker.CACHE_PREFIX, plusWorker.CACHE_PREFIX]).size, 3);
+    assert.equal(nestedWorker.CACHE_PREFIX, "jackal|%2Fa%2Fb%2F|");
+    assert.equal(underscoreWorker.CACHE_PREFIX, "jackal|%2Fa_b%2F|");
+    assert.equal(plusWorker.CACHE_PREFIX, "jackal|%2Fa%2Bb%2F|");
+    assert.equal(prefixParentWorker.CACHE_PREFIX, "jackal|%2Fa%2Fpwa%2F|");
+    assert.equal(prefixChildWorker.CACHE_PREFIX, "jackal|%2Fa%2Fpwa%2F-stage%2Fpwa%2F|");
+    assert.equal(
+        new Set([
+            nestedWorker.CACHE_PREFIX,
+            underscoreWorker.CACHE_PREFIX,
+            plusWorker.CACHE_PREFIX,
+            prefixParentWorker.CACHE_PREFIX,
+            prefixChildWorker.CACHE_PREFIX
+        ]).size,
+        5
+    );
 });
 
 test("side-by-side deployment activation only cleans the current scope", async () => {
-    const cacheBackend = createCacheBackend([], [
-        "jackal-%2Fstage%2Fpwa%2F-1.0.0-current",
-        "jackal-%2Fstage%2Fpwa%2F-1.0.0-old",
-        "jackal-%2Fproduction%2Fpwa%2F-1.0.0-current",
-        "jackal-%2Fproduction%2Fpwa%2F-1.0.0-old"
-    ]);
+    const cacheBackend = createCacheBackend(
+        [],
+        [
+            "jackal|%2Fstage%2Fpwa%2F|1.0.0-current",
+            "jackal|%2Fstage%2Fpwa%2F|1.0.0-old",
+            "jackal|%2Fproduction%2Fpwa%2F|1.0.0-current",
+            "jackal|%2Fproduction%2Fpwa%2F|1.0.0-old"
+        ]
+    );
     const stagingWorker = loadServiceWorker({ buildStamp: "current", scope: STAGING_SCOPE, cacheBackend });
     const productionWorker = loadServiceWorker({ buildStamp: "current", scope: PRODUCTION_SCOPE, cacheBackend });
 
     await runActivate(stagingWorker);
-    assert.deepEqual(cacheBackend.deletedNames, ["jackal-%2Fstage%2Fpwa%2F-1.0.0-old"]);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal|%2Fstage%2Fpwa%2F|1.0.0-old"]);
 
     await runActivate(productionWorker);
-    assert.deepEqual(cacheBackend.deletedNames, ["jackal-%2Fstage%2Fpwa%2F-1.0.0-old", "jackal-%2Fproduction%2Fpwa%2F-1.0.0-old"]);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal|%2Fstage%2Fpwa%2F|1.0.0-old", "jackal|%2Fproduction%2Fpwa%2F|1.0.0-old"]);
+});
+
+test("activation does not delete caches whose encoded scope only shares a prefix", async () => {
+    const cacheBackend = createCacheBackend(
+        [],
+        [
+            "jackal|%2Fa%2Fpwa%2F|1.0.0-current",
+            "jackal|%2Fa%2Fpwa%2F|1.0.0-old",
+            "jackal|%2Fa%2Fpwa%2F-stage%2Fpwa%2F|1.0.0-current",
+            "jackal|%2Fa%2Fpwa%2F-stage%2Fpwa%2F|1.0.0-old"
+        ]
+    );
+    const parentWorker = loadServiceWorker({ buildStamp: "current", scope: PREFIX_PARENT_SCOPE, cacheBackend });
+    const childWorker = loadServiceWorker({ buildStamp: "current", scope: PREFIX_CHILD_SCOPE, cacheBackend });
+
+    await runActivate(parentWorker);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal|%2Fa%2Fpwa%2F|1.0.0-old"]);
+
+    await runActivate(childWorker);
+    assert.deepEqual(cacheBackend.deletedNames, ["jackal|%2Fa%2Fpwa%2F|1.0.0-old", "jackal|%2Fa%2Fpwa%2F-stage%2Fpwa%2F|1.0.0-old"]);
 });
 
 test("service worker resource cache URLs resolve under the current deployment scope", () => {

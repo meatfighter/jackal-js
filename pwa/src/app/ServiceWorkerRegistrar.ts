@@ -24,6 +24,6 @@ async function clearDevelopmentServiceWorkers(): Promise<void> {
     await Promise.all(registrations.map((registration) => registration.unregister()));
     if ("caches" in window) {
         const keys = await caches.keys();
-        await Promise.all(keys.filter((key) => key.startsWith("jackal-")).map((key) => caches.delete(key)));
+        await Promise.all(keys.filter((key) => key.startsWith("jackal|") || key.startsWith("jackal-")).map((key) => caches.delete(key)));
     }
 }
