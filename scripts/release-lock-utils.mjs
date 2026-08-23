@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
-import { lstatSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { writeFileAtomic } from "./atomic-file-utils.mjs";
@@ -20,7 +20,7 @@ function isMissingPathError(error) {
 }
 
 function isTransientLockAccessError(error) {
-    return error?.code === "EPERM" || error?.code === "EBUSY" || error?.code === "ENOTEMPTY";
+    return error?.code === "EACCES" || error?.code === "EPERM" || error?.code === "EBUSY" || error?.code === "ENOTEMPTY";
 }
 
 function isRetryableLockRegistrationError(error) {
@@ -43,6 +43,33 @@ function holdersDir(lockDir) {
 
 function holderPath(lockDir, token) {
     return join(holdersDir(lockDir), `${process.pid}-${token}.json`);
+}
+
+function pendingLockDir(lockDir, token) {
+    return `${lockDir}.pending-${process.pid}-${token}`;
+}
+
+function detachedLockDir(lockDir, reason) {
+    return `${lockDir}.${reason}-${process.pid}-${randomUUID()}`;
+}
+
+function recoveryGuardDir(lockDir) {
+    return `${lockDir}.recovery`;
+}
+
+function recoveryGuardExists(lockDir) {
+    try {
+        const stat = lstatSync(recoveryGuardDir(lockDir));
+        return stat.isDirectory();
+    } catch (error) {
+        if (isMissingPathError(error)) {
+            return false;
+        }
+        if (isTransientLockAccessError(error)) {
+            return true;
+        }
+        throw error;
+    }
 }
 
 function assertRealLockDirectory(lockDir) {
@@ -238,31 +265,100 @@ function malformedAgeMs(lockStat, records) {
     return pathAgeMs(newestMtimeMs);
 }
 
-function removeStaleLock(lockDir, message = null) {
+function removeDirectoryIfPresent(path) {
     try {
-        rmSync(lockDir, { recursive: true, force: true });
+        rmSync(path, { recursive: true, force: true });
+    } catch (error) {
+        if (!isMissingPathError(error) && !isTransientLockAccessError(error)) {
+            throw error;
+        }
+    }
+}
+
+function preparePendingLock(lockDir, token) {
+    const pendingDir = pendingLockDir(lockDir, token);
+    mkdirSync(holdersDir(pendingDir), { recursive: true });
+    try {
+        writeOwner(pendingDir, token);
+        return pendingDir;
+    } catch (error) {
+        removeDirectoryIfPresent(pendingDir);
+        throw error;
+    }
+}
+
+function publishPendingLock(pendingDir, lockDir) {
+    renameSync(pendingDir, lockDir);
+}
+
+function detachLockDirectory(lockDir, reason) {
+    const detachedDir = detachedLockDir(lockDir, reason);
+    try {
+        renameSync(lockDir, detachedDir);
+        return detachedDir;
     } catch (error) {
         if (isMissingPathError(error)) {
-            return true;
+            return null;
         }
-        if (isTransientLockAccessError(error)) {
+        if (isTransientLockAccessError(error) || error?.code === "EEXIST") {
             return false;
         }
         throw error;
+    }
+}
+
+function removeStaleLock(lockDir, message = null) {
+    const detachedDir = detachLockDirectory(lockDir, "stale");
+    if (detachedDir === null) {
+        return true;
+    }
+    if (detachedDir === false) {
+        return false;
     }
 
     if (message !== null) {
         console.warn(message);
     }
+
+    try {
+        rmSync(detachedDir, { recursive: true, force: true });
+    } catch (error) {
+        if (isMissingPathError(error)) {
+            return true;
+        }
+        if (isTransientLockAccessError(error)) {
+            return true;
+        }
+        throw error;
+    }
     return true;
 }
 
 function removeOwnedLock(lockDir, token) {
-    const owner = readOwner(lockDir);
+    let owner;
+    try {
+        assertRealLockDirectory(lockDir);
+        owner = readOwner(lockDir);
+    } catch (error) {
+        if (isMissingPathError(error) || isTransientLockAccessError(error)) {
+            return;
+        }
+        throw error;
+    }
     if (owner.status !== "valid" || owner.token !== token) {
         return;
     }
-    rmSync(lockDir, { recursive: true, force: true });
+
+    const detachedDir = detachLockDirectory(lockDir, "released");
+    if (detachedDir === null || detachedDir === false) {
+        return;
+    }
+
+    const detachedOwner = readOwner(detachedDir);
+    if (detachedOwner.status !== "valid" || detachedOwner.token !== token) {
+        throw new Error(`Detached release operation lock owner changed before cleanup: ${detachedDir}`);
+    }
+    rmSync(detachedDir, { recursive: true, force: true });
 }
 
 function hasLiveLockState(lockDir) {
@@ -355,6 +451,43 @@ function tryRemoveStaleLock(lockDir, staleLockMs) {
     return removeStaleLock(lockDir);
 }
 
+function tryRemoveStaleLockSerialized(lockDir, staleLockMs) {
+    const guardDir = recoveryGuardDir(lockDir);
+    try {
+        mkdirSync(guardDir);
+    } catch (error) {
+        if (error?.code === "EEXIST" || isTransientLockAccessError(error)) {
+            return false;
+        }
+        throw error;
+    }
+
+    let staleRemoved;
+    let staleError = null;
+    try {
+        staleRemoved = tryRemoveStaleLock(lockDir, staleLockMs);
+    } catch (error) {
+        staleError = error;
+    }
+
+    let guardReleaseError = null;
+    try {
+        rmdirSync(guardDir);
+    } catch (error) {
+        if (!isMissingPathError(error)) {
+            guardReleaseError = error;
+        }
+    }
+
+    if (staleError !== null) {
+        throw staleError;
+    }
+    if (guardReleaseError !== null) {
+        throw guardReleaseError;
+    }
+    return staleRemoved;
+}
+
 function reentrantToken(lockDir) {
     const expectedPath = process.env[lockPathEnv];
     const expectedToken = process.env[lockTokenEnv];
@@ -406,50 +539,32 @@ async function withRegisteredLockHolder(lockDir, token, task) {
 async function acquireReleaseOperationLock(resolvedLockDir, timeoutMs, retryDelayMs, staleLockMs) {
     const startedAt = Date.now();
     while (true) {
+        const ownerToken = randomUUID();
+        const pendingDir = preparePendingLock(resolvedLockDir, ownerToken);
         try {
-            mkdirSync(resolvedLockDir);
+            publishPendingLock(pendingDir, resolvedLockDir);
+            return ownerToken;
         } catch (error) {
-            if (isTransientLockAccessError(error)) {
-                if (Date.now() - startedAt > timeoutMs) {
-                    throw new Error(`Timed out waiting for release operation lock path to settle: ${resolvedLockDir}`, { cause: error });
-                }
-                await delay(retryDelayMs);
-                continue;
-            }
-            if (error?.code !== "EEXIST") {
+            removeDirectoryIfPresent(pendingDir);
+            if (error?.code !== "EEXIST" && !isTransientLockAccessError(error)) {
                 throw error;
             }
-            if (!tryRemoveStaleLock(resolvedLockDir, staleLockMs) && Date.now() - startedAt > timeoutMs) {
+
+            if (!tryRemoveStaleLockSerialized(resolvedLockDir, staleLockMs) && Date.now() - startedAt > timeoutMs) {
+                if (recoveryGuardExists(resolvedLockDir)) {
+                    throw new Error(`Timed out waiting for release operation lock recovery guard: ${recoveryGuardDir(resolvedLockDir)}`, { cause: error });
+                }
                 throw new Error(`Timed out waiting for release operation lock: ${resolvedLockDir}`, { cause: error });
             }
             await delay(retryDelayMs);
-            continue;
-        }
-
-        const ownerToken = randomUUID();
-        try {
-            writeOwner(resolvedLockDir, ownerToken);
-            return ownerToken;
-        } catch (error) {
-            if (isMissingPathError(error) || isTransientLockAccessError(error)) {
-                try {
-                    removeOwnedLock(resolvedLockDir, ownerToken);
-                } catch {
-                    // Another contender may already be recovering this path.
-                }
-                if (Date.now() - startedAt > timeoutMs) {
-                    throw new Error(`Timed out initializing release operation lock: ${resolvedLockDir}`, { cause: error });
-                }
-                await delay(retryDelayMs);
-                continue;
-            }
-            rmSync(resolvedLockDir, { recursive: true, force: true });
-            throw error;
         }
     }
 }
 
-export async function withReleaseOperationLock(task, { lockDir = releaseOperationLockDir, timeoutMs = 60_000, retryDelayMs = 100, staleLockMs = ownerlessStaleMs } = {}) {
+export async function withReleaseOperationLock(
+    task,
+    { lockDir = releaseOperationLockDir, timeoutMs = 60_000, retryDelayMs = 100, staleLockMs = ownerlessStaleMs } = {}
+) {
     const resolvedLockDir = resolve(lockDir);
     const token = reentrantToken(resolvedLockDir);
     if (token !== null) {

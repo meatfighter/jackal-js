@@ -52,7 +52,13 @@ import {
     type RandomSnapshot,
     type SongSnapshot
 } from "./GameStateSnapshot.js";
-import { GAME_ELEMENT_TYPES, getGameElementTypeId, isGameElementTypeId, type GameElementConstructor, type GameElementTypeId } from "./GameElementTypeRegistry.js";
+import {
+    GAME_ELEMENT_TYPES,
+    getGameElementTypeId,
+    isGameElementTypeId,
+    type GameElementConstructor,
+    type GameElementTypeId
+} from "./GameElementTypeRegistry.js";
 
 type EntityContext = {
     main: Main;

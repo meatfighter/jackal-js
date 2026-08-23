@@ -3,6 +3,10 @@ dist/
 .release-work/
 .release-test-*/
 .release-operation.lock/
+.release-operation.lock.pending-*/
+.release-operation.lock.recovery/
+.release-operation.lock.released-*/
+.release-operation.lock.stale-*/
 .release-version-stamp.lock/
 .release-secrets/
 .release-candidates/

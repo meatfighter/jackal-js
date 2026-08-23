@@ -127,13 +127,18 @@ function assertManagedReleaseRoot(label, root) {
     return resolvedRoot;
 }
 
-function assertPhysicalOutputPath(label, path, allowedRoot) {
+function assertPhysicalContainment(label, path, allowedRoot) {
     const physicalAllowedRoot = physicalPathFor(allowedRoot);
     const physicalPath = physicalPathFor(path);
 
     if (!isSameOrInside(physicalAllowedRoot, physicalPath)) {
         throw new Error(`${label} physical path escapes release output root ${allowedRoot}: ${physicalPath}`);
     }
+}
+
+function assertPhysicalOutputPath(label, path, allowedRoot) {
+    assertPhysicalContainment(label, path, allowedRoot);
+    const physicalPath = physicalPathFor(path);
 
     for (const [sourceDir, sourceLabel] of trackedSourceDirectories) {
         if (existsSync(sourceDir) && pathsOverlap(physicalPathFor(sourceDir), physicalPath)) {
@@ -236,7 +241,7 @@ export function assertLocalGeneratedOutputPath(label, path, allowedRoot) {
     }
 
     assertNoSymlinkInExistingPath(label, resolvedPath);
-    assertPhysicalOutputPath(label, resolvedPath, resolvedRoot);
+    assertPhysicalContainment(label, resolvedPath, resolvedRoot);
     return resolvedPath;
 }
 

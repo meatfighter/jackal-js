@@ -336,12 +336,35 @@ test("release operation lock rejects fresh malformed metadata and warns before s
     });
 });
 
-test("concurrent stale release lock recovery tolerates disappearing lock directories", async () => {
+test("release operation lock does not auto-break an active stale-recovery guard", async () => {
     await withTempDir(async (dir) => {
         const lockDir = join(dir, "release-operation.lock");
-        const startFile = join(dir, "start-workers");
-        const workerCount = 20;
-        const workerSource = `
+        const recoveryGuardDir = `${lockDir}.recovery`;
+        mkdirSync(lockDir, { recursive: true });
+        mkdirSync(recoveryGuardDir);
+        writeFileSync(join(lockDir, "owner.json"), JSON.stringify({ pid: 999_999_999, token: "stale" }));
+
+        await assert.rejects(
+            withReleaseOperationLock(
+                () => {
+                    throw new Error("should not enter while recovery guard remains");
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 10, staleLockMs: -1 }
+            ),
+            /recovery guard/
+        );
+        assert.equal(existsSync(recoveryGuardDir), true);
+        assert.equal(existsSync(lockDir), true);
+    });
+});
+
+test("concurrent stale release lock recovery tolerates disappearing lock directories", async () => {
+    for (let iteration = 0; iteration < 3; iteration++) {
+        await withTempDir(async (dir) => {
+            const lockDir = join(dir, "release-operation.lock");
+            const startFile = join(dir, "start-workers");
+            const workerCount = 20;
+            const workerSource = `
             import { existsSync } from "node:fs";
             import { setTimeout as delay } from "node:timers/promises";
             import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
@@ -356,38 +379,39 @@ test("concurrent stale release lock recovery tolerates disappearing lock directo
                 console.log("acquired");
             }, { lockDir, retryDelayMs: 1, timeoutMs: 5_000, staleLockMs: -1 });
         `;
-        mkdirSync(lockDir, { recursive: true });
-        writeFileSync(join(lockDir, "owner.json"), JSON.stringify({ pid: 999_999_999, token: "stale" }));
+            mkdirSync(lockDir, { recursive: true });
+            writeFileSync(join(lockDir, "owner.json"), JSON.stringify({ pid: 999_999_999, token: "stale" }));
 
-        const workers = Array.from({ length: workerCount }, () =>
-            spawn(process.execPath, ["--input-type=module", "-e", workerSource], {
-                cwd: rootDir,
-                env: {
-                    ...process.env,
-                    JACKAL_TEST_LOCK_DIR: lockDir,
-                    JACKAL_TEST_START_FILE: startFile
-                },
-                stdio: ["ignore", "pipe", "pipe"]
-            })
-        );
+            const workers = Array.from({ length: workerCount }, () =>
+                spawn(process.execPath, ["--input-type=module", "-e", workerSource], {
+                    cwd: rootDir,
+                    env: {
+                        ...process.env,
+                        JACKAL_TEST_LOCK_DIR: lockDir,
+                        JACKAL_TEST_START_FILE: startFile
+                    },
+                    stdio: ["ignore", "pipe", "pipe"]
+                })
+            );
 
-        try {
-            writeFileSync(startFile, "go");
-            const results = await Promise.all(workers.map((worker) => collectChildResult(worker)));
-            for (const result of results) {
-                assert.equal(result.code, 0, `worker ${result.pid} failed with stderr:\n${result.stderr}`);
-                assert.equal(result.signal, null);
-                assert.match(result.stdout, /acquired/);
-            }
-        } finally {
-            for (const worker of workers) {
-                if (worker.exitCode === null && worker.signalCode === null) {
-                    worker.kill();
+            try {
+                writeFileSync(startFile, "go");
+                const results = await Promise.all(workers.map((worker) => collectChildResult(worker)));
+                for (const result of results) {
+                    assert.equal(result.code, 0, `iteration ${iteration} worker ${result.pid} failed with stderr:\n${result.stderr}`);
+                    assert.equal(result.signal, null);
+                    assert.match(result.stdout, /acquired/);
                 }
+            } finally {
+                for (const worker of workers) {
+                    if (worker.exitCode === null && worker.signalCode === null) {
+                        worker.kill();
+                    }
+                }
+                rmSync(lockDir, { recursive: true, force: true });
             }
-            rmSync(lockDir, { recursive: true, force: true });
-        }
-    });
+        });
+    }
 });
 
 test("atomic file writes clean pre-rename temps on injected failures", async () => {
@@ -426,13 +450,10 @@ test("desktop release copy rejects linked destination files when supported", asy
             return;
         }
 
-        assert.throws(
-            () => {
-                const destination = assertLocalGeneratedOutputPath("desktop release ZIP", releaseZip, releasesDir);
-                copyFileAtomic(sourceZip, destination);
-            },
-            /symlink|junction/
-        );
+        assert.throws(() => {
+            const destination = assertLocalGeneratedOutputPath("desktop release ZIP", releaseZip, releasesDir);
+            copyFileAtomic(sourceZip, destination);
+        }, /symlink|junction/);
         assert.equal(readFileSync(sentinel, "utf8"), "external sentinel");
     });
 });
@@ -461,6 +482,37 @@ test("desktop release copy is atomic and leaves no temp files", async () => {
 
         copyFileAtomic(sourceZip, releaseZip);
         assert.equal(readFileSync(releaseZip, "utf8"), "new desktop zip");
+    });
+});
+
+test("local generated desktop target paths allow target outputs and reject source paths", async () => {
+    const desktopDir = join(rootDir, "desktop");
+    const desktopTargetDir = join(desktopDir, "target");
+
+    assert.equal(assertLocalGeneratedOutputPath("desktop target directory", desktopTargetDir, desktopTargetDir), desktopTargetDir);
+    assert.equal(
+        assertLocalGeneratedOutputPath("desktop classes directory", join(desktopTargetDir, "classes"), desktopTargetDir),
+        join(desktopTargetDir, "classes")
+    );
+
+    for (const [label, path] of [
+        ["repository root", rootDir],
+        ["desktop source root", desktopDir],
+        ["desktop source directory", join(desktopDir, "src")],
+        ["desktop source child", join(desktopDir, "src", "jackal")]
+    ]) {
+        assert.throws(() => assertLocalGeneratedOutputPath(label, path, desktopTargetDir), /must be inside|repository root/);
+    }
+
+    await withTempDir((dir) => {
+        const realTargetDir = join(dir, "real-target");
+        const linkedTargetDir = join(dir, "linked-target");
+        mkdirSync(realTargetDir, { recursive: true });
+        if (!tryCreateSymlink(realTargetDir, linkedTargetDir, process.platform === "win32" ? "junction" : "dir")) {
+            return;
+        }
+
+        assert.throws(() => assertLocalGeneratedOutputPath("linked generated target", join(linkedTargetDir, "classes"), linkedTargetDir), /symlink|junction/);
     });
 });
 
@@ -834,6 +886,10 @@ test("transient release-state paths are ignored and not tracked", () => {
         /^\.release-work\//,
         /^\.release-test-/,
         /^\.release-operation\.lock\//,
+        /^\.release-operation\.lock\.pending-/,
+        /^\.release-operation\.lock\.recovery\//,
+        /^\.release-operation\.lock\.released-/,
+        /^\.release-operation\.lock\.stale-/,
         /^\.release-version-stamp\.lock\//,
         /^\.release-secrets\//,
         /^\.release-candidates\//,

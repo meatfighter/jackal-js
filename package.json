@@ -4,6 +4,9 @@
     "private": true,
     "license": "GPL-3.0-or-later",
     "type": "module",
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+    },
     "scripts": {
         "stamp": "node scripts/stamp-build.mjs",
         "clean": "node scripts/clean-dist.mjs",
@@ -15,7 +18,7 @@
         "build:about": "node scripts/build-about.mjs .release-components/web",
         "build:desktop": "node scripts/build-desktop.mjs",
         "_assemble": "node scripts/assemble.mjs .release-components/web",
-        "verify": "npm test && npm run lint && npm run typecheck",
+        "verify": "npm test && npm run format:check && npm run lint && npm run typecheck && npm run check:ts-nocheck",
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
         "release:web": "npm run build:web",
@@ -27,13 +30,14 @@
         "test": "node --test scripts/test-*.mjs",
         "verify:pwa-precache": "node scripts/verify-pwa-precache.mjs",
         "verify:release": "node scripts/verify-release-candidate.mjs",
+        "check:ts-nocheck": "node scripts/check-ts-nocheck-budget.mjs",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",
         "typecheck": "tsc --project pwa/tsconfig.json --noEmit"
     },
     "dependencies": {
-        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.0.0"
+        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#fdd2d232bf63ca30dc48c76b0b3e10b1e3b8856c"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

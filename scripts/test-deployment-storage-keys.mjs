@@ -29,5 +29,8 @@ test("deployment storage keys ignore query strings and preserve distinct paths",
     assert.notEqual(getDeploymentPathId("https://example.test/jackal/pwa/"), getDeploymentPathId("https://example.test/jackal-staging/pwa/"));
     assert.notEqual(getDeploymentPathId("https://example.test/a/b/"), getDeploymentPathId("https://example.test/a_b/"));
     assert.notEqual(getDeploymentPathId("https://example.test/a+b/"), getDeploymentPathId("https://example.test/a_b/"));
-    assert.equal(getDeploymentStorageKey("jackal-volume", "https://example.test/jackal/pwa/?v=old"), getDeploymentStorageKey("jackal-volume", "https://example.test/jackal/pwa/?v=new"));
+    assert.equal(
+        getDeploymentStorageKey("jackal-volume", "https://example.test/jackal/pwa/?v=old"),
+        getDeploymentStorageKey("jackal-volume", "https://example.test/jackal/pwa/?v=new")
+    );
 });
