@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { rootDir } from "./build-utils.mjs";
 
@@ -23,6 +23,10 @@ function hashTrackedFile(path) {
     const absolutePath = join(rootDir, path);
     if (!existsSync(absolutePath)) {
         return null;
+    }
+    const stat = lstatSync(absolutePath);
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+        throw new Error(`Tracked source must be a real file: ${path}`);
     }
     return createHash("sha256").update(readFileSync(absolutePath)).digest("hex");
 }

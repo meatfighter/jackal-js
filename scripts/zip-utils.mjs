@@ -1,5 +1,6 @@
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { assertRealFileOrDirectory } from "./build-utils.mjs";
 
 const LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
@@ -56,7 +57,7 @@ function collectZipSourceEntries(sourceDir, rootName, executableEntries) {
     const entries = [];
 
     function addEntry(path, name) {
-        const stat = statSync(path);
+        const stat = assertRealFileOrDirectory(path, "ZIP source entry");
         if (stat.isDirectory()) {
             const directoryName = name.endsWith("/") ? name : `${name}/`;
             entries.push({

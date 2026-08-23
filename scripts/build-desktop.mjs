@@ -1,7 +1,8 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { rootDir } from "./build-utils.mjs";
+import { assertRealDirectory, assertRealFile, assertRealFileOrDirectory, rootDir } from "./build-utils.mjs";
+import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { writeZipFromDirectory } from "./zip-utils.mjs";
 
 const desktopDir = join(rootDir, "desktop");
@@ -33,7 +34,7 @@ function run(command, args, cwd = rootDir) {
         stdio: "inherit"
     });
     if (result.status !== 0) {
-        process.exit(result.status ?? 1);
+        throw new Error(`Command failed with exit code ${result.status ?? "unknown"}: ${command} ${args.join(" ")}`);
     }
 }
 
@@ -67,9 +68,10 @@ function getJavacFeatureVersion() {
 function collectJavaFiles(dir, files = []) {
     for (const entry of readdirSync(dir)) {
         const full = join(dir, entry);
-        if (statSync(full).isDirectory()) {
+        const stat = assertRealFileOrDirectory(full, "desktop source entry");
+        if (stat.isDirectory()) {
             collectJavaFiles(full, files);
-        } else if (entry.endsWith(".java")) {
+        } else if (stat.isFile() && entry.endsWith(".java")) {
             files.push(full);
         }
     }
@@ -80,11 +82,11 @@ function copyResources(source, target) {
     for (const entry of readdirSync(source)) {
         const sourcePath = join(source, entry);
         const targetPath = join(target, entry);
-        const stat = statSync(sourcePath);
+        const stat = assertRealFileOrDirectory(sourcePath, "desktop resource entry");
         if (stat.isDirectory()) {
             mkdirSync(targetPath, { recursive: true });
             copyResources(sourcePath, targetPath);
-        } else if (!entry.endsWith(".java")) {
+        } else if (stat.isFile() && !entry.endsWith(".java")) {
             mkdirSync(dirname(targetPath), { recursive: true });
             copyFileSync(sourcePath, targetPath);
         }
@@ -92,10 +94,19 @@ function copyResources(source, target) {
 }
 
 function copyDirectoryContents(source, target) {
+    assertRealDirectory(source, "desktop copy source directory");
     rmSync(target, { recursive: true, force: true });
     mkdirSync(target, { recursive: true });
     for (const entry of readdirSync(source)) {
-        cpSync(join(source, entry), join(target, entry), { recursive: true });
+        const sourcePath = join(source, entry);
+        const targetPath = join(target, entry);
+        const stat = assertRealFileOrDirectory(sourcePath, "desktop copy source entry");
+        if (stat.isDirectory()) {
+            copyDirectoryContents(sourcePath, targetPath);
+        } else {
+            mkdirSync(dirname(targetPath), { recursive: true });
+            copyFileSync(sourcePath, targetPath);
+        }
     }
 }
 
@@ -127,18 +138,12 @@ function writeManifest() {
 function verifyRuntimeDependencies() {
     for (const jar of runtimeJars) {
         const path = join(libDir, jar);
-        if (!existsSync(path)) {
-            throw new Error(`Missing desktop runtime jar: ${path}`);
-        }
+        assertRealFile(path, "desktop runtime jar");
     }
-    if (!existsSync(nativeDir)) {
-        throw new Error(`Missing desktop native directory: ${nativeDir}`);
-    }
+    assertRealDirectory(nativeDir, "desktop native directory");
     const windowsNativeDir = join(nativeDir, "windows");
     for (const dll of ["lwjgl64.dll", "OpenAL64.dll", "jinput-dx8_64.dll", "jinput-raw_64.dll"]) {
-        if (!existsSync(join(windowsNativeDir, dll))) {
-            throw new Error(`Missing Windows 64-bit native library: ${join(windowsNativeDir, dll)}`);
-        }
+        assertRealFile(join(windowsNativeDir, dll), "Windows 64-bit native library");
     }
 }
 
@@ -165,8 +170,8 @@ function createDistribution() {
     rmSync(distributionRoot, { recursive: true, force: true });
     mkdirSync(distributionDir, { recursive: true });
     copyFileSync(stableJarPath, join(distributionDir, `${distributionName}.jar`));
-    cpSync(targetLibDir, join(distributionDir, "lib"), { recursive: true });
-    cpSync(targetNativeDir, join(distributionDir, "natives"), { recursive: true });
+    copyDirectoryContents(targetLibDir, join(distributionDir, "lib"));
+    copyDirectoryContents(targetNativeDir, join(distributionDir, "natives"));
 
     for (const name of ["run-windows.cmd", "run-windows.ps1", "run-linux.sh", "run-macos.sh", "README.md", "RUNTIME_DEPENDENCIES.md"]) {
         copyFileSync(join(desktopDir, name), join(distributionDir, name));
@@ -262,11 +267,13 @@ function buildWithJavacFallback() {
     createDistribution();
 }
 
-verifyRuntimeDependencies();
-removeVersionedTargetArtifacts();
-if (!tryNativeMaven() && !tryWslMaven()) {
-    buildWithJavacFallback();
-}
+await withReleaseOperationLock(() => {
+    verifyRuntimeDependencies();
+    removeVersionedTargetArtifacts();
+    if (!tryNativeMaven() && !tryWslMaven()) {
+        buildWithJavacFallback();
+    }
 
-console.log(`Built ${relative(rootDir, stableJarPath)}`);
-console.log(`Built ${relative(rootDir, stableZipPath)}`);
+    console.log(`Built ${relative(rootDir, stableJarPath)}`);
+    console.log(`Built ${relative(rootDir, stableZipPath)}`);
+});

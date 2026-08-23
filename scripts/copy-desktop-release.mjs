@@ -1,17 +1,21 @@
 import { copyFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
-import { ensureDirectory, readVersion, rootDir } from "./build-utils.mjs";
+import { assertRealFile, ensureDirectory, readVersion, rootDir } from "./build-utils.mjs";
+import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 
-const version = readVersion();
-const releasesDir = join(rootDir, "releases");
-const distributionName = "jackal-desktop";
-const sourceZip = join(rootDir, "desktop", "target", `${distributionName}.zip`);
-const releaseZip = join(releasesDir, `${distributionName}-${version.version}.zip`);
+await withReleaseOperationLock(() => {
+    const version = readVersion();
+    const releasesDir = join(rootDir, "releases");
+    const distributionName = "jackal-desktop";
+    const sourceZip = join(rootDir, "desktop", "target", `${distributionName}.zip`);
+    const releaseZip = join(releasesDir, `${distributionName}-${version.version}.zip`);
 
-if (!existsSync(sourceZip)) {
-    throw new Error(`Missing desktop release zip: ${sourceZip}`);
-}
+    if (!existsSync(sourceZip)) {
+        throw new Error(`Missing desktop release zip: ${sourceZip}`);
+    }
 
-ensureDirectory(releasesDir);
-copyFileSync(sourceZip, releaseZip);
-console.log(`Copied ${relative(rootDir, releaseZip)}`);
+    assertRealFile(sourceZip, "desktop release zip");
+    ensureDirectory(releasesDir);
+    copyFileSync(sourceZip, releaseZip);
+    console.log(`Copied ${relative(rootDir, releaseZip)}`);
+});

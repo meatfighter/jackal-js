@@ -2,6 +2,7 @@ dist/
 .release-components/
 .release-work/
 .release-test-*/
+.release-operation.lock/
 .release-version-stamp.lock/
 .release-secrets/
 .release-candidates/

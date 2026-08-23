@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
@@ -29,10 +29,16 @@ function collectPrecacheResources(dir: string, baseDir = dir): string[] {
     const resources: string[] = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
-        const stat = statSync(path);
+        const stat = lstatSync(path);
+        if (stat.isSymbolicLink()) {
+            throw new Error(`PWA precache entry must not be a symlink or junction: ${path}`);
+        }
         if (stat.isDirectory()) {
             resources.push(...collectPrecacheResources(path, baseDir));
             continue;
+        }
+        if (!stat.isFile()) {
+            throw new Error(`PWA precache entry must be a regular file or directory: ${path}`);
         }
 
         const ref = relative(baseDir, path).replaceAll("\\", "/");

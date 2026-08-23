@@ -62,9 +62,14 @@ function isReentrantLock(lockDir) {
 }
 
 function tryRemoveStaleLock(lockDir) {
+    const stat = lstatSync(lockDir);
+    if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        throw new Error(`Release operation lock must be a real directory: ${lockDir}`);
+    }
+
     const owner = readOwner(lockDir);
     if (owner === null) {
-        const ageMs = Date.now() - lstatSync(lockDir).mtimeMs;
+        const ageMs = Date.now() - stat.mtimeMs;
         if (ageMs < ownerlessStaleMs) {
             return false;
         }

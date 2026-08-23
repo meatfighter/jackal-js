@@ -1,7 +1,6 @@
-import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { distDir, rootDir } from "./build-utils.mjs";
+import { assertRealFile, assertReleaseTreePath, distDir, rootDir } from "./build-utils.mjs";
 import { sha256File, verifyReleaseManifest } from "./release-manifest.mjs";
 import { displayPath } from "./run-utils.mjs";
 import { listZipEntries } from "./zip-utils.mjs";
@@ -33,9 +32,7 @@ const executableZipEntries = new Set([`${distributionName}/run-linux.sh`, `${dis
 const forbiddenOuterManifestEntries = new Set(["META-INF/MANIFEST.MF", `${distributionName}/META-INF/MANIFEST.MF`]);
 
 function assertFile(path, label) {
-    if (!existsSync(path)) {
-        throw new Error(`Missing ${label}: ${path}`);
-    }
+    assertRealFile(path, label);
 }
 
 export function requiredDesktopZipEntries() {
@@ -109,16 +106,17 @@ export function verifyDesktopZip(releaseDir, version) {
 }
 
 export function verifyReleaseCandidate(releaseDir = distDir) {
-    const manifest = verifyReleaseManifest(releaseDir);
-    assertFile(join(releaseDir, "index.html"), "about page");
-    assertFile(join(releaseDir, "pwa", "index.html"), "PWA index");
-    assertFile(join(releaseDir, "pwa", "sw.js"), "PWA service worker");
-    verifyDesktopZip(releaseDir, manifest.version);
+    const root = assertReleaseTreePath("release candidate directory", releaseDir);
+    const manifest = verifyReleaseManifest(root);
+    assertFile(join(root, "index.html"), "about page");
+    assertFile(join(root, "pwa", "index.html"), "PWA index");
+    assertFile(join(root, "pwa", "sw.js"), "PWA service worker");
+    verifyDesktopZip(root, manifest.version);
     return manifest;
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    const releaseDir = resolve(rootDir, process.argv[2] ?? distDir);
+    const releaseDir = assertReleaseTreePath("release candidate directory", resolve(rootDir, process.argv[2] ?? distDir));
     const manifest = verifyReleaseCandidate(releaseDir);
     console.log(`Verified release candidate ${displayPath(releaseDir)} with ${manifest.files.length} manifest entries.`);
 }

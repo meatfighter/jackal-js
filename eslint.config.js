@@ -8,6 +8,7 @@ export default [
             ".release-components/**",
             ".release-work/**",
             ".release-test-*/**",
+            ".release-operation.lock/**",
             ".release-secrets/**",
             ".release-candidates/**",
             ".dist-pending-*/**",

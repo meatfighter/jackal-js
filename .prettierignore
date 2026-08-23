@@ -1,4 +1,14 @@
 node_modules/
 dist/
+.release-components/
+.release-work/
+.release-test-*/
+.release-operation.lock/
+.release-version-stamp.lock/
+.release-secrets/
+.release-candidates/
+.dist-pending-*/
+.dist-previous-*/
+.dist-active-before-*/
 coverage/
 *.tgz

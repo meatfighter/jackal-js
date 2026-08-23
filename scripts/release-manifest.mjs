@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { readVersion } from "./build-utils.mjs";
+import { assertRealFile, assertRealFileOrDirectory, assertReleaseTreePath, readVersion } from "./build-utils.mjs";
 
 export const RELEASE_MANIFEST_NAME = "release.json";
 
@@ -13,7 +13,7 @@ function collectFiles(dir, baseDir = dir) {
     const files = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
-        const stat = statSync(path);
+        const stat = assertRealFileOrDirectory(path, "release manifest entry");
         if (stat.isDirectory()) {
             files.push(...collectFiles(path, baseDir));
             continue;
@@ -28,11 +28,12 @@ function collectFiles(dir, baseDir = dir) {
 }
 
 export function sha256File(path) {
+    assertRealFile(path, "release file");
     return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
 export function createReleaseManifest(releaseDir, version = readVersion()) {
-    const root = resolve(releaseDir);
+    const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
     return {
         version: version.version,
         buildStamp: version.buildStamp,
@@ -45,13 +46,15 @@ export function createReleaseManifest(releaseDir, version = readVersion()) {
 }
 
 export function writeReleaseManifest(releaseDir, version = readVersion()) {
-    const manifest = createReleaseManifest(releaseDir, version);
-    writeFileSync(join(releaseDir, RELEASE_MANIFEST_NAME), `${JSON.stringify(manifest, null, 4)}\n`);
+    const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
+    const manifest = createReleaseManifest(root, version);
+    writeFileSync(join(root, RELEASE_MANIFEST_NAME), `${JSON.stringify(manifest, null, 4)}\n`);
     return manifest;
 }
 
 export function readReleaseManifest(releaseDir) {
-    const manifestPath = join(releaseDir, RELEASE_MANIFEST_NAME);
+    const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
+    const manifestPath = join(root, RELEASE_MANIFEST_NAME);
     if (!existsSync(manifestPath)) {
         throw new Error(`Missing release manifest: ${manifestPath}`);
     }
@@ -69,7 +72,7 @@ export function readReleaseManifest(releaseDir) {
 }
 
 export function verifyReleaseManifest(releaseDir) {
-    const root = resolve(releaseDir);
+    const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
     const manifest = readReleaseManifest(root);
     const actualFiles = new Map(collectFiles(root).map((file) => [file.ref, file]));
     const expectedFiles = new Set();

@@ -1,9 +1,9 @@
 import { createServer } from "node:http";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { extname, join, relative, resolve } from "node:path";
-import { distDir, rootDir } from "./build-utils.mjs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { extname, isAbsolute, join, relative, resolve } from "node:path";
+import { assertPwaReleaseTreePath, assertRealFile, assertRealFileOrDirectory, distDir, rootDir } from "./build-utils.mjs";
 
-const pwaDistDir = resolve(rootDir, process.argv[2] ?? process.env.JACKAL_PWA_DIST_DIR ?? join(distDir, "pwa"));
+const pwaDistDir = assertPwaReleaseTreePath("PWA release output directory", resolve(rootDir, process.argv[2] ?? join(distDir, "pwa")));
 const pwaDistLabel = relative(rootDir, pwaDistDir).replaceAll("\\", "/") || pwaDistDir;
 const serviceWorkerPath = join(pwaDistDir, "sw.js");
 const indexPath = join(pwaDistDir, "index.html");
@@ -11,11 +11,16 @@ const manifestPath = join(pwaDistDir, "manifest.webmanifest");
 const deploymentRoots = ["https://example.invalid/jackal/pwa/", "https://example.invalid/jackal-staging/pwa/", "https://example.invalid/foo/bar/baz/pwa/"];
 const disallowedRuntimePathFragments = ["/pwa/", "/jackal/", "/jackal-staging/"];
 
+function isInsidePath(parent, path) {
+    const ref = relative(resolve(parent), resolve(path));
+    return ref === "" || (!ref.startsWith("..") && !isAbsolute(ref));
+}
+
 function collectPrecacheResources(dir, baseDir = dir) {
     const resources = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
-        const stat = statSync(path);
+        const stat = assertRealFileOrDirectory(path, "PWA precache entry");
         if (stat.isDirectory()) {
             resources.push(...collectPrecacheResources(path, baseDir));
             continue;
@@ -34,7 +39,7 @@ function collectFiles(dir, baseDir = dir) {
     const files = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
-        const stat = statSync(path);
+        const stat = assertRealFileOrDirectory(path, "PWA release entry");
         if (stat.isDirectory()) {
             files.push(...collectFiles(path, baseDir));
             continue;
@@ -211,7 +216,15 @@ async function verifySameBytesRelocationPreview(indexHtml) {
 
         const relativePath = decodeURIComponent(requestUrl.pathname.slice(prefix.length));
         const filePath = resolve(pwaDistDir, relativePath.length === 0 ? "index.html" : relativePath);
-        if (!filePath.startsWith(resolve(pwaDistDir)) || !existsSync(filePath) || statSync(filePath).isDirectory()) {
+        if (!isInsidePath(pwaDistDir, filePath) || !existsSync(filePath)) {
+            response.writeHead(404);
+            response.end("Not found");
+            return;
+        }
+
+        try {
+            assertRealFile(filePath, "relocation preview file");
+        } catch {
             response.writeHead(404);
             response.end("Not found");
             return;
@@ -252,6 +265,10 @@ async function verifySameBytesRelocationPreview(indexHtml) {
 if (!existsSync(serviceWorkerPath) || !existsSync(indexPath) || !existsSync(manifestPath)) {
     throw new Error(`Missing ${pwaDistLabel} release output. Run the PWA build before verifying the precache list.`);
 }
+
+assertRealFile(serviceWorkerPath, "PWA service worker");
+assertRealFile(indexPath, "PWA index");
+assertRealFile(manifestPath, "PWA manifest");
 
 const listedResources = parseStaticResources(readFileSync(serviceWorkerPath, "utf8"));
 const generatedFiles = collectFiles(pwaDistDir);

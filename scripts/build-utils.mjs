@@ -172,6 +172,13 @@ export function assertCanonicalProductionDist(label, path) {
     return resolvedPath;
 }
 
+export function assertProductionDistPath(label, path) {
+    const resolvedPath = assertInsideRoot(label, path, distDir);
+    assertManagedReleaseRoot("dist", distDir);
+    assertPhysicalOutputPath(label, resolvedPath, distDir);
+    return resolvedPath;
+}
+
 export function assertReleaseFixtureRoot(label, path) {
     const resolvedPath = assertInsideRoot(label, path);
     const ref = displayPath(resolvedPath);
@@ -250,7 +257,24 @@ export function assertReleaseTreePath(label, path) {
     });
 }
 
+export function assertPwaReleaseTreePath(label, path) {
+    if (isSameOrInside(distDir, resolve(path))) {
+        return assertProductionDistPath(label, path);
+    }
+
+    return assertGeneratedReleaseOutputPath(label, path, {
+        allowComponents: true,
+        allowWork: true,
+        allowCandidates: true,
+        allowSecrets: false,
+        allowTests: true
+    });
+}
+
 export function assertRealDirectory(path, label = "directory") {
+    if (!existsSync(path)) {
+        throw new Error(`Missing ${label}: ${path}`);
+    }
     const stat = lstatSync(path);
     if (stat.isSymbolicLink() || !stat.isDirectory()) {
         throw new Error(`${label} must be a real directory: ${path}`);
@@ -259,6 +283,9 @@ export function assertRealDirectory(path, label = "directory") {
 }
 
 export function assertRealFile(path, label = "file") {
+    if (!existsSync(path)) {
+        throw new Error(`Missing ${label}: ${path}`);
+    }
     const stat = lstatSync(path);
     if (stat.isSymbolicLink() || !stat.isFile()) {
         throw new Error(`${label} must be a real file: ${path}`);
@@ -267,6 +294,9 @@ export function assertRealFile(path, label = "file") {
 }
 
 export function assertRealFileOrDirectory(path, label = "release entry") {
+    if (!existsSync(path)) {
+        throw new Error(`Missing ${label}: ${path}`);
+    }
     const stat = lstatSync(path);
     if (stat.isSymbolicLink()) {
         throw new Error(`${label} must not be a symlink or junction: ${path}`);
