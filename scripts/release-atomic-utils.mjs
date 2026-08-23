@@ -1,5 +1,6 @@
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fsyncDirectory, writeFileAtomic } from "./atomic-file-utils.mjs";
 import {
     assertCanonicalProductionDist,
     assertGeneratedReleaseWorkPath,
@@ -28,32 +29,9 @@ export function promotionJournalPath(workDir = releaseWorkDir) {
     return join(workDir, "promotion-journal.json");
 }
 
-function fsyncDirectory(path) {
-    try {
-        const fd = openSync(path, "r");
-        try {
-            fsyncSync(fd);
-        } finally {
-            closeSync(fd);
-        }
-    } catch {
-        // Directory fsync is not portable on every filesystem. The journal file
-        // itself is still fsynced before the atomic rename.
-    }
-}
-
 function writePromotionJournal(journalPath, journal) {
     mkdirSync(dirname(journalPath), { recursive: true });
-    const tempPath = `${journalPath}.${process.pid}.${Date.now()}.tmp`;
-    const fd = openSync(tempPath, "wx");
-    try {
-        writeFileSync(fd, `${JSON.stringify(journal, null, 4)}\n`);
-        fsyncSync(fd);
-    } finally {
-        closeSync(fd);
-    }
-    renameSync(tempPath, journalPath);
-    fsyncDirectory(dirname(journalPath));
+    writeFileAtomic(journalPath, `${JSON.stringify(journal, null, 4)}\n`);
 }
 
 function removePromotionJournal(journalPath) {

@@ -22,7 +22,7 @@ npm.cmd run build:web
 ```
 
 The PWA version and cache stamp live in `version.json` and are mirrored into static files that browsers cache.
-Production release commands stamp generated artifacts and then restore `version.json`; `npm.cmd run stamp` is only for intentionally updating the tracked stamp.
+Production release commands carry a generated stamp in memory without rewriting `version.json`; `npm.cmd run stamp` is only for intentionally updating the tracked stamp.
 
 ## Desktop Java
 
@@ -36,6 +36,13 @@ npm.cmd run run:desktop
 The desktop release zip is copied into `releases/` by `npm.cmd run release:desktop`; generated zip files are ignored unless a release process intentionally publishes them.
 
 `npm.cmd run build` builds a full release candidate, verifies it, and then promotes it to `dist/`: the root about page, the PWA under `dist/pwa`, the desktop zip, downloadable copies under `dist/downloads`, and `dist/release.json`.
+Use this full release sequence when refreshing promoted web artifacts:
+
+```sh
+npm.cmd run build
+npm.cmd run verify:release
+npm.cmd run verify:pwa-precache
+```
 
 ## License
 

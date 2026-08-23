@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, join, parse, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -10,6 +10,7 @@ export const releaseCandidatesDir = join(rootDir, ".release-candidates");
 export const releaseSecretsDir = join(rootDir, ".release-secrets");
 export const releaseOperationLockDir = join(rootDir, ".release-operation.lock");
 export const versionPath = join(rootDir, "version.json");
+export const buildVersionEnv = "JACKAL_BUILD_VERSION_JSON";
 
 const trackedSourceDirectories = [
     [join(rootDir, ".git"), ".git"],
@@ -37,15 +38,34 @@ function isReleaseTestPath(path) {
 }
 
 function findExistingPath(path) {
-    let current = resolve(path);
-    while (!existsSync(current)) {
-        const parent = dirname(current);
-        if (parent === current) {
-            throw new Error(`Unable to find an existing ancestor for ${path}.`);
-        }
-        current = parent;
+    const resolvedPath = resolve(path);
+    let current = rootDir;
+    let lastExisting = rootDir;
+    const ref = relative(rootDir, resolvedPath);
+
+    if (ref === "") {
+        return rootDir;
     }
-    return current;
+
+    for (const part of ref.split(/[\\/]/).filter(Boolean)) {
+        current = join(current, part);
+        let stat;
+        try {
+            stat = lstatSync(current);
+        } catch (error) {
+            if (error?.code === "ENOENT" || error?.code === "ENOTDIR") {
+                break;
+            }
+            throw error;
+        }
+
+        lastExisting = current;
+        if (!stat.isDirectory()) {
+            break;
+        }
+    }
+
+    return lastExisting;
 }
 
 function existingPathsBetween(parent, child) {
@@ -71,6 +91,9 @@ function assertNoSymlinkInExistingPath(label, path) {
         if (stat.isSymbolicLink()) {
             throw new Error(`${label} must not pass through a symlink or junction: ${existingPath}`);
         }
+        if (!stat.isDirectory() && resolve(existingPath) !== resolve(path)) {
+            throw new Error(`${label} must not pass through a non-directory path component: ${existingPath}`);
+        }
     }
 }
 
@@ -83,15 +106,22 @@ function physicalPathFor(path) {
 
 function assertManagedReleaseRoot(label, root) {
     const resolvedRoot = assertInsideRoot(`${label} root`, root);
-    if (existsSync(resolvedRoot)) {
+    try {
         const stat = lstatSync(resolvedRoot);
         if (stat.isSymbolicLink()) {
             throw new Error(`${label} root must not be a symlink or junction: ${resolvedRoot}`);
+        }
+        if (!stat.isDirectory()) {
+            throw new Error(`${label} root must be a real directory: ${resolvedRoot}`);
         }
 
         const physicalRoot = realpathSync.native(resolvedRoot);
         if (relative(resolve(resolvedRoot), resolve(physicalRoot)) !== "") {
             throw new Error(`${label} root must resolve to its canonical repository path: ${resolvedRoot} -> ${physicalRoot}`);
+        }
+    } catch (error) {
+        if (error?.code !== "ENOENT") {
+            throw error;
         }
     }
     return resolvedRoot;
@@ -197,6 +227,19 @@ export function assertReleaseFixtureOutputPath(label, path, fixtureRoot) {
     return resolvedPath;
 }
 
+export function assertLocalGeneratedOutputPath(label, path, allowedRoot) {
+    const resolvedRoot = assertInsideRoot(`${label} root`, allowedRoot);
+    const resolvedPath = assertInsideRoot(label, path, resolvedRoot);
+
+    if (resolvedPath === resolve(rootDir)) {
+        throw new Error(`${label} cannot be the repository root: ${resolvedPath}`);
+    }
+
+    assertNoSymlinkInExistingPath(label, resolvedPath);
+    assertPhysicalOutputPath(label, resolvedPath, resolvedRoot);
+    return resolvedPath;
+}
+
 export function assertGeneratedReleaseOutputPath(
     label,
     path,
@@ -272,10 +315,15 @@ export function assertPwaReleaseTreePath(label, path) {
 }
 
 export function assertRealDirectory(path, label = "directory") {
-    if (!existsSync(path)) {
-        throw new Error(`Missing ${label}: ${path}`);
+    let stat;
+    try {
+        stat = lstatSync(path);
+    } catch (error) {
+        if (error?.code === "ENOENT") {
+            throw new Error(`Missing ${label}: ${path}`, { cause: error });
+        }
+        throw error;
     }
-    const stat = lstatSync(path);
     if (stat.isSymbolicLink() || !stat.isDirectory()) {
         throw new Error(`${label} must be a real directory: ${path}`);
     }
@@ -283,10 +331,15 @@ export function assertRealDirectory(path, label = "directory") {
 }
 
 export function assertRealFile(path, label = "file") {
-    if (!existsSync(path)) {
-        throw new Error(`Missing ${label}: ${path}`);
+    let stat;
+    try {
+        stat = lstatSync(path);
+    } catch (error) {
+        if (error?.code === "ENOENT") {
+            throw new Error(`Missing ${label}: ${path}`, { cause: error });
+        }
+        throw error;
     }
-    const stat = lstatSync(path);
     if (stat.isSymbolicLink() || !stat.isFile()) {
         throw new Error(`${label} must be a real file: ${path}`);
     }
@@ -294,10 +347,15 @@ export function assertRealFile(path, label = "file") {
 }
 
 export function assertRealFileOrDirectory(path, label = "release entry") {
-    if (!existsSync(path)) {
-        throw new Error(`Missing ${label}: ${path}`);
+    let stat;
+    try {
+        stat = lstatSync(path);
+    } catch (error) {
+        if (error?.code === "ENOENT") {
+            throw new Error(`Missing ${label}: ${path}`, { cause: error });
+        }
+        throw error;
     }
-    const stat = lstatSync(path);
     if (stat.isSymbolicLink()) {
         throw new Error(`${label} must not be a symlink or junction: ${path}`);
     }
@@ -307,8 +365,16 @@ export function assertRealFileOrDirectory(path, label = "release entry") {
     return stat;
 }
 
-export function readVersion() {
+export function readTrackedVersion() {
     return JSON.parse(readFileSync(versionPath, "utf8").replace(/^\uFEFF/, ""));
+}
+
+export function readVersion() {
+    const override = process.env[buildVersionEnv];
+    if (override !== undefined) {
+        return JSON.parse(override.replace(/^\uFEFF/, ""));
+    }
+    return readTrackedVersion();
 }
 
 export function writeVersion(version) {
@@ -342,19 +408,29 @@ export function cleanProductionDistDirectory(path = distDir, label = "production
     return resolvedPath;
 }
 
-export function copyDirectory(source, target) {
-    if (!existsSync(source)) {
-        return;
+export function copyDirectory(source, target, { assertTargetPath = null } = {}) {
+    try {
+        assertRealDirectory(source, "copy source directory");
+    } catch (error) {
+        if (String(error?.message ?? "").startsWith("Missing copy source directory:")) {
+            return;
+        }
+        throw error;
     }
-    assertRealDirectory(source, "copy source directory");
-    ensureDirectory(target);
+
+    const resolvedTarget = assertTargetPath?.("copy target directory", target) ?? target;
+    if (existsSync(resolvedTarget)) {
+        assertRealDirectory(resolvedTarget, "copy target directory");
+    }
+    ensureDirectory(resolvedTarget);
     for (const entry of readdirSync(source).sort((a, b) => a.localeCompare(b))) {
         const sourcePath = join(source, entry);
-        const targetPath = join(target, entry);
+        const targetPath = join(resolvedTarget, entry);
         const stat = assertRealFileOrDirectory(sourcePath, "copy source entry");
         if (stat.isDirectory()) {
-            copyDirectory(sourcePath, targetPath);
+            copyDirectory(sourcePath, targetPath, { assertTargetPath });
         } else {
+            assertTargetPath?.("copy target file", targetPath);
             ensureDirectory(dirname(targetPath));
             copyFileSync(sourcePath, targetPath);
         }

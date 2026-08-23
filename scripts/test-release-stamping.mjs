@@ -2,12 +2,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import vm from "node:vm";
+import { buildVersionEnv, versionPath } from "./build-utils.mjs";
 import { nextBuildStamp } from "./stamp-build.mjs";
+import { withTemporaryBuildStamp } from "./version-stamp-utils.mjs";
 
 const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const versionJson = JSON.parse(readFileSync(new URL("../version.json", import.meta.url), "utf8"));
 const scripts = packageJson.scripts;
 const serviceWorkerSource = readFileSync(new URL("../pwa/public/sw.js", import.meta.url), "utf8");
+const buildAboutSource = readFileSync(new URL("./build-about.mjs", import.meta.url), "utf8");
+const assembleSource = readFileSync(new URL("./assemble.mjs", import.meta.url), "utf8");
+const verifyPwaPrecacheSource = readFileSync(new URL("./verify-pwa-precache.mjs", import.meta.url), "utf8");
+const viteConfigSource = readFileSync(new URL("../pwa/vite.config.ts", import.meta.url), "utf8");
 
 function embeddedServiceWorkerCacheName(buildStamp) {
     const header = serviceWorkerSource.slice(0, serviceWorkerSource.indexOf("const APP_ROOT"));
@@ -40,10 +46,34 @@ test("component and full release scripts route through hardened wrappers", () =>
     assert.equal(scripts["_assemble"], "node scripts/assemble.mjs .release-components/web");
     assert.equal(scripts["build:web"], "npm run verify && node scripts/build-web-release.mjs");
     assert.equal(scripts["build"], "npm run verify && node scripts/build-release.mjs");
+    assert.equal(scripts["release:desktop"], "node scripts/release-desktop.mjs");
     assert.equal(scripts["verify:release"], "node scripts/verify-release-candidate.mjs");
     assert.doesNotMatch(scripts["build:pwa:release"], /\bnpm run stamp\b|\bnpm run clean\b/);
     assert.doesNotMatch(scripts["build:web"], /\bnpm run stamp\b|\bnpm run clean\b/);
     assert.doesNotMatch(scripts["build"], /\bnpm run stamp\b|\bnpm run clean\b/);
+});
+
+test("production release wrappers do not honor ambient test output path variables", () => {
+    assert.doesNotMatch(buildAboutSource, /JACKAL_WEB_OUT_DIR/);
+    assert.doesNotMatch(assembleSource, /JACKAL_WEB_OUT_DIR/);
+    assert.doesNotMatch(verifyPwaPrecacheSource, /JACKAL_PWA_DIST_DIR/);
+});
+
+test("temporary release stamp stays in memory and is consumed by Vite", async () => {
+    const originalVersionBytes = readFileSync(versionPath, "utf8");
+    const previousOverride = process.env[buildVersionEnv];
+    let callbackRan = false;
+
+    assert.match(viteConfigSource, /JACKAL_BUILD_VERSION_JSON/);
+    await withTemporaryBuildStamp((version) => {
+        callbackRan = true;
+        assert.equal(readFileSync(versionPath, "utf8"), originalVersionBytes);
+        assert.equal(JSON.parse(process.env[buildVersionEnv]).buildStamp, version.buildStamp);
+    });
+
+    assert.equal(callbackRan, true);
+    assert.equal(readFileSync(versionPath, "utf8"), originalVersionBytes);
+    assert.equal(process.env[buildVersionEnv], previousOverride);
 });
 
 test("successive release stamps advance even when builds start in the same second", () => {

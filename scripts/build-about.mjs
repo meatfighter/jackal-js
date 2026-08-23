@@ -1,5 +1,6 @@
+import { writeFileAtomic } from "./atomic-file-utils.mjs";
 import { assertComponentReleaseOutputPath, componentReleaseDir, copyDirectory, ensureDirectory, readVersion, renderTemplate, rootDir } from "./build-utils.mjs";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 
@@ -17,10 +18,12 @@ await withReleaseOperationLock(() => {
     };
 
     const aboutDir = join(rootDir, "about");
+    const indexPath = assertComponentReleaseOutputPath("about index output file", join(outputDir, "index.html"));
+    const stylesPath = assertComponentReleaseOutputPath("about styles output file", join(outputDir, "styles.css"));
 
     ensureDirectory(outputDir);
-    writeFileSync(join(outputDir, "index.html"), renderTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), replacements));
-    writeFileSync(join(outputDir, "styles.css"), renderTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), replacements));
-    copyDirectory(join(aboutDir, "assets"), join(outputDir, "assets"));
+    writeFileAtomic(indexPath, renderTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), replacements));
+    writeFileAtomic(stylesPath, renderTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), replacements));
+    copyDirectory(join(aboutDir, "assets"), join(outputDir, "assets"), { assertTargetPath: assertComponentReleaseOutputPath });
     console.log("Built about page");
 });

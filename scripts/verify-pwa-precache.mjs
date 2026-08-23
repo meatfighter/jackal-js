@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { extname, isAbsolute, join, relative, resolve } from "node:path";
-import { assertPwaReleaseTreePath, assertRealFile, assertRealFileOrDirectory, distDir, rootDir } from "./build-utils.mjs";
+import { assertPwaReleaseTreePath, assertRealDirectory, assertRealFile, assertRealFileOrDirectory, distDir, rootDir } from "./build-utils.mjs";
 
 const pwaDistDir = assertPwaReleaseTreePath("PWA release output directory", resolve(rootDir, process.argv[2] ?? join(distDir, "pwa")));
 const pwaDistLabel = relative(rootDir, pwaDistDir).replaceAll("\\", "/") || pwaDistDir;
@@ -17,6 +17,7 @@ function isInsidePath(parent, path) {
 }
 
 function collectPrecacheResources(dir, baseDir = dir) {
+    assertRealDirectory(dir, "PWA precache directory");
     const resources = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
@@ -36,6 +37,7 @@ function collectPrecacheResources(dir, baseDir = dir) {
 }
 
 function collectFiles(dir, baseDir = dir) {
+    assertRealDirectory(dir, "PWA release directory");
     const files = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
@@ -223,6 +225,7 @@ async function verifySameBytesRelocationPreview(indexHtml) {
         }
 
         try {
+            assertPwaReleaseTreePath("relocation preview file path", filePath);
             assertRealFile(filePath, "relocation preview file");
         } catch {
             response.writeHead(404);

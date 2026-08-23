@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { assertRealFile, assertRealFileOrDirectory, assertReleaseTreePath, readVersion } from "./build-utils.mjs";
+import { writeFileAtomic } from "./atomic-file-utils.mjs";
+import { assertRealDirectory, assertRealFile, assertRealFileOrDirectory, assertReleaseTreePath, readVersion } from "./build-utils.mjs";
 
 export const RELEASE_MANIFEST_NAME = "release.json";
 
@@ -10,6 +11,7 @@ function normalizeRef(ref) {
 }
 
 function collectFiles(dir, baseDir = dir) {
+    assertRealDirectory(dir, "release manifest directory");
     const files = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);
@@ -48,7 +50,7 @@ export function createReleaseManifest(releaseDir, version = readVersion()) {
 export function writeReleaseManifest(releaseDir, version = readVersion()) {
     const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
     const manifest = createReleaseManifest(root, version);
-    writeFileSync(join(root, RELEASE_MANIFEST_NAME), `${JSON.stringify(manifest, null, 4)}\n`);
+    writeFileAtomic(join(root, RELEASE_MANIFEST_NAME), `${JSON.stringify(manifest, null, 4)}\n`);
     return manifest;
 }
 
@@ -58,6 +60,7 @@ export function readReleaseManifest(releaseDir) {
     if (!existsSync(manifestPath)) {
         throw new Error(`Missing release manifest: ${manifestPath}`);
     }
+    assertRealFile(manifestPath, "release manifest");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     if (
         typeof manifest !== "object" ||

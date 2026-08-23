@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readVersion, writeVersion } from "./build-utils.mjs";
+import { readTrackedVersion, writeVersion } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 
 function pad(value) {
@@ -20,7 +20,7 @@ export function formatBuildStamp(date) {
     ].join("");
 }
 
-function parseBuildStamp(value) {
+export function parseBuildStamp(value) {
     const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(String(value));
     if (match === null) {
         return null;
@@ -41,7 +41,7 @@ export function nextBuildStamp(date, previousStamp) {
 }
 
 export function stampBuild(date = new Date()) {
-    const version = readVersion();
+    const version = readTrackedVersion();
     version.buildStamp = nextBuildStamp(date, version.buildStamp);
     writeVersion(version);
     return version;

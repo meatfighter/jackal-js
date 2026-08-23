@@ -1,6 +1,7 @@
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
-import { assertRealFileOrDirectory } from "./build-utils.mjs";
+import { writeFileAtomic } from "./atomic-file-utils.mjs";
+import { assertRealDirectory, assertRealFileOrDirectory } from "./build-utils.mjs";
 
 const LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50;
@@ -54,6 +55,7 @@ function unixModeForEntry(name, isDirectory, executableEntries) {
 }
 
 function collectZipSourceEntries(sourceDir, rootName, executableEntries) {
+    assertRealDirectory(sourceDir, "ZIP source directory");
     const entries = [];
 
     function addEntry(path, name) {
@@ -171,7 +173,7 @@ export function writeZipFromDirectory(sourceDir, zipPath, { rootName = basename(
     end.writeUInt16LE(0, 20);
     outputParts.push(end);
 
-    writeFileSync(zipPath, Buffer.concat(outputParts));
+    writeFileAtomic(zipPath, Buffer.concat(outputParts));
 }
 
 function findEndOfCentralDirectory(data) {

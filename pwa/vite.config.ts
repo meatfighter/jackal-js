@@ -3,13 +3,29 @@ import { fileURLToPath } from "node:url";
 import { join, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 import type { Plugin, ResolvedConfig } from "vite";
-import versionInfo from "../version.json";
+import versionFileInfo from "../version.json";
 
 const APP_VERSION_TOKEN = "__APP_VERSION__";
 const BUILD_STAMP_TOKEN = "__BUILD_STAMP__";
 const BASE_URL_TOKEN = "__BASE_URL__";
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const pwaOutDir = process.env.JACKAL_PWA_OUT_DIR ?? "../.release-components/pwa";
+const buildVersionEnv = "JACKAL_BUILD_VERSION_JSON";
+
+function readBuildVersionInfo(): typeof versionFileInfo {
+    const override = process.env[buildVersionEnv];
+    if (override === undefined) {
+        return versionFileInfo;
+    }
+
+    const parsed = JSON.parse(override) as typeof versionFileInfo;
+    if (typeof parsed.version !== "string" || typeof parsed.buildStamp !== "string") {
+        throw new Error(`${buildVersionEnv} must contain version and buildStamp strings.`);
+    }
+    return parsed;
+}
+
+const versionInfo = readBuildVersionInfo();
 
 function normalizeBaseUrl(baseUrl: string): string {
     if (baseUrl.length === 0) {
@@ -26,6 +42,11 @@ function applyBuildTokens(content: string, baseUrl: string): string {
 }
 
 function collectPrecacheResources(dir: string, baseDir = dir): string[] {
+    const rootStat = lstatSync(dir);
+    if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+        throw new Error(`PWA precache root must be a real directory: ${dir}`);
+    }
+
     const resources: string[] = [];
     for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
         const path = join(dir, entry);

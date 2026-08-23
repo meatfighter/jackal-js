@@ -19,7 +19,7 @@
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
         "release:web": "npm run build:web",
-        "release:desktop": "npm run verify && npm run build:desktop && node scripts/copy-desktop-release.mjs",
+        "release:desktop": "node scripts/release-desktop.mjs",
         "run:desktop": "node scripts/run-desktop.mjs",
         "preview": "npm run preview:pwa",
         "preview:pwa": "vite preview --config pwa/vite.config.ts --host 127.0.0.1",

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
+import { writeFileAtomic } from "./atomic-file-utils.mjs";
 import { distDir, releaseWorkDir, rootDir, versionPath } from "./build-utils.mjs";
-import { promoteVerifiedCandidate } from "./release-atomic-utils.mjs";
+import { promoteVerifiedCandidate, promotionJournalPath, recoverInterruptedPromotion } from "./release-atomic-utils.mjs";
+import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { verifyReleaseManifest, writeReleaseManifest } from "./release-manifest.mjs";
 import { assertTrackedSourceStateUnchanged, captureTrackedSourceState } from "./source-state-utils.mjs";
 import { listZipEntries, writeZipFromDirectory } from "./zip-utils.mjs";
@@ -33,6 +35,15 @@ async function withReleaseWorkTestDir(task) {
 function createFile(path, content = "x") {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
+}
+
+function tryCreateSymlink(target, path, type) {
+    try {
+        symlinkSync(target, path, type);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function modeAwareRequiredEntries(overrides = {}) {
@@ -95,6 +106,160 @@ test("atomic candidate promotion restores the previous target when promotion fai
     });
 });
 
+test("release operation lock is reentrant, registers holders, and protects live holders", async () => {
+    await withTempDir(async (dir) => {
+        const lockDir = join(dir, "release-operation.lock");
+        const holdersDir = join(lockDir, "holders");
+        const holderFiles = () => readdirSync(holdersDir).filter((entry) => entry.endsWith(".json"));
+        let enteredReentrantLock = false;
+        let outerHolderCount = 0;
+        let innerHolderCount = 0;
+
+        await withReleaseOperationLock(
+            async () => {
+                outerHolderCount = holderFiles().length;
+                await withReleaseOperationLock(
+                    () => {
+                        enteredReentrantLock = true;
+                        innerHolderCount = holderFiles().length;
+                    },
+                    { lockDir }
+                );
+            },
+            { lockDir }
+        );
+
+        assert.equal(enteredReentrantLock, true);
+        assert.equal(outerHolderCount, 1);
+        assert.equal(innerHolderCount, 1);
+        assert.equal(existsSync(lockDir), false);
+
+        mkdirSync(holdersDir, { recursive: true });
+        writeFileSync(join(lockDir, "owner.json"), JSON.stringify({ pid: 999_999_999, token: "stale" }));
+        writeFileSync(join(holdersDir, "live-holder.json"), JSON.stringify({ pid: process.pid, token: "stale" }));
+
+        await assert.rejects(
+            withReleaseOperationLock(
+                () => {
+                    throw new Error("should not enter while a live holder remains");
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 10 }
+            ),
+            /Timed out waiting for release operation lock/
+        );
+
+        rmSync(join(holdersDir, "live-holder.json"), { force: true });
+
+        let recoveredStaleLock = false;
+        await withReleaseOperationLock(
+            () => {
+                recoveredStaleLock = true;
+            },
+            { lockDir, retryDelayMs: 1, timeoutMs: 1_000 }
+        );
+
+        assert.equal(recoveredStaleLock, true);
+        assert.equal(existsSync(lockDir), false);
+    });
+});
+
+test("release operation lock rejects fresh malformed metadata and warns before stale recovery", async () => {
+    await withTempDir(async (dir) => {
+        const lockDir = join(dir, "release-operation.lock");
+        mkdirSync(lockDir, { recursive: true });
+        writeFileSync(join(lockDir, "owner.json"), "{");
+
+        await assert.rejects(
+            withReleaseOperationLock(
+                () => {
+                    throw new Error("should not enter a fresh malformed lock");
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 10, staleLockMs: 60_000 }
+            ),
+            /malformed metadata/
+        );
+        assert.equal(existsSync(lockDir), true);
+
+        const warnings = [];
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+            warnings.push(args.join(" "));
+        };
+
+        try {
+            let recoveredStaleMalformedLock = false;
+            await withReleaseOperationLock(
+                () => {
+                    recoveredStaleMalformedLock = true;
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 1_000, staleLockMs: -1 }
+            );
+            assert.equal(recoveredStaleMalformedLock, true);
+        } finally {
+            console.warn = originalWarn;
+        }
+
+        assert.match(warnings.join("\n"), /Recovering stale malformed release operation lock/);
+        assert.equal(existsSync(lockDir), false);
+    });
+});
+
+test("atomic file writes clean pre-rename temps on injected failures", async () => {
+    await withTempDir((dir) => {
+        for (const hook of ["afterCreate", "afterWrite", "afterFsync", "beforeRename"]) {
+            const target = join(dir, `${hook}.json`);
+            assert.throws(
+                () =>
+                    writeFileAtomic(target, "sensitive metadata", {
+                        [hook]() {
+                            throw new Error(`simulated ${hook} failure`);
+                        }
+                    }),
+                new RegExp(`simulated ${hook} failure`)
+            );
+            assert.equal(existsSync(target), false);
+            assert.deepEqual(
+                readdirSync(dir).filter((entry) => entry.startsWith(`${hook}.json.`) && entry.endsWith(".tmp")),
+                []
+            );
+        }
+    });
+});
+
+test("release promotion recovery completes interrupted target backup journal", async () => {
+    await withTempDir((dir) => {
+        const candidateDir = join(dir, "candidate");
+        const targetDir = join(dir, "dist");
+        const workDir = join(dir, "work");
+        const backupDir = join(workDir, "previous-dist-test");
+        mkdirSync(candidateDir, { recursive: true });
+        mkdirSync(backupDir, { recursive: true });
+        writeFileSync(join(candidateDir, "index.html"), "new");
+        writeFileSync(join(backupDir, "index.html"), "old");
+        mkdirSync(workDir, { recursive: true });
+        writeFileSync(
+            promotionJournalPath(workDir),
+            `${JSON.stringify(
+                {
+                    phase: "target-backed-up",
+                    candidate: candidateDir,
+                    target: targetDir,
+                    backup: backupDir,
+                    work: workDir
+                },
+                null,
+                4
+            )}\n`
+        );
+
+        assert.equal(recoverInterruptedPromotion({ workDir, fixtureRoot: dir }), true);
+        assert.equal(readFileSync(join(targetDir, "index.html"), "utf8"), "new");
+        assert.equal(existsSync(candidateDir), false);
+        assert.equal(existsSync(backupDir), false);
+        assert.equal(existsSync(promotionJournalPath(workDir)), false);
+    });
+});
+
 test("production promotion only accepts generated candidates and canonical dist targets", async () => {
     await withTempDir((dir) => {
         const fixtureCandidateDir = join(dir, "candidate");
@@ -102,7 +267,7 @@ test("production promotion only accepts generated candidates and canonical dist 
 
         assert.throws(
             () => promoteVerifiedCandidate(fixtureCandidateDir, distDir, { workDir: releaseWorkDir }),
-            /release candidate must be generated release output/
+            /release candidate must be under one of these release output roots/
         );
     });
 
@@ -166,7 +331,7 @@ test("component release commands reject canonical dist output before touching it
             });
 
             assert.notEqual(result.status, 0, `${script} should reject canonical dist output.`);
-            assert.match(`${result.stdout}\n${result.stderr}`, /protected release path dist/);
+            assert.match(`${result.stdout}\n${result.stderr}`, /release output roots|canonical production dist|dist/);
             assert.equal(readFileSync(sentinelPath, "utf8"), "keep");
         }
     } finally {
@@ -174,6 +339,18 @@ test("component release commands reject canonical dist output before touching it
         if (!hadDist) {
             rmSync(distDir, { recursive: true, force: true });
         }
+    }
+});
+
+test("component release commands reject arbitrary source output roots", () => {
+    for (const script of ["scripts/build-pwa-release.mjs", "scripts/build-web-release.mjs", "scripts/build-about.mjs", "scripts/assemble.mjs"]) {
+        const result = spawnSync(process.execPath, [script, join(rootDir, "about")], {
+            cwd: rootDir,
+            encoding: "utf8"
+        });
+
+        assert.notEqual(result.status, 0, `${script} should reject arbitrary source output.`);
+        assert.match(`${result.stdout}\n${result.stderr}`, /release output roots|tracked source directory|about/);
     }
 });
 
@@ -192,6 +369,62 @@ test("release manifest verification detects mutated candidate files", async () =
 
         writeFileSync(join(releaseDir, "pwa", "index.html"), "PWA");
         assert.throws(() => verifyReleaseManifest(releaseDir), /SHA-256 mismatch/);
+    });
+});
+
+test("release artifact walkers reject symlinks when the filesystem supports them", async () => {
+    await withTempDir((dir) => {
+        const releaseDir = join(dir, "candidate");
+        const zipDir = join(dir, "zip-source");
+        mkdirSync(releaseDir, { recursive: true });
+        mkdirSync(zipDir, { recursive: true });
+        writeFileSync(join(releaseDir, "index.html"), "about");
+        writeFileSync(join(zipDir, "file.txt"), "zip");
+
+        const releaseLink = join(releaseDir, "linked.html");
+        const zipLink = join(zipDir, "linked.txt");
+        if (!tryCreateSymlink(join(releaseDir, "index.html"), releaseLink, "file") || !tryCreateSymlink(join(zipDir, "file.txt"), zipLink, "file")) {
+            return;
+        }
+
+        assert.throws(() => writeReleaseManifest(releaseDir, { version: "1.0.0", buildStamp: "20260823T000000Z" }), /symlink|junction/);
+        assert.throws(() => writeZipFromDirectory(zipDir, join(dir, "archive.zip")), /symlink|junction/);
+    });
+});
+
+test("release artifact walkers reject linked or broken roots when the filesystem supports them", async () => {
+    await withTempDir((dir) => {
+        const realReleaseDir = join(dir, "real-candidate");
+        const linkedReleaseDir = join(dir, "linked-candidate");
+        const brokenReleaseDir = join(dir, "broken-candidate");
+        mkdirSync(realReleaseDir, { recursive: true });
+        writeFileSync(join(realReleaseDir, "index.html"), "about");
+
+        const linkType = process.platform === "win32" ? "junction" : "dir";
+        if (tryCreateSymlink(realReleaseDir, linkedReleaseDir, linkType)) {
+            assert.throws(() => writeReleaseManifest(linkedReleaseDir, { version: "1.0.0", buildStamp: "20260823T000000Z" }), /symlink|junction/);
+        }
+        if (tryCreateSymlink(join(dir, "missing-candidate"), brokenReleaseDir, linkType)) {
+            assert.throws(() => writeReleaseManifest(brokenReleaseDir, { version: "1.0.0", buildStamp: "20260823T000000Z" }), /symlink|junction/);
+        }
+    });
+});
+
+test("release output path validation rejects physical symlink escapes when supported", async () => {
+    await withTempDir((dir) => {
+        const linkDir = join(dir, "linked-pwa");
+        if (!tryCreateSymlink(join(rootDir, "pwa"), linkDir, process.platform === "win32" ? "junction" : "dir")) {
+            return;
+        }
+
+        assert.throws(
+            () =>
+                promoteVerifiedCandidate(join(linkDir, "candidate"), join(dir, "dist"), {
+                    workDir: join(dir, "work"),
+                    fixtureRoot: dir
+                }),
+            /symlink|junction|tracked source directory|physical path/
+        );
     });
 });
 
@@ -243,6 +476,7 @@ test("transient release-state paths are ignored and not tracked", () => {
         /^\.release-components\//,
         /^\.release-work\//,
         /^\.release-test-/,
+        /^\.release-operation\.lock\//,
         /^\.release-version-stamp\.lock\//,
         /^\.release-secrets\//,
         /^\.release-candidates\//,

@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { assertRealDirectory, assertRealFile, assertRealFileOrDirectory, rootDir } from "./build-utils.mjs";
+import { assertLocalGeneratedOutputPath, assertRealDirectory, assertRealFile, assertRealFileOrDirectory, rootDir } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { writeZipFromDirectory } from "./zip-utils.mjs";
 
@@ -21,6 +21,42 @@ const sourcesFile = join(targetDir, "sources.txt");
 const manifestPath = join(targetDir, "MANIFEST.MF");
 const runtimeJars = ["slick.jar", "lwjgl.jar", "lwjgl_util.jar", "jinput.jar", "jorbis.jar"];
 const executableDistributionEntries = [`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`];
+
+function assertDesktopTargetPath(label, path) {
+    return assertLocalGeneratedOutputPath(label, path, targetDir);
+}
+
+function assertDesktopTargetDirectory(path, label) {
+    const resolvedPath = assertDesktopTargetPath(label, path);
+    if (existsSync(resolvedPath)) {
+        assertRealDirectory(resolvedPath, label);
+    }
+    return resolvedPath;
+}
+
+function ensureDesktopTargetDirectory(path, label) {
+    const resolvedPath = assertDesktopTargetDirectory(path, label);
+    mkdirSync(resolvedPath, { recursive: true });
+    return resolvedPath;
+}
+
+function cleanDesktopTargetDirectory(path, label) {
+    const resolvedPath = assertDesktopTargetPath(label, path);
+    if (existsSync(resolvedPath)) {
+        assertRealDirectory(resolvedPath, label);
+    }
+    rmSync(resolvedPath, { recursive: true, force: true });
+    mkdirSync(resolvedPath, { recursive: true });
+    return resolvedPath;
+}
+
+function removeDesktopTargetFile(path, label) {
+    const resolvedPath = assertDesktopTargetPath(label, path);
+    if (existsSync(resolvedPath)) {
+        assertRealFile(resolvedPath, label);
+        rmSync(resolvedPath, { force: true });
+    }
+}
 
 function commandExists(command) {
     const finder = process.platform === "win32" ? "where.exe" : "which";
@@ -84,10 +120,11 @@ function copyResources(source, target) {
         const targetPath = join(target, entry);
         const stat = assertRealFileOrDirectory(sourcePath, "desktop resource entry");
         if (stat.isDirectory()) {
-            mkdirSync(targetPath, { recursive: true });
+            ensureDesktopTargetDirectory(targetPath, "desktop resource target directory");
             copyResources(sourcePath, targetPath);
         } else if (stat.isFile() && !entry.endsWith(".java")) {
-            mkdirSync(dirname(targetPath), { recursive: true });
+            assertDesktopTargetPath("desktop resource target file", targetPath);
+            ensureDesktopTargetDirectory(dirname(targetPath), "desktop resource target parent");
             copyFileSync(sourcePath, targetPath);
         }
     }
@@ -95,8 +132,7 @@ function copyResources(source, target) {
 
 function copyDirectoryContents(source, target) {
     assertRealDirectory(source, "desktop copy source directory");
-    rmSync(target, { recursive: true, force: true });
-    mkdirSync(target, { recursive: true });
+    cleanDesktopTargetDirectory(target, "desktop copy target directory");
     for (const entry of readdirSync(source)) {
         const sourcePath = join(source, entry);
         const targetPath = join(target, entry);
@@ -104,7 +140,8 @@ function copyDirectoryContents(source, target) {
         if (stat.isDirectory()) {
             copyDirectoryContents(sourcePath, targetPath);
         } else {
-            mkdirSync(dirname(targetPath), { recursive: true });
+            assertDesktopTargetPath("desktop copy target file", targetPath);
+            ensureDesktopTargetDirectory(dirname(targetPath), "desktop copy target parent");
             copyFileSync(sourcePath, targetPath);
         }
     }
@@ -132,6 +169,8 @@ function formatManifestAttribute(name, value) {
 function writeManifest() {
     const classPath = runtimeJars.map((name) => `lib/${name}`).join(" ");
     const manifest = ["Manifest-Version: 1.0\n", "Main-Class: jackal.Main\n", formatManifestAttribute("Class-Path", classPath), "\n"].join("");
+    assertDesktopTargetPath("desktop manifest", manifestPath);
+    ensureDesktopTargetDirectory(dirname(manifestPath), "desktop manifest parent");
     writeFileSync(manifestPath, manifest);
 }
 
@@ -157,30 +196,41 @@ function removeVersionedTargetArtifacts() {
         return;
     }
 
+    assertRealDirectory(targetDir, "desktop target directory");
     const versionedArtifactPattern = new RegExp(`^${distributionName}-\\d.*\\.(?:jar|zip)$`);
     for (const entry of readdirSync(targetDir)) {
         if (versionedArtifactPattern.test(entry)) {
-            rmSync(join(targetDir, entry), { force: true });
+            const artifactPath = assertDesktopTargetPath("versioned desktop artifact", join(targetDir, entry));
+            assertRealFile(artifactPath, "versioned desktop artifact");
+            rmSync(artifactPath, { force: true });
         }
     }
 }
 
 function createDistribution() {
     const distributionDir = join(distributionRoot, distributionName);
-    rmSync(distributionRoot, { recursive: true, force: true });
-    mkdirSync(distributionDir, { recursive: true });
-    copyFileSync(stableJarPath, join(distributionDir, `${distributionName}.jar`));
+    cleanDesktopTargetDirectory(distributionRoot, "desktop distribution root");
+    ensureDesktopTargetDirectory(distributionDir, "desktop distribution directory");
+    assertRealFile(stableJarPath, "stable desktop JAR");
+    copyFileSync(stableJarPath, assertDesktopTargetPath("desktop distribution JAR", join(distributionDir, `${distributionName}.jar`)));
     copyDirectoryContents(targetLibDir, join(distributionDir, "lib"));
     copyDirectoryContents(targetNativeDir, join(distributionDir, "natives"));
 
     for (const name of ["run-windows.cmd", "run-windows.ps1", "run-linux.sh", "run-macos.sh", "README.md", "RUNTIME_DEPENDENCIES.md"]) {
-        copyFileSync(join(desktopDir, name), join(distributionDir, name));
+        const sourcePath = join(desktopDir, name);
+        const targetPath = assertDesktopTargetPath("desktop distribution file", join(distributionDir, name));
+        assertRealFile(sourcePath, "desktop distribution source file");
+        copyFileSync(sourcePath, targetPath);
     }
-    copyFileSync(join(rootDir, "LICENSE"), join(distributionDir, "LICENSE"));
-    copyFileSync(join(rootDir, "THIRD_PARTY_NOTICES.md"), join(distributionDir, "THIRD_PARTY_NOTICES.md"));
+    const licensePath = join(rootDir, "LICENSE");
+    const noticesPath = join(rootDir, "THIRD_PARTY_NOTICES.md");
+    assertRealFile(licensePath, "license file");
+    assertRealFile(noticesPath, "third-party notices");
+    copyFileSync(licensePath, assertDesktopTargetPath("desktop distribution license", join(distributionDir, "LICENSE")));
+    copyFileSync(noticesPath, assertDesktopTargetPath("desktop distribution third-party notices", join(distributionDir, "THIRD_PARTY_NOTICES.md")));
 
-    rmSync(stableZipPath, { force: true });
-    writeZipFromDirectory(distributionDir, stableZipPath, {
+    removeDesktopTargetFile(stableZipPath, "stable desktop ZIP");
+    writeZipFromDirectory(distributionDir, assertDesktopTargetPath("stable desktop ZIP", stableZipPath), {
         executableEntries: executableDistributionEntries,
         rootName: distributionName
     });
@@ -189,12 +239,8 @@ function createDistribution() {
 function normalizeMavenOutputs() {
     const mavenStableJar = join(targetDir, `${distributionName}.jar`);
     const mavenStableZip = join(targetDir, `${distributionName}.zip`);
-    if (!existsSync(mavenStableJar)) {
-        throw new Error(`Maven did not create ${mavenStableJar}`);
-    }
-    if (!existsSync(mavenStableZip)) {
-        throw new Error(`Maven did not create ${mavenStableZip}`);
-    }
+    assertRealFile(mavenStableJar, "Maven desktop JAR");
+    assertRealFile(mavenStableZip, "Maven desktop ZIP");
     createDistribution();
 }
 
@@ -247,12 +293,12 @@ function buildWithJavacFallback() {
     }
 
     console.log("Building desktop archive with javac fallback.");
-    rmSync(classesDir, { recursive: true, force: true });
-    mkdirSync(classesDir, { recursive: true });
-    mkdirSync(targetDir, { recursive: true });
+    cleanDesktopTargetDirectory(classesDir, "desktop classes directory");
+    ensureDesktopTargetDirectory(targetDir, "desktop target directory");
     copyRuntimeToTarget();
 
     const sources = collectJavaFiles(sourceDir);
+    assertDesktopTargetPath("desktop sources list", sourcesFile);
     writeFileSync(sourcesFile, sources.map((source) => source.replaceAll("\\", "/")).join("\n"));
 
     const classpath = runtimeJars.map((name) => join(libDir, name)).join(process.platform === "win32" ? ";" : ":");
@@ -268,6 +314,7 @@ function buildWithJavacFallback() {
 }
 
 await withReleaseOperationLock(() => {
+    assertDesktopTargetDirectory(targetDir, "desktop target directory");
     verifyRuntimeDependencies();
     removeVersionedTargetArtifacts();
     if (!tryNativeMaven() && !tryWslMaven()) {
