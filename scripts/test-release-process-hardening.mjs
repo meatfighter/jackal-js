@@ -358,6 +358,122 @@ test("release operation lock does not auto-break an active stale-recovery guard"
     });
 });
 
+test("gracefully released owner preserves live reentrant child holders", async () => {
+    await withTempDir(async (dir) => {
+        const lockDir = join(dir, "release-operation.lock");
+        const childReadyFile = join(dir, "child-ready");
+        const childPidFile = join(dir, "child-pid");
+        const stopFile = join(dir, "stop-child");
+        let childPid = null;
+        const childSource = `
+            import { existsSync, writeFileSync } from "node:fs";
+            import { setTimeout as delay } from "node:timers/promises";
+            import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
+
+            const lockDir = process.env.JACKAL_TEST_LOCK_DIR;
+            const childReadyFile = process.env.JACKAL_TEST_CHILD_READY_FILE;
+            const stopFile = process.env.JACKAL_TEST_STOP_FILE;
+
+            await withReleaseOperationLock(async () => {
+                writeFileSync(childReadyFile, String(process.pid));
+                while (!existsSync(stopFile)) {
+                    await delay(10);
+                }
+            }, { lockDir });
+        `;
+        const parentSource = `
+            import { spawn } from "node:child_process";
+            import { existsSync, writeFileSync } from "node:fs";
+            import { setTimeout as delay } from "node:timers/promises";
+            import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
+
+            const lockDir = process.env.JACKAL_TEST_LOCK_DIR;
+            const childReadyFile = process.env.JACKAL_TEST_CHILD_READY_FILE;
+            const childPidFile = process.env.JACKAL_TEST_CHILD_PID_FILE;
+            const stopFile = process.env.JACKAL_TEST_STOP_FILE;
+            const childSource = process.env.JACKAL_TEST_CHILD_SOURCE;
+
+            await withReleaseOperationLock(async () => {
+                const child = spawn(process.execPath, ["--input-type=module", "-e", childSource], {
+                    cwd: process.cwd(),
+                    env: {
+                        ...process.env,
+                        JACKAL_TEST_LOCK_DIR: lockDir,
+                        JACKAL_TEST_CHILD_READY_FILE: childReadyFile,
+                        JACKAL_TEST_STOP_FILE: stopFile
+                    },
+                    detached: true,
+                    stdio: "ignore"
+                });
+                writeFileSync(childPidFile, String(child.pid));
+                child.unref();
+
+                const deadline = Date.now() + 10_000;
+                while (!existsSync(childReadyFile)) {
+                    if (Date.now() > deadline) {
+                        throw new Error("Timed out waiting for child holder.");
+                    }
+                    await delay(10);
+                }
+            }, { lockDir });
+        `;
+
+        const parent = spawn(process.execPath, ["--input-type=module", "-e", parentSource], {
+            cwd: rootDir,
+            env: {
+                ...process.env,
+                JACKAL_TEST_LOCK_DIR: lockDir,
+                JACKAL_TEST_CHILD_READY_FILE: childReadyFile,
+                JACKAL_TEST_CHILD_PID_FILE: childPidFile,
+                JACKAL_TEST_STOP_FILE: stopFile,
+                JACKAL_TEST_CHILD_SOURCE: childSource
+            },
+            stdio: ["ignore", "pipe", "pipe"]
+        });
+
+        try {
+            const parentResult = await collectChildResult(parent, 15_000);
+            assert.equal(parentResult.code, 0, `parent failed with stderr:\n${parentResult.stderr}`);
+            childPid = Number(readFileSync(childPidFile, "utf8"));
+            assert.equal(Number.isInteger(childPid) && childPid > 0, true);
+
+            const owner = JSON.parse(readFileSync(join(lockDir, "owner.json"), "utf8"));
+            assert.equal(owner.released, true);
+            assert.deepEqual(readHolderPids(lockDir), [childPid]);
+
+            let competitorEnteredWhileChildLive = false;
+            await assert.rejects(
+                withReleaseOperationLock(
+                    () => {
+                        competitorEnteredWhileChildLive = true;
+                    },
+                    { lockDir, retryDelayMs: 1, timeoutMs: 25, staleLockMs: -1 }
+                ),
+                /Timed out waiting for release operation lock/
+            );
+            assert.equal(competitorEnteredWhileChildLive, false);
+
+            writeFileSync(stopFile, "stop");
+            await waitForPidsToExit([childPid], 5_000);
+
+            let competitorEnteredAfterChildExit = false;
+            await withReleaseOperationLock(
+                () => {
+                    competitorEnteredAfterChildExit = true;
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 1_000, staleLockMs: -1 }
+            );
+            assert.equal(competitorEnteredAfterChildExit, true);
+            assert.equal(existsSync(lockDir), false);
+        } finally {
+            if (childPid !== null) {
+                killPid(childPid);
+            }
+            rmSync(lockDir, { recursive: true, force: true });
+        }
+    });
+});
+
 test("concurrent stale release lock recovery tolerates disappearing lock directories", async () => {
     for (let iteration = 0; iteration < 3; iteration++) {
         await withTempDir(async (dir) => {
@@ -842,7 +958,16 @@ test("desktop ZIP verifier requires runtime jars, natives, and notices", () => {
 
     assert.doesNotThrow(() => verifyDesktopZipEntries(entries));
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/lib/jorbis.jar")), /jorbis\.jar/);
+    assert.throws(
+        () => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/natives/linux/libjinput-linux64.so")),
+        /libjinput-linux64\.so/
+    );
+    assert.throws(
+        () => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/natives/macosx/libjinput-osx.jnilib")),
+        /libjinput-osx\.jnilib/
+    );
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/THIRD_PARTY_NOTICES.md")), /THIRD_PARTY_NOTICES\.md/);
+    assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/LWJGL-2.txt")), /LWJGL-2\.txt/);
 });
 
 test("desktop ZIP verifier checks launch script modes and rejects outer manifests", () => {

@@ -14,9 +14,12 @@ const requiredNativeEntries = [
     "natives/windows/jinput-raw_64.dll",
     "natives/linux/liblwjgl64.so",
     "natives/linux/libopenal64.so",
+    "natives/linux/libjinput-linux64.so",
     "natives/macosx/liblwjgl.jnilib",
-    "natives/macosx/openal.dylib"
+    "natives/macosx/openal.dylib",
+    "natives/macosx/libjinput-osx.jnilib"
 ];
+const requiredLicenseEntries = ["licenses/SLICK2D.txt", "licenses/LWJGL-2.txt", "licenses/JINPUT.txt", "licenses/JORBIS-LGPL.txt"];
 const requiredRootEntries = [
     `${distributionName}.jar`,
     "LICENSE",
@@ -40,7 +43,8 @@ export function requiredDesktopZipEntries() {
     return [
         ...requiredRootEntries.map((entry) => `${root}${entry}`),
         ...runtimeJars.map((jar) => `${root}lib/${jar}`),
-        ...requiredNativeEntries.map((entry) => `${root}${entry}`)
+        ...requiredNativeEntries.map((entry) => `${root}${entry}`),
+        ...requiredLicenseEntries.map((entry) => `${root}${entry}`)
     ];
 }
 

@@ -118,7 +118,8 @@ function validateProcessMetadata(record, label) {
         !Number.isInteger(record.value.pid) ||
         record.value.pid <= 0 ||
         typeof record.value.token !== "string" ||
-        record.value.token.length === 0
+        record.value.token.length === 0 ||
+        (record.value.released !== undefined && typeof record.value.released !== "boolean")
     ) {
         return {
             status: record.status === "missing" ? "missing" : "malformed",
@@ -134,6 +135,7 @@ function validateProcessMetadata(record, label) {
         label,
         pid: record.value.pid,
         token: record.value.token,
+        released: record.value.released === true,
         mtimeMs: record.mtimeMs
     };
 }
@@ -151,6 +153,23 @@ function writeOwner(lockDir, token) {
                 hostname: hostname(),
                 token,
                 startedAt: new Date().toISOString()
+            },
+            null,
+            4
+        )}\n`
+    );
+}
+
+function markOwnerReleased(lockDir, owner) {
+    writeFileAtomic(
+        ownerPath(lockDir),
+        `${JSON.stringify(
+            {
+                pid: owner.pid,
+                hostname: hostname(),
+                token: owner.token,
+                released: true,
+                releasedAt: new Date().toISOString()
             },
             null,
             4
@@ -349,6 +368,21 @@ function removeOwnedLock(lockDir, token) {
         return;
     }
 
+    let holders;
+    try {
+        holders = readHolderRecords(lockDir);
+    } catch (error) {
+        if (isMissingPathError(error) || isTransientLockAccessError(error)) {
+            return;
+        }
+        throw error;
+    }
+
+    if (holders.live.length > 0 || holders.malformed.length > 0) {
+        markOwnerReleased(lockDir, owner);
+        return;
+    }
+
     const detachedDir = detachLockDirectory(lockDir, "released");
     if (detachedDir === null || detachedDir === false) {
         return;
@@ -374,7 +408,7 @@ function hasLiveLockState(lockDir) {
         }
         throw error;
     }
-    if (owner.status === "valid" && isProcessAlive(owner.pid)) {
+    if (owner.status === "valid" && !owner.released && isProcessAlive(owner.pid)) {
         return true;
     }
 
@@ -417,7 +451,7 @@ function tryRemoveStaleLock(lockDir, staleLockMs) {
     }
     const malformedRecords = [...holders.malformed];
 
-    if (owner.status === "valid" && isProcessAlive(owner.pid)) {
+    if (owner.status === "valid" && !owner.released && isProcessAlive(owner.pid)) {
         return false;
     }
     if (holders.live.length > 0) {

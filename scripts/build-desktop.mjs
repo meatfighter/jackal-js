@@ -3,12 +3,13 @@ import { dirname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assertLocalGeneratedOutputPath, assertRealDirectory, assertRealFile, assertRealFileOrDirectory, rootDir } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
-import { writeZipFromDirectory } from "./zip-utils.mjs";
+import { listZipEntries, writeZipFromDirectory } from "./zip-utils.mjs";
 
 const desktopDir = join(rootDir, "desktop");
 const sourceDir = join(desktopDir, "src");
 const libDir = join(desktopDir, "lib");
 const nativeDir = join(desktopDir, "natives");
+const licenseDir = join(desktopDir, "licenses");
 const targetDir = join(desktopDir, "target");
 const classesDir = join(targetDir, "classes");
 const targetLibDir = join(targetDir, "lib");
@@ -20,6 +21,13 @@ const stableZipPath = join(targetDir, `${distributionName}.zip`);
 const sourcesFile = join(targetDir, "sources.txt");
 const manifestPath = join(targetDir, "MANIFEST.MF");
 const runtimeJars = ["slick.jar", "lwjgl.jar", "lwjgl_util.jar", "jinput.jar", "jorbis.jar"];
+const requiredNatives = {
+    windows: ["lwjgl64.dll", "OpenAL64.dll", "jinput-dx8_64.dll", "jinput-raw_64.dll"],
+    linux: ["liblwjgl64.so", "libopenal64.so", "libjinput-linux64.so"],
+    macosx: ["liblwjgl.jnilib", "openal.dylib", "libjinput-osx.jnilib"]
+};
+const requiredLicenseFiles = ["SLICK2D.txt", "LWJGL-2.txt", "JINPUT.txt", "JORBIS-LGPL.txt"];
+const jinputUtilityPluginClass = "net/java/games/util/plugins/Plugins.class";
 const executableDistributionEntries = [`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`];
 
 function assertDesktopTargetPath(label, path) {
@@ -174,16 +182,40 @@ function writeManifest() {
     writeFileSync(manifestPath, manifest);
 }
 
+function jarContainsEntry(jarPath, entryName) {
+    return listZipEntries(jarPath).some((entry) => entry.name === entryName);
+}
+
+function verifyJInputUtilityDependency() {
+    const jinputJar = join(libDir, "jinput.jar");
+    const jutilsJar = join(libDir, "jutils.jar");
+    assertRealFile(jinputJar, "desktop runtime jar jinput.jar");
+    if (jarContainsEntry(jinputJar, jinputUtilityPluginClass) || (existsSync(jutilsJar) && runtimeJars.includes("jutils.jar"))) {
+        return;
+    }
+
+    throw new Error(`desktop runtime jar jinput.jar must embed ${jinputUtilityPluginClass} or desktop/lib/jutils.jar must be added to runtimeJars`);
+}
+
 function verifyRuntimeDependencies() {
     for (const jar of runtimeJars) {
-        const path = join(libDir, jar);
-        assertRealFile(path, "desktop runtime jar");
+        assertRealFile(join(libDir, jar), `desktop runtime jar ${jar}`);
     }
     assertRealDirectory(nativeDir, "desktop native directory");
-    const windowsNativeDir = join(nativeDir, "windows");
-    for (const dll of ["lwjgl64.dll", "OpenAL64.dll", "jinput-dx8_64.dll", "jinput-raw_64.dll"]) {
-        assertRealFile(join(windowsNativeDir, dll), "Windows 64-bit native library");
+
+    for (const [platform, files] of Object.entries(requiredNatives)) {
+        const platformDir = join(nativeDir, platform);
+        assertRealDirectory(platformDir, `${platform} native directory`);
+        for (const name of files) {
+            assertRealFile(join(platformDir, name), `${platform} native library ${name}`);
+        }
     }
+
+    assertRealDirectory(licenseDir, "desktop third-party licenses directory");
+    for (const licenseFile of requiredLicenseFiles) {
+        assertRealFile(join(licenseDir, licenseFile), `desktop third-party license ${licenseFile}`);
+    }
+    verifyJInputUtilityDependency();
 }
 
 function copyRuntimeToTarget() {
@@ -222,6 +254,7 @@ function createDistribution() {
         assertRealFile(sourcePath, "desktop distribution source file");
         copyFileSync(sourcePath, targetPath);
     }
+    copyDirectoryContents(licenseDir, join(distributionDir, "licenses"));
     const licensePath = join(rootDir, "LICENSE");
     const noticesPath = join(rootDir, "THIRD_PARTY_NOTICES.md");
     assertRealFile(licensePath, "license file");

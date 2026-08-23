@@ -34,6 +34,7 @@ npm.cmd run run:desktop
 
 `desktop/src` preserves the Java desktop source and resources. The Maven/fallback desktop build is packaging support and should not be used as a source of new TypeScript gameplay behavior.
 The desktop release zip is copied into `releases/` by `npm.cmd run release:desktop`; generated zip files are ignored unless a release process intentionally publishes them.
+Java 21 LTS is the primary desktop runtime for release smoke tests. Advertise only generated-ZIP launch targets that have been tested; see `desktop/README.md` and `desktop/RUNTIME_DEPENDENCIES.md`.
 
 `npm.cmd run build` builds a full release candidate, verifies it, and then promotes it to `dist/`: the root about page, the PWA under `dist/pwa`, the desktop zip, downloadable copies under `dist/downloads`, and `dist/release.json`.
 Use this full release sequence when refreshing promoted web artifacts:

@@ -34,8 +34,15 @@ Or run the platform script in this directory:
 run-windows.cmd
 ```
 
-The launch scripts set the LWJGL 2 and JInput native-library paths and probe optional Java flags used by modern JDKs. Windows 11 x64 is expected to use the vendored `lwjgl64.dll`, `OpenAL64.dll`, `jinput-dx8_64.dll`, and `jinput-raw_64.dll`.
+The launch scripts set the LWJGL 2 and JInput native-library paths and probe optional Java flags used by current JDKs. The packaged ZIP includes the 64-bit Windows, Linux, and macOS natives listed in `RUNTIME_DEPENDENCIES.md`.
 
 ## Compatibility Notes
 
-The Java code is compiled as Java 8 bytecode for modern JDK compatibility while keeping the original Java source intact. The runtime still depends on legacy LWJGL 2.8.5-era native libraries, so a working 64-bit desktop JVM and compatible OS native-loader behavior are still required.
+The Java code is compiled as Java 8 bytecode while keeping the original Java source intact. Java 21 LTS is the primary supported runtime for release smoke tests.
+
+Initial desktop support should be advertised only for OS/JVM combinations that have launched the generated ZIP successfully:
+
+- Windows 11 x86-64, Java 21
+- Linux x86-64, Java 21
+
+The ZIP contains macOS x86-era LWJGL/JInput natives, but macOS should not be listed as supported until the packaged artifact is smoke-tested on the exact architecture and JVM combination being advertised.

@@ -2,7 +2,12 @@ Third-Party Notices
 
 This project depends on slick2d-ts for the browser runtime. slick2d-ts is distributed under the BSD 3-Clause License and includes attribution for selected Slick2D API behavior.
 
-Desktop Java runtime dependencies are documented separately in desktop/RUNTIME_DEPENDENCIES.md where present. The desktop distribution includes third-party runtime jars and native libraries for Slick2D, LWJGL 2, JInput, and JOrbis/Jogg.
+Desktop Java runtime dependencies are documented separately in desktop/RUNTIME_DEPENDENCIES.md where present. The desktop distribution includes third-party runtime jars and native libraries for Slick2D, LWJGL 2, JInput, and JOrbis/Jogg. The generated desktop ZIP also carries dependency license files under `licenses/`:
+
+- `licenses/SLICK2D.txt`
+- `licenses/LWJGL-2.txt`
+- `licenses/JINPUT.txt`
+- `licenses/JORBIS-LGPL.txt`
 
 ## slick2d-ts
 
@@ -72,12 +77,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## LWJGL 2
 
-The desktop build includes `lwjgl.jar`, `lwjgl_util.jar`, and native LWJGL/OpenAL runtime libraries from the LWJGL 2 runtime set. LWJGL 2 is distributed under a BSD-style license by the Lightweight Java Game Library Project.
+The desktop build includes `lwjgl.jar`, `lwjgl_util.jar`, and native LWJGL/OpenAL runtime libraries from the LWJGL 2 runtime set. LWJGL 2 is distributed under a BSD-style license by the Lightweight Java Game Library Project. The desktop ZIP includes the license text at `licenses/LWJGL-2.txt`.
 
 ## JInput
 
-The desktop build includes `jinput.jar` and JInput native libraries. JInput is distributed under a BSD license by the JInput project.
+The desktop build includes `jinput.jar` and JInput native libraries. JInput is distributed under a BSD license by the JInput project. The desktop ZIP includes the license text at `licenses/JINPUT.txt`.
 
 ## JOrbis/Jogg
 
-The desktop build includes `jorbis.jar`, which contains JCraft JOrbis and Jogg classes for Ogg Vorbis decoding. JOrbis is distributed under the GNU Lesser General Public License by JCraft, Inc.
+The desktop build includes `jorbis.jar`, which contains JCraft JOrbis and Jogg classes for Ogg Vorbis decoding. JOrbis is distributed under the GNU Lesser General Public License by JCraft, Inc. The desktop ZIP includes the license notice at `licenses/JORBIS-LGPL.txt`.
