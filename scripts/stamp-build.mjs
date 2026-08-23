@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readVersion, writeVersion } from "./build-utils.mjs";
+import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 
 function pad(value) {
     return String(value).padStart(2, "0");
@@ -47,6 +48,8 @@ export function stampBuild(date = new Date()) {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    const version = stampBuild();
-    console.log(`Stamped build ${version.version} as ${version.buildStamp}`);
+    await withReleaseOperationLock(() => {
+        const version = stampBuild();
+        console.log(`Stamped build ${version.version} as ${version.buildStamp}`);
+    });
 }

@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import {
     assertCanonicalProductionDist,
     assertGeneratedReleaseWorkPath,
+    assertRealDirectory,
     assertReleaseFixtureOutputPath,
     assertReleasePathsDoNotOverlap,
     distDir,
@@ -10,9 +11,10 @@ import {
 } from "./build-utils.mjs";
 
 function assertDirectory(path, label) {
-    if (!existsSync(path) || !statSync(path).isDirectory()) {
+    if (!existsSync(path)) {
         throw new Error(`Missing ${label}: ${path}`);
     }
+    assertRealDirectory(path, label);
 }
 
 function resolvePromotionPath(label, path, fixtureRoot) {
@@ -22,11 +24,141 @@ function resolvePromotionPath(label, path, fixtureRoot) {
     return assertGeneratedReleaseWorkPath(label, path);
 }
 
+export function promotionJournalPath(workDir = releaseWorkDir) {
+    return join(workDir, "promotion-journal.json");
+}
+
+function fsyncDirectory(path) {
+    try {
+        const fd = openSync(path, "r");
+        try {
+            fsyncSync(fd);
+        } finally {
+            closeSync(fd);
+        }
+    } catch {
+        // Directory fsync is not portable on every filesystem. The journal file
+        // itself is still fsynced before the atomic rename.
+    }
+}
+
+function writePromotionJournal(journalPath, journal) {
+    mkdirSync(dirname(journalPath), { recursive: true });
+    const tempPath = `${journalPath}.${process.pid}.${Date.now()}.tmp`;
+    const fd = openSync(tempPath, "wx");
+    try {
+        writeFileSync(fd, `${JSON.stringify(journal, null, 4)}\n`);
+        fsyncSync(fd);
+    } finally {
+        closeSync(fd);
+    }
+    renameSync(tempPath, journalPath);
+    fsyncDirectory(dirname(journalPath));
+}
+
+function removePromotionJournal(journalPath) {
+    rmSync(journalPath, { force: true });
+    fsyncDirectory(dirname(journalPath));
+}
+
+function readPromotionJournal(journalPath) {
+    const journal = JSON.parse(readFileSync(journalPath, "utf8"));
+    if (
+        typeof journal !== "object" ||
+        journal === null ||
+        !["prepared", "target-backed-up", "candidate-promoted"].includes(journal.phase) ||
+        typeof journal.candidate !== "string" ||
+        typeof journal.target !== "string" ||
+        typeof journal.backup !== "string" ||
+        typeof journal.work !== "string"
+    ) {
+        throw new Error(`Invalid release promotion journal: ${journalPath}`);
+    }
+    return journal;
+}
+
+function resolvePromotionJournal(journal, work, fixtureRoot) {
+    if (resolve(journal.work) !== resolve(work)) {
+        throw new Error(`Release promotion journal work directory does not match ${work}: ${journal.work}`);
+    }
+
+    return {
+        phase: journal.phase,
+        candidate: resolvePromotionPath("release journal candidate", journal.candidate, fixtureRoot),
+        target:
+            fixtureRoot === null
+                ? assertCanonicalProductionDist("release journal target", journal.target)
+                : assertReleaseFixtureOutputPath("release journal target", journal.target, fixtureRoot),
+        backup: resolvePromotionPath("release journal backup", journal.backup, fixtureRoot)
+    };
+}
+
+function removeBackupOrKeepJournal(backup, journalPath) {
+    if (!existsSync(backup)) {
+        removePromotionJournal(journalPath);
+        return;
+    }
+
+    rmSync(backup, { recursive: true, force: true });
+    removePromotionJournal(journalPath);
+}
+
+export function recoverInterruptedPromotion({ workDir = releaseWorkDir, fixtureRoot = null } = {}) {
+    const work = assertGeneratedReleaseWorkPath("release work directory", workDir, { fixtureRoot });
+    const journalPath = promotionJournalPath(work);
+    if (!existsSync(journalPath)) {
+        return false;
+    }
+
+    const journal = resolvePromotionJournal(readPromotionJournal(journalPath), work, fixtureRoot);
+    const candidateExists = existsSync(journal.candidate);
+    const targetExists = existsSync(journal.target);
+    const backupExists = existsSync(journal.backup);
+
+    if (journal.phase === "candidate-promoted") {
+        if (!targetExists && backupExists) {
+            renameSync(journal.backup, journal.target);
+        } else {
+            removeBackupOrKeepJournal(journal.backup, journalPath);
+        }
+        return true;
+    }
+
+    if (journal.phase === "target-backed-up" || (!targetExists && !backupExists && candidateExists)) {
+        if (!targetExists && candidateExists) {
+            renameSync(journal.candidate, journal.target);
+            removeBackupOrKeepJournal(journal.backup, journalPath);
+            return true;
+        }
+        if (!targetExists && backupExists) {
+            renameSync(journal.backup, journal.target);
+            removePromotionJournal(journalPath);
+            return true;
+        }
+        if (targetExists && backupExists) {
+            removeBackupOrKeepJournal(journal.backup, journalPath);
+            return true;
+        }
+    }
+
+    if (journal.phase === "prepared") {
+        if (!targetExists && candidateExists && !backupExists) {
+            renameSync(journal.candidate, journal.target);
+        }
+        removePromotionJournal(journalPath);
+        return true;
+    }
+
+    throw new Error(`Unable to recover release promotion journal safely: ${journalPath}`);
+}
+
 export function promoteVerifiedCandidate(
     candidateDir,
     targetDir = distDir,
     { workDir = releaseWorkDir, beforeCandidatePromote = null, fixtureRoot = null } = {}
 ) {
+    recoverInterruptedPromotion({ workDir, fixtureRoot });
+
     const candidate = resolvePromotionPath("release candidate", candidateDir, fixtureRoot);
     const target =
         fixtureRoot === null
@@ -43,25 +175,55 @@ export function promoteVerifiedCandidate(
     assertReleasePathsDoNotOverlap("release target", target, "release backup", backup);
     mkdirSync(work, { recursive: true });
     rmSync(backup, { recursive: true, force: true });
+    const journalPath = promotionJournalPath(work);
+    writePromotionJournal(journalPath, {
+        phase: "prepared",
+        candidate,
+        target,
+        backup,
+        work
+    });
 
     try {
         if (existsSync(target)) {
             renameSync(target, backup);
             backupCreated = true;
+            writePromotionJournal(journalPath, {
+                phase: "target-backed-up",
+                candidate,
+                target,
+                backup,
+                work
+            });
         }
         beforeCandidatePromote?.();
         renameSync(candidate, target);
+        try {
+            writePromotionJournal(journalPath, {
+                phase: "candidate-promoted",
+                candidate,
+                target,
+                backup,
+                work
+            });
+        } catch (journalError) {
+            console.warn(`Promoted release but could not update promotion journal: ${journalPath}`, journalError);
+        }
         if (backupCreated) {
             try {
                 rmSync(backup, { recursive: true, force: true });
+                removePromotionJournal(journalPath);
             } catch (cleanupError) {
                 console.warn(`Promoted release but could not clean previous dist backup: ${backup}`, cleanupError);
             }
+        } else {
+            removePromotionJournal(journalPath);
         }
     } catch (error) {
         if (backupCreated && !existsSync(target) && existsSync(backup)) {
             renameSync(backup, target);
         }
+        removePromotionJournal(journalPath);
         throw error;
     }
 }
