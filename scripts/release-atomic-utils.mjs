@@ -1,16 +1,13 @@
 import { existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
-import { isAbsolute, join, relative, resolve } from "node:path";
-import { distDir, releaseWorkDir, rootDir } from "./build-utils.mjs";
-
-export function assertInsideRoot(label, path, allowedRoot = rootDir) {
-    const resolvedPath = resolve(path);
-    const resolvedRoot = resolve(allowedRoot);
-    const ref = relative(resolvedRoot, resolvedPath);
-    if (ref === "" || (!ref.startsWith("..") && !isAbsolute(ref))) {
-        return resolvedPath;
-    }
-    throw new Error(`${label} must be inside ${resolvedRoot}: ${resolvedPath}`);
-}
+import { join } from "node:path";
+import {
+    assertCanonicalProductionDist,
+    assertGeneratedReleaseWorkPath,
+    assertReleaseFixtureOutputPath,
+    assertReleasePathsDoNotOverlap,
+    distDir,
+    releaseWorkDir
+} from "./build-utils.mjs";
 
 function assertDirectory(path, label) {
     if (!existsSync(path) || !statSync(path).isDirectory()) {
@@ -18,14 +15,32 @@ function assertDirectory(path, label) {
     }
 }
 
-export function promoteVerifiedCandidate(candidateDir, targetDir = distDir, { workDir = releaseWorkDir, beforeCandidatePromote = null } = {}) {
-    const candidate = assertInsideRoot("release candidate", candidateDir);
-    const target = assertInsideRoot("release target", targetDir);
-    const work = assertInsideRoot("release work directory", workDir);
-    const backup = join(work, `previous-dist-${process.pid}-${Date.now()}`);
+function resolvePromotionPath(label, path, fixtureRoot) {
+    if (fixtureRoot !== null) {
+        return assertReleaseFixtureOutputPath(label, path, fixtureRoot);
+    }
+    return assertGeneratedReleaseWorkPath(label, path);
+}
+
+export function promoteVerifiedCandidate(
+    candidateDir,
+    targetDir = distDir,
+    { workDir = releaseWorkDir, beforeCandidatePromote = null, fixtureRoot = null } = {}
+) {
+    const candidate = resolvePromotionPath("release candidate", candidateDir, fixtureRoot);
+    const target =
+        fixtureRoot === null
+            ? assertCanonicalProductionDist("release target", targetDir)
+            : assertReleaseFixtureOutputPath("release target", targetDir, fixtureRoot);
+    const work = assertGeneratedReleaseWorkPath("release work directory", workDir, { fixtureRoot });
+    const backup = resolvePromotionPath("release backup", join(work, `previous-dist-${process.pid}-${Date.now()}`), fixtureRoot);
     let backupCreated = false;
 
     assertDirectory(candidate, "release candidate");
+    assertReleasePathsDoNotOverlap("release candidate", candidate, "release target", target);
+    assertReleasePathsDoNotOverlap("release candidate", candidate, "release backup", backup);
+    assertReleasePathsDoNotOverlap("release target", target, "release work directory", work);
+    assertReleasePathsDoNotOverlap("release target", target, "release backup", backup);
     mkdirSync(work, { recursive: true });
     rmSync(backup, { recursive: true, force: true });
 
@@ -37,7 +52,11 @@ export function promoteVerifiedCandidate(candidateDir, targetDir = distDir, { wo
         beforeCandidatePromote?.();
         renameSync(candidate, target);
         if (backupCreated) {
-            rmSync(backup, { recursive: true, force: true });
+            try {
+                rmSync(backup, { recursive: true, force: true });
+            } catch (cleanupError) {
+                console.warn(`Promoted release but could not clean previous dist backup: ${backup}`, cleanupError);
+            }
         }
     } catch (error) {
         if (backupCreated && !existsSync(target) && existsSync(backup)) {

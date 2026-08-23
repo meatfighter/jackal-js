@@ -1,16 +1,18 @@
 import { join } from "node:path";
-import { cleanDirectory, distDir, releaseWorkDir } from "./build-utils.mjs";
+import { cleanReleaseOutputDirectory, cleanReleaseWorkDirectory, distDir, releaseWorkDir } from "./build-utils.mjs";
 import { promoteVerifiedCandidate } from "./release-atomic-utils.mjs";
 import { displayPath, runNodeScript, runNpmScript } from "./run-utils.mjs";
+import { assertTrackedSourceStateUnchanged, captureTrackedSourceState } from "./source-state-utils.mjs";
 import { withTemporaryBuildStamp } from "./version-stamp-utils.mjs";
 
 const candidateDir = join(releaseWorkDir, "candidate");
 const pwaOutDir = join(candidateDir, "pwa");
+const sourceState = captureTrackedSourceState();
 
-cleanDirectory(releaseWorkDir);
+cleanReleaseWorkDirectory(releaseWorkDir);
 
 await withTemporaryBuildStamp(() => {
-    cleanDirectory(candidateDir);
+    cleanReleaseOutputDirectory(candidateDir, "release candidate directory");
     runNpmScript("_build:pwa:release", {
         env: {
             JACKAL_PWA_OUT_DIR: pwaOutDir
@@ -24,5 +26,6 @@ await withTemporaryBuildStamp(() => {
     runNodeScript("scripts/verify-release-candidate.mjs", [candidateDir]);
 });
 
+assertTrackedSourceStateUnchanged(sourceState);
 promoteVerifiedCandidate(candidateDir, distDir);
 console.log(`Promoted verified release candidate to ${displayPath(distDir)}`);

@@ -1,4 +1,4 @@
-import { cleanDirectory, distDir } from "./build-utils.mjs";
+import { cleanProductionDistDirectory, distDir } from "./build-utils.mjs";
 
-cleanDirectory(distDir);
+cleanProductionDistDirectory(distDir);
 console.log("Cleaned dist");
