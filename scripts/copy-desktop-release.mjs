@@ -1,5 +1,6 @@
-import { copyFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, relative } from "node:path";
+import { copyFileAtomic } from "./atomic-file-utils.mjs";
 import { assertLocalGeneratedOutputPath, assertRealDirectory, assertRealFile, ensureDirectory, readVersion, rootDir } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 
@@ -24,6 +25,6 @@ await withReleaseOperationLock(() => {
         assertRealFile(releaseZip, "desktop release ZIP");
     }
     ensureDirectory(releasesDir);
-    copyFileSync(sourceZip, releaseZip);
+    copyFileAtomic(sourceZip, releaseZip);
     console.log(`Copied ${relative(rootDir, releaseZip)}`);
 });

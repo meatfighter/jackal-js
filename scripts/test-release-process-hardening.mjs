@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
-import { writeFileAtomic } from "./atomic-file-utils.mjs";
-import { distDir, releaseWorkDir, rootDir, versionPath } from "./build-utils.mjs";
+import { copyFileAtomic, writeFileAtomic } from "./atomic-file-utils.mjs";
+import { assertLocalGeneratedOutputPath, distDir, releaseWorkDir, rootDir, versionPath } from "./build-utils.mjs";
 import { promoteVerifiedCandidate, promotionJournalPath, recoverInterruptedPromotion } from "./release-atomic-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { verifyReleaseManifest, writeReleaseManifest } from "./release-manifest.mjs";
@@ -44,6 +44,138 @@ function tryCreateSymlink(target, path, type) {
     } catch {
         return false;
     }
+}
+
+function wait(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+function waitForChildOutput(child, text, timeoutMs = 35_000) {
+    return new Promise((resolve, reject) => {
+        let stdout = "";
+        let stderr = "";
+        const timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error(`Timed out waiting for child output ${text}. stdout=${stdout} stderr=${stderr}`));
+        }, timeoutMs);
+
+        function cleanup() {
+            clearTimeout(timeout);
+            child.stdout.off("data", onStdout);
+            child.stderr.off("data", onStderr);
+            child.off("exit", onExit);
+        }
+
+        function onStdout(chunk) {
+            stdout += chunk;
+            if (stdout.includes(text)) {
+                cleanup();
+                resolve(stdout);
+            }
+        }
+
+        function onStderr(chunk) {
+            stderr += chunk;
+        }
+
+        function onExit(code, signal) {
+            cleanup();
+            reject(new Error(`Child exited before ${text}: code=${code} signal=${signal} stdout=${stdout} stderr=${stderr}`));
+        }
+
+        child.stdout.on("data", onStdout);
+        child.stderr.on("data", onStderr);
+        child.once("exit", onExit);
+    });
+}
+
+function waitForChildExit(child, timeoutMs = 5_000) {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error(`Timed out waiting for child ${child.pid} to exit.`));
+        }, timeoutMs);
+
+        function cleanup() {
+            clearTimeout(timeout);
+            child.off("exit", onExit);
+        }
+
+        function onExit(code, signal) {
+            cleanup();
+            resolve({ code, signal });
+        }
+
+        if (child.exitCode !== null || child.signalCode !== null) {
+            cleanup();
+            resolve({ code: child.exitCode, signal: child.signalCode });
+            return;
+        }
+        child.once("exit", onExit);
+    });
+}
+
+async function collectChildResult(child, timeoutMs = 10_000) {
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+    });
+    const result = await waitForChildExit(child, timeoutMs);
+    return { ...result, pid: child.pid, stdout, stderr };
+}
+
+function readHolderPids(lockDir) {
+    const holdersDir = join(lockDir, "holders");
+    if (!existsSync(holdersDir)) {
+        return [];
+    }
+
+    return readdirSync(holdersDir)
+        .filter((entry) => entry.endsWith(".json"))
+        .map((entry) => JSON.parse(readFileSync(join(holdersDir, entry), "utf8")).pid);
+}
+
+function readPidList(path) {
+    if (!existsSync(path)) {
+        return [];
+    }
+    return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function killPid(pid) {
+    if (pid === process.pid) {
+        return;
+    }
+    try {
+        process.kill(pid);
+    } catch {
+        // The process may already have exited.
+    }
+}
+
+async function waitForPidsToExit(pids, timeoutMs = 5_000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        const live = pids.filter((pid) => {
+            try {
+                process.kill(pid, 0);
+                return true;
+            } catch (error) {
+                return error?.code === "EPERM";
+            }
+        });
+        if (live.length === 0) {
+            return;
+        }
+        await wait(25);
+    }
+    throw new Error(`Timed out waiting for holder processes to exit: ${pids.join(", ")}`);
 }
 
 function modeAwareRequiredEntries(overrides = {}) {
@@ -204,6 +336,60 @@ test("release operation lock rejects fresh malformed metadata and warns before s
     });
 });
 
+test("concurrent stale release lock recovery tolerates disappearing lock directories", async () => {
+    await withTempDir(async (dir) => {
+        const lockDir = join(dir, "release-operation.lock");
+        const startFile = join(dir, "start-workers");
+        const workerCount = 20;
+        const workerSource = `
+            import { existsSync } from "node:fs";
+            import { setTimeout as delay } from "node:timers/promises";
+            import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
+
+            const lockDir = process.env.JACKAL_TEST_LOCK_DIR;
+            const startFile = process.env.JACKAL_TEST_START_FILE;
+            while (!existsSync(startFile)) {
+                await delay(5);
+            }
+
+            await withReleaseOperationLock(() => {
+                console.log("acquired");
+            }, { lockDir, retryDelayMs: 1, timeoutMs: 5_000, staleLockMs: -1 });
+        `;
+        mkdirSync(lockDir, { recursive: true });
+        writeFileSync(join(lockDir, "owner.json"), JSON.stringify({ pid: 999_999_999, token: "stale" }));
+
+        const workers = Array.from({ length: workerCount }, () =>
+            spawn(process.execPath, ["--input-type=module", "-e", workerSource], {
+                cwd: rootDir,
+                env: {
+                    ...process.env,
+                    JACKAL_TEST_LOCK_DIR: lockDir,
+                    JACKAL_TEST_START_FILE: startFile
+                },
+                stdio: ["ignore", "pipe", "pipe"]
+            })
+        );
+
+        try {
+            writeFileSync(startFile, "go");
+            const results = await Promise.all(workers.map((worker) => collectChildResult(worker)));
+            for (const result of results) {
+                assert.equal(result.code, 0, `worker ${result.pid} failed with stderr:\n${result.stderr}`);
+                assert.equal(result.signal, null);
+                assert.match(result.stdout, /acquired/);
+            }
+        } finally {
+            for (const worker of workers) {
+                if (worker.exitCode === null && worker.signalCode === null) {
+                    worker.kill();
+                }
+            }
+            rmSync(lockDir, { recursive: true, force: true });
+        }
+    });
+});
+
 test("atomic file writes clean pre-rename temps on injected failures", async () => {
     await withTempDir((dir) => {
         for (const hook of ["afterCreate", "afterWrite", "afterFsync", "beforeRename"]) {
@@ -222,6 +408,177 @@ test("atomic file writes clean pre-rename temps on injected failures", async () 
                 readdirSync(dir).filter((entry) => entry.startsWith(`${hook}.json.`) && entry.endsWith(".tmp")),
                 []
             );
+        }
+    });
+});
+
+test("desktop release copy rejects linked destination files when supported", async () => {
+    await withTempDir((dir) => {
+        const releasesDir = join(dir, "releases");
+        const sourceZip = join(dir, "source.zip");
+        const releaseZip = join(releasesDir, "jackal-desktop-1.0.0.zip");
+        const sentinel = join(dir, "external-sentinel.zip");
+
+        mkdirSync(releasesDir, { recursive: true });
+        writeFileSync(sourceZip, "new desktop zip");
+        writeFileSync(sentinel, "external sentinel");
+        if (!tryCreateSymlink(sentinel, releaseZip, "file")) {
+            return;
+        }
+
+        assert.throws(
+            () => {
+                const destination = assertLocalGeneratedOutputPath("desktop release ZIP", releaseZip, releasesDir);
+                copyFileAtomic(sourceZip, destination);
+            },
+            /symlink|junction/
+        );
+        assert.equal(readFileSync(sentinel, "utf8"), "external sentinel");
+    });
+});
+
+test("desktop release copy is atomic and leaves no temp files", async () => {
+    await withTempDir((dir) => {
+        const sourceZip = join(dir, "source.zip");
+        const releaseZip = join(dir, "jackal-desktop-1.0.0.zip");
+        writeFileSync(sourceZip, "new desktop zip");
+        writeFileSync(releaseZip, "old desktop zip");
+
+        assert.throws(
+            () =>
+                copyFileAtomic(sourceZip, releaseZip, {
+                    beforeRename() {
+                        throw new Error("simulated desktop copy failure");
+                    }
+                }),
+            /simulated desktop copy failure/
+        );
+        assert.equal(readFileSync(releaseZip, "utf8"), "old desktop zip");
+        assert.deepEqual(
+            readdirSync(dir).filter((entry) => entry.startsWith("jackal-desktop-1.0.0.zip.") && entry.endsWith(".tmp")),
+            []
+        );
+
+        copyFileAtomic(sourceZip, releaseZip);
+        assert.equal(readFileSync(releaseZip, "utf8"), "new desktop zip");
+    });
+});
+
+test("concurrent nested release operations preserve all live holder registrations", async () => {
+    await withTempDir(async (dir) => {
+        const lockDir = join(dir, "release-operation.lock");
+        const childPidPath = join(lockDir, "child-pids.json");
+        const holderCount = 20;
+        const childSource = `
+            import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
+            const lockDir = process.env.JACKAL_RELEASE_OPERATION_LOCK_PATH;
+            await withReleaseOperationLock(async () => {
+                setInterval(() => {}, 1_000);
+                await new Promise(() => {});
+            }, { lockDir });
+        `;
+        const parentSource = `
+            import { spawn } from "node:child_process";
+            import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+            import { join } from "node:path";
+            import { setTimeout as delay } from "node:timers/promises";
+            import { withReleaseOperationLock } from "./scripts/release-lock-utils.mjs";
+
+            const lockDir = process.env.JACKAL_TEST_LOCK_DIR;
+            const childPidPath = process.env.JACKAL_TEST_CHILD_PID_PATH;
+            const holderCount = Number(process.env.JACKAL_TEST_HOLDER_COUNT);
+            const childSource = process.env.JACKAL_TEST_CHILD_SOURCE;
+
+            await withReleaseOperationLock(async () => {
+                const childPids = [];
+                for (let index = 0; index < holderCount; index++) {
+                    const child = spawn(process.execPath, ["--input-type=module", "-e", childSource], {
+                        cwd: process.cwd(),
+                        env: process.env,
+                        detached: true,
+                        stdio: "ignore"
+                    });
+                    childPids.push(child.pid);
+                    child.unref();
+                }
+                writeFileSync(childPidPath, JSON.stringify(childPids));
+
+                const holdersDir = join(lockDir, "holders");
+                const deadline = Date.now() + 30_000;
+                let ready = false;
+                while (Date.now() < deadline) {
+                    const pids = readdirSync(holdersDir)
+                        .filter((entry) => entry.endsWith(".json"))
+                        .map((entry) => JSON.parse(readFileSync(join(holdersDir, entry), "utf8")).pid);
+                    if (pids.filter((pid) => pid !== process.pid).length === holderCount) {
+                        console.log("children-ready");
+                        ready = true;
+                        break;
+                    }
+                    await delay(25);
+                }
+                if (!ready) {
+                    throw new Error("Timed out waiting for nested child holders.");
+                }
+
+                setInterval(() => {}, 1_000);
+                await new Promise(() => {});
+            }, { lockDir });
+        `;
+        const parent = spawn(process.execPath, ["--input-type=module", "-e", parentSource], {
+            cwd: rootDir,
+            env: {
+                ...process.env,
+                JACKAL_TEST_LOCK_DIR: lockDir,
+                JACKAL_TEST_CHILD_PID_PATH: childPidPath,
+                JACKAL_TEST_HOLDER_COUNT: String(holderCount),
+                JACKAL_TEST_CHILD_SOURCE: childSource
+            },
+            stdio: ["ignore", "pipe", "pipe"]
+        });
+        const holderPids = new Set();
+
+        try {
+            await waitForChildOutput(parent, "children-ready");
+            const liveHolderPids = readHolderPids(lockDir);
+            const childHolderPids = liveHolderPids.filter((pid) => pid !== parent.pid);
+            for (const pid of childHolderPids) {
+                holderPids.add(pid);
+            }
+
+            assert.equal(childHolderPids.length, holderCount);
+            parent.kill();
+            await waitForChildExit(parent);
+
+            await assert.rejects(
+                withReleaseOperationLock(
+                    () => {
+                        throw new Error("should not enter while child holders remain");
+                    },
+                    { lockDir, retryDelayMs: 1, timeoutMs: 25, staleLockMs: -1 }
+                ),
+                /Timed out waiting for release operation lock/
+            );
+
+            for (const pid of holderPids) {
+                killPid(pid);
+            }
+            await waitForPidsToExit(Array.from(holderPids));
+
+            let recoveredAfterChildrenExited = false;
+            await withReleaseOperationLock(
+                () => {
+                    recoveredAfterChildrenExited = true;
+                },
+                { lockDir, retryDelayMs: 1, timeoutMs: 1_000, staleLockMs: -1 }
+            );
+            assert.equal(recoveredAfterChildrenExited, true);
+        } finally {
+            parent.kill();
+            for (const pid of new Set([...holderPids, ...readHolderPids(lockDir), ...readPidList(childPidPath)])) {
+                killPid(pid);
+            }
+            rmSync(lockDir, { recursive: true, force: true });
         }
     });
 });

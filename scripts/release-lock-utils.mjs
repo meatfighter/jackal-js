@@ -12,7 +12,26 @@ export const lockTokenEnv = "JACKAL_RELEASE_OPERATION_LOCK_TOKEN";
 const ownerFileName = "owner.json";
 const holdersDirName = "holders";
 const ownerlessStaleMs = 10_000;
+const registrationRetryCode = "JACKAL_RELEASE_LOCK_REGISTRATION_RETRY";
 const holderRegistrations = new Map();
+
+function isMissingPathError(error) {
+    return error?.code === "ENOENT" || error?.code === "ENOTDIR";
+}
+
+function isTransientLockAccessError(error) {
+    return error?.code === "EPERM" || error?.code === "EBUSY" || error?.code === "ENOTEMPTY";
+}
+
+function isRetryableLockRegistrationError(error) {
+    return error?.code === registrationRetryCode;
+}
+
+function lockRegistrationRetryError(error, lockDir) {
+    const retryError = new Error(`Release operation lock disappeared during holder registration: ${lockDir}`, { cause: error });
+    retryError.code = registrationRetryCode;
+    return retryError;
+}
 
 function ownerPath(lockDir) {
     return resolve(lockDir, ownerFileName);
@@ -42,12 +61,16 @@ function metadataMtimeMs(path) {
     }
 }
 
+function pathAgeMs(mtimeMs) {
+    return Math.max(0, Date.now() - mtimeMs);
+}
+
 function readJsonMetadata(path, label) {
     let text;
     try {
         text = readFileSync(path, "utf8");
     } catch (error) {
-        if (error?.code === "ENOENT") {
+        if (isMissingPathError(error)) {
             return { status: "missing", path, mtimeMs: 0 };
         }
         throw error;
@@ -112,7 +135,7 @@ function writeHolder(lockDir, token) {
     assertRealLockDirectory(lockDir);
     const owner = readOwner(lockDir);
     if (owner.status !== "valid" || owner.token !== token) {
-        throw new Error(`Cannot register release lock holder without a matching owner token: ${lockDir}`);
+        throw lockRegistrationRetryError(new Error(`Cannot register release lock holder without a matching owner token: ${lockDir}`), lockDir);
     }
 
     mkdirSync(holdersDir(lockDir), { recursive: true });
@@ -149,7 +172,7 @@ function readHolderRecords(lockDir) {
     try {
         dirStat = lstatSync(dir);
     } catch (error) {
-        if (error?.code === "ENOENT") {
+        if (isMissingPathError(error)) {
             return { live: [], malformed: [] };
         }
         throw error;
@@ -171,9 +194,27 @@ function readHolderRecords(lockDir) {
 
     const live = [];
     const malformed = [];
-    for (const entry of readdirSync(dir)) {
+    let entries;
+    try {
+        entries = readdirSync(dir);
+    } catch (error) {
+        if (isMissingPathError(error)) {
+            return { live, malformed };
+        }
+        throw error;
+    }
+
+    for (const entry of entries) {
         const path = join(dir, entry);
-        const stat = lstatSync(path);
+        let stat;
+        try {
+            stat = lstatSync(path);
+        } catch (error) {
+            if (isMissingPathError(error)) {
+                continue;
+            }
+            throw error;
+        }
         if (stat.isSymbolicLink() || !stat.isFile()) {
             malformed.push({ status: "malformed", path, label: "holder", mtimeMs: stat.mtimeMs });
             continue;
@@ -194,21 +235,90 @@ function readHolderRecords(lockDir) {
 
 function malformedAgeMs(lockStat, records) {
     const newestMtimeMs = Math.max(lockStat.mtimeMs, ...records.map((record) => record.mtimeMs));
-    return Date.now() - newestMtimeMs;
+    return pathAgeMs(newestMtimeMs);
 }
 
 function removeStaleLock(lockDir, message = null) {
+    try {
+        rmSync(lockDir, { recursive: true, force: true });
+    } catch (error) {
+        if (isMissingPathError(error)) {
+            return true;
+        }
+        if (isTransientLockAccessError(error)) {
+            return false;
+        }
+        throw error;
+    }
+
     if (message !== null) {
         console.warn(message);
     }
-    rmSync(lockDir, { recursive: true, force: true });
     return true;
 }
 
-function tryRemoveStaleLock(lockDir, staleLockMs) {
-    const lockStat = assertRealLockDirectory(lockDir);
+function removeOwnedLock(lockDir, token) {
     const owner = readOwner(lockDir);
-    const holders = readHolderRecords(lockDir);
+    if (owner.status !== "valid" || owner.token !== token) {
+        return;
+    }
+    rmSync(lockDir, { recursive: true, force: true });
+}
+
+function hasLiveLockState(lockDir) {
+    let owner;
+    try {
+        owner = readOwner(lockDir);
+    } catch (error) {
+        if (isTransientLockAccessError(error)) {
+            return true;
+        }
+        if (isMissingPathError(error)) {
+            return false;
+        }
+        throw error;
+    }
+    if (owner.status === "valid" && isProcessAlive(owner.pid)) {
+        return true;
+    }
+
+    try {
+        return readHolderRecords(lockDir).live.length > 0;
+    } catch (error) {
+        if (isTransientLockAccessError(error)) {
+            return true;
+        }
+        if (isMissingPathError(error)) {
+            return false;
+        }
+        throw error;
+    }
+}
+
+function tryRemoveStaleLock(lockDir, staleLockMs) {
+    let lockStat;
+    try {
+        lockStat = assertRealLockDirectory(lockDir);
+    } catch (error) {
+        if (isMissingPathError(error)) {
+            return true;
+        }
+        throw error;
+    }
+    let owner;
+    let holders;
+    try {
+        owner = readOwner(lockDir);
+        holders = readHolderRecords(lockDir);
+    } catch (error) {
+        if (isTransientLockAccessError(error)) {
+            return false;
+        }
+        if (isMissingPathError(error)) {
+            return true;
+        }
+        throw error;
+    }
     const malformedRecords = [...holders.malformed];
 
     if (owner.status === "valid" && isProcessAlive(owner.pid)) {
@@ -224,15 +334,24 @@ function tryRemoveStaleLock(lockDir, staleLockMs) {
         if (malformedAgeMs(lockStat, malformedRecords) < staleLockMs) {
             throw new Error(`Release operation lock contains malformed metadata and is too fresh to recover: ${lockDir}`);
         }
+        if (hasLiveLockState(lockDir)) {
+            return false;
+        }
         return removeStaleLock(lockDir, `Recovering stale malformed release operation lock: ${lockDir}`);
     }
     if (owner.status === "missing") {
-        if (Date.now() - lockStat.mtimeMs < staleLockMs) {
+        if (pathAgeMs(lockStat.mtimeMs) < staleLockMs) {
+            return false;
+        }
+        if (hasLiveLockState(lockDir)) {
             return false;
         }
         return removeStaleLock(lockDir);
     }
 
+    if (hasLiveLockState(lockDir)) {
+        return false;
+    }
     return removeStaleLock(lockDir);
 }
 
@@ -267,13 +386,66 @@ async function withRegisteredLockHolder(lockDir, token, task) {
         }
     }
 
-    writeHolder(lockDir, token);
+    try {
+        writeHolder(lockDir, token);
+    } catch (error) {
+        if (isMissingPathError(error) || isTransientLockAccessError(error)) {
+            throw lockRegistrationRetryError(error, lockDir);
+        }
+        throw error;
+    }
     holderRegistrations.set(key, 1);
     try {
         return await task();
     } finally {
         holderRegistrations.delete(key);
         rmSync(holderPath(lockDir, token), { force: true });
+    }
+}
+
+async function acquireReleaseOperationLock(resolvedLockDir, timeoutMs, retryDelayMs, staleLockMs) {
+    const startedAt = Date.now();
+    while (true) {
+        try {
+            mkdirSync(resolvedLockDir);
+        } catch (error) {
+            if (isTransientLockAccessError(error)) {
+                if (Date.now() - startedAt > timeoutMs) {
+                    throw new Error(`Timed out waiting for release operation lock path to settle: ${resolvedLockDir}`, { cause: error });
+                }
+                await delay(retryDelayMs);
+                continue;
+            }
+            if (error?.code !== "EEXIST") {
+                throw error;
+            }
+            if (!tryRemoveStaleLock(resolvedLockDir, staleLockMs) && Date.now() - startedAt > timeoutMs) {
+                throw new Error(`Timed out waiting for release operation lock: ${resolvedLockDir}`, { cause: error });
+            }
+            await delay(retryDelayMs);
+            continue;
+        }
+
+        const ownerToken = randomUUID();
+        try {
+            writeOwner(resolvedLockDir, ownerToken);
+            return ownerToken;
+        } catch (error) {
+            if (isMissingPathError(error) || isTransientLockAccessError(error)) {
+                try {
+                    removeOwnedLock(resolvedLockDir, ownerToken);
+                } catch {
+                    // Another contender may already be recovering this path.
+                }
+                if (Date.now() - startedAt > timeoutMs) {
+                    throw new Error(`Timed out initializing release operation lock: ${resolvedLockDir}`, { cause: error });
+                }
+                await delay(retryDelayMs);
+                continue;
+            }
+            rmSync(resolvedLockDir, { recursive: true, force: true });
+            throw error;
+        }
     }
 }
 
@@ -284,44 +456,38 @@ export async function withReleaseOperationLock(task, { lockDir = releaseOperatio
         return withRegisteredLockHolder(resolvedLockDir, token, task);
     }
 
-    const startedAt = Date.now();
-    while (true) {
-        try {
-            mkdirSync(resolvedLockDir);
-            break;
-        } catch (error) {
-            if (error?.code !== "EEXIST") {
-                throw error;
-            }
-            if (!tryRemoveStaleLock(resolvedLockDir, staleLockMs) && Date.now() - startedAt > timeoutMs) {
-                throw new Error(`Timed out waiting for release operation lock: ${resolvedLockDir}`, { cause: error });
-            }
-            await delay(retryDelayMs);
-        }
-    }
-
     const previousPath = process.env[lockPathEnv];
     const previousToken = process.env[lockTokenEnv];
-    const ownerToken = randomUUID();
+    const startedAt = Date.now();
 
-    try {
-        writeOwner(resolvedLockDir, ownerToken);
-        process.env[lockPathEnv] = resolvedLockDir;
-        process.env[lockTokenEnv] = ownerToken;
-        return await withRegisteredLockHolder(resolvedLockDir, ownerToken, task);
-    } finally {
-        if (previousPath === undefined) {
-            delete process.env[lockPathEnv];
-        } else {
-            process.env[lockPathEnv] = previousPath;
+    while (true) {
+        const ownerToken = await acquireReleaseOperationLock(resolvedLockDir, timeoutMs, retryDelayMs, staleLockMs);
+        try {
+            process.env[lockPathEnv] = resolvedLockDir;
+            process.env[lockTokenEnv] = ownerToken;
+            return await withRegisteredLockHolder(resolvedLockDir, ownerToken, task);
+        } catch (error) {
+            if (!isRetryableLockRegistrationError(error)) {
+                throw error;
+            }
+            if (Date.now() - startedAt > timeoutMs) {
+                throw new Error(`Timed out registering release operation lock holder: ${resolvedLockDir}`, { cause: error });
+            }
+            await delay(retryDelayMs);
+        } finally {
+            if (previousPath === undefined) {
+                delete process.env[lockPathEnv];
+            } else {
+                process.env[lockPathEnv] = previousPath;
+            }
+
+            if (previousToken === undefined) {
+                delete process.env[lockTokenEnv];
+            } else {
+                process.env[lockTokenEnv] = previousToken;
+            }
+
+            removeOwnedLock(resolvedLockDir, ownerToken);
         }
-
-        if (previousToken === undefined) {
-            delete process.env[lockTokenEnv];
-        } else {
-            process.env[lockTokenEnv] = previousToken;
-        }
-
-        rmSync(resolvedLockDir, { recursive: true, force: true });
     }
 }

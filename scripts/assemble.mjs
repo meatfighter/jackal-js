@@ -1,5 +1,6 @@
-import { copyFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { copyFileAtomic } from "./atomic-file-utils.mjs";
 import {
     assertComponentReleaseOutputPath,
     assertLocalGeneratedOutputPath,
@@ -37,7 +38,7 @@ await withReleaseOperationLock(() => {
         assertRealFile(versionedZip, "versioned desktop ZIP output");
     }
     ensureDirectory(downloadsDir);
-    copyFileSync(sourceZip, stableZip);
-    copyFileSync(sourceZip, versionedZip);
+    copyFileAtomic(sourceZip, stableZip);
+    copyFileAtomic(sourceZip, versionedZip);
     console.log(`Copied desktop downloads to ${downloadsDir}`);
 });
