@@ -18,6 +18,8 @@ Or from this directory with Maven installed:
 mvn package
 ```
 
+Direct `mvn package` is a developer build path. Public desktop releases should be produced through the repository-level npm release tooling, which verifies the expected runtime artifacts, dependency notices and source material, release metadata, launcher permissions, and final ZIP contents.
+
 `npm run build:desktop` tries native Maven first, then WSL2 Maven on Windows, then a `javac`/`jar` fallback. The fallback is present because modern Windows machines often have a JDK but not Maven on `PATH`.
 
 ## Run
