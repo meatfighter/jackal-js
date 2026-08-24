@@ -17,11 +17,14 @@ if [ ! -d "$NATIVES" ]; then
 fi
 
 MODERN_FLAGS=""
-if java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -version >/dev/null 2>&1; then
-    MODERN_FLAGS="--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow"
-elif java --enable-native-access=ALL-UNNAMED -version >/dev/null 2>&1; then
-    MODERN_FLAGS="--enable-native-access=ALL-UNNAMED"
-fi
+add_java_flag_if_supported() {
+    if java "$1" -version >/dev/null 2>&1; then
+        MODERN_FLAGS="$MODERN_FLAGS $1"
+    fi
+}
+
+add_java_flag_if_supported "--enable-native-access=ALL-UNNAMED"
+add_java_flag_if_supported "--sun-misc-unsafe-memory-access=allow"
 
 exec java $MODERN_FLAGS \
     "-Dorg.lwjgl.librarypath=$NATIVES" \

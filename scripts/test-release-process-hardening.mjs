@@ -10,7 +10,13 @@ import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { verifyReleaseManifest, writeReleaseManifest } from "./release-manifest.mjs";
 import { allowDirtyReleaseEnv, assertTrackedSourceStateUnchanged, captureSourceProvenance, captureTrackedSourceState } from "./source-state-utils.mjs";
 import { listZipEntries, writeZipFromDirectory } from "./zip-utils.mjs";
-import { requiredDesktopZipEntries, requiredDesktopZipEntryModes, verifyDesktopZipEntries, verifyReleaseCandidate } from "./verify-release-candidate.mjs";
+import {
+    requiredDesktopZipEntries,
+    requiredDesktopZipEntryModes,
+    verifyDesktopZipArchive,
+    verifyDesktopZipEntries,
+    verifyReleaseCandidate
+} from "./verify-release-candidate.mjs";
 import { withRestoredFile } from "./version-stamp-utils.mjs";
 
 async function withTempDir(task) {
@@ -199,9 +205,20 @@ function modeAwareRequiredEntries(overrides = {}) {
     }));
 }
 
-function createDesktopZipFixture(zipPath, distributionDir = join(dirname(zipPath), "jackal-desktop")) {
+const desktopLauncherFixtureContents = new Map([
+    ["jackal-desktop/run-windows.cmd", '@echo off\r\njava --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar "%JAR%"\r\n'],
+    ["jackal-desktop/run-windows.ps1", '& java "--enable-native-access=ALL-UNNAMED" "--sun-misc-unsafe-memory-access=allow" "-jar" $jar\r\n'],
+    ["jackal-desktop/run-linux.sh", '#!/usr/bin/env sh\nexec java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar "$JAR"\n'],
+    [
+        "jackal-desktop/run-macos.sh",
+        '#!/usr/bin/env sh\nexec java -XstartOnFirstThread --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar "$JAR"\n'
+    ]
+]);
+
+function createDesktopZipFixture(zipPath, distributionDir = join(dirname(zipPath), "jackal-desktop"), entryOverrides = new Map()) {
     for (const entry of requiredDesktopZipEntries()) {
-        createFile(join(distributionDir, entry.replace(/^jackal-desktop\//, "")), entry);
+        const content = entryOverrides.get(entry) ?? desktopLauncherFixtureContents.get(entry) ?? entry;
+        createFile(join(distributionDir, entry.replace(/^jackal-desktop\//, "")), content);
     }
 
     writeZipFromDirectory(distributionDir, zipPath, {
@@ -1231,6 +1248,32 @@ test("desktop ZIP verifier checks launch script modes and rejects outer manifest
     assert.doesNotThrow(() => verifyDesktopZipEntries([...entries, { name: "jackal-desktop/natives/windows/META-INF/MANIFEST.MF", unixMode: 0o644 }]));
 });
 
+test("desktop launchers probe JVM compatibility flags independently", () => {
+    const launchers = new Map([
+        ["run-linux.sh", readFileSync(join(rootDir, "desktop", "run-linux.sh"), "utf8")],
+        ["run-macos.sh", readFileSync(join(rootDir, "desktop", "run-macos.sh"), "utf8")],
+        ["run-windows.cmd", readFileSync(join(rootDir, "desktop", "run-windows.cmd"), "utf8")],
+        ["run-windows.ps1", readFileSync(join(rootDir, "desktop", "run-windows.ps1"), "utf8")]
+    ]);
+
+    for (const [launcher, text] of launchers) {
+        assert.doesNotMatch(
+            text,
+            /--enable-native-access=ALL-UNNAMED\s+--sun-misc-unsafe-memory-access=allow\s+-version/,
+            `${launcher} must not probe the two modern JVM flags as an all-or-nothing pair`
+        );
+    }
+
+    assert.match(launchers.get("run-linux.sh"), /add_java_flag_if_supported "--enable-native-access=ALL-UNNAMED"/);
+    assert.match(launchers.get("run-linux.sh"), /add_java_flag_if_supported "--sun-misc-unsafe-memory-access=allow"/);
+    assert.match(launchers.get("run-macos.sh"), /java -XstartOnFirstThread -version/);
+    assert.match(launchers.get("run-macos.sh"), /exec java \$FIRST_THREAD_FLAG \$MODERN_FLAGS/);
+    assert.match(launchers.get("run-windows.cmd"), /java --enable-native-access=ALL-UNNAMED -version/);
+    assert.match(launchers.get("run-windows.cmd"), /java --sun-misc-unsafe-memory-access=allow -version/);
+    assert.match(launchers.get("run-windows.ps1"), /& java "--enable-native-access=ALL-UNNAMED" "-version"/);
+    assert.match(launchers.get("run-windows.ps1"), /& java "--sun-misc-unsafe-memory-access=allow" "-version"/);
+});
+
 test("mode-aware desktop ZIP writer preserves script modes without an outer manifest", async () => {
     await withTempDir((dir) => {
         const distributionDir = join(dir, "jackal-desktop");
@@ -1254,6 +1297,35 @@ test("mode-aware desktop ZIP writer preserves script modes without an outer mani
             entries.some((entry) => entry.name === "META-INF/MANIFEST.MF" || entry.name === "jackal-desktop/META-INF/MANIFEST.MF"),
             false
         );
+    });
+});
+
+test("desktop ZIP verifier reads launcher compatibility flags from the archive", async () => {
+    await withTempDir((dir) => {
+        const okZip = join(dir, "jackal-desktop.zip");
+        createDesktopZipFixture(okZip, join(dir, "ok", "jackal-desktop"));
+        assert.doesNotThrow(() => verifyDesktopZipArchive(okZip));
+
+        const missingMacThreadZip = join(dir, "missing-mac-thread.zip");
+        createDesktopZipFixture(
+            missingMacThreadZip,
+            join(dir, "missing-mac-thread", "jackal-desktop"),
+            new Map([
+                [
+                    "jackal-desktop/run-macos.sh",
+                    '#!/usr/bin/env sh\nexec java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -jar "$JAR"\n'
+                ]
+            ])
+        );
+        assert.throws(() => verifyDesktopZipArchive(missingMacThreadZip), /run-macos\.sh.*-XstartOnFirstThread/);
+
+        const missingWindowsUnsafeZip = join(dir, "missing-windows-unsafe.zip");
+        createDesktopZipFixture(
+            missingWindowsUnsafeZip,
+            join(dir, "missing-windows-unsafe", "jackal-desktop"),
+            new Map([["jackal-desktop/run-windows.ps1", '& java "--enable-native-access=ALL-UNNAMED" "-jar" $jar\r\n']])
+        );
+        assert.throws(() => verifyDesktopZipArchive(missingWindowsUnsafeZip), /run-windows\.ps1.*--sun-misc-unsafe-memory-access=allow/);
     });
 });
 

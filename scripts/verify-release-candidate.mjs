@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { assertRealFile, assertReleaseTreePath, distDir, rootDir } from "./build-utils.mjs";
 import { sha256File, verifyReleaseManifest } from "./release-manifest.mjs";
 import { displayPath } from "./run-utils.mjs";
-import { listZipEntries } from "./zip-utils.mjs";
+import { listZipEntries, readZipTextEntry } from "./zip-utils.mjs";
 
 const distributionName = "jackal-desktop";
 const runtimeJars = ["slick.jar", "lwjgl.jar", "lwjgl_util.jar", "jinput.jar", "jorbis.jar"];
@@ -34,6 +34,12 @@ const requiredRootEntries = [
 ];
 const executableZipEntries = new Set([`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`]);
 const forbiddenOuterManifestEntries = new Set(["META-INF/MANIFEST.MF", `${distributionName}/META-INF/MANIFEST.MF`]);
+const requiredLauncherTokens = new Map([
+    ["run-windows.cmd", ["--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow"]],
+    ["run-windows.ps1", ["--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow"]],
+    ["run-linux.sh", ["--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow"]],
+    ["run-macos.sh", ["-XstartOnFirstThread", "--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow"]]
+]);
 
 function assertFile(path, label) {
     assertRealFile(path, label);
@@ -97,6 +103,20 @@ export function verifyDesktopZipEntries(entries) {
     }
 }
 
+export function verifyDesktopZipArchive(zipPath) {
+    verifyDesktopZipEntries(listZipEntries(zipPath));
+
+    for (const [launcher, tokens] of requiredLauncherTokens) {
+        const entryName = `${distributionName}/${launcher}`;
+        const text = readZipTextEntry(zipPath, entryName);
+        for (const token of tokens) {
+            if (!text.includes(token)) {
+                throw new Error(`Desktop ZIP launcher ${entryName} is missing compatibility token: ${token}`);
+            }
+        }
+    }
+}
+
 export function verifyDesktopZip(releaseDir, version) {
     const downloadsDir = join(releaseDir, "downloads");
     const stableZip = join(downloadsDir, `${distributionName}.zip`);
@@ -108,7 +128,7 @@ export function verifyDesktopZip(releaseDir, version) {
         throw new Error("Stable and versioned desktop ZIP downloads differ.");
     }
 
-    verifyDesktopZipEntries(listZipEntries(stableZip));
+    verifyDesktopZipArchive(stableZip);
 }
 
 export function verifyReleaseCandidate(releaseDir = distDir) {

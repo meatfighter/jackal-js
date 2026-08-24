@@ -15,14 +15,13 @@ if (-not (Test-Path $natives)) {
 }
 
 $modernFlags = @()
-& java "--enable-native-access=ALL-UNNAMED" "--sun-misc-unsafe-memory-access=allow" "-version" *> $null
+& java "--enable-native-access=ALL-UNNAMED" "-version" *> $null
 if ($LASTEXITCODE -eq 0) {
-    $modernFlags = @("--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow")
-} else {
-    & java "--enable-native-access=ALL-UNNAMED" "-version" *> $null
-    if ($LASTEXITCODE -eq 0) {
-        $modernFlags = @("--enable-native-access=ALL-UNNAMED")
-    }
+    $modernFlags += "--enable-native-access=ALL-UNNAMED"
+}
+& java "--sun-misc-unsafe-memory-access=allow" "-version" *> $null
+if ($LASTEXITCODE -eq 0) {
+    $modernFlags += "--sun-misc-unsafe-memory-access=allow"
 }
 
 & java @modernFlags `

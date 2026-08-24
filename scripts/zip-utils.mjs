@@ -219,7 +219,8 @@ export function listZipEntries(zipPath) {
             externalAttributes,
             unixMode: externalAttributes >>> 16,
             compressedSize,
-            uncompressedSize
+            uncompressedSize,
+            localHeaderOffset: data.readUInt32LE(offset + 42)
         });
         offset = fileNameEnd + extraFieldLength + fileCommentLength;
     }
@@ -229,4 +230,35 @@ export function listZipEntries(zipPath) {
     }
 
     return entries;
+}
+
+export function readZipEntryData(zipPath, entryName) {
+    const normalizedEntryName = normalizeZipPath(entryName);
+    const data = readFileSync(zipPath);
+    const entry = listZipEntries(zipPath).find((candidate) => candidate.name === normalizedEntryName);
+    if (entry === undefined) {
+        throw new Error(`ZIP entry is missing: ${normalizedEntryName}`);
+    }
+    if (entry.compressionMethod !== STORE_COMPRESSION_METHOD) {
+        throw new Error(`ZIP entry is compressed with unsupported method ${entry.compressionMethod}: ${normalizedEntryName}`);
+    }
+
+    const offset = entry.localHeaderOffset;
+    if (offset + 30 > data.length || data.readUInt32LE(offset) !== LOCAL_FILE_HEADER_SIGNATURE) {
+        throw new Error(`Invalid ZIP local-file header for ${normalizedEntryName}.`);
+    }
+
+    const fileNameLength = data.readUInt16LE(offset + 26);
+    const extraFieldLength = data.readUInt16LE(offset + 28);
+    const dataOffset = offset + 30 + fileNameLength + extraFieldLength;
+    const dataEnd = dataOffset + entry.uncompressedSize;
+    if (dataEnd > data.length || entry.compressedSize !== entry.uncompressedSize) {
+        throw new Error(`Invalid ZIP entry data length for ${normalizedEntryName}.`);
+    }
+
+    return data.subarray(dataOffset, dataEnd);
+}
+
+export function readZipTextEntry(zipPath, entryName) {
+    return readZipEntryData(zipPath, entryName).toString("utf8");
 }
