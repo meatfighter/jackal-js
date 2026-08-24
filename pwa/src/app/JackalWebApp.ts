@@ -514,14 +514,22 @@ export class JackalWebApp {
             if (text === null) {
                 return false;
             }
-            const snapshot = JSON.parse(text) as unknown;
-            if (!isPotentialGameStateSnapshot(snapshot)) {
+            let snapshot: unknown;
+            try {
+                snapshot = JSON.parse(text) as unknown;
+            } catch {
                 this.clearStoredGameState();
                 return false;
             }
+            if (!isPotentialGameStateSnapshot(snapshot)) {
+                if (!isFutureGameStateSnapshot(snapshot)) {
+                    this.clearStoredGameState();
+                }
+                return false;
+            }
             return true;
-        } catch {
-            this.clearStoredGameState();
+        } catch (error) {
+            console.warn("Unable to inspect Jackal saved game state.", error);
             return false;
         }
     }
@@ -893,6 +901,10 @@ function isPotentialGameStateSnapshot(snapshot: unknown): boolean {
         return isPotentialGameModeSnapshot(snapshot.gameMode) && isPotentialEncodedRecord(snapshot.playerFields, collectPotentialEntityIds(snapshot.gameMode));
     }
     return POTENTIAL_STANDALONE_MODE_IDS.includes(String(snapshot.modeId)) && isPotentialEncodedRecord(snapshot.modeFields, new Set<number>());
+}
+
+function isFutureGameStateSnapshot(snapshot: unknown): boolean {
+    return isRecord(snapshot) && Number.isInteger(snapshot.version) && (snapshot.version as number) > GAME_STATE_VERSION;
 }
 
 function isPotentialBaseSnapshot(snapshot: Record<string, unknown>): boolean {

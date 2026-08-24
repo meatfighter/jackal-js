@@ -2,7 +2,7 @@ import type { GameContainer } from "slick2d-ts";
 import { getDeploymentStorageKey } from "../../app/DeploymentStorageKeys.js";
 import type { Main } from "../Main.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
-import { GAME_STATE_STORAGE_KEY } from "./GameStateSchema.js";
+import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "./GameStateSchema.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
 
 export class JackalGameStateStore {
@@ -36,7 +36,6 @@ export class JackalGameStateStore {
             return true;
         } catch (error) {
             console.warn("Unable to restore Jackal game state.", error);
-            this.clear();
             return false;
         }
     }
@@ -44,8 +43,8 @@ export class JackalGameStateStore {
     public hasValidSave(): boolean {
         try {
             return this.readSnapshot() !== null;
-        } catch {
-            this.clear();
+        } catch (error) {
+            console.warn("Unable to inspect Jackal game state.", error);
             return false;
         }
     }
@@ -62,9 +61,18 @@ export class JackalGameStateStore {
             return null;
         }
 
-        const snapshot = JSON.parse(text) as unknown;
-        if (!this.serializer.isSupportedSnapshot(snapshot)) {
+        let snapshot: unknown;
+        try {
+            snapshot = JSON.parse(text) as unknown;
+        } catch {
             this.clear();
+            return null;
+        }
+
+        if (!this.serializer.isSupportedSnapshot(snapshot)) {
+            if (!isFutureGameStateSnapshot(snapshot)) {
+                this.clear();
+            }
             return null;
         }
 
@@ -74,4 +82,12 @@ export class JackalGameStateStore {
     private getStorageKey(): string {
         return getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
     }
+}
+
+function isFutureGameStateSnapshot(snapshot: unknown): boolean {
+    return isRecord(snapshot) && Number.isInteger(snapshot.version) && (snapshot.version as number) > GAME_STATE_VERSION;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
