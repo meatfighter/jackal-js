@@ -7,7 +7,10 @@ Desktop Java runtime dependencies are documented separately in desktop/RUNTIME_D
 - `licenses/SLICK2D.txt`
 - `licenses/LWJGL-2.txt`
 - `licenses/JINPUT.txt`
-- `licenses/JORBIS-LGPL.txt`
+- `licenses/LGPL-2.0.txt`
+- `licenses/JORBIS-NOTICE.txt`
+
+The generated desktop ZIP also carries the corresponding JOrbis 0.0.17 source archive at `sources/jorbis-0.0.17-sources.jar`.
 
 ## slick2d-ts
 
@@ -85,4 +88,4 @@ The desktop build includes `jinput.jar` and JInput native libraries. JInput is d
 
 ## JOrbis/Jogg
 
-The desktop build includes `jorbis.jar`, which contains JCraft JOrbis and Jogg classes for Ogg Vorbis decoding. JOrbis is distributed under the GNU Lesser General Public License by JCraft, Inc. The desktop ZIP includes the license notice at `licenses/JORBIS-LGPL.txt`.
+The desktop build includes `jorbis.jar`, which contains JCraft JOrbis and Jogg classes for Ogg Vorbis decoding. JOrbis is distributed under the GNU Lesser General Public License by JCraft, Inc. The desktop ZIP includes the complete GNU Library GPL v2 text at `licenses/LGPL-2.0.txt`, the JOrbis/Jogg notice at `licenses/JORBIS-NOTICE.txt`, and corresponding JOrbis 0.0.17 source at `sources/jorbis-0.0.17-sources.jar`.

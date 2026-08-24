@@ -1,4 +1,4 @@
-JOrbis / Jogg
+JOrbis / Jogg Notice
 
 Source: JOrbis source headers and JCraft license metadata. The bundled
 desktop/lib/jorbis.jar contains both com.jcraft.jorbis and com.jcraft.jogg

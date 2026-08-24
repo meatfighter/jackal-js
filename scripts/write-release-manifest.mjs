@@ -3,10 +3,11 @@ import { assertReleaseTreePath, distDir, rootDir } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { writeReleaseManifest } from "./release-manifest.mjs";
 import { displayPath } from "./run-utils.mjs";
+import { captureSourceProvenance, sourceProvenanceFromEnvironment } from "./source-state-utils.mjs";
 
 const releaseDir = assertReleaseTreePath("release manifest output directory", resolve(rootDir, process.argv[2] ?? distDir));
 
 await withReleaseOperationLock(() => {
-    const manifest = writeReleaseManifest(releaseDir);
+    const manifest = writeReleaseManifest(releaseDir, undefined, sourceProvenanceFromEnvironment() ?? captureSourceProvenance());
     console.log(`Wrote ${manifest.files.length} release manifest entries to ${displayPath(releaseDir)}/release.json`);
 });

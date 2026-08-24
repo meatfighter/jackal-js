@@ -34,9 +34,9 @@ export function sha256File(path) {
     return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
-export function createReleaseManifest(releaseDir, version = readVersion()) {
+export function createReleaseManifest(releaseDir, version = readVersion(), { sourceCommit = null, sourceUrl = null, dirty = false } = {}) {
     const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
-    return {
+    const manifest = {
         version: version.version,
         buildStamp: version.buildStamp,
         files: collectFiles(root).map((file) => ({
@@ -45,11 +45,23 @@ export function createReleaseManifest(releaseDir, version = readVersion()) {
             sha256: sha256File(file.path)
         }))
     };
+
+    if (sourceCommit !== null) {
+        manifest.sourceCommit = sourceCommit;
+    }
+    if (sourceUrl !== null) {
+        manifest.sourceUrl = sourceUrl;
+    }
+    if (dirty) {
+        manifest.dirty = true;
+    }
+
+    return manifest;
 }
 
-export function writeReleaseManifest(releaseDir, version = readVersion()) {
+export function writeReleaseManifest(releaseDir, version = readVersion(), provenance = {}) {
     const root = assertReleaseTreePath("release manifest directory", resolve(releaseDir));
-    const manifest = createReleaseManifest(root, version);
+    const manifest = createReleaseManifest(root, version, provenance);
     writeFileAtomic(join(root, RELEASE_MANIFEST_NAME), `${JSON.stringify(manifest, null, 4)}\n`);
     return manifest;
 }
@@ -67,6 +79,9 @@ export function readReleaseManifest(releaseDir) {
         manifest === null ||
         typeof manifest.version !== "string" ||
         typeof manifest.buildStamp !== "string" ||
+        (manifest.sourceCommit !== undefined && typeof manifest.sourceCommit !== "string") ||
+        (manifest.sourceUrl !== undefined && typeof manifest.sourceUrl !== "string") ||
+        (manifest.dirty !== undefined && typeof manifest.dirty !== "boolean") ||
         !Array.isArray(manifest.files)
     ) {
         throw new Error(`Invalid release manifest: ${manifestPath}`);

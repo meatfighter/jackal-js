@@ -19,7 +19,8 @@ const requiredNativeEntries = [
     "natives/macosx/openal.dylib",
     "natives/macosx/libjinput-osx.jnilib"
 ];
-const requiredLicenseEntries = ["licenses/SLICK2D.txt", "licenses/LWJGL-2.txt", "licenses/JINPUT.txt", "licenses/JORBIS-LGPL.txt"];
+const requiredLicenseEntries = ["licenses/SLICK2D.txt", "licenses/LWJGL-2.txt", "licenses/JINPUT.txt", "licenses/LGPL-2.0.txt", "licenses/JORBIS-NOTICE.txt"];
+const requiredSourceEntries = ["sources/jorbis-0.0.17-sources.jar"];
 const requiredRootEntries = [
     `${distributionName}.jar`,
     "LICENSE",
@@ -44,7 +45,8 @@ export function requiredDesktopZipEntries() {
         ...requiredRootEntries.map((entry) => `${root}${entry}`),
         ...runtimeJars.map((jar) => `${root}lib/${jar}`),
         ...requiredNativeEntries.map((entry) => `${root}${entry}`),
-        ...requiredLicenseEntries.map((entry) => `${root}${entry}`)
+        ...requiredLicenseEntries.map((entry) => `${root}${entry}`),
+        ...requiredSourceEntries.map((entry) => `${root}${entry}`)
     ];
 }
 
@@ -112,6 +114,12 @@ export function verifyDesktopZip(releaseDir, version) {
 export function verifyReleaseCandidate(releaseDir = distDir) {
     const root = assertReleaseTreePath("release candidate directory", releaseDir);
     const manifest = verifyReleaseManifest(root);
+    if (!/^[0-9a-f]{40}$/i.test(manifest.sourceCommit ?? "")) {
+        throw new Error("Release manifest must record a 40-character sourceCommit.");
+    }
+    if (typeof manifest.sourceUrl !== "string" || manifest.sourceUrl.length === 0) {
+        throw new Error("Release manifest must record sourceUrl.");
+    }
     assertFile(join(root, "index.html"), "about page");
     assertFile(join(root, "pwa", "index.html"), "PWA index");
     assertFile(join(root, "pwa", "sw.js"), "PWA service worker");

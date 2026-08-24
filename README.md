@@ -37,6 +37,7 @@ The desktop release zip is copied into `releases/` by `npm.cmd run release:deskt
 Java 21 LTS is the primary desktop runtime for release smoke tests. Advertise only generated-ZIP launch targets that have been tested; see `desktop/README.md` and `desktop/RUNTIME_DEPENDENCIES.md`.
 
 `npm.cmd run build` builds a full release candidate, verifies it, and then promotes it to `dist/`: the root about page, the PWA under `dist/pwa`, the desktop zip, downloadable copies under `dist/downloads`, and `dist/release.json`.
+Production releases require a clean Git checkout. If you intentionally need to build from local changes, set `JACKAL_ALLOW_DIRTY_RELEASE=1`; the generated `dist/release.json` records the source commit, source URL, and `dirty: true`.
 Use this full release sequence when refreshing promoted web artifacts:
 
 ```sh

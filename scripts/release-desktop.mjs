@@ -4,5 +4,6 @@ import { runNodeScript, runNpmScript } from "./run-utils.mjs";
 await withReleaseOperationLock(() => {
     runNpmScript("verify");
     runNpmScript("build:desktop");
+    runNpmScript("verify:desktop");
     runNodeScript("scripts/copy-desktop-release.mjs");
 });

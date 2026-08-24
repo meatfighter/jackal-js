@@ -28,6 +28,7 @@
         "preview:pwa": "vite preview --config pwa/vite.config.ts --host 127.0.0.1",
         "preview:dist": "vite preview --host 127.0.0.1 --outDir dist",
         "test": "node --test scripts/test-*.mjs",
+        "verify:desktop": "node scripts/verify-desktop-zip.mjs",
         "verify:pwa-precache": "node scripts/verify-pwa-precache.mjs",
         "verify:release": "node scripts/verify-release-candidate.mjs",
         "check:ts-nocheck": "node scripts/check-ts-nocheck-budget.mjs",

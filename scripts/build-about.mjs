@@ -3,6 +3,7 @@ import { assertComponentReleaseOutputPath, componentReleaseDir, copyDirectory, e
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
+import { releaseSourceUrlEnv } from "./source-state-utils.mjs";
 
 const outputDir = assertComponentReleaseOutputPath("about release output directory", resolve(rootDir, process.argv[2] ?? join(componentReleaseDir, "web")));
 
@@ -14,7 +15,8 @@ await withReleaseOperationLock(() => {
         __BUILD_STAMP__: version.buildStamp,
         __BUILD_STAMP_ENCODED__: encodedBuildStamp,
         __DESKTOP_ZIP__: `downloads/jackal-desktop.zip?v=${encodedBuildStamp}`,
-        __PWA_URL__: `pwa/?v=${encodedBuildStamp}`
+        __PWA_URL__: `pwa/?v=${encodedBuildStamp}`,
+        __SOURCE_URL__: process.env[releaseSourceUrlEnv] ?? "https://github.com/meatfighter/jackal-js"
     };
 
     const aboutDir = join(rootDir, "about");

@@ -81,6 +81,12 @@ function removeBackupOrKeepJournal(backup, journalPath) {
     removePromotionJournal(journalPath);
 }
 
+function removeCandidateIfPresent(candidate) {
+    if (existsSync(candidate)) {
+        rmSync(candidate, { recursive: true, force: true });
+    }
+}
+
 export function recoverInterruptedPromotion({ workDir = releaseWorkDir, fixtureRoot = null } = {}) {
     const work = assertGeneratedReleaseWorkPath("release work directory", workDir, { fixtureRoot });
     const journalPath = promotionJournalPath(work);
@@ -94,15 +100,18 @@ export function recoverInterruptedPromotion({ workDir = releaseWorkDir, fixtureR
     const backupExists = existsSync(journal.backup);
 
     if (journal.phase === "candidate-promoted") {
-        if (!targetExists && backupExists) {
-            renameSync(journal.backup, journal.target);
-        } else {
+        if (targetExists) {
             removeBackupOrKeepJournal(journal.backup, journalPath);
+        } else if (backupExists) {
+            renameSync(journal.backup, journal.target);
+            removePromotionJournal(journalPath);
+        } else {
+            throw new Error(`Unable to recover release promotion journal safely: ${journalPath}`);
         }
         return true;
     }
 
-    if (journal.phase === "target-backed-up" || (!targetExists && !backupExists && candidateExists)) {
+    if (journal.phase === "target-backed-up") {
         if (!targetExists && candidateExists) {
             renameSync(journal.candidate, journal.target);
             removeBackupOrKeepJournal(journal.backup, journalPath);
@@ -117,14 +126,31 @@ export function recoverInterruptedPromotion({ workDir = releaseWorkDir, fixtureR
             removeBackupOrKeepJournal(journal.backup, journalPath);
             return true;
         }
+        if (targetExists) {
+            removePromotionJournal(journalPath);
+            return true;
+        }
     }
 
     if (journal.phase === "prepared") {
-        if (!targetExists && candidateExists && !backupExists) {
-            renameSync(journal.candidate, journal.target);
+        if (!targetExists && backupExists) {
+            renameSync(journal.backup, journal.target);
+            removeCandidateIfPresent(journal.candidate);
+            removePromotionJournal(journalPath);
+            return true;
         }
-        removePromotionJournal(journalPath);
-        return true;
+        if (!targetExists && candidateExists) {
+            renameSync(journal.candidate, journal.target);
+            removePromotionJournal(journalPath);
+            return true;
+        }
+        if (targetExists) {
+            if (backupExists) {
+                rmSync(journal.backup, { recursive: true, force: true });
+            }
+            removePromotionJournal(journalPath);
+            return true;
+        }
     }
 
     throw new Error(`Unable to recover release promotion journal safely: ${journalPath}`);

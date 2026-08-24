@@ -34,4 +34,7 @@ Third-party desktop license files are packaged under `licenses/` in the generate
 - `licenses/SLICK2D.txt`
 - `licenses/LWJGL-2.txt`
 - `licenses/JINPUT.txt`
-- `licenses/JORBIS-LGPL.txt`
+- `licenses/LGPL-2.0.txt`
+- `licenses/JORBIS-NOTICE.txt`
+
+The generated desktop ZIP also includes the corresponding JOrbis 0.0.17 source archive at `sources/jorbis-0.0.17-sources.jar`.

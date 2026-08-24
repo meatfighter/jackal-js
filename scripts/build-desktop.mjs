@@ -10,6 +10,7 @@ const sourceDir = join(desktopDir, "src");
 const libDir = join(desktopDir, "lib");
 const nativeDir = join(desktopDir, "natives");
 const licenseDir = join(desktopDir, "licenses");
+const runtimeSourceDir = join(desktopDir, "sources");
 const targetDir = join(desktopDir, "target");
 const classesDir = join(targetDir, "classes");
 const targetLibDir = join(targetDir, "lib");
@@ -26,7 +27,8 @@ const requiredNatives = {
     linux: ["liblwjgl64.so", "libopenal64.so", "libjinput-linux64.so"],
     macosx: ["liblwjgl.jnilib", "openal.dylib", "libjinput-osx.jnilib"]
 };
-const requiredLicenseFiles = ["SLICK2D.txt", "LWJGL-2.txt", "JINPUT.txt", "JORBIS-LGPL.txt"];
+const requiredLicenseFiles = ["SLICK2D.txt", "LWJGL-2.txt", "JINPUT.txt", "LGPL-2.0.txt", "JORBIS-NOTICE.txt"];
+const requiredRuntimeSourceFiles = ["jorbis-0.0.17-sources.jar"];
 const jinputUtilityPluginClass = "net/java/games/util/plugins/Plugins.class";
 const executableDistributionEntries = [`${distributionName}/run-linux.sh`, `${distributionName}/run-macos.sh`];
 
@@ -215,6 +217,10 @@ function verifyRuntimeDependencies() {
     for (const licenseFile of requiredLicenseFiles) {
         assertRealFile(join(licenseDir, licenseFile), `desktop third-party license ${licenseFile}`);
     }
+    assertRealDirectory(runtimeSourceDir, "desktop third-party sources directory");
+    for (const sourceFile of requiredRuntimeSourceFiles) {
+        assertRealFile(join(runtimeSourceDir, sourceFile), `desktop third-party source ${sourceFile}`);
+    }
     verifyJInputUtilityDependency();
 }
 
@@ -255,6 +261,7 @@ function createDistribution() {
         copyFileSync(sourcePath, targetPath);
     }
     copyDirectoryContents(licenseDir, join(distributionDir, "licenses"));
+    copyDirectoryContents(runtimeSourceDir, join(distributionDir, "sources"));
     const licensePath = join(rootDir, "LICENSE");
     const noticesPath = join(rootDir, "THIRD_PARTY_NOTICES.md");
     assertRealFile(licensePath, "license file");

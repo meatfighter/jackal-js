@@ -8,9 +8,9 @@ import { assertLocalGeneratedOutputPath, distDir, releaseWorkDir, rootDir, versi
 import { promoteVerifiedCandidate, promotionJournalPath, recoverInterruptedPromotion } from "./release-atomic-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
 import { verifyReleaseManifest, writeReleaseManifest } from "./release-manifest.mjs";
-import { assertTrackedSourceStateUnchanged, captureTrackedSourceState } from "./source-state-utils.mjs";
+import { allowDirtyReleaseEnv, assertTrackedSourceStateUnchanged, captureSourceProvenance, captureTrackedSourceState } from "./source-state-utils.mjs";
 import { listZipEntries, writeZipFromDirectory } from "./zip-utils.mjs";
-import { requiredDesktopZipEntries, requiredDesktopZipEntryModes, verifyDesktopZipEntries } from "./verify-release-candidate.mjs";
+import { requiredDesktopZipEntries, requiredDesktopZipEntryModes, verifyDesktopZipEntries, verifyReleaseCandidate } from "./verify-release-candidate.mjs";
 import { withRestoredFile } from "./version-stamp-utils.mjs";
 
 async function withTempDir(task) {
@@ -35,6 +35,19 @@ async function withReleaseWorkTestDir(task) {
 function createFile(path, content = "x") {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
+}
+
+function readMarker(path) {
+    return readFileSync(join(path, "index.html"), "utf8");
+}
+
+function runGitFixture(cwd, args) {
+    const result = spawnSync("git", args, {
+        cwd,
+        encoding: "utf8"
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
 }
 
 function tryCreateSymlink(target, path, type) {
@@ -184,6 +197,17 @@ function modeAwareRequiredEntries(overrides = {}) {
         name,
         unixMode: overrides[name] ?? modes.get(name)
     }));
+}
+
+function createDesktopZipFixture(zipPath, distributionDir = join(dirname(zipPath), "jackal-desktop")) {
+    for (const entry of requiredDesktopZipEntries()) {
+        createFile(join(distributionDir, entry.replace(/^jackal-desktop\//, "")), entry);
+    }
+
+    writeZipFromDirectory(distributionDir, zipPath, {
+        executableEntries: ["jackal-desktop/run-linux.sh", "jackal-desktop/run-macos.sh"],
+        rootName: "jackal-desktop"
+    });
 }
 
 test("temporary file restoration preserves exact original bytes on success and failure", async () => {
@@ -785,6 +809,151 @@ test("release promotion recovery completes interrupted target backup journal", a
     });
 });
 
+test("release promotion recovery preserves a usable target at crash cut points", async () => {
+    const cases = [
+        {
+            name: "before journal",
+            phase: null,
+            target: "old",
+            backup: null,
+            candidate: "new",
+            expectedTarget: "old",
+            expectedCandidate: true,
+            expectedBackup: false,
+            expectedRecovered: false
+        },
+        {
+            name: "prepared before target backup",
+            phase: "prepared",
+            target: "old",
+            backup: null,
+            candidate: "new",
+            expectedTarget: "old",
+            expectedCandidate: true,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "prepared after target backup rename",
+            phase: "prepared",
+            target: null,
+            backup: "old",
+            candidate: "new",
+            expectedTarget: "old",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "target-backed-up before candidate promotion",
+            phase: "target-backed-up",
+            target: null,
+            backup: "old",
+            candidate: "new",
+            expectedTarget: "new",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "target-backed-up after candidate rename",
+            phase: "target-backed-up",
+            target: "new",
+            backup: "old",
+            candidate: null,
+            expectedTarget: "new",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "target-backed-up without candidate restores backup",
+            phase: "target-backed-up",
+            target: null,
+            backup: "old",
+            candidate: null,
+            expectedTarget: "old",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "candidate-promoted before cleanup",
+            phase: "candidate-promoted",
+            target: "new",
+            backup: "old",
+            candidate: null,
+            expectedTarget: "new",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "candidate-promoted after backup cleanup",
+            phase: "candidate-promoted",
+            target: "new",
+            backup: null,
+            candidate: null,
+            expectedTarget: "new",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        },
+        {
+            name: "candidate-promoted without target restores backup",
+            phase: "candidate-promoted",
+            target: null,
+            backup: "old",
+            candidate: null,
+            expectedTarget: "old",
+            expectedCandidate: false,
+            expectedBackup: false,
+            expectedRecovered: true
+        }
+    ];
+
+    for (const crashCase of cases) {
+        await withTempDir((dir) => {
+            const candidateDir = join(dir, "candidate");
+            const targetDir = join(dir, "dist");
+            const workDir = join(dir, "work");
+            const backupDir = join(workDir, "previous-dist-test");
+
+            if (crashCase.candidate !== null) {
+                createFile(join(candidateDir, "index.html"), crashCase.candidate);
+            }
+            if (crashCase.target !== null) {
+                createFile(join(targetDir, "index.html"), crashCase.target);
+            }
+            if (crashCase.backup !== null) {
+                createFile(join(backupDir, "index.html"), crashCase.backup);
+            }
+            if (crashCase.phase !== null) {
+                createFile(
+                    promotionJournalPath(workDir),
+                    `${JSON.stringify(
+                        {
+                            phase: crashCase.phase,
+                            candidate: candidateDir,
+                            target: targetDir,
+                            backup: backupDir,
+                            work: workDir
+                        },
+                        null,
+                        4
+                    )}\n`
+                );
+            }
+
+            assert.equal(recoverInterruptedPromotion({ workDir, fixtureRoot: dir }), crashCase.expectedRecovered, crashCase.name);
+            assert.equal(readMarker(targetDir), crashCase.expectedTarget, crashCase.name);
+            assert.equal(existsSync(candidateDir), crashCase.expectedCandidate, crashCase.name);
+            assert.equal(existsSync(backupDir), crashCase.expectedBackup, crashCase.name);
+            assert.equal(existsSync(promotionJournalPath(workDir)), false, crashCase.name);
+        });
+    }
+});
+
 test("production promotion only accepts generated candidates and canonical dist targets", async () => {
     await withTempDir((dir) => {
         const fixtureCandidateDir = join(dir, "candidate");
@@ -835,6 +1004,50 @@ test("final tracked source check rejects before canonical dist promotion", async
             rmSync(sentinelPath, { force: true });
             if (!hadDist) {
                 rmSync(distDir, { recursive: true, force: true });
+            }
+        }
+    });
+});
+
+test("source provenance rejects dirty production releases unless explicitly allowed", async () => {
+    await withTempDir((dir) => {
+        const repo = join(dir, "repo");
+        mkdirSync(repo, { recursive: true });
+
+        runGitFixture(repo, ["init"]);
+        runGitFixture(repo, ["config", "user.email", "release-test@example.test"]);
+        runGitFixture(repo, ["config", "user.name", "Release Test"]);
+        runGitFixture(repo, ["config", "commit.gpgsign", "false"]);
+        createFile(join(repo, "tracked.txt"), "clean\n");
+        runGitFixture(repo, ["add", "tracked.txt"]);
+        runGitFixture(repo, ["commit", "-m", "initial"]);
+        runGitFixture(repo, ["remote", "add", "origin", "git@github.com:meatfighter/jackal-js.git"]);
+
+        const clean = captureSourceProvenance({ allowDirty: false, cwd: repo });
+        assert.match(clean.sourceCommit, /^[0-9a-f]{40}$/);
+        assert.match(clean.sourceUrl, /^https:\/\/github\.com\/meatfighter\/jackal-js\/tree\/[0-9a-f]{40}$/);
+        assert.equal(clean.dirty, false);
+
+        createFile(join(repo, "notes.txt"), "untracked\n");
+        assert.throws(() => captureSourceProvenance({ allowDirty: false, cwd: repo }), /untracked:notes\.txt/);
+        rmSync(join(repo, "notes.txt"), { force: true });
+
+        writeFileSync(join(repo, "tracked.txt"), "unstaged\n");
+        assert.throws(() => captureSourceProvenance({ allowDirty: false, cwd: repo }), /unstaged:tracked\.txt/);
+        runGitFixture(repo, ["add", "tracked.txt"]);
+        assert.throws(() => captureSourceProvenance({ allowDirty: false, cwd: repo }), /staged:tracked\.txt/);
+
+        const previousAllowDirty = process.env[allowDirtyReleaseEnv];
+        process.env[allowDirtyReleaseEnv] = "1";
+        try {
+            const dirty = captureSourceProvenance({ cwd: repo });
+            assert.equal(dirty.sourceCommit, clean.sourceCommit);
+            assert.equal(dirty.dirty, true);
+        } finally {
+            if (previousAllowDirty === undefined) {
+                delete process.env[allowDirtyReleaseEnv];
+            } else {
+                process.env[allowDirtyReleaseEnv] = previousAllowDirty;
             }
         }
     });
@@ -894,6 +1107,39 @@ test("release manifest verification detects mutated candidate files", async () =
 
         writeFileSync(join(releaseDir, "pwa", "index.html"), "PWA");
         assert.throws(() => verifyReleaseManifest(releaseDir), /SHA-256 mismatch/);
+    });
+});
+
+test("release candidate verifier requires source provenance in the release manifest", async () => {
+    await withTempDir((dir) => {
+        const releaseDir = join(dir, "candidate");
+        const downloadsDir = join(releaseDir, "downloads");
+        const version = {
+            version: "1.0.0",
+            buildStamp: "20260824T000000Z"
+        };
+        const sourceCommit = "a".repeat(40);
+        const sourceUrl = `https://github.com/meatfighter/jackal-js/tree/${sourceCommit}`;
+        const stableZip = join(downloadsDir, "jackal-desktop.zip");
+        const versionedZip = join(downloadsDir, `jackal-desktop-${version.version}.zip`);
+
+        createFile(join(releaseDir, "index.html"), "about");
+        createFile(join(releaseDir, "pwa", "index.html"), "pwa");
+        createFile(join(releaseDir, "pwa", "sw.js"), "sw");
+        createDesktopZipFixture(stableZip, join(dir, "desktop-zip-source", "jackal-desktop"));
+        copyFileAtomic(stableZip, versionedZip);
+
+        writeReleaseManifest(releaseDir, version);
+        assert.throws(() => verifyReleaseCandidate(releaseDir), /sourceCommit/);
+
+        writeReleaseManifest(releaseDir, version, { sourceCommit });
+        assert.throws(() => verifyReleaseCandidate(releaseDir), /sourceUrl/);
+
+        writeReleaseManifest(releaseDir, version, { dirty: true, sourceCommit, sourceUrl });
+        const manifest = verifyReleaseCandidate(releaseDir);
+        assert.equal(manifest.sourceCommit, sourceCommit);
+        assert.equal(manifest.sourceUrl, sourceUrl);
+        assert.equal(manifest.dirty, true);
     });
 });
 
@@ -968,6 +1214,12 @@ test("desktop ZIP verifier requires runtime jars, natives, and notices", () => {
     );
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/THIRD_PARTY_NOTICES.md")), /THIRD_PARTY_NOTICES\.md/);
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/LWJGL-2.txt")), /LWJGL-2\.txt/);
+    assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/LGPL-2.0.txt")), /LGPL-2\.0\.txt/);
+    assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/JORBIS-NOTICE.txt")), /JORBIS-NOTICE\.txt/);
+    assert.throws(
+        () => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/sources/jorbis-0.0.17-sources.jar")),
+        /jorbis-0\.0\.17-sources\.jar/
+    );
 });
 
 test("desktop ZIP verifier checks launch script modes and rejects outer manifests", () => {
