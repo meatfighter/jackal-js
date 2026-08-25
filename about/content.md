@@ -51,7 +51,7 @@ Selecting **Options** opens another menu with:
 - **Difficulty** — Choose between **Normal** and **Hard**.
 - **Done** — Return to the previous menu.
 
-## History
+# History
 
 I originally ported _Jackal_ to Java in 2013 using the [Slick2D](https://slick.ninjacave.com/wiki/index.php?title=Getting_Started) and [JInput](https://jinput.github.io/jinput/) libraries. I studied _Jackal_ in the [FCEUX](https://fceux.com/) NES emulator and recreated its stages and mechanics through observation.
 

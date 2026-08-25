@@ -150,7 +150,7 @@ function isBlockStart(lines, index) {
 }
 
 function renderHeading(rawLevel, text, usedSlugs, headings) {
-    const level = Math.min(rawLevel + 1, 6);
+    const level = Math.min(rawLevel, 6);
     const slug = uniqueSlug(text, usedSlugs);
     const plainText = stripInlineMarkdown(text);
     headings.push({ level, text: plainText, slug });
@@ -222,7 +222,6 @@ export function renderAboutMarkdown(markdown) {
     const headings = [];
     const usedSlugs = new Set();
     let index = 0;
-    let seenHeading = false;
 
     while (index < lines.length) {
         const line = lines[index];
@@ -236,11 +235,7 @@ export function renderAboutMarkdown(markdown) {
         if (heading !== null) {
             const rawLevel = heading[1].length;
             const headingText = heading[2].trim();
-            const isSourceTitle = !seenHeading && rawLevel === 1 && stripInlineMarkdown(headingText).toLowerCase() === "about";
-            seenHeading = true;
-            if (!isSourceTitle) {
-                html.push(renderHeading(rawLevel, headingText, usedSlugs, headings));
-            }
+            html.push(renderHeading(rawLevel, headingText, usedSlugs, headings));
             index += 1;
             continue;
         }
