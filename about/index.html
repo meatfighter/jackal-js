@@ -37,48 +37,38 @@
         </script>
     </head>
     <body>
-        <header class="site-header">
-            <div class="site-header__inner">
-                <h1 class="site-title">
-                    <a class="site-logo-link" href="./" aria-label="Jackal">
-                        <img class="site-logo" src="./__TITLE_IMAGE__" alt="Jackal" width="2172" height="724" decoding="async" />
-                    </a>
-                </h1>
-                <div class="site-tools" aria-label="Display controls">
+        <div class="page">
+            <header class="site-header">
+                <div class="site-header__inner">
+                    <h1 class="site-title">
+                        <a class="site-logo-link" href="./" aria-label="Jackal">
+                            <img class="site-logo" src="./__TITLE_IMAGE__" alt="Jackal" width="2172" height="724" decoding="async" />
+                        </a>
+                    </h1>
                     <label class="theme-switch" for="theme-toggle">
                         <span class="sr-only">Toggle dark mode</span>
                         <input id="theme-toggle" type="checkbox" role="switch" aria-label="Toggle dark mode" />
                         <span class="theme-switch__track" aria-hidden="true"></span>
                     </label>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <main id="main" class="site-main">
-            <div class="site-main__inner">
-                __TOC_HTML__
+            <main id="main" class="site-main">
                 <article class="article" aria-label="About Jackal">__ARTICLE_HTML__</article>
-            </div>
-        </main>
+            </main>
 
-        <footer class="site-footer">
-            <div class="site-footer__inner">
-                <p>Copyright 2026 meatfighter.com</p>
-                <p class="license-line">
-                    <span>This content is licensed under</span>
-                    <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
-                    <span class="license-icons" aria-hidden="true">
-                        <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" width="24" height="24" loading="lazy" />
-                        <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" width="24" height="24" loading="lazy" />
-                        <img src="https://mirrors.creativecommons.org/presskit/icons/sa.svg" alt="" width="24" height="24" loading="lazy" />
-                    </span>
-                </p>
-                <nav class="footer-links" aria-label="Footer links">
-                    <a href="__REPO_URL__">Source</a>
-                    <a href="https://meatfighter.com/">meatfighter.com</a>
-                </nav>
-            </div>
-        </footer>
+            <footer class="site-footer">
+                <div class="site-footer__inner">
+                    <div class="site-footer__left">
+                        <p>&copy; 2026 meatfighter.com</p>
+                        <p>
+                            This content is licensed under
+                            <a class="license-link" href="https://creativecommons.org/licenses/by-sa/4.0/?ref=chooser-v1" rel="license">CC BY-SA 4.0</a>
+                        </p>
+                    </div>
+                </div>
+            </footer>
+        </div>
 
         <script src="./theme.js?v=__BUILD_STAMP_ENCODED__"></script>
     </body>

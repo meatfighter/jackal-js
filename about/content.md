@@ -6,8 +6,6 @@ Press the **Play** button below to launch an enhanced-graphics desktop browser p
 
 [Play](__PWA_URL__)
 
-![Screenshot of Jackal gameplay](__SCREENSHOT_IMAGE__)
-
 # Controls
 
 _Jackal_ supports both keyboard and gamepad input. The default controls are:

@@ -33,8 +33,7 @@ await withReleaseOperationLock(() => {
         {
             __DESKTOP_ZIP__: `downloads/jackal-desktop.zip?v=${encodedBuildStamp}`,
             __PWA_URL__: `pwa/?v=${encodedBuildStamp}`,
-            __REPO_URL__: repoUrl,
-            __SCREENSHOT_IMAGE__: `assets/jackal-screenshot.png?v=${encodedBuildStamp}`
+            __REPO_URL__: repoUrl
         },
         "about Markdown content"
     );
@@ -48,8 +47,7 @@ await withReleaseOperationLock(() => {
         __DESCRIPTION__: description,
         __REPO_URL__: repoUrl,
         __SOCIAL_IMAGE_URL__: `${canonicalUrl}assets/jackal-screenshot.png`,
-        __TITLE_IMAGE__: `assets/title.png?v=${encodedBuildStamp}`,
-        __TOC_HTML__: renderedMarkdown.tocHtml
+        __TITLE_IMAGE__: `assets/title.png?v=${encodedBuildStamp}`
     };
 
     const indexPath = assertComponentReleaseOutputPath("about index output file", join(outputDir, "index.html"));

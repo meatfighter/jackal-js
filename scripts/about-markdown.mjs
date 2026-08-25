@@ -1,5 +1,5 @@
 const siteOrigin = "https://meatfighter.com";
-const copyIconSvg = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"/></svg>`;
+const copyIconSvg = `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>`;
 const stashMarker = "%%ABOUT_HTML_";
 
 function escapeHtml(value) {
@@ -155,7 +155,7 @@ function renderHeading(rawLevel, text, usedSlugs, headings) {
     const plainText = stripInlineMarkdown(text);
     headings.push({ level, text: plainText, slug });
     const label = escapeAttribute(`Copy link to ${plainText}`);
-    return `<h${level} id="${escapeAttribute(slug)}"><a class="heading-anchor" href="#${escapeAttribute(slug)}">${renderInline(text)}</a><button class="heading-copy" type="button" data-copy-url="#${escapeAttribute(slug)}" aria-label="${label}">${copyIconSvg}</button></h${level}>`;
+    return `<h${level} id="${escapeAttribute(slug)}"><a class="heading-link" href="#${escapeAttribute(slug)}">${renderInline(text)}</a><button class="copy-link" type="button" data-copy-url="#${escapeAttribute(slug)}" aria-label="${label}">${copyIconSvg}</button></h${level}>`;
 }
 
 function renderList(items, tagName) {
@@ -211,19 +211,6 @@ function renderCodeBlock(info, lines) {
     const languageClass = language.length > 0 ? ` class="language-${escapeAttribute(language)}"` : "";
     const label = language.length > 0 ? language : "Code";
     return `<div class="code-block"><div class="code-block__header"><span>${escapeHtml(label)}</span><button class="copy-code" type="button" data-copy-code="" aria-label="Copy code">${copyIconSvg}</button></div><pre><code${languageClass}>${escapeHtml(lines.join("\n"))}</code></pre></div>`;
-}
-
-function renderToc(headings) {
-    const visibleHeadings = headings.filter((heading) => heading.level <= 3);
-    if (visibleHeadings.length === 0) {
-        return "";
-    }
-
-    const items = visibleHeadings
-        .map((heading) => `<li class="toc-level-${heading.level}"><a href="#${escapeAttribute(heading.slug)}">${escapeHtml(heading.text)}</a></li>`)
-        .join("");
-
-    return `<nav class="table-of-contents" aria-label="Contents"><h2>Contents</h2><ol>${items}</ol></nav>`;
 }
 
 export function renderAboutMarkdown(markdown) {
@@ -325,7 +312,6 @@ export function renderAboutMarkdown(markdown) {
 
     return {
         articleHtml: html.join("\n"),
-        headings,
-        tocHtml: renderToc(headings)
+        headings
     };
 }

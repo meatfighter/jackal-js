@@ -24,7 +24,6 @@ function renderedAboutFixture() {
     return renderAboutMarkdown(
         contentMarkdown
             .replaceAll("__PWA_URL__", "pwa/?v=test-build")
-            .replaceAll("__SCREENSHOT_IMAGE__", "assets/jackal-screenshot.png?v=test-build")
             .replaceAll("__REPO_URL__", "https://github.com/meatfighter/jackal-js")
             .replaceAll("__DESKTOP_ZIP__", "downloads/jackal-desktop.zip?v=test-build")
     );
@@ -32,9 +31,9 @@ function renderedAboutFixture() {
 
 test("about Markdown content is the user-facing source of truth", () => {
     assert.match(contentMarkdown, /\[Play\]\(__PWA_URL__\)/);
-    assert.match(contentMarkdown, /!\[Screenshot of Jackal gameplay\]\(__SCREENSHOT_IMAGE__\)/);
     assert.match(contentMarkdown, /\[meatfighter\/jackal-js repository\]\(__REPO_URL__\)/);
     assert.ok(contentMarkdown.includes(desktopZipProse));
+    assert.doesNotMatch(contentMarkdown, /!\[Screenshot of Jackal gameplay\]/);
     assert.doesNotMatch(contentMarkdown, /\*\*\[here\]\*\*/);
     assert.doesNotMatch(contentMarkdown, /\bTODO\b/i);
     assert.doesNotMatch(contentMarkdown, /executable JAR/i);
@@ -43,15 +42,14 @@ test("about Markdown content is the user-facing source of truth", () => {
 test("about Markdown renderer creates the expected article features", () => {
     const rendered = renderedAboutFixture();
 
-    assert.match(rendered.tocHtml, /<nav class="table-of-contents" aria-label="Contents">/);
-    assert.match(rendered.tocHtml, /href="#controls"/);
     assert.match(rendered.articleHtml, /<h2 id="controls">/);
-    assert.match(rendered.articleHtml, /data-copy-url="#controls"/);
+    assert.match(rendered.articleHtml, /<a class="heading-link" href="#controls">Controls<\/a>/);
+    assert.match(rendered.articleHtml, /<button class="copy-link" type="button" data-copy-url="#controls"/);
     assert.match(rendered.articleHtml, /class="play-button" href="pwa\/\?v=test-build"/);
-    assert.match(rendered.articleHtml, /class="article-figure"><img src="assets\/jackal-screenshot\.png\?v=test-build"/);
     assert.match(rendered.articleHtml, /<div class="table-wrap"><table>/);
     assert.match(rendered.articleHtml, /href="https:\/\/github\.com\/meatfighter\/jackal-js"/);
     assert.doesNotMatch(rendered.articleHtml, /target="_blank"/);
+    assert.doesNotMatch(rendered.articleHtml, /jackal-screenshot\.png/);
     assert.doesNotMatch(rendered.articleHtml, /<h1\b/);
     assert.ok(rendered.headings.some((heading) => heading.slug === "hard-mode" && heading.level === 2));
 });
@@ -61,11 +59,17 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /<meta property="og:image" content="__SOCIAL_IMAGE_URL__" \/>/);
     assert.match(indexTemplate, /<meta name="twitter:card" content="summary_large_image" \/>/);
     assert.match(indexTemplate, /src=".\/__TITLE_IMAGE__"/);
-    assert.match(indexTemplate, /__TOC_HTML__/);
     assert.match(indexTemplate, /__ARTICLE_HTML__/);
-    assert.match(indexTemplate, /CC BY-SA 4\.0/);
+    assert.match(indexTemplate, /https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\?ref=chooser-v1/);
+    assert.doesNotMatch(indexTemplate, /__TOC_HTML__/);
+    assert.doesNotMatch(indexTemplate, /license-icons/);
     assert.match(indexTemplate, /<script src=".\/theme\.js\?v=__BUILD_STAMP_ENCODED__"><\/script>/);
     assert.match(styles, /\.play-button/);
+    assert.match(styles, /min-width: 192px;/);
+    assert.match(styles, /min-height: 48px;/);
+    assert.match(styles, /border-radius: 30px;/);
+    assert.match(styles, /background: var\(--title-jeep-green\);/);
+    assert.doesNotMatch(styles, /table-of-contents/);
     assert.match(themeScript, /jackal-about-theme/);
 });
 
