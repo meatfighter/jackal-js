@@ -4,7 +4,9 @@ _Jackal_ is an overhead run-and-gun game originally released in 1988 by Konami f
 
 Press the **Play** button below to launch an enhanced-graphics desktop browser port of _Jackal_.
 
-**[Play]**
+[Play](__PWA_URL__)
+
+![Screenshot of Jackal gameplay](__SCREENSHOT_IMAGE__)
 
 # Controls
 
@@ -87,11 +89,15 @@ If you can survive Hard Mode, you'll be rewarded with an extended ending sequenc
 
 This port is a reimplementation, not an emulation. It does not run or include the original NES ROM.
 
-The source code for the project is available **[here]**.
+The source code for the project is available in the [meatfighter/jackal-js repository](__REPO_URL__).
 
-The Java desktop version is available as an executable JAR file **[here]**. Run as:
+The Java desktop version is available as a [desktop ZIP](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
 
-java -jar ...TODO...
+- Windows: `run-windows.cmd`
+- Linux: `run-linux.sh`
+- macOS: `run-macos.sh`
+
+Java 21 or newer is required.
 
 # Acknowledgements
 

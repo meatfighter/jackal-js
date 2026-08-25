@@ -150,7 +150,7 @@ The root about page links to:
 
 - the browser game under `pwa/`;
 - the stable desktop ZIP;
-- the exact source commit associated with the release.
+- the stable public GitHub repository for the project.
 
 The stable and versioned desktop ZIPs are verified to be byte-for-byte identical.
 
@@ -247,17 +247,17 @@ Generated directories are disposable only when no recovery workflow needs them. 
 
 `about/` contains the source deployed at the release root.
 
-Typical source consists of `index.html`, `styles.css`, and optional assets.
+The page body lives in `about/content.md`. `scripts/about-markdown.mjs` converts that constrained Markdown into HTML, then `scripts/build-about.mjs` injects it into the static `about/index.html` shell with `about/styles.css`, `about/theme.js`, and assets from `about/assets/`.
 
-`scripts/build-about.mjs` stamps the template with release-derived values such as:
+`scripts/build-about.mjs` stamps the Markdown and template with release-derived values such as:
 
 - application version;
 - build stamp;
 - versioned PWA URL;
-- desktop download URL;
-- exact source-code URL for the release commit.
+- desktop ZIP download URL;
+- screenshot/title image URLs.
 
-Do not hard-code a release commit or generated cache-busting/download query into the template. Those values belong to the release process.
+The public Source link intentionally points at the stable `https://github.com/meatfighter/jackal-js` repository. Exact build provenance belongs to `release.json`, not to a user-facing page link. Do not hard-code generated cache-busting/download query strings into the Markdown or template; those values belong to the release process.
 
 ### `pwa/` — Browser/PWA port
 
@@ -805,7 +805,7 @@ More concretely, the production flow:
 6. generates an effective build stamp without dirtying tracked source;
 7. builds the PWA candidate;
 8. verifies PWA resource completeness and relocatability;
-9. builds the project/about page with exact source URL;
+9. builds the project/about page from Markdown content;
 10. builds the desktop JAR/ZIP;
 11. verifies/copies desktop downloads into the candidate;
 12. writes `release.json`;
@@ -854,7 +854,7 @@ A normal clean release records:
 - exact source URL;
 - clean/dirty provenance as appropriate.
 
-The generated About-page Source Code link uses the same exact source URL.
+The generated About-page Source link intentionally points at the stable public repository URL. The exact source URL remains in `release.json`.
 
 ### Source cannot change mid-build
 
@@ -1294,7 +1294,7 @@ Inspect `dist/release.json` and confirm:
 - `sourceCommit` is the intended release commit;
 - `sourceUrl` opens that exact commit;
 - dirty provenance is not present for a normal clean release;
-- the About-page Source Code link points at the same commit.
+- the About-page Source link points at the stable public repository URL.
 
 Deploy `dist/` only after those checks pass.
 
