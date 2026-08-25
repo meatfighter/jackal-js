@@ -18,7 +18,7 @@ _Jackal_ supports both keyboard and gamepad input. The default controls are:
 | Right             | Right Arrow | D-pad Right |
 | Grenade / Missile | X           | A           |
 | Gun               | Z           | X           |
-| Start / Pause     | Enter       | MENU        |
+| Start / Pause     | Enter       | Menu        |
 
 You can change the button mapping by selecting **Options → Input** from the in-game menu.
 
@@ -51,8 +51,6 @@ Selecting **Options** opens another menu with:
 - **Difficulty** — Choose between **Normal** and **Hard**.
 - **Done** — Return to the previous menu.
 
-_Jackal_ does not provide touchscreen controls.
-
 ## History
 
 I originally ported _Jackal_ to Java in 2013 using the [Slick2D](https://slick.ninjacave.com/wiki/index.php?title=Getting_Started) and [JInput](https://jinput.github.io/jinput/) libraries. I studied _Jackal_ in the [FCEUX](https://fceux.com/) NES emulator and recreated its stages and mechanics through observation.
@@ -63,11 +61,11 @@ In 2026, I rewrote the port in TypeScript and adapted it to modern web browsers.
 
 # Differences
 
-I applied a pixel-art upscaling algorithm to the graphics and then manually enhanced them further, adding detail not present in the low-rez NES artwork.
+I applied a pixel-art upscaling algorithm to the graphics. Then I manually enhanced them, adding detail not present in the low-rez NES artwork.
 
 I gave the player's jeep, enemy vehicles, aircraft, gun turrets, and bombs smooth rotational movement. Modern browsers can readily apply affine transformations to images, while the NES had to represent changing directions with a limited number of separately drawn sprites. I used those sprites as key frames and interpolated the orientations between them. I even blurred the spinning blades of helicopters.
 
-I used similar graphical transformations for other effects. Explosions billow and scale as they expand, while flames use semitransparency. I added more elaborate fire effects when the player attacks a boss. Aircraft cast semitransparent shadows on the ground. When the rescue helicopter takes off, its shadow scales and falls away as the helicopter gains altitude.
+I used similar graphical transformations for other effects. Explosions billow and scale as they expand, while flames use semitransparency. Bosses erupt in more elaborate fire effects when attacked. Aircraft cast semitransparent shadows on the ground. When the rescue helicopter takes off, its shadow scales and falls away as the helicopter gains altitude. The same effect is used for the Chinook that drops off the player's jeep in the prologue.
 
 I also introduced many subtle graphical details. Gunboat turrets rotate as they aim. The doors covering underground guns slide smoothly open before the guns rotate and target the player. The bodies of defeated enemy soldiers gradually fade away.
 
@@ -83,20 +81,22 @@ After completing the NES version of _Jackal_, the game starts again from the fir
 
 My version features a separate **Hard Mode** that can be selected directly from the in-game menu. It uses the same six maps as the original game, but I substantially increased the number of enemies and made the stages much more intense. It is intended to feel like a genuinely different challenge rather than a lightly modified replay of the game.
 
-If you can survive Hard Mode, you'll be rewarded with an extended ending sequence.
+If you can survive Hard Mode, you'll be rewarded with an extended ending sequence. If you need help in either mode, try entering the [Konami Code](https://en.wikipedia.org/wiki/Konami_Code) on the title screen.
 
 # Resources
 
 This port is a reimplementation, not an emulation. It does not run or include the original NES ROM.
 
-The source code for the browser version is available **[here]**.
+The source code for the project is available **[here]**.
 
-The original Java desktop version is also available as an executable JAR file **[here]**.
+The Java desktop version is available as an executable JAR file **[here]**. Run as:
+
+java -jar ...TODO...
 
 # Acknowledgements
 
-Konami developed and published _Jackal_ for the NES. The original game was programmed by **H. Hori** and **H. Yanagisawa**. **M. Fujiwara**, **Yoichi Yoshimoto**, and **Junko Maruo** were credited with character design, while **Kenji Shimoide**, **Naoki Satō**, and **Tomo Yamamoto** were credited with visual design. The music was composed by **Shinya Sakamoto** and **Atsushi Fujio**. This port would not exist without their brilliant work.
+Konami developed and published *Jackal* for the NES. It credits **H. Hori** and **H. Yanagisawa** with programming; **M. Fujiwara**, **Yoichi Yoshimoto**, and **Junko Maruo** with character design; **Kenji Shimoide**, **Naoki Satō**, and **Tomo Yamamoto** with visual design; and **Shinya Sakamoto** and **Atsushi Fujio** with music. This port would not exist without their brilliant work.
 
-This project is an unofficial recreation and a tribute to the original game, undertaken as a programming project. It is not affiliated with, sponsored by, or endorsed by Konami or Nintendo. The original game, graphics, music, sound effects, and other content remain the property of their respective rights holders.
+This project is an unofficial recreation of and tribute to the original game, developed as a hobby programming project. It is not affiliated with, sponsored by, or endorsed by Konami or Nintendo. The original game, graphics, music, sound effects, and other content remain the property of their respective rights holders.
 
-I provide this port free of charge. The game contains no advertising and generates no revenue.
+I provide this port free of charge. It contains no advertising and generates no revenue.
