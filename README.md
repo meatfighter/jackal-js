@@ -112,19 +112,19 @@ The key distinction is that **development/component output is not canonical depl
 
 ### Source-of-truth quick reference
 
-| Concern | Source of truth | Generated/derived output |
-| --- | --- | --- |
-| Gameplay behavior | `pwa/src/jackal/`, compared with `desktop/src/jackal/` | bundled PWA JavaScript |
-| Browser lifecycle/UI/storage | `pwa/src/app/` | bundled PWA JavaScript |
-| Small Java semantic helpers | `pwa/src/java/` | bundled PWA JavaScript |
-| Save/continue format | `pwa/src/jackal/persistence/` | browser save state |
-| Static PWA/offline behavior | `pwa/public/`, `pwa/vite.config.ts` | generated PWA release |
-| Public project page | `about/` | root of assembled release |
-| Desktop Java source | `desktop/src/` | `desktop/target/` and desktop ZIP |
-| Desktop runtime contract | `desktop/RUNTIME_DEPENDENCIES.md`, `desktop/lib/`, `desktop/natives/` in the full repo | packaged runtime files |
-| Release version | `version.json` | generated build identity/release filenames |
-| Production release logic | `scripts/` | `.release-work/` candidate then `dist/` |
-| Release integrity/provenance | release scripts + Git state | `dist/release.json` |
+| Concern                      | Source of truth                                                                        | Generated/derived output                   |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Gameplay behavior            | `pwa/src/jackal/`, compared with `desktop/src/jackal/`                                 | bundled PWA JavaScript                     |
+| Browser lifecycle/UI/storage | `pwa/src/app/`                                                                         | bundled PWA JavaScript                     |
+| Small Java semantic helpers  | `pwa/src/java/`                                                                        | bundled PWA JavaScript                     |
+| Save/continue format         | `pwa/src/jackal/persistence/`                                                          | browser save state                         |
+| Static PWA/offline behavior  | `pwa/public/`, `pwa/vite.config.ts`                                                    | generated PWA release                      |
+| Public project page          | `about/`                                                                               | root of assembled release                  |
+| Desktop Java source          | `desktop/src/`                                                                         | `desktop/target/` and desktop ZIP          |
+| Desktop runtime contract     | `desktop/RUNTIME_DEPENDENCIES.md`, `desktop/lib/`, `desktop/natives/` in the full repo | packaged runtime files                     |
+| Release version              | `version.json`                                                                         | generated build identity/release filenames |
+| Production release logic     | `scripts/`                                                                             | `.release-work/` candidate then `dist/`    |
+| Release integrity/provenance | release scripts + Git state                                                            | `dist/release.json`                        |
 
 If generated output disagrees with source, fix source and rebuild. Never patch `dist/`, `.release-work/`, `.release-components/`, or `desktop/target/` to make a release appear correct.
 
@@ -206,36 +206,36 @@ Production provenance depends on Git. The normal production build requires a cle
 
 ### Source and configuration
 
-| Path | Purpose |
-| --- | --- |
-| `about/` | Source template/assets for the public project page. |
-| `pwa/` | TypeScript browser/PWA implementation. |
-| `pwa/src/app/` | Browser shell, lifecycle, input/settings persistence, resource inventory, service-worker integration. |
-| `pwa/src/jackal/` | Java-shaped gameplay port. |
-| `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store. |
-| `pwa/src/java/` | Small compatibility helpers used to preserve selected Java semantics. |
-| `pwa/public/` | Manifest, service-worker source, notices, icons, and game resources. |
-| `desktop/` | Preserved Java implementation plus desktop packaging/runtime material. |
-| `scripts/` | Build, verification, versioning, source-provenance, path-safety, locking, ZIP, promotion, and recovery tooling. |
-| `version.json` | Tracked application version/build-stamp source. |
-| `package.json` | Root command surface and JavaScript dependencies. |
-| `package-lock.json` | Reproducible JavaScript dependency resolution. |
-| `THIRD_PARTY_NOTICES.md` | Root dependency/license notices. |
-| `LICENSE` | Project license. |
+| Path                          | Purpose                                                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `about/`                      | Source template/assets for the public project page.                                                             |
+| `pwa/`                        | TypeScript browser/PWA implementation.                                                                          |
+| `pwa/src/app/`                | Browser shell, lifecycle, input/settings persistence, resource inventory, service-worker integration.           |
+| `pwa/src/jackal/`             | Java-shaped gameplay port.                                                                                      |
+| `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store.                             |
+| `pwa/src/java/`               | Small compatibility helpers used to preserve selected Java semantics.                                           |
+| `pwa/public/`                 | Manifest, service-worker source, notices, icons, and game resources.                                            |
+| `desktop/`                    | Preserved Java implementation plus desktop packaging/runtime material.                                          |
+| `scripts/`                    | Build, verification, versioning, source-provenance, path-safety, locking, ZIP, promotion, and recovery tooling. |
+| `version.json`                | Tracked application version/build-stamp source.                                                                 |
+| `package.json`                | Root command surface and JavaScript dependencies.                                                               |
+| `package-lock.json`           | Reproducible JavaScript dependency resolution.                                                                  |
+| `THIRD_PARTY_NOTICES.md`      | Root dependency/license notices.                                                                                |
+| `LICENSE`                     | Project license.                                                                                                |
 
 ### Generated and local state
 
-| Path | Purpose | Commit? |
-| --- | --- | --- |
-| `node_modules/` | Installed JavaScript dependencies. | No |
-| `desktop/target/` | Java compile/package output. | No |
-| `dist/` | **Canonical promoted production release.** | No |
-| `.release-components/` | Noncanonical PWA/web component output. | No |
-| `.release-work/` | Full-release candidate and promotion/recovery workspace. | No |
-| `.release-candidates/` | Persistent generated release coordination state. | No |
-| `.release-secrets/` | Reserved ignored/private release work area. | No |
-| `.release-operation.lock*` | Generated release lock/recovery state. | No |
-| `releases/` | Local staging for verified standalone desktop ZIPs. | No |
+| Path                       | Purpose                                                  | Commit? |
+| -------------------------- | -------------------------------------------------------- | ------- |
+| `node_modules/`            | Installed JavaScript dependencies.                       | No      |
+| `desktop/target/`          | Java compile/package output.                             | No      |
+| `dist/`                    | **Canonical promoted production release.**               | No      |
+| `.release-components/`     | Noncanonical PWA/web component output.                   | No      |
+| `.release-work/`           | Full-release candidate and promotion/recovery workspace. | No      |
+| `.release-candidates/`     | Persistent generated release coordination state.         | No      |
+| `.release-secrets/`        | Reserved ignored/private release work area.              | No      |
+| `.release-operation.lock*` | Generated release lock/recovery state.                   | No      |
+| `releases/`                | Local staging for verified standalone desktop ZIPs.      | No      |
 
 Generated directories are disposable only when no recovery workflow needs them. If an interrupted release left a journal/backup/candidate, run the recovery-aware release command before deleting state manually.
 
@@ -388,18 +388,18 @@ Only advertise an OS/JVM combination after launching the **actual generated ZIP*
 
 The root scripts are grouped by responsibility.
 
-| Area | Representative scripts | Responsibility |
-| --- | --- | --- |
-| Build orchestration | `build-pwa-release.mjs`, `build-web-release.mjs`, `build-about.mjs`, `build-desktop.mjs`, `assemble.mjs`, `build-release.mjs` | Create component and full candidates. |
-| Release verification | `verify-pwa-precache.mjs`, `verify-desktop-zip.mjs`, `verify-release-candidate.mjs` | Validate PWA relocation/precache, desktop ZIP, and full release. |
-| Manifest/integrity | `release-manifest.mjs`, `write-release-manifest.mjs` | Inventory release files, sizes, and SHA-256 values. |
-| Source provenance | `source-state-utils.mjs` | Capture clean source commit/URL and tracked-source hashes. |
-| Version/build stamps | `version-stamp-utils.mjs`, `stamp-build.mjs` | Manage tracked/manual and transient build identities. |
-| Release locking | `release-lock-utils.mjs` | Reentrant owner/holder lock and stale recovery. |
-| Atomic promotion | `release-atomic-utils.mjs`, `atomic-file-utils.mjs` | Crash-safe candidate promotion and atomic control-file writes. |
-| Path/filesystem safety | `build-utils.mjs` | Canonical paths, generated-output policies, link/path validation. |
-| ZIP/process helpers | `zip-utils.mjs`, `run-utils.mjs` | Packaging/inspection and consistent child-process execution. |
-| Tests | `test-*.mjs` | Exercise persistent state, PWA scoping, provenance, lock/recovery, and release hardening. |
+| Area                   | Representative scripts                                                                                                        | Responsibility                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Build orchestration    | `build-pwa-release.mjs`, `build-web-release.mjs`, `build-about.mjs`, `build-desktop.mjs`, `assemble.mjs`, `build-release.mjs` | Create component and full candidates.                                                     |
+| Release verification   | `verify-pwa-precache.mjs`, `verify-desktop-zip.mjs`, `verify-release-candidate.mjs`                                           | Validate PWA relocation/precache, desktop ZIP, and full release.                          |
+| Manifest/integrity     | `release-manifest.mjs`, `write-release-manifest.mjs`                                                                          | Inventory release files, sizes, and SHA-256 values.                                       |
+| Source provenance      | `source-state-utils.mjs`                                                                                                      | Capture clean source commit/URL and tracked-source hashes.                                |
+| Version/build stamps   | `version-stamp-utils.mjs`, `stamp-build.mjs`                                                                                  | Manage tracked/manual and transient build identities.                                     |
+| Release locking        | `release-lock-utils.mjs`                                                                                                      | Reentrant owner/holder lock and stale recovery.                                           |
+| Atomic promotion       | `release-atomic-utils.mjs`, `atomic-file-utils.mjs`                                                                           | Crash-safe candidate promotion and atomic control-file writes.                            |
+| Path/filesystem safety | `build-utils.mjs`                                                                                                             | Canonical paths, generated-output policies, link/path validation.                         |
+| ZIP/process helpers    | `zip-utils.mjs`, `run-utils.mjs`                                                                                              | Packaging/inspection and consistent child-process execution.                              |
+| Tests                  | `test-*.mjs`                                                                                                                  | Exercise persistent state, PWA scoping, provenance, lock/recovery, and release hardening. |
 
 When changing release infrastructure, add tests for the failure mode. A happy-path build does not exercise crashes, races, stale locks, dirty source, or malicious/accidental path layouts.
 
@@ -744,18 +744,18 @@ Do not replace it with ad-hoc component builds and manual copies into `dist/`.
 
 ### Build-command quick reference
 
-| Goal | Command | Output |
-| --- | --- | --- |
-| Develop browser game | `npm run dev` | Vite dev server |
-| Run normal source gate | `npm run verify` | checks only |
-| Build PWA component | `npm run build:pwa` | `.release-components/pwa/` |
-| Build about + PWA component | `npm run build:web` | `.release-components/web/` |
-| Build desktop package | `npm run build:desktop` | `desktop/target/` |
-| Verify desktop ZIP | `npm run verify:desktop` | validation only |
-| Stage standalone desktop ZIP | `npm run release:desktop` | `releases/` |
-| **Build canonical production release** | **`npm run build`** | **`dist/`** |
-| Verify promoted release | `npm run verify:release` | validation only |
-| Verify PWA precache/relocation | `npm run verify:pwa-precache` | validation only |
+| Goal                                   | Command                       | Output                     |
+| -------------------------------------- | ----------------------------- | -------------------------- |
+| Develop browser game                   | `npm run dev`                 | Vite dev server            |
+| Run normal source gate                 | `npm run verify`              | checks only                |
+| Build PWA component                    | `npm run build:pwa`           | `.release-components/pwa/` |
+| Build about + PWA component            | `npm run build:web`           | `.release-components/web/` |
+| Build desktop package                  | `npm run build:desktop`       | `desktop/target/`          |
+| Verify desktop ZIP                     | `npm run verify:desktop`      | validation only            |
+| Stage standalone desktop ZIP           | `npm run release:desktop`     | `releases/`                |
+| **Build canonical production release** | **`npm run build`**           | **`dist/`**                |
+| Verify promoted release                | `npm run verify:release`      | validation only            |
+| Verify PWA precache/relocation         | `npm run verify:pwa-precache` | validation only            |
 
 ---
 
@@ -1178,62 +1178,62 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 
 ## Useful Commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start local PWA development server. |
-| `npm run clean` | Remove/recreate managed canonical `dist/` output. |
-| `npm test` | Run Node test suite. |
-| `npm run format` | Apply Prettier. |
-| `npm run format:check` | Check formatting. |
-| `npm run lint` | Run ESLint. |
-| `npm run typecheck` | Run TypeScript compiler without emitting. |
-| `npm run check:ts-nocheck` | Enforce unchecked-TypeScript budget. |
-| `npm run verify` | Run the normal source-quality gate. |
-| `npm run build:pwa` | Build/verify PWA component output. |
-| `npm run build:web` | Build verified about + PWA component output. |
-| `npm run build:about` | Build the about-page component. |
-| `npm run build:desktop` | Build desktop JAR/ZIP. |
-| `npm run verify:desktop` | Verify generated desktop ZIP. |
-| `npm run release:desktop` | Stage a verified standalone desktop ZIP. |
-| `npm run run:desktop` | Run desktop Java build. |
-| **`npm run build`** | **Build, verify, and promote full production release to `dist/`.** |
-| `npm run verify:release` | Verify promoted release manifest/artifacts. |
-| `npm run verify:pwa-precache` | Verify PWA precache/relocation behavior. |
-| `npm run preview:pwa` | Preview PWA build configuration. |
-| `npm run preview:dist` | Serve promoted `dist/` locally. |
-| `npm run stamp` | Intentionally update tracked `version.json` build stamp. |
+| Command                       | Purpose                                                            |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `npm run dev`                 | Start local PWA development server.                                |
+| `npm run clean`               | Remove/recreate managed canonical `dist/` output.                  |
+| `npm test`                    | Run Node test suite.                                               |
+| `npm run format`              | Apply Prettier.                                                    |
+| `npm run format:check`        | Check formatting.                                                  |
+| `npm run lint`                | Run ESLint.                                                        |
+| `npm run typecheck`           | Run TypeScript compiler without emitting.                          |
+| `npm run check:ts-nocheck`    | Enforce unchecked-TypeScript budget.                               |
+| `npm run verify`              | Run the normal source-quality gate.                                |
+| `npm run build:pwa`           | Build/verify PWA component output.                                 |
+| `npm run build:web`           | Build verified about + PWA component output.                       |
+| `npm run build:about`         | Build the about-page component.                                    |
+| `npm run build:desktop`       | Build desktop JAR/ZIP.                                             |
+| `npm run verify:desktop`      | Verify generated desktop ZIP.                                      |
+| `npm run release:desktop`     | Stage a verified standalone desktop ZIP.                           |
+| `npm run run:desktop`         | Run desktop Java build.                                            |
+| **`npm run build`**           | **Build, verify, and promote full production release to `dist/`.** |
+| `npm run verify:release`      | Verify promoted release manifest/artifacts.                        |
+| `npm run verify:pwa-precache` | Verify PWA precache/relocation behavior.                           |
+| `npm run preview:pwa`         | Preview PWA build configuration.                                   |
+| `npm run preview:dist`        | Serve promoted `dist/` locally.                                    |
+| `npm run stamp`               | Intentionally update tracked `version.json` build stamp.           |
 
 ---
 
 ## Where Do I Make This Change?
 
-| Goal | Start here |
-| --- | --- |
-| Player/enemy/game mechanics | `pwa/src/jackal/`, compare `desktop/src/jackal/` |
-| Browser menu/game shell | `pwa/src/app/JackalWebApp.ts` |
-| Keyboard/gamepad mapping persistence | `pwa/src/app/JackalInputMappingStore.ts` |
-| Save/continue serialization | `pwa/src/jackal/persistence/` |
-| Stable saved-entity IDs | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts` |
-| Deployment-specific local storage | `pwa/src/app/DeploymentStorageKeys.ts` |
-| Service-worker registration | `pwa/src/app/ServiceWorkerRegistrar.ts` |
-| Offline/cache strategy | `pwa/public/sw.js` |
-| PWA build/precache generation | `pwa/vite.config.ts` |
-| Game preload resource inventory | `pwa/src/app/ResourceManifest.ts` |
-| Java compatibility helpers | `pwa/src/java/` |
-| Public project/about page | `about/`, `scripts/build-about.mjs` |
-| Desktop Java behavior | `desktop/src/jackal/` |
-| Desktop runtime dependencies | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/` |
-| Desktop packaging | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs` |
-| Full release orchestration | `scripts/build-release.mjs` |
-| Release manifest | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs` |
-| Source provenance | `scripts/source-state-utils.mjs` |
-| Release locking | `scripts/release-lock-utils.mjs` |
-| Atomic promotion/recovery | `scripts/release-atomic-utils.mjs` |
-| Atomic control-file writes | `scripts/atomic-file-utils.mjs` |
-| Output/path safety | `scripts/build-utils.mjs` |
-| Version/build stamps | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs` |
-| `@ts-nocheck` policy | `scripts/check-ts-nocheck-budget.mjs` |
-| Third-party notices/source | root/PWA notices plus desktop license/source material |
+| Goal                                 | Start here                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| Player/enemy/game mechanics          | `pwa/src/jackal/`, compare `desktop/src/jackal/`                                |
+| Browser menu/game shell              | `pwa/src/app/JackalWebApp.ts`                                                   |
+| Keyboard/gamepad mapping persistence | `pwa/src/app/JackalInputMappingStore.ts`                                        |
+| Save/continue serialization          | `pwa/src/jackal/persistence/`                                                   |
+| Stable saved-entity IDs              | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts`                         |
+| Deployment-specific local storage    | `pwa/src/app/DeploymentStorageKeys.ts`                                          |
+| Service-worker registration          | `pwa/src/app/ServiceWorkerRegistrar.ts`                                         |
+| Offline/cache strategy               | `pwa/public/sw.js`                                                              |
+| PWA build/precache generation        | `pwa/vite.config.ts`                                                            |
+| Game preload resource inventory      | `pwa/src/app/ResourceManifest.ts`                                               |
+| Java compatibility helpers           | `pwa/src/java/`                                                                 |
+| Public project/about page            | `about/`, `scripts/build-about.mjs`                                             |
+| Desktop Java behavior                | `desktop/src/jackal/`                                                           |
+| Desktop runtime dependencies         | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/` |
+| Desktop packaging                    | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs`                   |
+| Full release orchestration           | `scripts/build-release.mjs`                                                     |
+| Release manifest                     | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs`            |
+| Source provenance                    | `scripts/source-state-utils.mjs`                                                |
+| Release locking                      | `scripts/release-lock-utils.mjs`                                                |
+| Atomic promotion/recovery            | `scripts/release-atomic-utils.mjs`                                              |
+| Atomic control-file writes           | `scripts/atomic-file-utils.mjs`                                                 |
+| Output/path safety                   | `scripts/build-utils.mjs`                                                       |
+| Version/build stamps                 | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`    |
+| `@ts-nocheck` policy                 | `scripts/check-ts-nocheck-budget.mjs`                                           |
+| Third-party notices/source           | root/PWA notices plus desktop license/source material                           |
 
 ---
 
