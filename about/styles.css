@@ -23,8 +23,8 @@
     --muted: #4f5b68;
     --border: #d7dce3;
     --border-strong: #9aa8ba;
-    --link: #0b3b6a;
-    --link-hover: #0969da;
+    --link: #0078d4;
+    --link-hover: #006dc1;
     --code-bg: #eef2f6;
     --inline-code-bg: #e7f0fa;
     --inline-code-text: #161b22;
@@ -524,7 +524,7 @@ button {
     gap: 1rem;
     padding: 0.9rem 0 2rem;
     border-top: 1px solid var(--border);
-    color: var(--muted);
+    color: var(--text);
     font-family: var(--font-ui);
     font-size: 0.95rem;
     line-height: 1.6;

@@ -79,6 +79,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /width: 18px;/);
     assert.match(styles, /\.site-footer \{\s+margin-top: auto;\s+background: transparent;\s+\}/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*border-top: 1px solid var\(--border\);/);
+    assert.match(styles, /\.site-footer__inner \{[\s\S]*color: var\(--text\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*font-size: 0\.95rem;\s+line-height: 1\.6;/);
     assert.match(styles, /\.site-footer__links \{[\s\S]*font-size: 0\.95rem;\s+font-weight: 600;\s+line-height: 1\.6;/);
     assert.match(indexTemplate, /<script src=".\/theme\.js\?v=__BUILD_STAMP_ENCODED__"><\/script>/);
@@ -92,8 +93,8 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /--font-body: "Source Sans 3", "Segoe UI"/);
     assert.match(styles, /--bg: #f7f8fa;/);
     assert.match(styles, /--bg: #111419;/);
-    assert.match(styles, /--link: #0b3b6a;/);
-    assert.match(styles, /--link-hover: #0969da;/);
+    assert.match(styles, /--link: #0078d4;/);
+    assert.match(styles, /--link-hover: #006dc1;/);
     assert.match(styles, /line-height: 1\.75;/);
     assert.doesNotMatch(styles, /scrollbar-color/);
     assert.doesNotMatch(styles, /::-webkit-scrollbar/);
