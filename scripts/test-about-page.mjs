@@ -94,7 +94,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /--bg: #f7f8fa;/);
     assert.match(styles, /--bg: #111419;/);
     assert.match(styles, /--link: #0078d4;/);
-    assert.match(styles, /--link-hover: #006dc1;/);
+    assert.match(styles, /--link-hover: #004578;/);
     assert.match(styles, /line-height: 1\.75;/);
     assert.doesNotMatch(styles, /scrollbar-color/);
     assert.doesNotMatch(styles, /::-webkit-scrollbar/);
@@ -112,6 +112,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /a \{\s+color: var\(--link\);\s+text-decoration: none;\s+transition: color 0\.18s ease;\s+\}/);
     assert.match(styles, /a:hover,\s+a:focus-visible \{\s+color: var\(--link-hover\);\s+\}/);
     assert.match(styles, /--play-button-bg: var\(--link\);/);
+    assert.match(styles, /--play-button-bg-hover: #006dc1;/);
     assert.match(styles, /--play-button-bg-hover: var\(--link-hover\);/);
     assert.match(styles, /background: var\(--play-button-bg\);/);
     assert.match(styles, /background: var\(--play-button-bg-hover\);/);

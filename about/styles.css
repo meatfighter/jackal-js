@@ -24,7 +24,7 @@
     --border: #d7dce3;
     --border-strong: #9aa8ba;
     --link: #0078d4;
-    --link-hover: #006dc1;
+    --link-hover: #004578;
     --code-bg: #eef2f6;
     --inline-code-bg: #e7f0fa;
     --inline-code-text: #161b22;
@@ -36,7 +36,7 @@
     --title-jeep-green: #18b313;
     --title-shadow-gray: #565656;
     --play-button-bg: var(--link);
-    --play-button-bg-hover: var(--link-hover);
+    --play-button-bg-hover: #006dc1;
     --play-button-text: #ffffff;
     --measure: 750px;
     --font-body: "Source Sans 3", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
