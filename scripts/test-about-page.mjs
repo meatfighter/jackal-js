@@ -92,6 +92,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /--font-body: "Source Sans 3", "Segoe UI"/);
     assert.match(styles, /--bg: #f7f8fa;/);
     assert.match(styles, /--bg: #111419;/);
+    assert.match(styles, /--link: #0b3b6a;/);
     assert.match(styles, /--link-hover: #0969da;/);
     assert.match(styles, /line-height: 1\.75;/);
     assert.doesNotMatch(styles, /scrollbar-color/);
@@ -109,10 +110,8 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /background: var\(--switch-track-checked\);/);
     assert.match(styles, /a \{\s+color: var\(--link\);\s+text-decoration: none;\s+transition: color 0\.18s ease;\s+\}/);
     assert.match(styles, /a:hover,\s+a:focus-visible \{\s+color: var\(--link-hover\);\s+\}/);
-    assert.match(styles, /--play-button-bg: #0e4a84;/);
-    assert.match(styles, /--play-button-bg-hover: #0b3b6a;/);
-    assert.match(styles, /--play-button-bg: #8dc1ff;/);
-    assert.match(styles, /--play-button-bg-hover: #b7d9ff;/);
+    assert.match(styles, /--play-button-bg: var\(--link\);/);
+    assert.match(styles, /--play-button-bg-hover: var\(--link-hover\);/);
     assert.match(styles, /background: var\(--play-button-bg\);/);
     assert.match(styles, /background: var\(--play-button-bg-hover\);/);
     assert.match(styles, /color: var\(--play-button-text\);/);
