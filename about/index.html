@@ -49,7 +49,19 @@
                 <div class="site-header__inner">
                     <h1 class="site-title">
                         <a class="site-logo-link" href="./" aria-label="Jackal">
-                            <img class="site-logo" src="./__TITLE_IMAGE__" alt="Jackal" width="2172" height="724" decoding="async" />
+                            <picture class="site-logo-picture">
+                                <source type="image/webp" srcset="./__TITLE_WEBP_SRCSET__" sizes="__TITLE_IMAGE_SIZES__" />
+                                <img
+                                    class="site-logo"
+                                    src="./__TITLE_PNG_SRC__"
+                                    srcset="./__TITLE_PNG_SRCSET__"
+                                    sizes="__TITLE_IMAGE_SIZES__"
+                                    alt="Jackal"
+                                    width="__TITLE_IMAGE_WIDTH__"
+                                    height="__TITLE_IMAGE_HEIGHT__"
+                                    decoding="async"
+                                />
+                            </picture>
                         </a>
                     </h1>
                     <label class="theme-switch" for="theme-toggle">

@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { generateAboutImageAssets, titleImageHeight, titleImageSizes, titleImageWidth } from "./about-image-assets.mjs";
 import { renderAboutMarkdown } from "./about-markdown.mjs";
 import { rootDir } from "./build-utils.mjs";
+import sharp from "sharp";
 import { test } from "node:test";
 
 const aboutDir = join(rootDir, "about");
@@ -11,6 +13,7 @@ const indexTemplate = readFileSync(join(aboutDir, "index.html"), "utf8");
 const styles = readFileSync(join(aboutDir, "styles.css"), "utf8");
 const themeScript = readFileSync(join(aboutDir, "theme.js"), "utf8");
 const buildAboutSource = readFileSync(new URL("./build-about.mjs", import.meta.url), "utf8");
+const temporaryOutputDir = join(rootDir, ".release-test-about-images");
 
 const desktopZipProse = `The Java desktop version is available as a [desktop ZIP](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
 
@@ -63,7 +66,14 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /href=".\/assets\/fonts\/source-sans-3\/SourceSans3VF-Upright\.ttf\.woff2\?v=__BUILD_STAMP_ENCODED__"/);
     assert.match(indexTemplate, /as="font"/);
     assert.match(indexTemplate, /<title>Jackal<\/title>/);
-    assert.match(indexTemplate, /src=".\/__TITLE_IMAGE__"/);
+    assert.match(indexTemplate, /<picture class="site-logo-picture">/);
+    assert.match(indexTemplate, /type="image\/webp"/);
+    assert.match(indexTemplate, /srcset=".\/__TITLE_WEBP_SRCSET__"/);
+    assert.match(indexTemplate, /src=".\/__TITLE_PNG_SRC__"/);
+    assert.match(indexTemplate, /srcset=".\/__TITLE_PNG_SRCSET__"/);
+    assert.match(indexTemplate, /sizes="__TITLE_IMAGE_SIZES__"/);
+    assert.match(indexTemplate, /width="__TITLE_IMAGE_WIDTH__"/);
+    assert.match(indexTemplate, /height="__TITLE_IMAGE_HEIGHT__"/);
     assert.match(indexTemplate, /__ARTICLE_HTML__/);
     assert.match(indexTemplate, /https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\?ref=chooser-v1/);
     assert.match(indexTemplate, /class="license-wrap"/);
@@ -82,6 +92,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /\.site-footer__inner \{[\s\S]*color: var\(--text\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*font-size: 0\.95rem;\s+line-height: 1\.6;/);
     assert.match(styles, /\.site-footer__links \{[\s\S]*font-size: 0\.95rem;\s+font-weight: 600;\s+line-height: 1\.6;/);
+    assert.match(styles, /@media \(max-width: 720px\) \{[\s\S]*\.site-footer__links \{\s+margin-top: 0\.65rem;\s+text-align: center;\s+\}/);
     assert.match(indexTemplate, /<script src=".\/theme\.js\?v=__BUILD_STAMP_ENCODED__"><\/script>/);
     assert.match(styles, /\.play-button/);
     assert.match(styles, /min-width: 192px;/);
@@ -134,6 +145,9 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
 test("about build uses constrained Markdown and stable public repository link", () => {
     assert.match(buildAboutSource, /content\.md/);
     assert.match(buildAboutSource, /renderAboutMarkdown/);
+    assert.match(buildAboutSource, /generateAboutImageAssets/);
+    assert.match(buildAboutSource, /__TITLE_WEBP_SRCSET__/);
+    assert.match(buildAboutSource, /__TITLE_PNG_SRCSET__/);
     assert.match(buildAboutSource, /https:\/\/github\.com\/meatfighter\/jackal-js/);
     assert.doesNotMatch(buildAboutSource, /releaseSourceUrlEnv/);
     assert.doesNotMatch(buildAboutSource, /__SOURCE_URL__/);
@@ -147,4 +161,29 @@ test("about title and screenshot assets live with the about page source", () => 
     assert.equal(existsSync(join(aboutDir, "assets", "fonts", "source-sans-3", "LICENSE.md")), true);
     assert.equal(existsSync(join(rootDir, "title.png")), false);
     assert.equal(existsSync(join(rootDir, "jackal-screenshot.png")), false);
+});
+
+test("about responsive title images are generated with expected dimensions", async () => {
+    rmSync(temporaryOutputDir, { recursive: true, force: true });
+
+    await generateAboutImageAssets(join(aboutDir, "assets"), temporaryOutputDir);
+
+    assert.equal(titleImageWidth, 750);
+    assert.equal(titleImageHeight, 250);
+    assert.equal(titleImageSizes, "min(750px, calc(100vw - 2rem))");
+
+    const expectedDimensions = new Map([
+        ["title-750.png", { width: 750, height: 250 }],
+        ["title-1500.png", { width: 1500, height: 500 }],
+        ["title-750.webp", { width: 750, height: 250 }],
+        ["title-1500.webp", { width: 1500, height: 500 }]
+    ]);
+
+    for (const [fileName, expected] of expectedDimensions) {
+        const outputPath = join(temporaryOutputDir, fileName);
+        assert.equal(existsSync(outputPath), true);
+        const metadata = await sharp(outputPath).metadata();
+        assert.equal(metadata.width, expected.width);
+        assert.equal(metadata.height, expected.height);
+    }
 });

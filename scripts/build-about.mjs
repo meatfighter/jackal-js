@@ -1,4 +1,5 @@
 import { writeFileAtomic } from "./atomic-file-utils.mjs";
+import { generateAboutImageAssets, titleImageHeight, titleImageSizes, titleImageWidth } from "./about-image-assets.mjs";
 import { renderAboutMarkdown } from "./about-markdown.mjs";
 import { assertComponentReleaseOutputPath, componentReleaseDir, copyDirectory, ensureDirectory, readVersion, renderTemplate, rootDir } from "./build-utils.mjs";
 import { readFileSync } from "node:fs";
@@ -24,7 +25,7 @@ function renderCheckedTemplate(template, replacements, label) {
     return output;
 }
 
-await withReleaseOperationLock(() => {
+await withReleaseOperationLock(async () => {
     const version = readVersion();
     const encodedBuildStamp = encodeURIComponent(version.buildStamp);
     const aboutDir = join(rootDir, "about");
@@ -47,7 +48,12 @@ await withReleaseOperationLock(() => {
         __DESCRIPTION__: description,
         __REPO_URL__: repoUrl,
         __SOCIAL_IMAGE_URL__: `${canonicalUrl}assets/jackal-screenshot.png`,
-        __TITLE_IMAGE__: `assets/title.png?v=${encodedBuildStamp}`
+        __TITLE_IMAGE_HEIGHT__: titleImageHeight,
+        __TITLE_IMAGE_SIZES__: titleImageSizes,
+        __TITLE_IMAGE_WIDTH__: titleImageWidth,
+        __TITLE_PNG_SRC__: `assets/title-750.png?v=${encodedBuildStamp}`,
+        __TITLE_PNG_SRCSET__: `assets/title-750.png?v=${encodedBuildStamp} 750w, assets/title-1500.png?v=${encodedBuildStamp} 1500w`,
+        __TITLE_WEBP_SRCSET__: `assets/title-750.webp?v=${encodedBuildStamp} 750w, assets/title-1500.webp?v=${encodedBuildStamp} 1500w`
     };
 
     const indexPath = assertComponentReleaseOutputPath("about index output file", join(outputDir, "index.html"));
@@ -59,5 +65,6 @@ await withReleaseOperationLock(() => {
     writeFileAtomic(stylesPath, renderCheckedTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), pageReplacements, "about stylesheet"));
     writeFileAtomic(themePath, renderCheckedTemplate(readFileSync(join(aboutDir, "theme.js"), "utf8"), pageReplacements, "about script"));
     copyDirectory(join(aboutDir, "assets"), join(outputDir, "assets"), { assertTargetPath: assertComponentReleaseOutputPath });
+    await generateAboutImageAssets(join(aboutDir, "assets"), join(outputDir, "assets"));
     console.log("Built about page");
 });

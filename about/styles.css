@@ -164,6 +164,10 @@ button {
     outline-offset: 3px;
 }
 
+.site-logo-picture {
+    display: block;
+}
+
 .site-logo {
     display: block;
     width: 100%;
@@ -599,6 +603,6 @@ button {
 
     .site-footer__links {
         margin-top: 0.65rem;
-        text-align: left;
+        text-align: center;
     }
 }
