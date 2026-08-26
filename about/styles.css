@@ -23,21 +23,22 @@
     --muted: #4f5b68;
     --border: #d7dce3;
     --border-strong: #9aa8ba;
-    --link: #0078d4;
-    --link-hover: #004578;
+    --link: #9a5514;
+    --link-hover: #6a390d;
     --code-bg: #eef2f6;
     --inline-code-bg: #e7f0fa;
     --inline-code-text: #161b22;
-    --switch-track: #dde4ec;
-    --switch-track-checked: #c7d8ec;
-    --switch-border: #9aa8ba;
+    --switch-track: #e5e8ec;
+    --switch-track-checked: #c8ced6;
+    --switch-border: #8a949e;
     --switch-knob: #ffffff;
-    --switch-knob-border: #8694a8;
+    --switch-knob-border: var(--title-shadow-gray);
+    --title-cream: #f2d59d;
     --title-jeep-green: #18b313;
+    --title-mountain-brown: #9a5514;
     --title-shadow-gray: #565656;
-    --play-button-bg: var(--link);
-    --play-button-bg-hover: #006dc1;
-    --play-button-text: #ffffff;
+    --play-button-bg: var(--title-jeep-green);
+    --play-button-text: var(--bg);
     --measure: 750px;
     --font-body: "Source Sans 3", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     --font-ui: var(--font-body);
@@ -56,19 +57,18 @@ html[data-theme="dark"] {
     --muted: #b6bec9;
     --border: #2b3543;
     --border-strong: #4b5d72;
-    --link: #8dc1ff;
-    --link-hover: #b7d9ff;
+    --link: #f2d59d;
+    --link-hover: #fff0c4;
     --code-bg: #181d24;
     --inline-code-bg: #263241;
     --inline-code-text: #f3f5f7;
-    --switch-track: #263241;
-    --switch-track-checked: #324962;
-    --switch-border: #4b5d72;
-    --switch-knob: #f7f9fc;
-    --switch-knob-border: #778aa1;
-    --play-button-bg: var(--link);
-    --play-button-bg-hover: var(--link-hover);
-    --play-button-text: #111419;
+    --switch-track: #2b3036;
+    --switch-track-checked: var(--title-shadow-gray);
+    --switch-border: #6e7681;
+    --switch-knob: #f3f5f7;
+    --switch-knob-border: #8d96a0;
+    --play-button-bg: var(--title-jeep-green);
+    --play-button-text: var(--bg);
 }
 
 * {
@@ -493,7 +493,6 @@ button {
 
 .play-button:hover,
 .play-button:focus-visible {
-    background: var(--play-button-bg-hover);
     color: var(--play-button-text);
     text-decoration: none;
 }
