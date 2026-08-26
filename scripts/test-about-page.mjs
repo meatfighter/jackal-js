@@ -52,9 +52,11 @@ test("about Markdown renderer creates the expected article features", () => {
     assert.match(rendered.articleHtml, /<button class="copy-link" type="button" data-copy-url="#controls"/);
     assert.match(rendered.articleHtml, /<h2 id="browser-menu">/);
     assert.match(rendered.articleHtml, /class="play-button" href="pwa\/\?v=test-build"/);
+    assert.doesNotMatch(rendered.articleHtml, /class="play-button"[^>]+target="_blank"/);
     assert.match(rendered.articleHtml, /<div class="table-wrap"><table>/);
-    assert.match(rendered.articleHtml, /href="https:\/\/github\.com\/meatfighter\/jackal-js"/);
-    assert.doesNotMatch(rendered.articleHtml, /target="_blank"/);
+    assert.match(rendered.articleHtml, /href="https:\/\/github\.com\/meatfighter\/jackal-js" target="_blank" rel="noopener noreferrer"/);
+    assert.match(rendered.articleHtml, /href="downloads\/jackal-desktop\.zip\?v=test-build" download="jackal-desktop\.zip"/);
+    assert.doesNotMatch(rendered.articleHtml, /downloads\/jackal-desktop\.zip\?v=test-build" target="_blank"/);
     assert.doesNotMatch(rendered.articleHtml, /jackal-screenshot\.png/);
     assert.ok(rendered.headings.some((heading) => heading.slug === "hard-mode" && heading.level === 1));
 });
@@ -81,7 +83,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /mirrors\.creativecommons\.org\/presskit\/icons\/cc\.svg\?ref=chooser-v1/);
     assert.match(indexTemplate, /mirrors\.creativecommons\.org\/presskit\/icons\/by\.svg\?ref=chooser-v1/);
     assert.match(indexTemplate, /mirrors\.creativecommons\.org\/presskit\/icons\/sa\.svg\?ref=chooser-v1/);
-    assert.match(indexTemplate, /<a href="__REPO_URL__">Source<\/a>/);
+    assert.match(indexTemplate, /<a href="__REPO_URL__" target="_blank" rel="noopener noreferrer">Source<\/a>/);
     assert.match(indexTemplate, /<a href="https:\/\/meatfighter\.com\/">Home<\/a>/);
     assert.doesNotMatch(indexTemplate, /__TOC_HTML__/);
     assert.match(styles, /\.license-wrap/);

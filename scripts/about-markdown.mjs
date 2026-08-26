@@ -58,6 +58,18 @@ function sanitizeUrl(value) {
     return "#";
 }
 
+function isSamePageAnchor(href) {
+    return href.startsWith("#");
+}
+
+function isDesktopZipUrl(href) {
+    try {
+        return new URL(href, `${siteOrigin}/jackal/`).pathname.endsWith("/downloads/jackal-desktop.zip");
+    } catch {
+        return false;
+    }
+}
+
 function stashHtml(html, stashedHtml) {
     const index = stashedHtml.push(html) - 1;
     return `${stashMarker}${index}%%`;
@@ -80,7 +92,13 @@ function renderInlineNoLinks(value) {
 
 function renderLink(label, href) {
     const sanitizedHref = sanitizeUrl(href);
-    return `<a href="${escapeAttribute(sanitizedHref)}">${renderInlineNoLinks(label)}</a>`;
+    const attributes = [`href="${escapeAttribute(sanitizedHref)}"`];
+    if (isDesktopZipUrl(sanitizedHref)) {
+        attributes.push('download="jackal-desktop.zip"');
+    } else if (!isSamePageAnchor(sanitizedHref)) {
+        attributes.push('target="_blank"', 'rel="noopener noreferrer"');
+    }
+    return `<a ${attributes.join(" ")}>${renderInlineNoLinks(label)}</a>`;
 }
 
 function renderInline(value) {
