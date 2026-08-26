@@ -305,6 +305,7 @@ public class Main extends BasicGame {
     int count = 0;  
     while(nextFrameTime <= Sys.getTime()) {
       fullScreenToggleCheck(gc); 
+      updateControllerRefreshPolicy();
       input.snap();
       mode.update(gc);      
       nextFrameTime += (int)((Sys.getTimerResolution() * 0.01f) + 0.5f);
@@ -366,6 +367,11 @@ public class Main extends BasicGame {
       }
       resetNextFrameTime();
     }
+  }
+
+  private void updateControllerRefreshPolicy() {
+    ControllerSupport.setControllerRefreshEnabled(
+        mode != null && mode.shouldRefreshControllers());
   }
 
   private boolean isFullscreenDisplayActive(GameContainer gc) {
@@ -610,6 +616,7 @@ public class Main extends BasicGame {
       input.clearKeyPressedRecord();
       this.mode = mode;
       mode.init(this, gc);
+      updateControllerRefreshPolicy();
       mode.update(gc);      
       resetNextFrameTime();
     } catch(Throwable t) {

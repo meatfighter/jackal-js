@@ -11,6 +11,7 @@ const versionJson = JSON.parse(readFileSync(new URL("../version.json", import.me
 const scripts = packageJson.scripts;
 const serviceWorkerSource = readFileSync(new URL("../pwa/public/sw.js", import.meta.url), "utf8");
 const buildAboutSource = readFileSync(new URL("./build-about.mjs", import.meta.url), "utf8");
+const buildWebSource = readFileSync(new URL("./build-web-release.mjs", import.meta.url), "utf8");
 const assembleSource = readFileSync(new URL("./assemble.mjs", import.meta.url), "utf8");
 const releaseDesktopSource = readFileSync(new URL("./release-desktop.mjs", import.meta.url), "utf8");
 const verifyPwaPrecacheSource = readFileSync(new URL("./verify-pwa-precache.mjs", import.meta.url), "utf8");
@@ -50,6 +51,9 @@ test("component and full release scripts route through hardened wrappers", () =>
     assert.equal(scripts["release:desktop"], "node scripts/release-desktop.mjs");
     assert.equal(scripts["verify:desktop"], "node scripts/verify-desktop-zip.mjs");
     assert.equal(scripts["verify:release"], "node scripts/verify-release-candidate.mjs");
+    assert.match(buildWebSource, /runNpmScript\("build:desktop"\)/);
+    assert.match(buildWebSource, /runNpmScript\("verify:desktop"\)/);
+    assert.match(buildWebSource, /runNodeScript\("scripts\/assemble\.mjs", \[webOutDir\]\)/);
     assert.match(releaseDesktopSource, /runNpmScript\("verify:desktop"\)/);
     assert.doesNotMatch(scripts["build:pwa:release"], /\bnpm run stamp\b|\bnpm run clean\b/);
     assert.doesNotMatch(scripts["build:web"], /\bnpm run stamp\b|\bnpm run clean\b/);

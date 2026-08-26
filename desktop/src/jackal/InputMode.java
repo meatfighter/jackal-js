@@ -60,9 +60,9 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     "DOWN",
     "LEFT",
     "RIGHT",
-    "THROW GRENADE OR FIRE BAZOOKA",
-    "SHOOT MACHINE GUN",
-    "START OR PAUSE",
+    "GRENADE",
+    "GUN",
+    "START",
   };
   public static final float[] NAME_XS = new float[NAMES.length];
   
@@ -509,6 +509,11 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     message = "";
     state = STATE_READ_FADE;
     delay = FADE_TIME;
+  }
+
+  @Override
+  public boolean shouldRefreshControllers() {
+    return state == STATE_MENU || state == STATE_READING;
   }
 
   @Override

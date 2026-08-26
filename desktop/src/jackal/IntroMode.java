@@ -254,6 +254,11 @@ public class IntroMode implements IMode, IFadeListener, IMenuListener {
   }
   
   @Override
+  public boolean shouldRefreshControllers() {
+    return state == STATE_TITLE;
+  }
+
+  @Override
   public void update(GameContainer gc) throws SlickException {
     
     switch(state) {      

@@ -17,6 +17,9 @@ await withReleaseOperationLock(async () => {
         });
         runNodeScript("scripts/verify-pwa-precache.mjs", [pwaOutDir]);
         runNodeScript("scripts/build-about.mjs", [webOutDir]);
+        runNpmScript("build:desktop");
+        runNpmScript("verify:desktop");
+        runNodeScript("scripts/assemble.mjs", [webOutDir]);
     });
 
     console.log(`Built component web release in ${displayPath(webOutDir)}`);

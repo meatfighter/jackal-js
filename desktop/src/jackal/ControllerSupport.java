@@ -40,6 +40,7 @@ public final class ControllerSupport {
   private static volatile boolean globalPollFailureDetected;
   private static boolean controllersCreateAttempted;
   private static boolean controllersUnavailable;
+  private static boolean controllerRefreshEnabled;
   private static long lastControllerPollNanos = Long.MIN_VALUE;
   private static long lastControllerRefreshNanos = Long.MIN_VALUE;
   private static final boolean[] controllerCandidateKnown =
@@ -91,6 +92,10 @@ public final class ControllerSupport {
       } catch(SecurityException e) {
       }
     }
+  }
+
+  public static void setControllerRefreshEnabled(boolean enabled) {
+    controllerRefreshEnabled = enabled;
   }
 
   public static boolean isDirectionDown(int direction) {
@@ -176,6 +181,10 @@ public final class ControllerSupport {
   }
 
   public static boolean refreshControllersIfNeeded() {
+    if (!controllerRefreshEnabled) {
+      return false;
+    }
+
     boolean createAttemptedBefore =
         controllersCreateAttempted || Controllers.isCreated();
     if (hasUsableGameController()) {
@@ -1198,11 +1207,13 @@ public final class ControllerSupport {
           || (text.startsWith("Failed to poll component:")
           && (text.indexOf("Failed to poll device") != -1
           || text.indexOf("Failed to get device state") != -1));
+      boolean pluginLoadNotice = text.equals(
+          "Loading: net.java.games.input.DirectAndRawInputEnvironmentPlugin");
       if (pollFailure) {
         globalPollFailureDetected = true;
         controllersUnavailable = true;
       }
-      return pollFailure;
+      return pollFailure || pluginLoadNotice;
     }
   }
 }

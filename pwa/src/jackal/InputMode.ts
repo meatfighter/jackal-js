@@ -105,7 +105,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     public static readonly LABELS: any[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
 
-    public static readonly NAMES: any[] = ["UP", "DOWN", "LEFT", "RIGHT", "THROW GRENADE OR FIRE BAZOOKA", "SHOOT MACHINE GUN", "START OR PAUSE"];
+    public static readonly NAMES: any[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
     public static readonly NAME_XS: any[] = javaArray(InputMode.NAMES.length, 0);
 
     static {

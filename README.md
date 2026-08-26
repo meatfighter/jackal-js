@@ -690,13 +690,13 @@ It does **not** create canonical `dist/`.
 npm run build:web
 ```
 
-This runs `verify`, then builds the about page + PWA together under:
+This runs `verify`, then builds the about page, PWA, and verified desktop ZIP together under:
 
 ```text
 .release-components/web/
 ```
 
-Use it when reviewing the web deliverable without a full desktop/canonical promotion.
+Use it when reviewing the complete web deliverable without canonical promotion to `dist/`.
 
 ### About component build
 
@@ -749,7 +749,7 @@ Do not replace it with ad-hoc component builds and manual copies into `dist/`.
 | Develop browser game                   | `npm run dev`                 | Vite dev server            |
 | Run normal source gate                 | `npm run verify`              | checks only                |
 | Build PWA component                    | `npm run build:pwa`           | `.release-components/pwa/` |
-| Build about + PWA component            | `npm run build:web`           | `.release-components/web/` |
+| Build complete web component           | `npm run build:web`           | `.release-components/web/` |
 | Build desktop package                  | `npm run build:desktop`       | `desktop/target/`          |
 | Verify desktop ZIP                     | `npm run verify:desktop`      | validation only            |
 | Stage standalone desktop ZIP           | `npm run release:desktop`     | `releases/`                |
@@ -1190,7 +1190,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | `npm run check:ts-nocheck`    | Enforce unchecked-TypeScript budget.                               |
 | `npm run verify`              | Run the normal source-quality gate.                                |
 | `npm run build:pwa`           | Build/verify PWA component output.                                 |
-| `npm run build:web`           | Build verified about + PWA component output.                       |
+| `npm run build:web`           | Build verified about + PWA + desktop ZIP component output.         |
 | `npm run build:about`         | Build the about-page component.                                    |
 | `npm run build:desktop`       | Build desktop JAR/ZIP.                                             |
 | `npm run verify:desktop`      | Verify generated desktop ZIP.                                      |
