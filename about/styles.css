@@ -29,9 +29,6 @@
     --inline-code-bg: #e7f0fa;
     --inline-code-text: #161b22;
     --table-head: #eef2f6;
-    --scrollbar-track: #dde4ec;
-    --scrollbar-thumb: #728197;
-    --scrollbar-thumb-hover: #59687e;
     --switch-track: #dde4ec;
     --switch-track-checked: #c7d8ec;
     --switch-border: #9aa8ba;
@@ -66,9 +63,6 @@ html[data-theme="dark"] {
     --inline-code-bg: #263241;
     --inline-code-text: #f3f5f7;
     --table-head: #181d24;
-    --scrollbar-track: #263241;
-    --scrollbar-thumb: #65788f;
-    --scrollbar-thumb-hover: #8194ac;
     --switch-track: #263241;
     --switch-track-checked: #324962;
     --switch-border: #4b5d72;
@@ -86,7 +80,6 @@ html[data-theme="dark"] {
 html {
     min-width: 320px;
     scroll-behavior: smooth;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 body {
@@ -98,38 +91,17 @@ body {
     font-size: clamp(1rem, 0.2vw + 0.95rem, 1.125rem);
     font-weight: 400;
     line-height: 1.75;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-}
-
-::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
-    background-color: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-track {
-    background-color: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-    min-height: 2rem;
-    border: 3px solid var(--scrollbar-track);
-    background-color: var(--scrollbar-thumb);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover);
 }
 
 a {
     color: var(--link);
     text-decoration: none;
+    transition: color 0.18s ease;
 }
 
 a:hover,
 a:focus-visible {
     color: var(--link-hover);
-    text-decoration: underline;
 }
 
 img,
@@ -539,8 +511,7 @@ button {
 
 .site-footer {
     margin-top: auto;
-    border-top: 1px solid var(--border);
-    background: color-mix(in oklab, var(--surface), transparent 8%);
+    background: transparent;
 }
 
 .site-footer__inner {
@@ -548,7 +519,8 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.15rem 0 1.5rem;
+    padding: 0.9rem 0 2rem;
+    border-top: 1px solid var(--border);
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: 0.95rem;

@@ -77,6 +77,10 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /\.license-wrap/);
     assert.match(styles, /\.license-icons/);
     assert.match(styles, /width: 18px;/);
+    assert.match(styles, /\.site-footer \{\s+margin-top: auto;\s+background: transparent;\s+\}/);
+    assert.match(styles, /\.site-footer__inner \{[\s\S]*border-top: 1px solid var\(--border\);/);
+    assert.match(styles, /\.site-footer__inner \{[\s\S]*font-size: 0\.95rem;\s+line-height: 1\.6;/);
+    assert.match(styles, /\.site-footer__links \{[\s\S]*font-size: 0\.95rem;\s+font-weight: 600;\s+line-height: 1\.6;/);
     assert.match(indexTemplate, /<script src=".\/theme\.js\?v=__BUILD_STAMP_ENCODED__"><\/script>/);
     assert.match(styles, /\.play-button/);
     assert.match(styles, /min-width: 192px;/);
@@ -89,9 +93,14 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /--bg: #f7f8fa;/);
     assert.match(styles, /--bg: #111419;/);
     assert.match(styles, /line-height: 1\.75;/);
+    assert.doesNotMatch(styles, /scrollbar-color/);
+    assert.doesNotMatch(styles, /::-webkit-scrollbar/);
+    assert.doesNotMatch(styles, /--scrollbar-/);
     assert.match(styles, /--switch-track-checked: #c7d8ec;/);
     assert.match(styles, /--switch-track-checked: #324962;/);
     assert.match(styles, /background: var\(--switch-track-checked\);/);
+    assert.match(styles, /a \{\s+color: var\(--link\);\s+text-decoration: none;\s+transition: color 0\.18s ease;\s+\}/);
+    assert.match(styles, /a:hover,\s+a:focus-visible \{\s+color: var\(--link-hover\);\s+\}/);
     assert.match(styles, /--play-button-bg: #0e4a84;/);
     assert.match(styles, /--play-button-bg-hover: #0b3b6a;/);
     assert.match(styles, /--play-button-bg: #8dc1ff;/);
