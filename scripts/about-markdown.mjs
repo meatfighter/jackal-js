@@ -231,6 +231,18 @@ function renderCodeBlock(info, lines) {
     return `<div class="code-block"><div class="code-block__header"><span>${escapeHtml(label)}</span><button class="copy-code" type="button" data-copy-code="" aria-label="Copy code">${copyIconSvg}</button></div><pre><code${languageClass}>${escapeHtml(lines.join("\n"))}</code></pre></div>`;
 }
 
+function renderTableOfContents(headings) {
+    const visibleHeadings = headings.filter((heading) => heading.level <= 2);
+    if (visibleHeadings.length === 0) {
+        return "";
+    }
+
+    const items = visibleHeadings
+        .map((heading) => `<li class="toc-level-${heading.level}"><a href="#${escapeAttribute(heading.slug)}">${escapeHtml(heading.text)}</a></li>`)
+        .join("\n");
+    return `<nav class="toc" aria-labelledby="toc-heading"><h2 id="toc-heading">Contents</h2><ol>\n${items}\n</ol></nav>`;
+}
+
 export function renderAboutMarkdown(markdown) {
     const lines = markdown
         .replace(/^\uFEFF/, "")
@@ -325,6 +337,7 @@ export function renderAboutMarkdown(markdown) {
 
     return {
         articleHtml: html.join("\n"),
-        headings
+        headings,
+        tocHtml: renderTableOfContents(headings)
     };
 }

@@ -248,6 +248,54 @@ button {
     padding: 1rem 0 3.75rem;
 }
 
+.toc {
+    margin: 0 0 2rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.65;
+    text-align: center;
+}
+
+.toc h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    border: 0;
+    white-space: nowrap;
+}
+
+.toc ol {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.toc li {
+    display: inline;
+    margin: 0;
+}
+
+.toc li:not(:last-child)::after {
+    content: " | ";
+    color: var(--muted);
+}
+
+.toc .toc-level-2 {
+    margin-left: 0;
+}
+
+.toc .toc-level-2 a {
+    color: color-mix(in srgb, var(--link) 78%, var(--muted));
+}
+
 .article {
     padding: 0;
     border: 0;
@@ -590,6 +638,10 @@ button {
 
     .article {
         padding: 1.25rem;
+    }
+
+    .toc {
+        padding: 0 1.25rem;
     }
 
     .copy-link {

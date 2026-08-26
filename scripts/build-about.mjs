@@ -51,6 +51,7 @@ await withReleaseOperationLock(async () => {
         __TITLE_IMAGE_HEIGHT__: titleImageHeight,
         __TITLE_IMAGE_SIZES__: titleImageSizes,
         __TITLE_IMAGE_WIDTH__: titleImageWidth,
+        __TOC_HTML__: renderedMarkdown.tocHtml,
         __TITLE_PNG_SRC__: `assets/title-750.png?v=${encodedBuildStamp}`,
         __TITLE_PNG_SRCSET__: `assets/title-750.png?v=${encodedBuildStamp} 750w, assets/title-1500.png?v=${encodedBuildStamp} 1500w`,
         __TITLE_WEBP_SRCSET__: `assets/title-750.webp?v=${encodedBuildStamp} 750w, assets/title-1500.webp?v=${encodedBuildStamp} 1500w`

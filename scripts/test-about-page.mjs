@@ -59,6 +59,11 @@ test("about Markdown renderer creates the expected article features", () => {
     assert.doesNotMatch(rendered.articleHtml, /downloads\/jackal-desktop\.zip\?v=test-build" target="_blank"/);
     assert.doesNotMatch(rendered.articleHtml, /jackal-screenshot\.png/);
     assert.ok(rendered.headings.some((heading) => heading.slug === "hard-mode" && heading.level === 1));
+    assert.match(rendered.tocHtml, /<nav class="toc" aria-labelledby="toc-heading">/);
+    assert.match(rendered.tocHtml, /<h2 id="toc-heading">Contents<\/h2>/);
+    assert.match(rendered.tocHtml, /<li class="toc-level-1"><a href="#about">About<\/a><\/li>/);
+    assert.match(rendered.tocHtml, /<li class="toc-level-2"><a href="#browser-menu">Browser Menu<\/a><\/li>/);
+    assert.doesNotMatch(rendered.tocHtml, /class="toc-level-3"/);
 });
 
 test("about page shell carries SEO, theme, footer, and generated-content placeholders", () => {
@@ -76,6 +81,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /sizes="__TITLE_IMAGE_SIZES__"/);
     assert.match(indexTemplate, /width="__TITLE_IMAGE_WIDTH__"/);
     assert.match(indexTemplate, /height="__TITLE_IMAGE_HEIGHT__"/);
+    assert.match(indexTemplate, /__TOC_HTML__/);
     assert.match(indexTemplate, /__ARTICLE_HTML__/);
     assert.match(indexTemplate, /https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\?ref=chooser-v1/);
     assert.match(indexTemplate, /class="license-wrap"/);
@@ -85,7 +91,8 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /mirrors\.creativecommons\.org\/presskit\/icons\/sa\.svg\?ref=chooser-v1/);
     assert.match(indexTemplate, /<a href="__REPO_URL__" target="_blank" rel="noopener noreferrer">Source<\/a>/);
     assert.match(indexTemplate, /<a href="https:\/\/meatfighter\.com\/">Home<\/a>/);
-    assert.doesNotMatch(indexTemplate, /__TOC_HTML__/);
+    assert.match(styles, /\.toc \{\s+margin: 0 0 2rem;/);
+    assert.match(styles, /\.toc li:not\(:last-child\)::after \{\s+content: " \| ";/);
     assert.match(styles, /\.license-wrap/);
     assert.match(styles, /\.license-icons/);
     assert.match(styles, /width: 18px;/);
