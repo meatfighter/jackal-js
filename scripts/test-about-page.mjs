@@ -93,6 +93,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /<a href="https:\/\/meatfighter\.com\/">Home<\/a>/);
     assert.match(styles, /\.toc \{\s+margin: 0 0 2rem;/);
     assert.match(styles, /\.toc li:not\(:last-child\)::after \{\s+content: " \| ";/);
+    assert.doesNotMatch(styles, /\.toc \.toc-level-2 a\s*\{/);
     assert.match(styles, /\.license-wrap/);
     assert.match(styles, /\.license-icons/);
     assert.match(styles, /width: 18px;/);
@@ -112,7 +113,17 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /SourceSans3VF-Italic\.ttf\.woff2\?v=__BUILD_STAMP_ENCODED__/);
     assert.match(styles, /--font-body: "Source Sans 3", "Segoe UI"/);
     assert.match(styles, /--bg: #f7f8fa;/);
+    assert.match(styles, /--border: #e6d2a8;/);
+    assert.match(styles, /--border-strong: #b5874a;/);
+    assert.match(styles, /--code-bg: #f4efe4;/);
+    assert.match(styles, /--inline-code-bg: #e8f3df;/);
+    assert.match(styles, /--inline-code-text: #183716;/);
     assert.match(styles, /--bg: #111419;/);
+    assert.match(styles, /--border: #403522;/);
+    assert.match(styles, /--border-strong: #7a633b;/);
+    assert.match(styles, /--code-bg: #171a14;/);
+    assert.match(styles, /--inline-code-bg: #182817;/);
+    assert.match(styles, /--inline-code-text: #dff1d5;/);
     assert.match(styles, /--link: #9a5514;/);
     assert.match(styles, /--link-hover: #6a390d;/);
     assert.match(styles, /--link: #f2d59d;/);
