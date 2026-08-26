@@ -92,6 +92,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /--font-body: "Source Sans 3", "Segoe UI"/);
     assert.match(styles, /--bg: #f7f8fa;/);
     assert.match(styles, /--bg: #111419;/);
+    assert.match(styles, /--link-hover: #0969da;/);
     assert.match(styles, /line-height: 1\.75;/);
     assert.doesNotMatch(styles, /scrollbar-color/);
     assert.doesNotMatch(styles, /::-webkit-scrollbar/);
