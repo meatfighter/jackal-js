@@ -60,6 +60,8 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /<link rel="canonical" href="__CANONICAL_URL__" \/>/);
     assert.match(indexTemplate, /<meta property="og:image" content="__SOCIAL_IMAGE_URL__" \/>/);
     assert.match(indexTemplate, /<meta name="twitter:card" content="summary_large_image" \/>/);
+    assert.match(indexTemplate, /href=".\/assets\/fonts\/source-sans-3\/SourceSans3VF-Upright\.otf\.woff2\?v=__BUILD_STAMP_ENCODED__"/);
+    assert.match(indexTemplate, /as="font"/);
     assert.match(indexTemplate, /src=".\/__TITLE_IMAGE__"/);
     assert.match(indexTemplate, /__ARTICLE_HTML__/);
     assert.match(indexTemplate, /https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\?ref=chooser-v1/);
@@ -72,9 +74,20 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /min-width: 192px;/);
     assert.match(styles, /min-height: 48px;/);
     assert.match(styles, /border-radius: 30px;/);
-    assert.match(styles, /--play-button-bg: #1a7f37;/);
-    assert.match(styles, /--play-button-bg-hover: #116329;/);
-    assert.match(styles, /--play-button-bg: var\(--title-jeep-green\);/);
+    assert.match(styles, /font-family: "Source Sans 3";/);
+    assert.match(styles, /SourceSans3VF-Upright\.otf\.woff2\?v=__BUILD_STAMP_ENCODED__/);
+    assert.match(styles, /SourceSans3VF-Italic\.otf\.woff2\?v=__BUILD_STAMP_ENCODED__/);
+    assert.match(styles, /--font-body: "Source Sans 3", "Segoe UI"/);
+    assert.match(styles, /--bg: #f7f8fa;/);
+    assert.match(styles, /--bg: #111419;/);
+    assert.match(styles, /line-height: 1\.75;/);
+    assert.match(styles, /--switch-track-checked: #c7d8ec;/);
+    assert.match(styles, /--switch-track-checked: #324962;/);
+    assert.match(styles, /background: var\(--switch-track-checked\);/);
+    assert.match(styles, /--play-button-bg: #0e4a84;/);
+    assert.match(styles, /--play-button-bg-hover: #0b3b6a;/);
+    assert.match(styles, /--play-button-bg: #8dc1ff;/);
+    assert.match(styles, /--play-button-bg-hover: #b7d9ff;/);
     assert.match(styles, /background: var\(--play-button-bg\);/);
     assert.match(styles, /background: var\(--play-button-bg-hover\);/);
     assert.match(styles, /color: var\(--play-button-text\);/);
@@ -95,6 +108,9 @@ test("about build uses constrained Markdown and stable public repository link", 
 test("about title and screenshot assets live with the about page source", () => {
     assert.equal(existsSync(join(aboutDir, "assets", "title.png")), true);
     assert.equal(existsSync(join(aboutDir, "assets", "jackal-screenshot.png")), true);
+    assert.equal(existsSync(join(aboutDir, "assets", "fonts", "source-sans-3", "SourceSans3VF-Upright.otf.woff2")), true);
+    assert.equal(existsSync(join(aboutDir, "assets", "fonts", "source-sans-3", "SourceSans3VF-Italic.otf.woff2")), true);
+    assert.equal(existsSync(join(aboutDir, "assets", "fonts", "source-sans-3", "LICENSE.md")), true);
     assert.equal(existsSync(join(rootDir, "title.png")), false);
     assert.equal(existsSync(join(rootDir, "jackal-screenshot.png")), false);
 });

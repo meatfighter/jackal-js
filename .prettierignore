@@ -12,3 +12,4 @@ dist/
 .dist-active-before-*/
 coverage/
 *.tgz
+about/assets/fonts/
