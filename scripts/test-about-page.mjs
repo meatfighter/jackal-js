@@ -97,6 +97,13 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.doesNotMatch(styles, /scrollbar-color/);
     assert.doesNotMatch(styles, /::-webkit-scrollbar/);
     assert.doesNotMatch(styles, /--scrollbar-/);
+    assert.doesNotMatch(styles, /--table-head/);
+    assert.doesNotMatch(styles, /background: var\(--table-head\)/);
+    assert.match(styles, /\.table-wrap \{\s+margin: 1rem 0;/);
+    assert.match(styles, /\.article table \{\s+width: auto;\s+border-collapse: collapse;\s+font-size: inherit;\s+line-height: 1\.35;\s+\}/);
+    assert.match(styles, /\.article th,\s+\.article td \{\s+padding: 0\.24rem 2\.2rem 0\.24rem 0;\s+text-align: left;\s+vertical-align: top;\s+\}/);
+    assert.match(styles, /\.article th:last-child,\s+\.article td:last-child \{\s+padding-right: 0;\s+\}/);
+    assert.match(styles, /\.article th \{\s+border-bottom: 1px solid var\(--border\);\s+font-weight: 700;\s+\}/);
     assert.match(styles, /--switch-track-checked: #c7d8ec;/);
     assert.match(styles, /--switch-track-checked: #324962;/);
     assert.match(styles, /background: var\(--switch-track-checked\);/);

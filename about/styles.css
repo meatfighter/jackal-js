@@ -28,7 +28,6 @@
     --code-bg: #eef2f6;
     --inline-code-bg: #e7f0fa;
     --inline-code-text: #161b22;
-    --table-head: #eef2f6;
     --switch-track: #dde4ec;
     --switch-track-checked: #c7d8ec;
     --switch-border: #9aa8ba;
@@ -62,7 +61,6 @@ html[data-theme="dark"] {
     --code-bg: #181d24;
     --inline-code-bg: #263241;
     --inline-code-text: #f3f5f7;
-    --table-head: #181d24;
     --switch-track: #263241;
     --switch-track-checked: #324962;
     --switch-border: #4b5d72;
@@ -432,26 +430,31 @@ button {
 }
 
 .table-wrap {
-    margin: 1.25rem 0;
+    margin: 1rem 0;
     overflow-x: auto;
 }
 
 .article table {
-    width: 100%;
+    width: auto;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: inherit;
+    line-height: 1.35;
 }
 
 .article th,
 .article td {
-    padding: 0.45rem 0.65rem;
-    border: 1px solid var(--border);
+    padding: 0.24rem 2.2rem 0.24rem 0;
     text-align: left;
     vertical-align: top;
 }
 
+.article th:last-child,
+.article td:last-child {
+    padding-right: 0;
+}
+
 .article th {
-    background: var(--table-head);
+    border-bottom: 1px solid var(--border);
     font-weight: 700;
 }
 
