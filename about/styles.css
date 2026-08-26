@@ -3,7 +3,7 @@
     font-style: normal;
     font-weight: 200 900;
     font-display: swap;
-    src: url("./assets/fonts/source-sans-3/SourceSans3VF-Upright.otf.woff2?v=__BUILD_STAMP_ENCODED__") format("woff2");
+    src: url("./assets/fonts/source-sans-3/SourceSans3VF-Upright.ttf.woff2?v=__BUILD_STAMP_ENCODED__") format("woff2");
 }
 
 @font-face {
@@ -11,7 +11,7 @@
     font-style: italic;
     font-weight: 200 900;
     font-display: swap;
-    src: url("./assets/fonts/source-sans-3/SourceSans3VF-Italic.otf.woff2?v=__BUILD_STAMP_ENCODED__") format("woff2");
+    src: url("./assets/fonts/source-sans-3/SourceSans3VF-Italic.ttf.woff2?v=__BUILD_STAMP_ENCODED__") format("woff2");
 }
 
 :root {
@@ -575,6 +575,24 @@ button {
 
 .site-footer__separator {
     color: var(--muted);
+}
+
+.license-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.license-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.18rem;
+}
+
+.license-icons img {
+    width: 18px;
+    height: 18px;
 }
 
 @media (max-width: 720px) {
