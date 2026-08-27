@@ -4,7 +4,6 @@ import type { Main } from "../Main.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
 import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "./GameStateSchema.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
-
 export class JackalGameStateStore {
     private readonly serializer = new JackalGameStateSerializer();
 

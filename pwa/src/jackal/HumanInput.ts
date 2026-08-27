@@ -1,66 +1,14 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Input, type GameContainer } from "slick2d-ts";
+import { javaArray } from "../java/JavaRuntime.js";
 import { ButtonMapping } from "./ButtonMapping.js";
-import { IInput } from "./IInput.js";
+import type { IInput } from "./IInput.js";
 export class HumanInput implements IInput {
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: ButtonMapping, arg1?: GameContainer) {
         const argCount = arguments.length;
         this.__construct_HumanInput(argCount, arg0, arg1);
     }
 
-    private __construct_HumanInput(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_HumanInput(argCount: number, arg0?: ButtonMapping, arg1?: GameContainer): void {
         if (argCount === 2) {
             let buttonMappingLocal = arg0;
             let gc = arg1;
@@ -77,12 +25,12 @@ export class HumanInput implements IInput {
     private static readonly GAMEPAD_AXIS_LIMIT: number = 16;
     private static readonly AXIS_THRESHOLD: number = 0.5;
     private static readonly AXIS_RECENTER_THRESHOLD: number = 0.05;
-    private static readonly EXTRA_HORIZONTAL_AXES: any[] = [2, 6];
-    private static readonly EXTRA_VERTICAL_AXES: any[] = [3, 7];
+    private static readonly EXTRA_HORIZONTAL_AXES: number[] = [2, 6];
+    private static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
 
-    private buttonMapping: any = null as any;
-    private input: any = null as any;
-    private extraAxisBaselines: any[] = javaArray(HumanInput.CONTROLLER_INDEX_LIMIT * HumanInput.GAMEPAD_AXIS_LIMIT, Number.NaN);
+    private buttonMapping: ButtonMapping = null;
+    private input: Input = null;
+    private extraAxisBaselines: number[] = javaArray(HumanInput.CONTROLLER_INDEX_LIMIT * HumanInput.GAMEPAD_AXIS_LIMIT, Number.NaN);
     private up: boolean = false;
     private down: boolean = false;
     private left: boolean = false;
@@ -99,7 +47,7 @@ export class HumanInput implements IInput {
         this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun) || this.isAnyControllerButtonDown(this.buttonMapping.controllerGun);
     }
 
-    private isControllerBindingDown(button: any): boolean {
+    private isControllerBindingDown(button: number): boolean {
         switch (button) {
             case 12:
                 return this.isControllerUpDown() || this.isAnyControllerButtonDown(button);
@@ -114,7 +62,7 @@ export class HumanInput implements IInput {
         }
     }
 
-    private isAnyControllerButtonDown(button: any): boolean {
+    private isAnyControllerButtonDown(button: number): boolean {
         if (button < 0) {
             return false;
         }
@@ -125,7 +73,7 @@ export class HumanInput implements IInput {
         }
     }
 
-    private isControllerBindingPressed(button: any): boolean {
+    private isControllerBindingPressed(button: number): boolean {
         if (button < 0) {
             return false;
         }
@@ -155,7 +103,7 @@ export class HumanInput implements IInput {
         return pressed;
     }
 
-    private isMappedDirectionButton(button: any): boolean {
+    private isMappedDirectionButton(button: number): boolean {
         return (
             this.buttonMapping.controllerUp == button ||
             this.buttonMapping.controllerDown == button ||
@@ -164,11 +112,11 @@ export class HumanInput implements IInput {
         );
     }
 
-    private isDirectionalGamepadButton(button: any): boolean {
+    private isDirectionalGamepadButton(button: number): boolean {
         return button >= ButtonMapping.DEFAULT_CONTROLLER_UP && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
 
-    private isControlPressed(control: any, controller: any): boolean {
+    private isControlPressed(control: number, controller: number): boolean {
         try {
             return this.input.isControlPressed(control, controller);
         } catch (e) {
@@ -224,7 +172,7 @@ export class HumanInput implements IInput {
         return this.isAnyAxisGreaterThan(HumanInput.EXTRA_HORIZONTAL_AXES, HumanInput.AXIS_THRESHOLD);
     }
 
-    private isAnyAxisLessThan(axes: any, threshold: any): boolean {
+    private isAnyAxisLessThan(axes: readonly number[], threshold: number): boolean {
         for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
             for (let i = 0; i < axes.length; i++) {
                 if (this.readExtraAxisValue(controller, axes[i]) < threshold) {
@@ -235,7 +183,7 @@ export class HumanInput implements IInput {
         return false;
     }
 
-    private isAnyAxisGreaterThan(axes: any, threshold: any): boolean {
+    private isAnyAxisGreaterThan(axes: readonly number[], threshold: number): boolean {
         for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
             for (let i = 0; i < axes.length; i++) {
                 if (this.readExtraAxisValue(controller, axes[i]) > threshold) {
@@ -246,7 +194,7 @@ export class HumanInput implements IInput {
         return false;
     }
 
-    private readExtraAxisValue(controller: any, axis: any): number {
+    private readExtraAxisValue(controller: number, axis: number): number {
         try {
             if (this.input.getAxisCount(controller) <= axis) {
                 return 0;

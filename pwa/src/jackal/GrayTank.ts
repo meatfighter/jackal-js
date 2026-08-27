@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import type { BossGarageManager } from "./BossGarageManager.js";
@@ -78,7 +25,7 @@ export class GrayTank extends Enemy {
     declare public garage: boolean;
     declare public bossGarageManager: BossGarageManager | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
         this.shootCount = 0;
@@ -106,13 +53,17 @@ export class GrayTank extends Enemy {
         this.bossGarageManager = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
+    public constructor(x: number, y: number);
+    public constructor(x: number, y: number, shack: boolean);
+    public constructor(x: number, y: number, firstMove: number);
+    public constructor(x: number, y: number, firstMove: number, bossGarageManager: BossGarageManager);
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean | number, arg3?: BossGarageManager) {
         super();
         const argCount = arguments.length;
         this.__construct_GrayTank(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_GrayTank(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    private __construct_GrayTank(argCount: number, arg0?: number, arg1?: number, arg2?: boolean | number, arg3?: BossGarageManager): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal4 = arg0;
             let yLocal4 = arg1;
@@ -176,7 +127,7 @@ export class GrayTank extends Enemy {
     public targetAngle: number = 90;
     public displayAngle: number = 90;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -273,7 +224,7 @@ export class GrayTank extends Enemy {
         }
     }
 
-    private testCorners(nextX: any, nextY: any): void {
+    private testCorners(nextX: number, nextY: number): void {
         let sx1 = 0;
         let sy1 = 0;
         let sx2 = 0;
@@ -528,7 +479,7 @@ export class GrayTank extends Enemy {
 
     // returns true if attack successful
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.shack && this.firstMove > 40) {
             return false;
         } else {
@@ -538,7 +489,7 @@ export class GrayTank extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.shack && this.firstMove > 40) {
             return false;
         } else {
@@ -546,7 +497,7 @@ export class GrayTank extends Enemy {
         }
     }
 
-    public remove(): void {
+    public override remove(): void {
         super.remove();
         if (this.bossGarageManager != null) {
             this.bossGarageManager.tankDestroyed();

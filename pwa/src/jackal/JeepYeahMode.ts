@@ -1,73 +1,22 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type GameContainer, type Graphics } from "slick2d-ts";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMode } from "./IMode.js";
 import { JeepYeahBullet } from "./JeepYeahBullet.js";
 import { JeepYeahExplosion } from "./JeepYeahExplosion.js";
 import { JeepYeahFireLeft } from "./JeepYeahFireLeft.js";
 import { JeepYeahFireRight } from "./JeepYeahFireRight.js";
 import { JeepYeahPlane } from "./JeepYeahPlane.js";
 import { Modes } from "./Modes.js";
+import type { Main } from "./Main.js";
 export class JeepYeahMode implements IMode, IFadeListener {
-    public constructor(arg0?: any) {
+    public constructor(arg0?: boolean) {
         const argCount = arguments.length;
         this.__construct_JeepYeahMode(argCount, arg0);
     }
 
-    private __construct_JeepYeahMode(argCount: number, arg0?: any): void {
+    private __construct_JeepYeahMode(argCount: number, arg0?: boolean): void {
         if (argCount === 1 && typeof arg0 === "boolean") {
             let yeahLocal = arg0;
             this.yeah = yeahLocal;
@@ -87,22 +36,22 @@ export class JeepYeahMode implements IMode, IFadeListener {
     public static readonly SMOKE_VX: number = 0.25;
     public static readonly SMOKE_VY: number = 0.5;
 
-    public main: any = null as any;
-    public gc: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
     public smokeX: number = 0;
     public smokeY: number = 0;
-    public explosion: any = null as any;
-    public leftPlane: any = null as any;
-    public rightPlane: any = null as any;
-    public fireRight: any = null as any;
-    public fireLeft: any = null as any;
-    public bullets: any = new ArrayList<JeepYeahBullet>();
+    public explosion: JeepYeahExplosion = null;
+    public leftPlane: JeepYeahPlane = null;
+    public rightPlane: JeepYeahPlane = null;
+    public fireRight: JeepYeahFireRight = null;
+    public fireLeft: JeepYeahFireLeft = null;
+    public bullets: ArrayList<JeepYeahBullet> = new ArrayList<JeepYeahBullet>();
     public bulletDelay: number = JeepYeahMode.BULLET_DELAY;
     public yeahVisible: number = JeepYeahMode.YEAH_DELAY;
     public yeah: boolean = false;
     public state: number = JeepYeahMode.STATE_FADE_IN;
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
 
@@ -124,7 +73,7 @@ export class JeepYeahMode implements IMode, IFadeListener {
         }
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         if (this.yeahVisible > 0) {
             this.yeahVisible--;
         }
@@ -170,7 +119,7 @@ export class JeepYeahMode implements IMode, IFadeListener {
         }
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 

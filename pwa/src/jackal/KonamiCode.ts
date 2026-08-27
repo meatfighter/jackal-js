@@ -1,57 +1,5 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { IInput } from "./IInput.js";
+import type { Main } from "./Main.js";
 export enum KonamiCodeKeys {
     UP,
     DOWN,
@@ -61,12 +9,12 @@ export enum KonamiCodeKeys {
     GUN
 }
 export class KonamiCode {
-    public constructor(arg0?: any) {
+    public constructor(arg0?: Main) {
         const argCount = arguments.length;
         this.__construct_KonamiCode(argCount, arg0);
     }
 
-    private __construct_KonamiCode(argCount: number, arg0?: any): void {
+    private __construct_KonamiCode(argCount: number, arg0?: Main): void {
         if (argCount === 1) {
             let mainLocal = arg0;
             this.main = mainLocal;
@@ -78,7 +26,7 @@ export class KonamiCode {
 
     // Try the following sequence on the title screen :)
 
-    private static readonly SEQUENCE: any[] = [
+    private static readonly SEQUENCE: KonamiCodeKeys[] = [
         KonamiCodeKeys.UP,
         KonamiCodeKeys.UP,
         KonamiCodeKeys.DOWN,
@@ -93,8 +41,8 @@ export class KonamiCode {
 
     public enabled: boolean = false;
     public keyReleased: boolean = false;
-    public main: any = null as any;
-    public input: any = null as any;
+    public main: Main = null;
+    public input: IInput = null;
     public sequenceIndex: number = 0;
 
     public gettingClose(): boolean {

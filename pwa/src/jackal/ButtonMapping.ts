@@ -1,57 +1,5 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Input } from "slick2d-ts";
+import { Integer } from "../java/JavaRuntime.js";
 export class ButtonMapping {
     public static readonly NO_BINDING: number = -1;
     public static readonly ACTION_UP: number = 0;
@@ -118,11 +66,11 @@ export class ButtonMapping {
         this.gunKeyMapped = true;
     }
 
-    public static isReservedKey(key: any): boolean {
+    public static isReservedKey(key: number): boolean {
         return key == Input.KEY_SPACE || key == Input.KEY_ESCAPE;
     }
 
-    public keyboardLabelFor(action: any): string {
+    public keyboardLabelFor(action: number): string {
         switch (action) {
             case ButtonMapping.ACTION_UP:
                 return ButtonMapping.getKeyText(this.keyUp);
@@ -142,7 +90,7 @@ export class ButtonMapping {
         return "";
     }
 
-    public controllerLabelFor(action: any): string {
+    public controllerLabelFor(action: number): string {
         switch (action) {
             case ButtonMapping.ACTION_UP:
                 return ButtonMapping.getGamepadButtonText(this.controllerUp);
@@ -162,11 +110,11 @@ export class ButtonMapping {
         return "";
     }
 
-    public inputMappingLine(label: any, action: any): string {
+    public inputMappingLine(label: string, action: number): string {
         return ButtonMapping.padLabel(label) + ": " + this.keyboardLabelFor(action) + ", " + this.controllerLabelFor(action);
     }
 
-    public static getKeyText(key: any): string {
+    public static getKeyText(key: number): string {
         if (key == ButtonMapping.NO_BINDING) {
             return "NONE";
         }
@@ -212,7 +160,7 @@ export class ButtonMapping {
         }
     }
 
-    public static getGamepadButtonText(button: any): string {
+    public static getGamepadButtonText(button: number): string {
         if (button == ButtonMapping.NO_BINDING) {
             return "GP-NONE";
         }
@@ -256,11 +204,11 @@ export class ButtonMapping {
         }
     }
 
-    private static padLabel(label: any): string {
+    private static padLabel(label: string): string {
         return label.length >= 8 ? label : label + "        ".substring(label.length);
     }
 
-    private static getLetterKeyText(key: any): string {
+    private static getLetterKeyText(key: number): string {
         switch (key) {
             case Input.KEY_A:
                 return "A";

@@ -4,6 +4,7 @@ import { BossGarage } from "../BossGarage.js";
 import { EnemyBullet } from "../EnemyBullet.js";
 import { FloorGun } from "../FloorGun.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
+import type { Enemy } from "../Enemy.js";
 import type { GameElement } from "../GameElement.js";
 import { GameMode } from "../GameMode.js";
 import { HardEndingMode } from "../HardEndingMode.js";
@@ -18,16 +19,20 @@ import { JeepYeahFireRight } from "../JeepYeahFireRight.js";
 import { JeepYeahMode } from "../JeepYeahMode.js";
 import { JeepYeahPlane } from "../JeepYeahPlane.js";
 import { KonamiCode } from "../KonamiCode.js";
+import type { IFadeListener } from "../IFadeListener.js";
+import type { IMenuListener } from "../IMenuListener.js";
+import type { IMode } from "../IMode.js";
 import { Main } from "../Main.js";
 import { MainRuntimeState } from "../MainRuntimeState.js";
 import { MapMode } from "../MapMode.js";
 import { Menu } from "../Menu.js";
-import { Modes } from "../Modes.js";
+
 import { OptionsMode } from "../OptionsMode.js";
 import { Player } from "../Player.js";
 import { RotatingGun } from "../RotatingGun.js";
 import { StatueMissile } from "../StatueMissile.js";
 import { StatueSeekerMissile } from "../StatueSeekerMissile.js";
+import type { Song } from "../Song.js";
 import { SunsetMode } from "../SunsetMode.js";
 import { TileDebris } from "../TileDebris.js";
 import { ButtonMapping } from "../ButtonMapping.js";
@@ -59,7 +64,6 @@ import {
     type GameElementConstructor,
     type GameElementTypeId
 } from "./GameElementTypeRegistry.js";
-
 type EntityContext = {
     main: Main;
     gameMode: GameMode | null;
@@ -73,11 +77,54 @@ type RestoreContext = {
     gameMode: GameMode | null;
     gc: GameContainer;
     player: Player | null;
-    entitiesById: Map<number, object>;
+    entitiesById: Map<number, GameElement>;
     audioState: AudioStateSnapshot;
 };
 
 type UnknownRecord = Record<string, unknown>;
+
+type MenuMode = object & { menu: Menu | null };
+type ModeRuntimePointers = object & {
+    main: Main;
+    gc: GameContainer;
+    input?: Main["input"];
+    buttonMapping?: ButtonMapping;
+    menu?: Menu | null;
+};
+type InputModeListenerControls = {
+    listeningForInput: boolean;
+    state: number;
+    addInputListeners(): void;
+    removeInputListeners(): void;
+};
+type GameElementRuntimePointers = GameElement &
+    Partial<{
+        solids: ArrayList<Enemy>;
+        enemies: ArrayList<Enemy>;
+        mines: ArrayList<Enemy>;
+        player: Player;
+    }>;
+type PlayerRuntimePointers = {
+    main: Main;
+    gameMode: GameMode;
+    input: Main["input"];
+    mines: ArrayList<Enemy>;
+};
+type JavaRandomState = { seed0: number; seed1: number; seed2: number };
+type EntityPersistenceView = GameElementRuntimePointers & {
+    type: number;
+    sprites: RotatingGun["sprites"];
+    sprite: EnemyBullet["sprite"];
+    mask: FloorGun["mask"];
+    panel: FloorGun["panel"];
+    right: StatueMissile["right"];
+    X: TileDebris["X"];
+    Y: TileDebris["Y"];
+    state: BossGarage["state"];
+    vehicle: BossGarage["vehicle"];
+    isBrownTank: BossGarage["isBrownTank"];
+    [key: string]: unknown;
+};
 
 const MAIN_FIELD_NAMES = [
     "nextFrameTime",
@@ -676,10 +723,10 @@ export class JackalGameStateSerializer {
         gameMode.init(main, gc);
         const player = gameMode.player as Player;
 
-        const entitiesById = new Map<number, object>();
+        const entitiesById = new Map<number, GameElement>();
         for (const entitySnapshot of snapshot.gameMode.entities) {
             const constructor = this.constructorFor(entitySnapshot.type);
-            entitiesById.set(entitySnapshot.id, Object.create(constructor.prototype) as object);
+            entitiesById.set(entitySnapshot.id, Object.create(constructor.prototype) as GameElement);
         }
 
         const context: RestoreContext = {
@@ -729,7 +776,7 @@ export class JackalGameStateSerializer {
             gameMode: null,
             gc,
             player: null,
-            entitiesById: new Map<number, object>(),
+            entitiesById: new Map<number, GameElement>(),
             audioState: snapshot.audioState
         };
 
@@ -775,8 +822,8 @@ export class JackalGameStateSerializer {
     }
 
     private restoreFadeListener(main: Main, mode: object): void {
-        if (main.fading && typeof (mode as any).fadeCompleted === "function") {
-            main.fadeListener = mode;
+        if (main.fading && typeof (mode as { fadeCompleted?: unknown }).fadeCompleted === "function") {
+            main.fadeListener = mode as IFadeListener;
         } else {
             main.fadeListener = null;
         }
@@ -790,7 +837,7 @@ export class JackalGameStateSerializer {
             return "HERE";
         }
         if (mode instanceof JeepYeahMode) {
-            return (mode as any).yeah ? "YEAH" : "WE_MADE_IT";
+            return mode.yeah ? "YEAH" : "WE_MADE_IT";
         }
         if (mode instanceof SunsetMode) {
             return "SUNSET";
@@ -819,7 +866,7 @@ export class JackalGameStateSerializer {
         throw new Error(`Unsupported Jackal mode for game-state save: ${mode.constructor?.name ?? "unknown"}.`);
     }
 
-    private createStandaloneMode(modeId: string): any {
+    private createStandaloneMode(modeId: string): IMode {
         switch (modeId) {
             case "INTRO":
                 return new IntroMode();
@@ -885,7 +932,7 @@ export class JackalGameStateSerializer {
             case "DIFFICULTY":
             case "OPTIONS":
                 return {
-                    menu: this.createMenuSnapshot((mode as any).menu, context)
+                    menu: this.createMenuSnapshot((mode as MenuMode).menu, context)
                 };
             case "INPUT":
                 return {
@@ -920,7 +967,7 @@ export class JackalGameStateSerializer {
     }
 
     private createInputModeExtraSnapshot(mode: InputMode, context: EntityContext): InputModeExtraSnapshot {
-        const mutableMode = mode as any;
+        const mutableMode = mode;
         return {
             menu: this.createMenuSnapshot(mutableMode.menu, context),
             draftButtonMapping: this.createButtonMappingSnapshot(mutableMode.draftButtonMapping, context),
@@ -930,7 +977,7 @@ export class JackalGameStateSerializer {
     }
 
     private createJeepYeahModeExtraSnapshot(mode: JeepYeahMode, context: EntityContext): JeepYeahModeExtraSnapshot {
-        const mutableMode = mode as any;
+        const mutableMode = mode;
         const bullets: EncodedRecord[] = [];
         if (mutableMode.bullets !== null) {
             for (let i = 0; i < mutableMode.bullets.size(); i++) {
@@ -967,7 +1014,7 @@ export class JackalGameStateSerializer {
     }
 
     private restoreModeMenu(mode: object, snapshot: MenuSnapshot | null, context: RestoreContext): void {
-        const mutableMode = mode as any;
+        const mutableMode = mode as MenuMode;
         if (snapshot === null) {
             mutableMode.menu = null;
             return;
@@ -980,7 +1027,7 @@ export class JackalGameStateSerializer {
     }
 
     private restoreInputModeExtraSnapshot(mode: InputMode, snapshot: InputModeExtraSnapshot, context: RestoreContext): void {
-        const mutableMode = mode as any;
+        const mutableMode = mode;
         this.restoreModeMenu(mode, snapshot.menu, context);
         if (snapshot.draftButtonMapping === null) {
             mutableMode.draftButtonMapping = null;
@@ -990,10 +1037,10 @@ export class JackalGameStateSerializer {
         }
         mutableMode.assignedKeys = new Set(snapshot.assignedKeys);
         mutableMode.assignedControllerButtons = new Set(snapshot.assignedControllerButtons);
-        this.restoreInputModeListenerState(mutableMode);
+        this.restoreInputModeListenerState(mutableMode as unknown as InputModeListenerControls);
     }
 
-    private restoreInputModeListenerState(mode: any): void {
+    private restoreInputModeListenerState(mode: InputModeListenerControls): void {
         if (mode.listeningForInput && typeof mode.removeInputListeners === "function") {
             mode.removeInputListeners();
         }
@@ -1004,7 +1051,7 @@ export class JackalGameStateSerializer {
     }
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
-        const mutableMode = mode as any;
+        const mutableMode = mode;
         mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context);
         mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context);
         mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context);
@@ -1028,7 +1075,7 @@ export class JackalGameStateSerializer {
     }
 
     private restoreModeRuntimePointers(mode: object, main: Main, gc: GameContainer): void {
-        const mutableMode = mode as any;
+        const mutableMode = mode as ModeRuntimePointers;
         mutableMode.main = main;
         mutableMode.gc = gc;
         if ("input" in mutableMode) {
@@ -1043,10 +1090,10 @@ export class JackalGameStateSerializer {
     }
 
     private restoreMenuRuntimePointers(menu: Menu, main: Main, listener: object): void {
-        const mutableMenu = menu as any;
+        const mutableMenu = menu;
         mutableMenu.main = main;
         mutableMenu.input = main.input;
-        mutableMenu.menuListener = listener;
+        mutableMenu.menuListener = listener as IMenuListener;
     }
 
     private createEntityContext(main: Main, gameMode: GameMode, player: Player): EntityContext {
@@ -1098,10 +1145,10 @@ export class JackalGameStateSerializer {
         return layers;
     }
 
-    private restoreElementLayers(gameMode: GameMode, layers: number[][], entitiesById: Map<number, object>): void {
+    private restoreElementLayers(gameMode: GameMode, layers: number[][], entitiesById: Map<number, GameElement>): void {
         gameMode.elements = new Array(8);
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
-            const list = new ArrayList<object>(256);
+            const list = new ArrayList<GameElement>(256);
             const ids = layers[layer] ?? [];
             for (const id of ids) {
                 const entity = entitiesById.get(id);
@@ -1115,20 +1162,20 @@ export class JackalGameStateSerializer {
     }
 
     private rebuildGameModeIndexes(gameMode: GameMode): void {
-        gameMode.enemies = new ArrayList<object>(256);
-        gameMode.solids = new ArrayList<object>(256);
-        gameMode.mines = new ArrayList<object>(256);
+        gameMode.enemies = new ArrayList<Enemy>(256);
+        gameMode.solids = new ArrayList<Enemy>(256);
+        gameMode.mines = new ArrayList<Enemy>(256);
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
             const list = gameMode.elements[layer];
             for (let i = 0; i < list.size(); i++) {
-                const entity = list.get(i) as any;
+                const entity = list.get(i);
                 if (entity.enemy) {
-                    gameMode.enemies.add(entity);
-                    if (entity.solid) {
-                        gameMode.solids.add(entity);
+                    gameMode.enemies.add(entity as Enemy);
+                    if ((entity as Enemy).solid) {
+                        gameMode.solids.add(entity as Enemy);
                     }
-                    if (entity.mine) {
-                        gameMode.mines.add(entity);
+                    if ((entity as Enemy).mine) {
+                        gameMode.mines.add(entity as Enemy);
                     }
                 }
             }
@@ -1137,7 +1184,7 @@ export class JackalGameStateSerializer {
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
             const list = gameMode.elements[layer];
             for (let i = 0; i < list.size(); i++) {
-                const entity = list.get(i) as any;
+                const entity = list.get(i) as GameElementRuntimePointers;
                 entity.solids = gameMode.solids;
                 entity.enemies = gameMode.enemies;
                 entity.mines = gameMode.mines;
@@ -1152,15 +1199,15 @@ export class JackalGameStateSerializer {
         gameMode.gc = gc;
         gameMode.input = main.input;
         gameMode.player = player;
-        const mutablePlayer = player as any;
+        const mutablePlayer = player as unknown as PlayerRuntimePointers;
         mutablePlayer.main = main;
         mutablePlayer.gameMode = gameMode;
         mutablePlayer.input = main.input;
         mutablePlayer.mines = gameMode.mines;
     }
 
-    private restoreEntityRuntimePointers(entity: object, main: Main, gameMode: GameMode): void {
-        const mutableEntity = entity as any;
+    private restoreEntityRuntimePointers(entity: GameElement, main: Main, gameMode: GameMode): void {
+        const mutableEntity = entity as GameElementRuntimePointers;
         mutableEntity.main = main;
         mutableEntity.gameMode = gameMode;
         mutableEntity.solids = gameMode.solids;
@@ -1171,19 +1218,19 @@ export class JackalGameStateSerializer {
         this.clearEntityRuntimeFields(mutableEntity);
     }
 
-    private encodeEntityRuntimeFields(entity: object, fields: EncodedRecord, context: EntityContext): void {
-        const mutableEntity = entity as any;
+    private encodeEntityRuntimeFields(entity: GameElement, fields: EncodedRecord, context: EntityContext): void {
+        const mutableEntity = entity as unknown as EntityPersistenceView;
         if (entity instanceof EnemyBullet) {
             fields[RUNTIME_ENEMY_BULLET_SPRITE_FIELD] = this.enemyBulletSpriteId(mutableEntity.sprite, context.main);
         } else if (entity instanceof FloorGun) {
-            fields[RUNTIME_FLOOR_GUN_PLAIN_FIELD] = this.floorGunUsesPlainSprites(mutableEntity, context.main);
+            fields[RUNTIME_FLOOR_GUN_PLAIN_FIELD] = this.floorGunUsesPlainSprites(mutableEntity as unknown as FloorGun, context.main);
         } else if (entity instanceof TileDebris) {
             fields[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD] = this.indexOfReference(context.gameMode.tiles, mutableEntity.sprite, "TileDebris sprite");
         }
     }
 
-    private restoreEntityRuntimeImages(entity: any, main: Main, gameMode: GameMode): void {
-        const mutableEntity = entity as any;
+    private restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: GameMode): void {
+        const mutableEntity = entity as unknown as EntityPersistenceView;
         if (entity instanceof RotatingGun) {
             switch (mutableEntity.type) {
                 case RotatingGun.TYPE_GREEN:
@@ -1208,8 +1255,8 @@ export class JackalGameStateSerializer {
             mutableEntity.sprite = main.statueMissiles[0];
         } else if (entity instanceof TileDebris) {
             const tile = mutableEntity[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD];
-            if (Number.isInteger(tile) && tile >= 0 && tile < gameMode.tiles.length) {
-                mutableEntity.sprite = gameMode.tiles[tile];
+            if (Number.isInteger(tile) && (tile as number) >= 0 && (tile as number) < gameMode.tiles.length) {
+                mutableEntity.sprite = gameMode.tiles[tile as number];
             } else {
                 mutableEntity.sprite = gameMode.tiles[gameMode.tileMap[mutableEntity.Y][mutableEntity.X]];
             }
@@ -1222,10 +1269,10 @@ export class JackalGameStateSerializer {
         }
     }
 
-    private clearEntityRuntimeFields(entity: any): void {
-        delete entity[RUNTIME_ENEMY_BULLET_SPRITE_FIELD];
-        delete entity[RUNTIME_FLOOR_GUN_PLAIN_FIELD];
-        delete entity[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD];
+    private clearEntityRuntimeFields(entity: GameElement): void {
+        delete (entity as unknown as Record<string, unknown>)[RUNTIME_ENEMY_BULLET_SPRITE_FIELD];
+        delete (entity as unknown as Record<string, unknown>)[RUNTIME_FLOOR_GUN_PLAIN_FIELD];
+        delete (entity as unknown as Record<string, unknown>)[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD];
     }
 
     private enemyBulletSpriteId(sprite: unknown, main: Main): string {
@@ -1241,7 +1288,7 @@ export class JackalGameStateSerializer {
         throw new Error("Unable to identify EnemyBullet sprite for game-state save.");
     }
 
-    private enemyBulletSpriteById(main: Main, id: unknown): unknown {
+    private enemyBulletSpriteById(main: Main, id: unknown): Main["cannonball"] {
         switch (id) {
             case ENEMY_BULLET_SPRITE_CANNONBALL:
                 return main.cannonball;
@@ -1254,7 +1301,7 @@ export class JackalGameStateSerializer {
         }
     }
 
-    private floorGunUsesPlainSprites(entity: any, main: Main): boolean {
+    private floorGunUsesPlainSprites(entity: FloorGun, main: Main): boolean {
         if (entity.mask === main.plainFloorGuns[0] && entity.panel === main.plainFloorGuns[1]) {
             return true;
         }
@@ -1276,7 +1323,7 @@ export class JackalGameStateSerializer {
     private encodeNamedFields(source: object, names: string[], context: EntityContext): EncodedRecord {
         const record: EncodedRecord = {};
         for (const name of names) {
-            record[name] = this.encodeValue(source[name], context);
+            record[name] = this.encodeValue((source as Record<string, unknown>)[name], context);
         }
         return record;
     }
@@ -1287,7 +1334,7 @@ export class JackalGameStateSerializer {
             if (SKIPPED_INSTANCE_FIELDS.has(key)) {
                 continue;
             }
-            const value = source[key];
+            const value = (source as Record<string, unknown>)[key];
             if (typeof value === "function" || typeof value === "undefined") {
                 continue;
             }
@@ -1346,7 +1393,7 @@ export class JackalGameStateSerializer {
 
     private decodeFieldsInto(target: object, fields: EncodedRecord, context: RestoreContext): void {
         for (const [key, value] of Object.entries(fields)) {
-            target[key] = this.decodeValue(value, context);
+            (target as Record<string, unknown>)[key] = this.decodeValue(value, context);
         }
     }
 
@@ -1398,15 +1445,15 @@ export class JackalGameStateSerializer {
 
     private snapshotRandom(random: Random): RandomSnapshot {
         return {
-            seed0: (random as any).seed0,
-            seed1: (random as any).seed1,
-            seed2: (random as any).seed2
+            seed0: (random as unknown as JavaRandomState).seed0,
+            seed1: (random as unknown as JavaRandomState).seed1,
+            seed2: (random as unknown as JavaRandomState).seed2
         };
     }
 
     private restoreRandom(snapshot: RandomSnapshot): Random {
         const random = Object.create(Random.prototype) as Random;
-        const mutableRandom = random as any;
+        const mutableRandom = random as unknown as JavaRandomState;
         mutableRandom.seed0 = snapshot.seed0;
         mutableRandom.seed1 = snapshot.seed1;
         mutableRandom.seed2 = snapshot.seed2;
@@ -1421,25 +1468,26 @@ export class JackalGameStateSerializer {
         return constructor;
     }
 
-    private songIdFor(main: Main, song: unknown): string | null {
+    private songIdFor(main: Main, song: Song | null): string | null {
         if (song === null) {
             return null;
         }
+        const songs = main as unknown as Record<string, Song | null | undefined>;
         for (const id of SONG_IDS) {
-            if (main[id] === song) {
+            if (songs[id] === song) {
                 return id;
             }
         }
         return null;
     }
 
-    private createSongSnapshot(main: Main, song: unknown): JackalGameStateSnapshot["currentSongState"] {
+    private createSongSnapshot(main: Main, song: Song | null): JackalGameStateSnapshot["currentSongState"] {
         const id = this.songIdFor(main, song);
         if (id === null) {
             return null;
         }
 
-        const songValue = song as any;
+        const songValue = song;
         return {
             id,
             playing: Boolean(songValue.playing),
@@ -1448,7 +1496,7 @@ export class JackalGameStateSerializer {
         };
     }
 
-    private captureActiveSongMusic(main: Main, song: any): MusicSnapshot | null {
+    private captureActiveSongMusic(main: Main, song: Song): MusicSnapshot | null {
         const intro = song.intro as Music | null;
         if (intro !== null && this.isMusicActiveForSnapshot(intro)) {
             return this.captureMusic(main, intro);
@@ -1503,7 +1551,7 @@ export class JackalGameStateSerializer {
             return;
         }
 
-        const song = currentSong as any;
+        const song = currentSong;
         song.playing = currentSongState.playing;
         song.playedIntro2 = currentSongState.playedIntro2;
         if (currentSongState.activeMusic !== null && currentSongState.playing) {
@@ -1513,11 +1561,11 @@ export class JackalGameStateSerializer {
         }
     }
 
-    private songById(main: Main, id: string | null): unknown {
+    private songById(main: Main, id: string | null): Song | null {
         if (id === null) {
             return null;
         }
-        return main[id] ?? null;
+        return (main as unknown as Record<string, Song | null | undefined>)[id] ?? null;
     }
 
     private musicIdForMusic(main: Main, music: Music | null): string | null {
@@ -1526,7 +1574,7 @@ export class JackalGameStateSerializer {
         }
 
         for (const songId of SONG_IDS) {
-            const song = main[songId] as any;
+            const song = (main as unknown as Record<string, Song | null | undefined>)[songId];
             if (song === null || typeof song === "undefined") {
                 continue;
             }
@@ -1554,7 +1602,7 @@ export class JackalGameStateSerializer {
             return null;
         }
 
-        const song = this.songById(main, id.substring(0, dot)) as any;
+        const song = this.songById(main, id.substring(0, dot));
         if (song === null) {
             return null;
         }

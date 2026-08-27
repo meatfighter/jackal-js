@@ -1,57 +1,3 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
@@ -60,20 +6,23 @@ export class Airplane extends Enemy {
     declare public up: boolean;
     declare public orientationIndex: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.bombDelay = 0;
         this.up = false;
         this.orientationIndex = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(leftLandingPort: boolean);
+    public constructor(x: number, y: number, up: boolean);
+    public constructor(x: number, y: number);
+    public constructor(arg0?: boolean | number, arg1?: number, arg2?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_Airplane(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_Airplane(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_Airplane(argCount: number, arg0?: boolean | number, arg1?: number, arg2?: boolean): void {
         if (argCount === 1 && typeof arg0 === "boolean") {
             let leftLandingPort = arg0;
             this.x = this.gameMode.player.x + (leftLandingPort ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
@@ -108,7 +57,7 @@ export class Airplane extends Enemy {
     public static readonly BOMB_DELAY: number = 68;
     public static readonly APPEAR_DISTANCE: number = 192;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 7;
@@ -121,7 +70,7 @@ export class Airplane extends Enemy {
         this.points = 1000;
     }
 
-    public remove(): void {
+    public override remove(): void {
         this.removeFlag = true;
         if (this.playSoundOnRemove) {
             this.main.playHitExplodeSound();
@@ -149,12 +98,12 @@ export class Airplane extends Enemy {
     }
 
     // returns true if player bumped into the enemy
-    public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
+    public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
         return false;
     }
 
     // returns true if player bullet was absorbed by enemy
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         return false;
     }
 

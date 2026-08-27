@@ -1,62 +1,12 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type GameContainer, type Graphics } from "slick2d-ts";
+import { javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMode } from "./IMode.js";
 import { Modes } from "./Modes.js";
 import { Player } from "./Player.js";
+import type { IInput } from "./IInput.js";
+import type { Main } from "./Main.js";
 export class HardEndingMode implements IMode, IFadeListener {
     public static readonly STATE_TYPING: number = 0;
     public static readonly STATE_PAUSED: number = 1;
@@ -69,7 +19,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     public static readonly STATE_FINAL_SCORE_FADE_OUT: number = 8;
     public static readonly STATE_DONE: number = 9;
 
-    public static readonly CARDS: any[] = [
+    public static readonly CARDS: string[][] = [
         [
             "Congratulations!!!",
             "",
@@ -117,9 +67,9 @@ export class HardEndingMode implements IMode, IFadeListener {
         ]
     ];
 
-    public static readonly NAMES: any[] = ["Sergeant Quint (Driver)", "Lieutenant Bob (Gunner)", "Corporal Grey (Driver)", "Colonel Decker (Gunner)"];
+    public static readonly NAMES: string[] = ["Sergeant Quint (Driver)", "Lieutenant Bob (Gunner)", "Corporal Grey (Driver)", "Colonel Decker (Gunner)"];
 
-    public static readonly NAME_INFOS: any[] = [
+    public static readonly NAME_INFOS: number[][] = [
         [2, HardEndingMode.computeCenter(0)],
         [1, HardEndingMode.computeCenter(1)],
         [3, HardEndingMode.computeCenter(2)],
@@ -128,7 +78,7 @@ export class HardEndingMode implements IMode, IFadeListener {
 
     public static readonly CARD0_Y: number = (MainConstants.DISPLAY_HEIGHT - (((HardEndingMode.CARDS[0].length << 1) - 1) << 5)) >> 1;
 
-    public static readonly CREDITS: any[] = [
+    public static readonly CREDITS: string[] = [
         "programmed by",
         "michael birken",
         "",
@@ -193,26 +143,26 @@ export class HardEndingMode implements IMode, IFadeListener {
 
     public static readonly CREDITS_SPEED: number = (MainConstants.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / javaFloat(HardEndingMode.CREDITS_TIME);
 
-    public finalScore: string = null as any;
+    public finalScore: string = null;
     public finalScoreX: number = 0;
 
-    public main: any = null as any;
-    public gc: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
     public state: number = HardEndingMode.STATE_TYPING;
     public lineIndex: number = 0;
     public lineLength: number = 0;
     public cardIndex: number = 0;
     public delay: number = HardEndingMode.TYPE_DELAY;
     public creditsY: number = MainConstants.DISPLAY_HEIGHT;
-    public input: any = null as any;
+    public input: IInput = null;
     public jeepX: number = -50;
     public rumble: number = 0;
 
-    private static computeCenter(index: any): number {
+    private static computeCenter(index: number): number {
         return (MainConstants.DISPLAY_WIDTH - (HardEndingMode.NAMES[index].length << 5)) >> 1;
     }
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
         this.input = main.input;
@@ -290,7 +240,7 @@ export class HardEndingMode implements IMode, IFadeListener {
         }
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         switch (this.state) {
             case HardEndingMode.STATE_TYPING:
                 this.updateTyping();
@@ -310,7 +260,7 @@ export class HardEndingMode implements IMode, IFadeListener {
         }
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 

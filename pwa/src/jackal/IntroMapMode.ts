@@ -1,61 +1,10 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type GameContainer, type Graphics } from "slick2d-ts";
+
 import { MainConstants } from "../java/MainConstants.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMode } from "./IMode.js";
 import { Modes } from "./Modes.js";
+import type { Main } from "./Main.js";
 export class IntroMapMode implements IMode, IFadeListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_PAUSED: number = 1;
@@ -64,12 +13,12 @@ export class IntroMapMode implements IMode, IFadeListener {
 
     public static readonly PAUSE_DELAY: number = 250;
 
-    public main: any = null as any;
-    public gc: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
     public delay: number = IntroMapMode.PAUSE_DELAY;
     public state: number = IntroMapMode.STATE_FADE_IN;
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
 
@@ -87,14 +36,14 @@ export class IntroMapMode implements IMode, IFadeListener {
         }
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         if (this.state == IntroMapMode.STATE_PAUSED && --this.delay == 0) {
             this.state = IntroMapMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 

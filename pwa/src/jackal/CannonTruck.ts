@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 export class CannonTruck extends Enemy {
@@ -60,7 +7,7 @@ export class CannonTruck extends Enemy {
     declare public fires: number;
     declare public ready: boolean;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.directionIndex = 0;
         this.right = false;
@@ -70,13 +17,13 @@ export class CannonTruck extends Enemy {
         this.ready = false;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_CannonTruck(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_CannonTruck(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_CannonTruck(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -107,7 +54,7 @@ export class CannonTruck extends Enemy {
     public static readonly BULLET_SPEED: number = 2;
     public static readonly BULLET_ANGLE: number = javaFloat((10 * Math.PI) / 180);
 
-    public static readonly DIRS: any[] = [
+    public static readonly DIRS: number[][][] = [
         [[javaFloat(CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4)), javaFloat(CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4))]],
         [
             [
@@ -134,7 +81,7 @@ export class CannonTruck extends Enemy {
     public state: number = CannonTruck.STATE_SLEEPING;
     public delay: number = 1;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 3;

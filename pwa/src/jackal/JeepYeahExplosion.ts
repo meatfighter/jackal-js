@@ -1,64 +1,13 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { ArrayList } from "../java/JavaRuntime.js";
+import type { Enemy } from "./Enemy.js";
+import type { Main } from "./Main.js";
 export class JeepYeahExplosion {
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         const argCount = arguments.length;
         this.__construct_JeepYeahExplosion(argCount, arg0, arg1);
     }
 
-    private __construct_JeepYeahExplosion(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_JeepYeahExplosion(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -76,38 +25,38 @@ export class JeepYeahExplosion {
     public scale: number = 0;
     public grenadeExplosion: boolean = false;
     public damagesEnemies: boolean = true;
-    public enemies: any = null as any;
+    public enemies: ArrayList<Enemy> = null;
     public type: number = 0;
     public tiny: boolean = false;
     public delay: number = 0;
     public alpha: number = 1;
     public enemyX: number = 0;
     public enemyY: number = 0;
-    public enemy: any = null as any;
+    public enemy: Enemy = null;
     public x: number = 0;
     public y: number = 0;
     public remove: boolean = false;
 
-    public setAlpha(alpha: any): void {
+    public setAlpha(alpha: number): void {
         this.alpha = alpha;
     }
 
-    public setTiny(tiny: any): void {
+    public setTiny(tiny: boolean): void {
         this.tiny = tiny;
         if (tiny) {
             this.setDamagesEnemies(false);
         }
     }
 
-    public setDelayed(delay: any): void {
+    public setDelayed(delay: number): void {
         this.delay = delay;
     }
 
-    public setDamagesEnemies(damagesEnemies: any): void {
+    public setDamagesEnemies(damagesEnemies: boolean): void {
         this.damagesEnemies = damagesEnemies;
     }
 
-    public setGrenadeExplosion(grenadeExplosion: any): void {
+    public setGrenadeExplosion(grenadeExplosion: boolean): void {
         this.grenadeExplosion = grenadeExplosion;
     }
 
@@ -141,7 +90,7 @@ export class JeepYeahExplosion {
         }
     }
 
-    public render(main: any): void {
+    public render(main: Main): void {
         if (this.alpha == 1) {
             main.drawScaled(main.explosions[this.spriteIndex], this.x, this.y, this.scale);
         } else {

@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
@@ -80,7 +27,7 @@ export class BossBlueTank extends Enemy {
     declare public introDelay: number;
     declare public bossBlueTanksManager: BossBlueTanksManager | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
         this.shootCount = 0;
@@ -108,13 +55,13 @@ export class BossBlueTank extends Enemy {
         this.bossBlueTanksManager = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: BossBlueTanksManager) {
         super();
         const argCount = arguments.length;
         this.__construct_BossBlueTank(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_BossBlueTank(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_BossBlueTank(argCount: number, arg0?: number, arg1?: number, arg2?: BossBlueTanksManager): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -161,7 +108,7 @@ export class BossBlueTank extends Enemy {
     public targetAngle: number = 90;
     public displayAngle: number = 90;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -252,7 +199,7 @@ export class BossBlueTank extends Enemy {
         this.moveSteps = javaRoundFloat(d / BossBlueTank.SPEED);
     }
 
-    private testCorners(nextX: any, nextY: any): void {
+    private testCorners(nextX: number, nextY: number): void {
         let sx1 = 0;
         let sy1 = 0;
         let sx2 = 0;
@@ -510,7 +457,7 @@ export class BossBlueTank extends Enemy {
         }
     }
 
-    public remove(): void {
+    public override remove(): void {
         this.removeFlag = true;
         this.main.playHitExplodeSound();
         this.bossBlueTanksManager.blueTankDestroyed();
@@ -528,7 +475,7 @@ export class BossBlueTank extends Enemy {
     }
 
     // returns true if attack successful
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             if (this.colorOffset == 0) {
                 this.main.playHitExplodeSound();
@@ -540,7 +487,7 @@ export class BossBlueTank extends Enemy {
     }
 
     // returns true if player bullet was absorbed by enemy
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.hit(x1, y1, x2, y2)) {
             if (--this.bulletHits == 0) {
                 this.attacked();
@@ -554,7 +501,7 @@ export class BossBlueTank extends Enemy {
     }
 
     // returns true if player bumped into the enemy
-    public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
+    public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
         if (invincible) {
             return false;
         }

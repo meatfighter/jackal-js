@@ -1,75 +1,34 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
+import type { IInput } from "./IInput.js";
+import type { IMenuListener } from "./IMenuListener.js";
+import type { Main } from "./Main.js";
 export class Menu {
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any, arg8?: any) {
+    public constructor(
+        arg0?: number,
+        arg1?: number,
+        arg2?: Main,
+        arg3?: number,
+        arg4?: number,
+        arg5?: IMenuListener,
+        arg6?: string,
+        arg7?: string,
+        arg8?: string
+    ) {
         const argCount = arguments.length;
         this.__construct_Menu(argCount, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
 
     private __construct_Menu(
         argCount: number,
-        arg0?: any,
-        arg1?: any,
-        arg2?: any,
-        arg3?: any,
-        arg4?: any,
-        arg5?: any,
-        arg6?: any,
-        arg7?: any,
-        arg8?: any
+        arg0?: number,
+        arg1?: number,
+        arg2?: Main,
+        arg3?: number,
+        arg4?: number,
+        arg5?: IMenuListener,
+        arg6?: string,
+        arg7?: string,
+        arg8?: string
     ): void {
         if (argCount >= 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
             let xLocal = arg0;
@@ -111,14 +70,14 @@ export class Menu {
 
     private static readonly I_SELECT_TIME2: number = 1 / (Menu.SELECT_TIME * Menu.SELECT_TIME);
 
-    public main: any = null as any;
-    public options: any[] = null as any;
-    public input: any = null as any;
+    public main: Main = null;
+    public options: string[] = null;
+    public input: IInput = null;
     public x: number = 0;
     public y: number = 0;
     public iconY: number = 0;
     public selectedIndex: number = 0;
-    public menuListener: any = null as any;
+    public menuListener: IMenuListener = null;
     public icon: number = 0;
     public buttonReleased: boolean = false;
     public selectState: number = Menu.SELECT_STATE_STATIONARY;
@@ -134,7 +93,7 @@ export class Menu {
         this.konamiCodeTest = true;
     }
 
-    public setInputEnabled(inputEnabled: any): void {
+    public setInputEnabled(inputEnabled: boolean): void {
         this.inputEnabled = inputEnabled;
     }
 

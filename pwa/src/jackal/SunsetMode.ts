@@ -1,61 +1,11 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type GameContainer, type Graphics } from "slick2d-ts";
+import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMode } from "./IMode.js";
 import { Modes } from "./Modes.js";
+import type { IInput } from "./IInput.js";
+import type { Main } from "./Main.js";
 export class SunsetMode implements IMode, IFadeListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_PAUSED_1: number = 1;
@@ -100,7 +50,7 @@ export class SunsetMode implements IMode, IFadeListener {
     public static readonly SUN_WAVES: number = 3;
     public static readonly WAVES_HEIGHT: number = 32;
 
-    public static readonly sunOffsets: any[] = javaArray(SunsetMode.SUN_HEIGHT, 0);
+    public static readonly sunOffsets: number[] = javaArray(SunsetMode.SUN_HEIGHT, 0);
 
     static {
         let PERCENT = javaFloat((SunsetMode.SUN_WAVES * 2 * Math.PI) / SunsetMode.SUN_HEIGHT);
@@ -110,7 +60,7 @@ export class SunsetMode implements IMode, IFadeListener {
         }
     }
 
-    public readonly credits: any[] = [
+    public readonly credits: string[][] = [
         ["programmed by", "michael birken"],
 
         ["inspired by", '`jackal" for the', "nintendo", "entertainment system and the", "brilliant works of konami"],
@@ -130,8 +80,8 @@ export class SunsetMode implements IMode, IFadeListener {
         ["final score: ", "", "  press start for", "  hard mode..."]
     ];
 
-    public main: any = null as any;
-    public gc: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
     public sunOffset: number = 0;
     public sunOffsetCounter: number = 0;
     public rotorAngle: number = 0;
@@ -145,9 +95,9 @@ export class SunsetMode implements IMode, IFadeListener {
     public creditsIndex: number = 0;
     public lineIndex: number = 0;
     public lineLength: number = 0;
-    public input: any = null as any;
+    public input: IInput = null;
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
         this.input = main.input;
@@ -157,7 +107,7 @@ export class SunsetMode implements IMode, IFadeListener {
         main.startFade(false, this);
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         switch (this.state) {
             case SunsetMode.STATE_PAUSED_1:
                 if (--this.delay == 0) {
@@ -248,7 +198,7 @@ export class SunsetMode implements IMode, IFadeListener {
         }
     }
 
-    private drawHelicopter(alpha: any): void {
+    private drawHelicopter(alpha: number): void {
         let k = SunsetMode.Z0 / (SunsetMode.Z0 - this.helicopterZ);
         this.main.rotateGraphics(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
         this.main.scaleGraphics(0, -40, 1, 0.2);
@@ -261,7 +211,7 @@ export class SunsetMode implements IMode, IFadeListener {
         this.main.popGraphics();
     }
 
-    private drawHelicopterShaded(shade: any): void {
+    private drawHelicopterShaded(shade: number): void {
         let k = SunsetMode.Z0 / (SunsetMode.Z0 - this.helicopterZ);
         this.main.rotateGraphics(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
         this.main.scaleGraphics(0, -40, 1, 0.2);
@@ -277,7 +227,7 @@ export class SunsetMode implements IMode, IFadeListener {
         this.main.popGraphics();
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         if (this.state == SunsetMode.STATE_HARD_MODE_WAITING) {
             g.setColor(Color.black);
             g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);

@@ -1,63 +1,13 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type GameContainer, type Graphics } from "slick2d-ts";
+
 import { MainConstants } from "../java/MainConstants.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMenuListener } from "./IMenuListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMenuListener } from "./IMenuListener.js";
+import type { IMode } from "./IMode.js";
 import { Menu } from "./Menu.js";
 import { Modes } from "./Modes.js";
+import type { IInput } from "./IInput.js";
+import type { Main } from "./Main.js";
 export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_EXPLOSION: number = 1;
@@ -72,7 +22,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_OUT: number = 10;
     public static readonly STATE_DONE: number = 11;
 
-    public static readonly STORY: any[] = [
+    public static readonly STORY: string[] = [
         "Your brothers-in-arms are",
         "hostages behind enemy",
         "lines, and you're their",
@@ -87,13 +37,13 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         "ferocity of a wild jackal."
     ];
 
-    public static readonly NAMES: any[] = [
+    public static readonly NAMES: string[][] = [
         ["Colonel", "Decker", "Lieut.", "Bob"],
 
         ["Sgt.", "Quint", "Corporal", "Grey"]
     ];
 
-    public static readonly NAME_XYS: any[] = [
+    public static readonly NAME_XYS: number[][] = [
         [528, 128],
         [624, 192],
         [240, 640],
@@ -127,9 +77,9 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly I_SCROLL_DELAY: number = 1 / IntroMode.SCROLL_DELAY;
     public static readonly I_ENTER_DELAY: number = 1 / IntroMode.ENTER_DELAY;
 
-    public main: any = null as any;
-    public gc: any = null as any;
-    public input: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
+    public input: IInput = null;
     public state: number = IntroMode.STATE_FADE_IN;
     public delay: number = IntroMode.TITLE_DELAY;
     public scrollOffsetX: number = 0;
@@ -138,11 +88,11 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public namesIndex: number = 0;
     public nameLength: number = 0;
     public soldierSet: number = 0;
-    public menu: any = null as any;
+    public menu: Menu = null;
     public selectionMade: boolean = false;
     public selectedIndex: number = 0;
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
         this.input = main.input;
@@ -184,7 +134,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         }
     }
 
-    private startSolidersEnter(set: any): void {
+    private startSolidersEnter(set: number): void {
         this.soldierSet = set;
         this.state = IntroMode.STATE_SOLDIERS_ENTER;
         this.delay = IntroMode.ENTER_DELAY;
@@ -272,13 +222,13 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         }
     }
 
-    public selectionChanged(selectedIndex: any): void {
+    public selectionChanged(selectedIndex: number): void {
         if (this.state == IntroMode.STATE_TITLE) {
             this.delay = IntroMode.TITLE_DELAY;
         }
     }
 
-    public optionSelected(selectedIndex: any): void {
+    public optionSelected(selectedIndex: number): void {
         this.selectionMade = true;
         this.selectedIndex = selectedIndex;
         if (this.state == IntroMode.STATE_TITLE) {
@@ -298,7 +248,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         );
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         switch (this.state) {
             case IntroMode.STATE_FADE_IN:
             case IntroMode.STATE_TITLE:
@@ -345,12 +295,12 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         }
     }
 
-    private renderBlankScreen(gc: any, g: any): void {
+    private renderBlankScreen(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
     }
 
-    private renderTitleAndStory(gc: any, g: any): void {
+    private renderTitleAndStory(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
@@ -374,7 +324,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         }
     }
 
-    private renderSoldiers(gc: any, g: any): void {
+    private renderSoldiers(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
@@ -383,7 +333,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         this.main.soldiers[offset + 1].draw(this.lowerSolderX, IntroMode.LOWER_SOLDIER_Y);
     }
 
-    private renderTyping(gc: any, g: any): void {
+    private renderTyping(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
@@ -405,7 +355,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         }
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         switch (this.state) {
             case IntroMode.STATE_FADE_IN:
             case IntroMode.STATE_EXPLOSION:

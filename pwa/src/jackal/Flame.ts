@@ -1,76 +1,23 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export class Flame extends GameElement {
     declare public spriteCounter: number;
     declare public spriteIndex: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.spriteCounter = 0;
         this.spriteIndex = 0;
         this.delay = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_Flame(argCount, arg0, arg1);
     }
 
-    private __construct_Flame(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_Flame(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -83,7 +30,7 @@ export class Flame extends GameElement {
 
     public static readonly TIME_TO_LIVE: number = 1 * 91;
 
-    public static readonly ALPHAS: any[] = javaArray(Flame.TIME_TO_LIVE, 0);
+    public static readonly ALPHAS: number[] = javaArray(Flame.TIME_TO_LIVE, 0);
 
     static {
         for (let i = 0; i < Flame.TIME_TO_LIVE; i++) {

@@ -1,27 +1,23 @@
 import {
-    AppGameContainer,
     ApplicationGameContainer,
     BasicGame,
     BufferUtils,
     Color,
-    Cursor,
     CursorLoader,
-    Display,
-    GameContainer,
     GL11,
-    Graphics,
     Image,
-    Input,
     Log,
     Music,
     Mouse,
     ResourceLoader,
     ScalableGame,
-    SlickException,
     Sound,
-    SoundStore,
     Sys,
-    XMLPackedSheet
+    XMLPackedSheet,
+    type AppGameContainer,
+    type Cursor,
+    type GameContainer,
+    type Graphics
 } from "slick2d-ts";
 import {
     ArrayList,
@@ -40,32 +36,22 @@ import {
     Random,
     System,
     java2DArray,
-    java3DArray,
-    java4DArray,
     javaArray,
     javaByte,
-    javaChar,
-    javaDouble,
     javaFloat,
     javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
+    javaIntDiv
 } from "../java/JavaRuntime.js";
-import { BossHelicopter } from "./BossHelicopter.js";
-import { BossSuperTankGun } from "./BossSuperTankGun.js";
+
 import { ButtonMapping } from "./ButtonMapping.js";
-import { CliffGun } from "./CliffGun.js";
+
 import { ContinueMode } from "./ContinueMode.js";
 import { DifficultyMode } from "./DifficultyMode.js";
 import { ExtraLargeImage } from "./ExtraLargeImage.js";
-import { Flame } from "./Flame.js";
-import { FriendlyHelicopter } from "./FriendlyHelicopter.js";
+
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { GameMode } from "./GameMode.js";
-import { GrayJeep } from "./GrayJeep.js";
+
 import { HardEndingMode } from "./HardEndingMode.js";
 import { HumanInput } from "./HumanInput.js";
 import { InputMode } from "./InputMode.js";
@@ -79,12 +65,26 @@ import { MapMode } from "./MapMode.js";
 import { MainRuntimeState } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { OptionsMode } from "./OptionsMode.js";
-import { RotatingGun } from "./RotatingGun.js";
+
 import { Song } from "./Song.js";
 import { Stage } from "./Stage.js";
 import { SunsetMode } from "./SunsetMode.js";
-import { SuperFire } from "./SuperFire.js";
+
 import { Triggers } from "./Triggers.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IInput } from "./IInput.js";
+import type { IMode } from "./IMode.js";
+interface WindowedDisplayMode {
+    width: number;
+    height: number;
+}
+
+interface BrowserFullscreenController {
+    isFullscreen(): boolean;
+    enterFullscreen(): void;
+    exitFullscreen(): void;
+}
+
 /*
  * Jackal
  * Copyright (C) 2013 meatfighter.com
@@ -134,9 +134,9 @@ export class Main extends BasicGame {
 
     public static readonly CHARS: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'-0123456789©!:()&`\" ";
 
-    public static readonly TILES: any[] = [218, 235, 273, 233, 328, 330];
+    public static readonly TILES: number[] = [218, 235, 273, 233, 328, 330];
 
-    public static readonly FADES: any[] = javaArray(23, null);
+    public static readonly FADES: Color[] = javaArray(23, null);
 
     static {
         for (let i = 0; i < Main.FADES.length; i++) {
@@ -144,28 +144,28 @@ export class Main extends BasicGame {
         }
     }
 
-    public static mainInstance: any = null as any;
-    public static gameMode: any = null as any;
+    public static mainInstance: Main = null;
+    public static gameMode: GameMode = null;
 
-    public random: any = new Random();
-    public buttonMapping: any = new ButtonMapping();
+    public random: Random = new Random();
+    public buttonMapping: ButtonMapping = new ButtonMapping();
     public nextFrameTime: number = 0;
-    public mode: any = null as any;
-    public input: any = null as any;
-    public nativeCursor: any = null as any;
-    public currentSong: any = null as any;
-    public requestedSong: any = null as any;
+    public mode: IMode = null;
+    public input: IInput = null;
+    public nativeCursor: Cursor = null;
+    public currentSong: Song = null;
+    public requestedSong: Song = null;
     public loadIndex: number = 0;
 
-    public fadeListener: any = null as any;
+    public fadeListener: IFadeListener = null;
     public fading: boolean = false;
     public fadeIndex: number = 0;
     public fadeOut: boolean = false;
 
     public extraLives: number = 0;
-    public extraLivesStr: string = null as any;
+    public extraLivesStr: string = null;
     public score: number = 0;
-    public scoreStr: string = null as any;
+    public scoreStr: string = null;
     public stageIndex: number = 0;
     public hasMissiles: boolean = false;
     public missilePower: number = 0;
@@ -176,156 +176,156 @@ export class Main extends BasicGame {
     public controllerGrenadePressed: boolean = false;
     public controllerGunPressed: boolean = false;
 
-    public stages: any[] = javaArray(6, null);
+    public stages: Stage[] = javaArray(6, null);
 
-    public players: any[] = java2DArray(4, 5, null);
-    public explosions: any[] = javaArray(4, null);
-    public grenade: any = null as any;
-    public playerMissile: any = null as any;
-    public yellowBullet: any = null as any;
-    public whiteBullet: any = null as any;
-    public bulletHit: any = null as any;
-    public grayGuns: any[] = javaArray(2, null);
-    public enemySoldiers: any[] = java2DArray(2, 8, null);
-    public swampSoldiers: any[] = java2DArray(2, 8, null);
-    public deadEnemySoldier: any = null as any;
-    public brownTanks: any[] = javaArray(5, null);
-    public friendlySoldiers: any[] = java2DArray(4, 12, null);
-    public help: any = null as any;
-    public greenBoats: any[] = javaArray(2, null);
-    public stars: any[] = javaArray(4, null);
-    public friendlyHelicopters: any[] = javaArray(4, null);
-    public lamps: any[] = javaArray(4, null);
-    public bossBlueTanks: any[] = java2DArray(4, 5, null);
-    public fonts: any[] = java2DArray(4, 256, null);
-    public statueBlueEyes: any = null as any;
-    public statueBlueMouth: any = null as any;
-    public statueWhiteEyes: any = null as any;
-    public statueWhiteMouth: any = null as any;
-    public statueMissiles: any[] = javaArray(2, null);
-    public airplanes: any[] = java2DArray(2, 2, null);
-    public bomb: any = null as any;
-    public grayJeeps: any[] = javaArray(5, null);
-    public grayTanks: any[] = javaArray(5, null);
-    public cannonball: any = null as any;
-    public columns: any[] = javaArray(2, null);
-    public parkedGrayJeep: any = null as any;
-    public grayBoats: any[] = javaArray(3, null);
-    public submarines: any[] = javaArray(4, null);
-    public lasers: any[] = javaArray(6, null);
-    public troopsTruck: any = null as any;
-    public floorGuns: any[] = javaArray(8, null);
-    public shipGuns: any[] = javaArray(3, null);
-    public plainFloorGuns: any[] = javaArray(2, null);
-    public playerWakes: any[] = javaArray(6, null);
-    public swampMissiles: any[] = javaArray(5, null);
-    public mines: any[] = javaArray(4, null);
-    public rock: any = null as any;
-    public cannonTruck: any[] = java2DArray(2, 2, null);
-    public cliffMissileLauncher: any = null as any;
-    public trains: any[] = javaArray(3, null);
-    public bossHelicopters: any[] = javaArray(6, null);
-    public parachutes: any[] = javaArray(5, null);
-    public tankShack: any = null as any;
-    public cliffGuns: any[] = javaArray(5, null);
-    public fires: any[] = java2DArray(2, 3, null);
-    public fireTanks: any[] = javaArray(5, null);
-    public garages: any[] = javaArray(5, null);
-    public sparks: any[] = java2DArray(2, 7, null);
-    public conveyors: any[] = javaArray(16, null);
-    public greenGuns: any[] = javaArray(2, null);
-    public brownGuns: any[] = javaArray(2, null);
-    public parkedBrownTank: any = null as any;
-    public floorMissileLauncher: any[] = javaArray(4, null);
-    public enemyHelicopters: any[] = javaArray(3, null);
-    public headquartersLights: any[] = javaArray(2, null);
-    public elephantGuns: any[] = javaArray(9, null);
-    public superTanks: any[] = java2DArray(4, 5, null);
-    public superFires: any[] = java2DArray(2, 3, null);
-    public superGuns: any[] = javaArray(2, null);
-    public chinooks: any[] = javaArray(4, null);
-    public heres: any[] = javaArray(2, null);
-    public smoke: any = null as any;
-    public blackPlane: any = null as any;
-    public gunFires: any[] = javaArray(2, null);
-    public jeepYeahBullet: any = null as any;
-    public yeahs: any[] = javaArray(4, null);
-    public suns: any[] = null as any;
-    public waves: any[] = null as any;
-    public rescueHelicopters: any[] = javaArray(3, null);
+    public players: Image[][] = java2DArray(4, 5, null);
+    public explosions: Image[] = javaArray(4, null);
+    public grenade: Image = null;
+    public playerMissile: Image = null;
+    public yellowBullet: Image = null;
+    public whiteBullet: Image = null;
+    public bulletHit: Image = null;
+    public grayGuns: Image[] = javaArray(2, null);
+    public enemySoldiers: Image[][] = java2DArray(2, 8, null);
+    public swampSoldiers: Image[][] = java2DArray(2, 8, null);
+    public deadEnemySoldier: Image = null;
+    public brownTanks: Image[] = javaArray(5, null);
+    public friendlySoldiers: Image[][] = java2DArray(4, 12, null);
+    public help: Image = null;
+    public greenBoats: Image[] = javaArray(2, null);
+    public stars: Image[] = javaArray(4, null);
+    public friendlyHelicopters: Image[] = javaArray(4, null);
+    public lamps: Image[] = javaArray(4, null);
+    public bossBlueTanks: Image[][] = java2DArray(4, 5, null);
+    public fonts: Image[][] = java2DArray(4, 256, null);
+    public statueBlueEyes: Image = null;
+    public statueBlueMouth: Image = null;
+    public statueWhiteEyes: Image = null;
+    public statueWhiteMouth: Image = null;
+    public statueMissiles: Image[] = javaArray(2, null);
+    public airplanes: Image[][] = java2DArray(2, 2, null);
+    public bomb: Image = null;
+    public grayJeeps: Image[] = javaArray(5, null);
+    public grayTanks: Image[] = javaArray(5, null);
+    public cannonball: Image = null;
+    public columns: Image[] = javaArray(2, null);
+    public parkedGrayJeep: Image = null;
+    public grayBoats: Image[] = javaArray(3, null);
+    public submarines: Image[] = javaArray(4, null);
+    public lasers: Image[] = javaArray(6, null);
+    public troopsTruck: Image = null;
+    public floorGuns: Image[] = javaArray(8, null);
+    public shipGuns: Image[] = javaArray(3, null);
+    public plainFloorGuns: Image[] = javaArray(2, null);
+    public playerWakes: Image[] = javaArray(6, null);
+    public swampMissiles: Image[] = javaArray(5, null);
+    public mines: Image[] = javaArray(4, null);
+    public rock: Image = null;
+    public cannonTruck: Image[][] = java2DArray(2, 2, null);
+    public cliffMissileLauncher: Image = null;
+    public trains: Image[] = javaArray(3, null);
+    public bossHelicopters: Image[] = javaArray(6, null);
+    public parachutes: Image[] = javaArray(5, null);
+    public tankShack: Image = null;
+    public cliffGuns: Image[] = javaArray(5, null);
+    public fires: Image[][] = java2DArray(2, 3, null);
+    public fireTanks: Image[] = javaArray(5, null);
+    public garages: Image[] = javaArray(5, null);
+    public sparks: Image[][] = java2DArray(2, 7, null);
+    public conveyors: Image[] = javaArray(16, null);
+    public greenGuns: Image[] = javaArray(2, null);
+    public brownGuns: Image[] = javaArray(2, null);
+    public parkedBrownTank: Image = null;
+    public floorMissileLauncher: Image[] = javaArray(4, null);
+    public enemyHelicopters: Image[] = javaArray(3, null);
+    public headquartersLights: Image[] = javaArray(2, null);
+    public elephantGuns: Image[] = javaArray(9, null);
+    public superTanks: Image[][] = java2DArray(4, 5, null);
+    public superFires: Image[][] = java2DArray(2, 3, null);
+    public superGuns: Image[] = javaArray(2, null);
+    public chinooks: Image[] = javaArray(4, null);
+    public heres: Image[] = javaArray(2, null);
+    public smoke: Image = null;
+    public blackPlane: Image = null;
+    public gunFires: Image[] = javaArray(2, null);
+    public jeepYeahBullet: Image = null;
+    public yeahs: Image[] = javaArray(4, null);
+    public suns: Image[] = null;
+    public waves: Image[] = null;
+    public rescueHelicopters: Image[] = javaArray(3, null);
 
-    public jeepHere: any = null as any;
-    public titleImage: any = null as any;
-    public map: any = null as any;
-    public soldiers: any[] = javaArray(4, null);
-    public sunset: any = null as any;
-    public jeepYeah: any = null as any;
+    public jeepHere: LargeImage = null;
+    public titleImage: LargeImage = null;
+    public map: LargeImage = null;
+    public soldiers: LargeImage[] = javaArray(4, null);
+    public sunset: ExtraLargeImage = null;
+    public jeepYeah: ExtraLargeImage = null;
 
-    public bossIntro: any = null as any;
-    public bossRepeat: any = null as any;
-    public superTankIntro: any = null as any;
-    public stage0Intro: any = null as any;
-    public stage0Repeat: any = null as any;
-    public start: any = null as any;
+    public bossIntro: Music = null;
+    public bossRepeat: Music = null;
+    public superTankIntro: Music = null;
+    public stage0Intro: Music = null;
+    public stage0Repeat: Music = null;
+    public start: Music = null;
 
-    public bossSong: any = null as any;
-    public continueSong: any = null as any;
-    public cutsceneSong: any = null as any;
-    public endingSong: any = null as any;
-    public introSong: any = null as any;
-    public stageSong0: any = null as any;
-    public stageSong1: any = null as any;
-    public stageSong2: any = null as any;
-    public superTankSong: any = null as any;
-    public titleSong: any = null as any;
+    public bossSong: Song = null;
+    public continueSong: Song = null;
+    public cutsceneSong: Song = null;
+    public endingSong: Song = null;
+    public introSong: Song = null;
+    public stageSong0: Song = null;
+    public stageSong1: Song = null;
+    public stageSong2: Song = null;
+    public superTankSong: Song = null;
+    public titleSong: Song = null;
 
-    public bulletHitSound: any = null as any;
-    public enemyHitSound: any = null as any;
-    public explodeSound: any = null as any;
-    public explodeSound2: any = null as any;
-    public explodeSound3: any = null as any;
-    public extraLifeSound: any = null as any;
-    public fireSound: any = null as any;
-    public helicopterSound: any = null as any;
-    public helicopterSound2: any = null as any;
-    public helicopterPickupSound: any = null as any;
-    public headquartersExplodesSound: any = null as any;
-    public hutSound: any = null as any;
-    public introChingSound: any = null as any;
-    public introTypeSound: any = null as any;
-    public laserSound: any = null as any;
-    public machineGunSound: any = null as any;
-    public missileSound: any = null as any;
-    public pauseSound: any = null as any;
-    public pickupSound: any = null as any;
-    public playerExplodeSound: any = null as any;
-    public planeSound: any = null as any;
-    public soldierKilledSound: any = null as any;
-    public throwSound: any = null as any;
-    public weaponUpgradeSound: any = null as any;
-    public wellDoneSound: any = null as any;
+    public bulletHitSound: Sound = null;
+    public enemyHitSound: Sound = null;
+    public explodeSound: Sound = null;
+    public explodeSound2: Sound = null;
+    public explodeSound3: Sound = null;
+    public extraLifeSound: Sound = null;
+    public fireSound: Sound = null;
+    public helicopterSound: Sound = null;
+    public helicopterSound2: Sound = null;
+    public helicopterPickupSound: Sound = null;
+    public headquartersExplodesSound: Sound = null;
+    public hutSound: Sound = null;
+    public introChingSound: Sound = null;
+    public introTypeSound: Sound = null;
+    public laserSound: Sound = null;
+    public machineGunSound: Sound = null;
+    public missileSound: Sound = null;
+    public pauseSound: Sound = null;
+    public pickupSound: Sound = null;
+    public playerExplodeSound: Sound = null;
+    public planeSound: Sound = null;
+    public soldierKilledSound: Sound = null;
+    public throwSound: Sound = null;
+    public weaponUpgradeSound: Sound = null;
+    public wellDoneSound: Sound = null;
 
-    public triggerSizes: any[] = null as any;
-    public unitVector: any[] = javaArray(3, 0);
+    public triggerSizes: number[][] = null;
+    public unitVector: number[] = javaArray(3, 0);
     public lastPlayTime: HashMap<Sound, number> = Collections.synchronizedMap(new HashMap<Sound, number>());
-    public konamiCode: any = null as any;
+    public konamiCode: KonamiCode = null;
 
-    public gc: any = null as any;
-    public appGameContainer: any = null as any;
-    public scalableGame: any = null as any;
-    public hiddenCursor: any = null as any;
-    public loadingFinishedHandler: any = null as any;
-    public loadingCompleteHandler: any = null as any;
-    public stateSaveInvalidatedHandler: any = null as any;
-    public inputMappingChangedHandler: any = null as any;
-    public windowedDisplayModeProvider: any = null as any;
-    public browserFullscreenController: any = null as any;
+    public gc: GameContainer = null;
+    public appGameContainer: AppGameContainer = null;
+    public scalableGame: ScalableGame = null;
+    public hiddenCursor: Cursor = null;
+    public loadingFinishedHandler: (() => void) | null = null;
+    public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
+    public stateSaveInvalidatedHandler: (() => void) | null = null;
+    public inputMappingChangedHandler: (() => void) | null = null;
+    public windowedDisplayModeProvider: (() => WindowedDisplayMode) | null = null;
+    public browserFullscreenController: BrowserFullscreenController | null = null;
     public browserSuspended: boolean = false;
     public browserSuspendedMusicOn: boolean = true;
     public browserSuspendedSoundOn: boolean = true;
     private loadingFinishedNotified: boolean = false;
 
-    public init(gc: any): void {
+    public init(gc: GameContainer): void {
         Main.mainInstance = this;
         MainRuntimeState.mainInstance = this;
         this.gc = gc;
@@ -350,7 +350,7 @@ export class Main extends BasicGame {
         this.completeLoadingImmediately(gc);
     }
 
-    public update(gc: any, delta: any): void {
+    public update(gc: GameContainer, delta: number): void {
         if (this.browserSuspended) {
             this.resetNextFrameTime();
             return;
@@ -438,7 +438,7 @@ export class Main extends BasicGame {
         this.stageIndex = 0;
     }
 
-    private fullScreenToggleCheck(gc: any): void {
+    private fullScreenToggleCheck(gc: GameContainer): void {
         let isEscape = this.input.isEscape();
         if (this.input.isFullscreenTogglePressed() || isEscape) {
             let fullscreen = this.browserFullscreenController != null ? this.browserFullscreenController.isFullscreen() : gc.isFullscreen();
@@ -461,7 +461,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         this.mode.render(gc, g);
 
         if (this.fading) {
@@ -470,7 +470,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public upgradeWeapon(alwaysPlaySound: any): boolean {
+    public upgradeWeapon(alwaysPlaySound: boolean): boolean {
         let soundPlayed = false;
         if (alwaysPlaySound) {
             Main.mainInstance.playSound(Main.mainInstance.weaponUpgradeSound);
@@ -507,7 +507,7 @@ export class Main extends BasicGame {
         this.stageIndex++;
     }
 
-    public requestMode(mode: any, gc: any): void {
+    public requestMode(mode: Modes, gc: GameContainer): void {
         if (this.isModeStateSaveInvalidating(mode)) {
             this.notifyStateSaveInvalidated();
         }
@@ -558,7 +558,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public setMode(mode: any, gc: any): void {
+    public setMode(mode: IMode, gc: GameContainer): void {
         try {
             this.input.clearKeyPressedRecord();
             this.mode = mode;
@@ -570,7 +570,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public addPoints(points: any): void {
+    public addPoints(points: number): void {
         let before = this.score;
         this.score += points;
         if ((before < 20000 && this.score >= 20000) || javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000)) {
@@ -580,7 +580,7 @@ export class Main extends BasicGame {
         this.scoreStr = Main.formatScore(this.score);
     }
 
-    private static formatScore(score: any): string {
+    private static formatScore(score: number): string {
         let digits = Integer.toString(score);
         if (digits.length < 6) {
             digits = "000000".substring(0, 6 - digits.length) + digits;
@@ -634,15 +634,15 @@ export class Main extends BasicGame {
         }
     }
 
-    public drawNumber(value: any, digits: any, x: any, y: any, color: any): void {
-        let font = this.fonts[color];
+    public drawNumber(value: number, digits: number, x: number, y: number, color: number): void {
+        let font = this.fonts[color] as unknown as Record<string, Image>;
         x += (digits - 1) << 5;
         for (let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {
             font[String.fromCharCode("0".charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);
         }
     }
 
-    public startFade(fadeOut: any, fadeListener: any): void {
+    public startFade(fadeOut: boolean, fadeListener: IFadeListener): void {
         this.fading = true;
         this.fadeOut = fadeOut;
         this.fadeListener = fadeListener;
@@ -658,7 +658,7 @@ export class Main extends BasicGame {
         this.fadeListener = null;
     }
 
-    public drawString(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    public drawString(arg0?: string, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
         const argCount = arguments.length;
         if (
             argCount === 5 &&
@@ -676,23 +676,23 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawString: ${argCount}`);
     }
 
-    public drawString__overload0(string: any, length: any, x: any, y: any, color: any): void {
-        let font = this.fonts[color];
+    public drawString__overload0(string: string, length: number, x: number, y: number, color: number): void {
+        let font = this.fonts[color] as unknown as Record<string, Image>;
         for (let i = 0; i < length; i++, x += 32) {
             font[string.charAt(i)].draw(x, y);
         }
     }
 
-    public drawString__overload1(string: any, x: any, y: any, color: any): void {
-        let font = this.fonts[color];
+    public drawString__overload1(string: string, x: number, y: number, color: number): void {
+        let font = this.fonts[color] as unknown as Record<string, Image>;
         let length = string.length;
         for (let i = 0; i < length; i++, x += 32) {
             font[string.charAt(i)].draw(x, y);
         }
     }
 
-    public drawStringAlpha(string: any, x: any, y: any, color: any, alpha: any): void {
-        let font = this.fonts[color];
+    public drawStringAlpha(string: string, x: number, y: number, color: number, alpha: number): void {
+        let font = this.fonts[color] as unknown as Record<string, Image>;
         let length = string.length;
         for (let i = 0; i < length; i++, x += 32) {
             let image = font[string.charAt(i)];
@@ -702,7 +702,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public draw(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    public draw(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
         const argCount = arguments.length;
         if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
             return this.draw__overload0(arg0, arg1, arg2);
@@ -723,11 +723,11 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched draw: ${argCount}`);
     }
 
-    public draw__overload0(image: any, x: any, y: any): void {
+    public draw__overload0(image: Image, x: number, y: number): void {
         image.draw(x, y);
     }
 
-    public draw__overload1(image: any, x: any, y: any, alpha: any): void {
+    public draw__overload1(image: Image, x: number, y: number, alpha: number): void {
         image.setAlpha(alpha);
         image.draw(x, y);
         image.setAlpha(1);
@@ -746,11 +746,11 @@ export class Main extends BasicGame {
         this.playSound(this.explodeSound3, 0.65);
     }
 
-    public isSoundPlaying(sound: any): boolean {
+    public isSoundPlaying(sound: Sound): boolean {
         return sound.playing();
     }
 
-    public playSound(arg0?: any, arg1?: any): any {
+    public playSound(arg0?: Sound, arg1?: number): void {
         const argCount = arguments.length;
         if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
             return this.playSound__overload0(arg0);
@@ -761,7 +761,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched playSound: ${argCount}`);
     }
 
-    public playSound__overload0(sound: any): void {
+    public playSound__overload0(sound: Sound): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -773,14 +773,14 @@ export class Main extends BasicGame {
         }
     }
 
-    public playSoundAlways(sound: any): void {
+    public playSoundAlways(sound: Sound): void {
         if (this.closeRequestedFlag) {
             return;
         }
         sound.play();
     }
 
-    public playSound__overload1(sound: any, volume: any): void {
+    public playSound__overload1(sound: Sound, volume: number): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -792,7 +792,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public playSoundIfNotPlaying(arg0?: any, arg1?: any): any {
+    public playSoundIfNotPlaying(arg0?: Sound, arg1?: number): void {
         const argCount = arguments.length;
         if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
             return this.playSoundIfNotPlaying__overload0(arg0);
@@ -803,7 +803,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${argCount}`);
     }
 
-    public playSoundIfNotPlaying__overload0(sound: any): void {
+    public playSoundIfNotPlaying__overload0(sound: Sound): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -812,7 +812,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public playSoundIfNotPlaying__overload1(sound: any, volume: any): void {
+    public playSoundIfNotPlaying__overload1(sound: Sound, volume: number): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -821,7 +821,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public stopSong(arg0?: any): any {
+    public stopSong(arg0?: Song): void {
         const argCount = arguments.length;
         if (argCount === 1 && (arg0 === null || arg0 instanceof Song)) {
             return this.stopSong__overload0(arg0);
@@ -832,26 +832,26 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched stopSong: ${argCount}`);
     }
 
-    public stopSong__overload0(song: any): void {
+    public stopSong__overload0(song: Song): void {
         if (song != null) {
             song.stop();
         }
     }
 
-    public stopSound(sound: any): void {
+    public stopSound(sound: Sound): void {
         if (sound != null && sound.playing()) {
             sound.stop();
         }
     }
 
-    public createUnitVector2(angle: any): any {
+    public createUnitVector2(angle: number): number[] {
         this.unitVector[0] = javaFloat(Math.cos(angle));
         this.unitVector[1] = javaFloat(Math.sin(angle));
 
         return this.unitVector;
     }
 
-    public createUnitVector(angle: any): any {
+    public createUnitVector(angle: number): number[] {
         switch (angle) {
             case 0:
             case 360:
@@ -893,7 +893,7 @@ export class Main extends BasicGame {
         return this.unitVector;
     }
 
-    public drawRotated(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any): any {
+    public drawRotated(arg0?: Image, arg1?: number, arg2?: number, arg3?: number[] | number, arg4?: number, arg5?: number, arg6?: number, arg7?: number): void {
         const argCount = arguments.length;
         if (
             argCount === 5 &&
@@ -957,7 +957,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawRotated: ${argCount}`);
     }
 
-    public drawRotated__overload0(image: any, x: any, y: any, centers: any, angle: any): void {
+    public drawRotated__overload0(image: Image, x: number, y: number, centers: number[], angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -965,7 +965,17 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotatedScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any, arg7?: any, arg8?: any): any {
+    public drawRotatedScaled(
+        arg0?: Image,
+        arg1?: number,
+        arg2?: number,
+        arg3?: number,
+        arg4?: number,
+        arg5?: number,
+        arg6?: number,
+        arg7?: number,
+        arg8?: number
+    ): void {
         const argCount = arguments.length;
         if (
             argCount === 8 &&
@@ -997,7 +1007,16 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawRotatedScaled: ${argCount}`);
     }
 
-    public drawRotatedScaled__overload0(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any): void {
+    public drawRotatedScaled__overload0(
+        image: Image,
+        x: number,
+        y: number,
+        centerX: number,
+        centerY: number,
+        angle: number,
+        scaleX: number,
+        scaleY: number
+    ): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1006,7 +1025,17 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotatedScaled__overload1(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scaleX: any, scaleY: any, alpha: any): void {
+    public drawRotatedScaled__overload1(
+        image: Image,
+        x: number,
+        y: number,
+        centerX: number,
+        centerY: number,
+        angle: number,
+        scaleX: number,
+        scaleY: number,
+        alpha: number
+    ): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1017,7 +1046,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawRotated__overload1(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scale: any): void {
+    public drawRotated__overload1(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1026,7 +1055,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload2(image: any, x: any, y: any, centerX: any, centerY: any, angle: any, scale: any, alpha: any): void {
+    public drawRotated__overload2(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scale: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1037,7 +1066,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawRotated__overload3(image: any, x: any, y: any, centerX: any, centerY: any, angle: any): void {
+    public drawRotated__overload3(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1045,7 +1074,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload4(image: any, x: any, y: any, angle: any, alpha: any): void {
+    public drawRotated__overload4(image: Image, x: number, y: number, angle: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1055,12 +1084,12 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public translateGraphics(x: any, y: any): void {
+    public translateGraphics(x: number, y: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
     }
 
-    public rotateGraphics(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    public rotateGraphics(arg0?: number, arg1?: number, arg2?: number, arg3?: number): void {
         const argCount = arguments.length;
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
             return this.rotateGraphics__overload0(arg0, arg1, arg2, arg3);
@@ -1071,20 +1100,20 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched rotateGraphics: ${argCount}`);
     }
 
-    public rotateGraphics__overload0(x: any, y: any, angle: any, scale: any): void {
+    public rotateGraphics__overload0(x: number, y: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
         GL11.glScalef(scale, scale, 1);
     }
 
-    public scaleGraphics(x: any, y: any, scaleX: any, scaleY: any): void {
+    public scaleGraphics(x: number, y: number, scaleX: number, scaleY: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glScalef(scaleX, scaleY, 1);
     }
 
-    public rotateGraphics__overload1(x: any, y: any, angle: any): void {
+    public rotateGraphics__overload1(x: number, y: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1094,7 +1123,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload5(image: any, x: any, y: any, angle: any): void {
+    public drawRotated__overload5(image: Image, x: number, y: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1102,7 +1131,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotatedAlpha(image: any, x: any, y: any, angle: any, alpha: any): void {
+    public drawRotatedAlpha(image: Image, x: number, y: number, angle: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1112,7 +1141,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public draw__overload2(image: any, x: any, y: any, angle: any, scale: any): void {
+    public draw__overload2(image: Image, x: number, y: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1121,7 +1150,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawCenteredAlpha(image: any, x: any, y: any, alpha: any): void {
+    public drawCenteredAlpha(image: Image, x: number, y: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1130,7 +1159,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawCentered(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    public drawCentered(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
         const argCount = arguments.length;
         if (
             argCount === 5 &&
@@ -1154,7 +1183,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawCentered: ${argCount}`);
     }
 
-    public drawCentered__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
+    public drawCentered__overload0(image: Image, x: number, y: number, scale: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1164,7 +1193,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawCentered__overload1(image: any, x: any, y: any, scale: any): void {
+    public drawCentered__overload1(image: Image, x: number, y: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glScalef(scale, scale, 1);
@@ -1172,7 +1201,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawOffset(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    public drawOffset(arg0?: Image, arg1?: number, arg2?: number, arg3?: number): void {
         const argCount = arguments.length;
         if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
             return this.drawOffset__overload0(arg0, arg1, arg2);
@@ -1183,28 +1212,28 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawOffset: ${argCount}`);
     }
 
-    public drawOffset__overload0(image: any, x: any, y: any): void {
+    public drawOffset__overload0(image: Image, x: number, y: number): void {
         image.draw(x, y);
     }
 
-    public drawOffset__overload1(image: any, x: any, y: any, alpha: any): void {
+    public drawOffset__overload1(image: Image, x: number, y: number, alpha: number): void {
         image.setAlpha(alpha);
         image.draw(x, y);
         image.setAlpha(1);
     }
 
-    public drawCentered__overload2(image: any): void {
+    public drawCentered__overload2(image: Image): void {
         image.draw(-image.getWidth() * 0.5, -image.getHeight() * 0.5);
     }
 
-    public drawCentered__overload3(image: any, x: any, y: any): void {
+    public drawCentered__overload3(image: Image, x: number, y: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         image.draw(-image.getWidth() * 0.5, -image.getHeight() * 0.5);
         GL11.glPopMatrix();
     }
 
-    public drawScaled(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    public drawScaled(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
         const argCount = arguments.length;
         if (
             argCount === 5 &&
@@ -1222,7 +1251,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawScaled: ${argCount}`);
     }
 
-    public drawScaled__overload0(image: any, x: any, y: any, scale: any, alpha: any): void {
+    public drawScaled__overload0(image: Image, x: number, y: number, scale: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1232,7 +1261,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawScaled__overload1(image: any, x: any, y: any, scale: any): void {
+    public drawScaled__overload1(image: Image, x: number, y: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glScalef(scale, scale, 1);
@@ -1240,7 +1269,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawVehicle(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    public drawVehicle(arg0?: Image[], arg1?: number, arg2?: number, arg3?: number[][] | number, arg4?: number): void {
         const argCount = arguments.length;
         if (argCount === 5 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
             return this.drawVehicle__overload0(arg0, arg1, arg2, arg3, arg4);
@@ -1261,7 +1290,7 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched drawVehicle: ${argCount}`);
     }
 
-    public drawVehicle__overload0(sprites: any, x: any, y: any, centers: any, angle: any): void {
+    public drawVehicle__overload0(sprites: Image[], x: number, y: number, centers: number[][], angle: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
@@ -1286,7 +1315,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public drawVehicle__overload1(sprites: any, x: any, y: any, angle: any, alpha: any): void {
+    public drawVehicle__overload1(sprites: Image[], x: number, y: number, angle: number, alpha: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
@@ -1311,7 +1340,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public drawVehicle__overload2(sprites: any, x: any, y: any, angle: any): void {
+    public drawVehicle__overload2(sprites: Image[], x: number, y: number, angle: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
@@ -1387,7 +1416,7 @@ export class Main extends BasicGame {
         this.stopSound(this.wellDoneSound);
     }
 
-    public requestSong(song: any): void {
+    public requestSong(song: Song): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -1398,7 +1427,7 @@ export class Main extends BasicGame {
         this.nextFrameTime = Sys.getTime();
     }
 
-    public closeRequested(): boolean {
+    public override closeRequested(): boolean {
         if (!super.closeRequested()) {
             return false;
         }
@@ -1407,7 +1436,7 @@ export class Main extends BasicGame {
         return true;
     }
 
-    private getCharacterName(c: any): string {
+    private getCharacterName(c: string): string {
         switch (c) {
             case ".":
                 return "period";
@@ -1460,14 +1489,14 @@ export class Main extends BasicGame {
                     break;
             }
             for (let j = 0; j < Main.CHARS.length; j++) {
-                this.fonts[i][Character.toLowerCase(Main.CHARS.charAt(j))] = this.fonts[i][Main.CHARS.charAt(j)] = pack.getSprite(
-                    JavaString.format("font-%s-%s.png", color, this.getCharacterName(Main.CHARS.charAt(j)))
-                );
+                (this.fonts[i] as unknown as Record<string, Image>)[Character.toLowerCase(Main.CHARS.charAt(j))] = (
+                    this.fonts[i] as unknown as Record<string, Image>
+                )[Main.CHARS.charAt(j)] = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(Main.CHARS.charAt(j))));
             }
         }
     }
 
-    private loadTiles(index: any, stage: any): void {
+    private loadTiles(index: number, stage: Stage): void {
         let pack = new XMLPackedSheet(JavaString.format("images/tiles-%d.png", index), JavaString.format("images/tiles-%d.xml", index));
         let size = Main.TILES[index];
         stage.tiles = javaArray(size, null);
@@ -1868,13 +1897,13 @@ export class Main extends BasicGame {
         this.rescueHelicopters[2] = pack8.getSprite("rescue-helicopter-blade.png");
     }
 
-    private loadExtraLargeImage(name: any, ...packNames: any[]): any {
+    private loadExtraLargeImage(name: string, ...packNames: string[]): ExtraLargeImage {
         let packs = javaArray(packNames.length, null);
         for (let i = 0; i < packNames.length; i++) {
             packs[i] = new XMLPackedSheet("images/" + packNames[i] + ".png", "images/" + packNames[i] + ".xml");
         }
 
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("images/%s.dat", name))));
 
         let width = dis.readShort();
@@ -1892,7 +1921,7 @@ export class Main extends BasicGame {
                 cell[2] = y2;
             }
         }
-        Arrays.sort(mapLocal, (cell1: any, cell2: any) => cell1[0] - cell2[0]);
+        Arrays.sort(mapLocal, (cell1: number[], cell2: number[]) => cell1[0] - cell2[0]);
 
         let tiles = javaArray(tileCount, null);
         for (let i = 0, j = 0; i < tileCount; i++) {
@@ -1909,8 +1938,8 @@ export class Main extends BasicGame {
         return new ExtraLargeImage(this, tiles, mapLocal);
     }
 
-    private loadLargeImage(name: any, packName: any): any {
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+    private loadLargeImage(name: string, packName: string): LargeImage {
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("images/%s.dat", name))));
 
         let width = dis.readShort();
@@ -1934,7 +1963,7 @@ export class Main extends BasicGame {
         return new LargeImage(this, tiles, mapLocal, width, height);
     }
 
-    private loadTriggerMap(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): any {
+    private loadTriggerMap(arg0?: number, arg1?: number[][], arg2?: number, arg3?: Stage, arg4?: boolean): void {
         const argCount = arguments.length;
         if (argCount === 4 && typeof arg0 === "number" && Array.isArray(arg1) && typeof arg2 === "number" && (arg3 === null || arg3 instanceof Stage)) {
             return this.loadTriggerMap__overload0(arg0, arg1, arg2, arg3);
@@ -1952,17 +1981,17 @@ export class Main extends BasicGame {
         throw new Error(`No Java method overload matched loadTriggerMap: ${argCount}`);
     }
 
-    private loadTriggerMap__overload0(height: any, enemySizes: any, stageIndex: any, stage: any): void {
+    private loadTriggerMap__overload0(height: number, enemySizes: number[][], stageIndex: number, stage: Stage): void {
         this.loadTriggerMap(height, enemySizes, stageIndex, stage, false);
         this.loadTriggerMap(height, enemySizes, stageIndex, stage, true);
     }
 
-    private loadTriggerMap__overload1(height: any, enemySizes: any, stageIndex: any, stage: any, hard: any): void {
+    private loadTriggerMap__overload1(height: number, enemySizes: number[][], stageIndex: number, stage: Stage, hard: boolean): void {
         let lists: ArrayList<number[]>[] = javaArray(height, null);
         for (let i = 0; i < height; i++) {
             lists[i] = new ArrayList<number[]>();
         }
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(
             new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/enemies%s-%d.dat", hard ? "-hard" : "", stageIndex)))
         );
@@ -1992,7 +2021,7 @@ export class Main extends BasicGame {
     }
 
     private loadSizes(): void {
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream("maps/sizes.dat")));
         let count = dis.readShort();
         this.triggerSizes = java2DArray(count, 2, 0);
@@ -2017,8 +2046,8 @@ export class Main extends BasicGame {
         dis.close();
     }
 
-    private loadMaps(index: any, stage: any): void {
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+    private loadMaps(index: number, stage: Stage): void {
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/map-%d.dat", index))));
         stage.mapWidth = dis.readShort();
         stage.mapHeight = dis.readShort();
@@ -2044,8 +2073,8 @@ export class Main extends BasicGame {
         dis.close();
     }
 
-    private loadTypes(index: any, stage: any): void {
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+    private loadTypes(index: number, stage: Stage): void {
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/types-%d.dat", index))));
         stage.mapWidth = dis.readShort();
         stage.mapHeight = dis.readShort();
@@ -2071,14 +2100,14 @@ export class Main extends BasicGame {
         dis.close();
     }
 
-    private loadStages(stages: any): void {
+    private loadStages(stages: Stage[]): void {
         for (let i = 0; i < 6; i++) {
             stages[i] = new Stage();
             this.loadStage(i, stages[i]);
         }
     }
 
-    private loadStage(index: any, stage: any): void {
+    private loadStage(index: number, stage: Stage): void {
         this.loadTiles(index, stage);
         this.loadMaps(index, stage);
         this.loadTypes(index, stage);
@@ -2086,8 +2115,8 @@ export class Main extends BasicGame {
         this.loadTriggerMap(stage.mapHeight, this.triggerSizes, index, stage);
     }
 
-    private loadDirections(index: any, stage: any): void {
-        let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
+    private loadDirections(index: number, stage: Stage): void {
+        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/dirs-%d.dat", index))));
         let size = dis.readInt();
         stage.directionsWidth = dis.readInt();
@@ -2255,7 +2284,7 @@ export class Main extends BasicGame {
         return ++this.loadIndex / 42;
     }
 
-    public completeLoadingImmediately(gc: any): void {
+    public completeLoadingImmediately(gc: GameContainer): void {
         while (this.loadIndex < 42) {
             this.loadNext();
         }
@@ -2274,7 +2303,7 @@ export class Main extends BasicGame {
         return this.mode == null || this.loadIndex < 42;
     }
 
-    public setBrowserSuspended(suspended: any): void {
+    public setBrowserSuspended(suspended: boolean): void {
         if (this.browserSuspended == suspended) {
             return;
         }
@@ -2326,7 +2355,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public getWindowedDisplayMode(): any {
+    public getWindowedDisplayMode(): WindowedDisplayMode {
         if (this.windowedDisplayModeProvider != null) {
             return this.windowedDisplayModeProvider();
         }
@@ -2355,7 +2384,7 @@ export class Main extends BasicGame {
         }
     }
 
-    private isModeStateSaveInvalidating(mode: any): boolean {
+    private isModeStateSaveInvalidating(mode: Modes): boolean {
         return false;
     }
 
@@ -2374,13 +2403,13 @@ export class Main extends BasicGame {
         Class.forName("jackal.HardEndingMode");
     }
 
-    public static rotate(x: any, y: any, angle: any): any {
+    public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
         let cos = javaFloat(Math.cos(angle));
         let sin = javaFloat(Math.sin(angle));
         return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
     }
 
-    public static javaMain(args: any): void {
+    public static javaMain(args: string[]): void {
         // The browser port has no AWT toolkit initialization equivalent.
 
         let mainLocal = new Main();

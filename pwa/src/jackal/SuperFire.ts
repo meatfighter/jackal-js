@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { java3DArray, javaArray, javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 import type { BossSuperTank } from "./BossSuperTank.js";
@@ -64,7 +11,7 @@ export class SuperFire extends GameElement {
     declare public asterDelay: number;
     declare public bossSuperTank: BossSuperTank | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.player = null;
         this.state = 0;
@@ -75,13 +22,13 @@ export class SuperFire extends GameElement {
         this.bossSuperTank = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: BossSuperTank) {
         super();
         const argCount = arguments.length;
         this.__construct_SuperFire(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_SuperFire(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_SuperFire(argCount: number, arg0?: number, arg1?: number, arg2?: BossSuperTank): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -105,8 +52,8 @@ export class SuperFire extends GameElement {
     public static readonly ASTER_ANGLE: number = javaFloat(Math.PI);
     public static readonly ASTER_SPACER_ANGLE: number = javaFloat((2.0 * Math.PI) / SuperFire.ASTER_SPINES);
 
-    public static readonly ASTERS_XYS: any[] = java3DArray(SuperFire.ASTER_DELAY, SuperFire.ASTER_SPINES, 2, 0);
-    public static readonly ASTER_SCALES: any[] = javaArray(SuperFire.ASTER_DELAY, 0);
+    public static readonly ASTERS_XYS: number[][][] = java3DArray(SuperFire.ASTER_DELAY, SuperFire.ASTER_SPINES, 2, 0);
+    public static readonly ASTER_SCALES: number[] = javaArray(SuperFire.ASTER_DELAY, 0);
 
     static {
         for (let i = 0; i < SuperFire.ASTER_DELAY; i++) {

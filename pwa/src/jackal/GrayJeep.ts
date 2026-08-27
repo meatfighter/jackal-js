@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
 import type { Player } from "./Player.js";
@@ -72,7 +19,7 @@ export class GrayJeep extends Enemy {
     declare public loopTargetX: number;
     declare public loopTargetY: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.bombDelay = 0;
         this.moveSteps = 0;
@@ -93,13 +40,13 @@ export class GrayJeep extends Enemy {
         this.loopTargetY = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_GrayJeep(argCount, arg0, arg1);
     }
 
-    private __construct_GrayJeep(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_GrayJeep(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -125,7 +72,7 @@ export class GrayJeep extends Enemy {
     public targetAngle: number = 90;
     public displayAngle: number = 90;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -218,7 +165,7 @@ export class GrayJeep extends Enemy {
         this.moveSteps = javaRoundFloat(d / GrayJeep.SPEED);
     }
 
-    private testCorners(nextX: any, nextY: any): void {
+    private testCorners(nextX: number, nextY: number): void {
         let sx1 = 0;
         let sy1 = 0;
         let sx2 = 0;

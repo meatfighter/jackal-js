@@ -1,6 +1,5 @@
 import type { ButtonMapping } from "../jackal/ButtonMapping.js";
 import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
-
 const NO_BINDING = -1;
 
 interface JackalInputMappingSnapshot {

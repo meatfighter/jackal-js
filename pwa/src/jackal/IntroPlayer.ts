@@ -1,64 +1,10 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { Player } from "./Player.js";
 import type { Chinook } from "./Chinook.js";
 export class IntroPlayer extends GameElement {
     declare public chinook: Chinook | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
         this.state = 0;
@@ -66,13 +12,13 @@ export class IntroPlayer extends GameElement {
         this.chinook = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: Chinook) {
         super();
         const argCount = arguments.length;
         this.__construct_IntroPlayer(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_IntroPlayer(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_IntroPlayer(argCount: number, arg0?: number, arg1?: number, arg2?: Chinook): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;

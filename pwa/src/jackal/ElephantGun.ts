@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { java2DArray, javaFloat } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { ElephantMissile } from "./ElephantMissile.js";
 import { Enemy } from "./Enemy.js";
@@ -69,7 +16,7 @@ export class ElephantGun extends Enemy {
     declare public hits: number;
     declare public player: Player | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.spriteIndex = 0;
         this.destroyed = false;
@@ -85,13 +32,13 @@ export class ElephantGun extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_ElephantGun(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_ElephantGun(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_ElephantGun(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -132,7 +79,7 @@ export class ElephantGun extends Enemy {
 
     public asters: number[][] = java2DArray(ElephantGun.ASTER_SPINES, 2, 0);
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.player = this.gameMode.player;
@@ -230,7 +177,7 @@ export class ElephantGun extends Enemy {
     }
 
     // returns true if attack successful
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.state != ElephantGun.STATE_DESTROYED && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.main.playHitExplodeSound();
             if (++this.hits == ElephantGun.HITS) {
@@ -253,7 +200,7 @@ export class ElephantGun extends Enemy {
     }
 
     // returns true if player bullet was absorbed by enemy
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.state != ElephantGun.STATE_DESTROYED && this.hit(x1, y1, x2, y2)) {
             return true;
         } else {

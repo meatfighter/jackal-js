@@ -8,7 +8,6 @@ import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
 import versionInfo from "../../../version.json";
-
 const GAME_DISPLAY_WIDTH = 1024;
 const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
@@ -22,6 +21,10 @@ const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
 type SlickRuntimeModule = typeof import("slick2d-ts");
 type MainConstructor = typeof import("../jackal/Main.js").Main;
 type JackalGameStateStoreConstructor = typeof import("../jackal/persistence/JackalGameStateStore.js").JackalGameStateStore;
+
+interface ResourceLoadProgress {
+    readonly loaded: number;
+}
 
 interface PreparedRuntime {
     readonly slick: SlickRuntimeModule;
@@ -227,7 +230,7 @@ export class JackalWebApp {
         const mainGame = new runtime.Main();
         this.inputMappingStore.restore(mainGame.buttonMapping);
 
-        const scalableGame = new runtime.slick.ScalableGame(mainGame as any, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
+        const scalableGame = new runtime.slick.ScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
         const displayMode = this.getResponsiveWindowedDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
         appContainer.setPreserveAudioCacheOnDestroy(true);
@@ -247,8 +250,8 @@ export class JackalWebApp {
             exitFullscreen: () => this.exitGameShellFullscreen()
         };
         if (restoreSavedGame) {
-            mainGame.loadingCompleteHandler = (gc: unknown) => {
-                if (!this.getGameStateStore(runtime).restore(mainGame, gc as any)) {
+            mainGame.loadingCompleteHandler = (gc) => {
+                if (!this.getGameStateStore(runtime).restore(mainGame, gc)) {
                     throw new Error("Saved game could not be restored.");
                 }
                 return true;
@@ -267,7 +270,7 @@ export class JackalWebApp {
         await appContainer.start();
         await ResourceLoader.waitForAll();
 
-        appContainer.setErrorHandler((error) => {
+        appContainer.setErrorHandler((error: unknown) => {
             console.error(error);
             this.showLoadError("Unable to start.", "Check your connection and try again.", () => {
                 void this.startGame(restoreSavedGame);
@@ -481,11 +484,11 @@ export class JackalWebApp {
         };
 
         await Promise.all([
-            ResourceLoader.preloadResources(resourceRefs, (progress) => {
+            ResourceLoader.preloadResources(resourceRefs, (progress: ResourceLoadProgress) => {
                 loadedResources = progress.loaded;
                 updateProgress();
             }),
-            SoundStore.get().preloadAudioBuffers(audioRefs, (progress) => {
+            SoundStore.get().preloadAudioBuffers(audioRefs, (progress: ResourceLoadProgress) => {
                 loadedAudio = progress.loaded;
                 updateProgress();
             })

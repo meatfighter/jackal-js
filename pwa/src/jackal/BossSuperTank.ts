@@ -1,64 +1,11 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { AttackSource } from "./AttackSource.js";
 import { BossSuperTankGun } from "./BossSuperTankGun.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { FlashingSkull } from "./FlashingSkull.js";
-import { ICameraPanListener } from "./ICameraPanListener.js";
+import type { ICameraPanListener } from "./ICameraPanListener.js";
 import { SuperFire } from "./SuperFire.js";
 import type { Player } from "./Player.js";
 export class BossSuperTank extends Enemy implements ICameraPanListener {
@@ -74,7 +21,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     declare public exploding: number;
     declare public superFire: SuperFire | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.player = null;
         this.colorIndex = 0;
@@ -92,13 +39,13 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         this.superFire = null;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_BossSuperTank(argCount, arg0, arg1);
     }
 
-    private __construct_BossSuperTank(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_BossSuperTank(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -168,7 +115,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     public delay: number = 1;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 2;
@@ -208,7 +155,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         }
     }
 
-    private move(dx: any): void {
+    private move(dx: number): void {
         this.x += dx;
         this.wheelAngle += BossSuperTank.WHEEL_ANGLE_CONST * dx;
         this.treadOffset -= dx;
@@ -316,7 +263,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         }
     }
 
-    private displayHit(hitX: any, hitY: any): void {
+    private displayHit(hitX: number, hitY: number): void {
         if (hitY > this.y + 230) {
             hitY = this.y + 230;
         }
@@ -341,7 +288,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     // returns true if attack successful
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.state >= BossSuperTank.STATE_EXPLODING) {
             return false;
         }
@@ -366,7 +313,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.state >= BossSuperTank.STATE_EXPLODING) {
             return false;
         }

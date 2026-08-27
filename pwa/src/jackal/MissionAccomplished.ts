@@ -1,64 +1,10 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 export class MissionAccomplished extends GameElement {
     declare public messageIndex: number;
     declare public messageLength: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
         this.messageIndex = 0;
@@ -73,7 +19,7 @@ export class MissionAccomplished extends GameElement {
     public static readonly TYPE_TIME: number = 8;
     public static readonly PAUSE_TIME: number = 64;
 
-    public static readonly MESSAGES: any[] = ["WELL DONE!", "YOUR MISSION", "ACCOMPLISHED."];
+    public static readonly MESSAGES: string[] = ["WELL DONE!", "YOUR MISSION", "ACCOMPLISHED."];
 
     public state: number = MissionAccomplished.STATE_TYPING;
 

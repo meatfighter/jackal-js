@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaDouble, javaFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { DeadEnemySoldier } from "./DeadEnemySoldier.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
@@ -88,7 +35,7 @@ export class EnemySoldier extends Enemy {
     declare public bossHelicopter: BossHelicopter | null;
     declare public fire: boolean;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = null;
         this.state = 0;
@@ -119,13 +66,13 @@ export class EnemySoldier extends Enemy {
         this.fire = false;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: EnemySoldierType) {
         super();
         const argCount = arguments.length;
         this.__construct_EnemySoldier(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_EnemySoldier(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_EnemySoldier(argCount: number, arg0?: number, arg1?: number, arg2?: EnemySoldierType): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -198,7 +145,7 @@ export class EnemySoldier extends Enemy {
     public static readonly ORIENTATION_UP: number = 4;
     public static readonly ORIENTATION_LEFT: number = 6;
 
-    public static readonly WOBBLES: any[] = javaArray(EnemySoldier.LEG_FRAMES, 0);
+    public static readonly WOBBLES: number[] = javaArray(EnemySoldier.LEG_FRAMES, 0);
     static {
         for (let i = EnemySoldier.LEG_FRAMES - 1; i >= 0; i--) {
             EnemySoldier.WOBBLES[i] = -EnemySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(EnemySoldier.LEG_FRAMES)));
@@ -207,7 +154,7 @@ export class EnemySoldier extends Enemy {
 
     public state: number = EnemySoldier.STATE_SEEKING;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -236,7 +183,7 @@ export class EnemySoldier extends Enemy {
         this.points = 100;
     }
 
-    public setBossHelicopter(bossHelicopter: any): void {
+    public setBossHelicopter(bossHelicopter: BossHelicopter): void {
         this.bossHelicopter = bossHelicopter;
         this.points = 10;
     }
@@ -494,18 +441,18 @@ export class EnemySoldier extends Enemy {
         }
     }
 
-    public flatten(): void {
+    public override flatten(): void {
         this.remove();
         new DeadEnemySoldier(this.x, this.y);
     }
 
-    public explode(): void {
+    public override explode(): void {
         this.remove();
         new DeadEnemySoldier(this.x, this.y);
         new Explosion(this.x, this.y);
     }
 
-    public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
+    public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
         if (this.isMine(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
@@ -513,7 +460,7 @@ export class EnemySoldier extends Enemy {
         return false;
     }
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.hit(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
@@ -522,7 +469,7 @@ export class EnemySoldier extends Enemy {
     }
 
     // returns true if player bullet was absorbed by enemy
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.hit(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
@@ -532,7 +479,7 @@ export class EnemySoldier extends Enemy {
         }
     }
 
-    public remove(): void {
+    public override remove(): void {
         this.removeFlag = true;
         if (this.bossHelicopter != null) {
             this.bossHelicopter.soldierKilled();

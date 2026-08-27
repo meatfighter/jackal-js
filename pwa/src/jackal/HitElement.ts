@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaInt } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export abstract class HitElement extends GameElement {
     // Java field `hit`; renamed because JavaScript cannot also expose hit(...) under the same key.
@@ -61,7 +8,7 @@ export abstract class HitElement extends GameElement {
     declare public hitX2: number;
     declare public hitY2: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.hitField = false;
         this.hitX1 = 0;
@@ -95,18 +42,18 @@ export abstract class HitElement extends GameElement {
         this.enemy = true;
     }
 
-    public overlap(ax1: any, ay1: any, ax2: any, ay2: any, bx1: any, by1: any, bx2: any, by2: any): boolean {
+    public overlap(ax1: number, ay1: number, ax2: number, ay2: number, bx1: number, by1: number, bx2: number, by2: number): boolean {
         return ax1 <= bx2 && ax2 >= bx1 && ay1 <= by2 && ay2 >= by1;
     }
 
-    public hitPoint(h: any): boolean {
+    public hitPoint(h: HitElement): boolean {
         return this.hit(h.x, h.y);
     }
 
-    public hit(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    public hit(arg0?: HitElement | number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 1 && (arg0 === null || arg0 instanceof HitElement)) {
-            return this.hit__overload0(arg0);
+            return this.hit__overload0(arg0 as HitElement);
         }
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             return this.hit__overload1(arg0, arg1);
@@ -117,7 +64,7 @@ export abstract class HitElement extends GameElement {
         throw new Error(`No Java method overload matched hit: ${argCount}`);
     }
 
-    public hit__overload0(h: any): boolean {
+    public hit__overload0(h: HitElement): boolean {
         return this.overlap(
             h.x + h.hitX1,
             h.y + h.hitY1,
@@ -130,14 +77,14 @@ export abstract class HitElement extends GameElement {
         );
     }
 
-    public hit__overload1(px: any, py: any): boolean {
+    public hit__overload1(px: number, py: number): boolean {
         px -= this.x;
         py -= this.y;
 
         return py >= this.hitY1 && py <= this.hitY2 && px >= this.hitX1 && px <= this.hitX2;
     }
 
-    public hit__overload2(x1: any, y1: any, x2: any, y2: any): boolean {
+    public hit__overload2(x1: number, y1: number, x2: number, y2: number): boolean {
         return this.overlap(x1, y1, x2, y2, this.x + this.hitX1, this.y + this.hitY1, this.x + this.hitX2, this.y + this.hitY2);
     }
 
@@ -145,7 +92,7 @@ export abstract class HitElement extends GameElement {
         return this.hitField;
     }
 
-    public setHit(hit: any): void {
+    public setHit(hit: boolean): void {
         this.hitField = hit;
     }
 
@@ -186,7 +133,7 @@ export abstract class HitElement extends GameElement {
         return false;
     }
 
-    public checkBounds(maxY: any): void {
+    public override checkBounds(maxY: number): void {
         if (this.y + this.hitY1 > maxY) {
             this.remove();
         }

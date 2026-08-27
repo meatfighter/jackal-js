@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaDouble, javaFloat, javaIntDiv } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
@@ -79,7 +26,7 @@ export class BossHelicopter extends Enemy {
     declare public soldiers: number;
     declare public bulletDelay: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.player = null;
         this.angle = 0;
@@ -127,14 +74,14 @@ export class BossHelicopter extends Enemy {
     public static readonly POSITION_DRIFT_TIME: number = 2 * 91 + 1;
     public static readonly POSITION_DRIFT_DISTANCE: number = 32;
     public static readonly PI2: number = javaFloat(2 * Math.PI);
-    public static readonly POSITIONS: any[] = javaArray(BossHelicopter.POSITION_DRIFT_TIME, 0);
-    public static readonly DRIFT_ANGLES: any[] = javaArray(BossHelicopter.POSITION_DRIFT_TIME, 0);
+    public static readonly POSITIONS: number[] = javaArray(BossHelicopter.POSITION_DRIFT_TIME, 0);
+    public static readonly DRIFT_ANGLES: number[] = javaArray(BossHelicopter.POSITION_DRIFT_TIME, 0);
     public static readonly DRIFT_ANGLE: number = 5;
     public static readonly MIN_Y: number = -96;
     public static readonly MIN_Y2: number = -256;
     public static readonly MAX_Y: number = 480;
     public static readonly ENTERING_TIME: number = 2 * 91;
-    public static readonly ENTERINGS: any[] = javaArray(BossHelicopter.ENTERING_TIME, 0);
+    public static readonly ENTERINGS: number[] = javaArray(BossHelicopter.ENTERING_TIME, 0);
     // Assigned once in the static block, matching Java static-final initialization.
     public static ENTER_ACCELERATION: number = 0;
     public static readonly HOVER_TIME: number = 45;
@@ -149,7 +96,7 @@ export class BossHelicopter extends Enemy {
     public static readonly SHUTTER_TIME: number = 91;
     public static readonly SHUTTER_AMPLITUDE: number = 8;
     public static readonly SHUTTER_CYCLES: number = 5;
-    public static readonly SHUTTERS: any[] = javaArray(BossHelicopter.SHUTTER_TIME, 0);
+    public static readonly SHUTTERS: number[] = javaArray(BossHelicopter.SHUTTER_TIME, 0);
     public static readonly MAX_SOLDIERS: number = 32;
     public static readonly BULLET_DELAY: number = 68;
     public static readonly BULLET_SPEED: number = 1.75;
@@ -194,7 +141,7 @@ export class BossHelicopter extends Enemy {
 
     public state: number = BossHelicopter.STATE_ENTERING;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.player = this.gameMode.player;
@@ -368,13 +315,13 @@ export class BossHelicopter extends Enemy {
     }
 
     // returns true if player bumped into the enemy
-    public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
+    public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
         return false;
     }
 
     // returns true if attack successful
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.tinyExplosions == 0 && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.main.playHitExplodeSound();
             if (++this.hits == BossHelicopter.HITS) {
@@ -406,11 +353,11 @@ export class BossHelicopter extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         return false;
     }
 
-    public checkBounds(maxY: any): void {}
+    public override checkBounds(maxY: number): void {}
 
     public render(): void {
         this.rotorAngle -= 30;

@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { RotatingGunState } from "./RotatingGun.js";
@@ -67,9 +14,9 @@ export class BossSuperTankGun extends Enemy {
     declare public recoilIndex: number;
     declare public bossSuperTank: BossSuperTank | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.state = null as any;
+        this.state = null;
         this.angle = 0;
         this.recoil = 0;
         this.pause = 0;
@@ -79,13 +26,13 @@ export class BossSuperTankGun extends Enemy {
         this.bossSuperTank = null;
     }
 
-    public constructor(arg0?: any) {
+    public constructor(arg0?: BossSuperTank) {
         super();
         const argCount = arguments.length;
         this.__construct_BossSuperTankGun(argCount, arg0);
     }
 
-    private __construct_BossSuperTankGun(argCount: number, arg0?: any): void {
+    private __construct_BossSuperTankGun(argCount: number, arg0?: BossSuperTank): void {
         if (argCount === 1) {
             let bossSuperTankLocal = arg0;
             this.bossSuperTank = bossSuperTankLocal;
@@ -96,7 +43,7 @@ export class BossSuperTankGun extends Enemy {
 
     public static readonly RECOIL_DURATION: number = 17;
     public static readonly RECOIL_AMPLITUDE: number = 8;
-    public static readonly recoils: any[] = javaArray(BossSuperTankGun.RECOIL_DURATION, 0);
+    public static readonly recoils: number[] = javaArray(BossSuperTankGun.RECOIL_DURATION, 0);
     public static readonly PAUSE_AFTER_RECOIL: number = 17;
     public static readonly PAUSE_BETWEEN_GROUPS: number = 50;
     public static readonly GROUP_SIZE: number = 3;
@@ -121,7 +68,7 @@ export class BossSuperTankGun extends Enemy {
 
     public groupSize: number = BossSuperTankGun.GROUP_SIZE;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 3;
@@ -211,13 +158,13 @@ export class BossSuperTankGun extends Enemy {
 
     // returns true if attack successful
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         return false;
     }
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         return false;
     }
 

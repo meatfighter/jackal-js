@@ -176,7 +176,7 @@ npm ci
 
 The JavaScript toolchain uses TypeScript, Vite, ESLint, Prettier, and `slick2d-ts`.
 
-The `slick2d-ts` dependency is pinned to an exact Git commit in `package.json` rather than floating on a compatible semver range. Treat upgrades as deliberate gameplay/runtime changes.
+The `slick2d-ts` dependency uses a compatible semver range in `package.json`, while `package-lock.json` records the exact resolved Git revision used by a given checkout. Treat dependency refreshes as deliberate gameplay/runtime changes, even when the range accepts them.
 
 ### Java
 
@@ -429,7 +429,8 @@ The current `verify` command runs:
 2. Prettier check;
 3. ESLint;
 4. TypeScript type checking;
-5. the zero-`@ts-nocheck` policy check.
+5. the zero-`@ts-nocheck` policy check;
+6. the zero explicit-TypeScript-`any` policy check.
 
 Useful individual commands:
 
@@ -439,6 +440,7 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm run check:ts-nocheck
+npm run check:explicit-any
 ```
 
 ### Format source
@@ -465,9 +467,9 @@ npm run run:desktop
 
 The PWA uses `slick2d-ts`, a TypeScript/browser adaptation of the Slick2D APIs used by the Java game.
 
-This dependency is pinned to an exact Git commit.
+This dependency is declared as `#semver:^1.0.0`; the lockfile then records the exact resolved package version and Git revision.
 
-Do not replace that pin with a floating compatible version without understanding that the runtime can affect:
+Do not refresh, widen, or replace that dependency without understanding that the runtime can affect:
 
 - rendering;
 - fixed-step timing;
@@ -475,7 +477,7 @@ Do not replace that pin with a floating compatible version without understanding
 - keyboard/gamepad input;
 - fullscreen/container behavior.
 
-Upgrade it as an intentional dependency change and retest gameplay/input/timing.
+Refresh it as an intentional dependency change and retest gameplay/input/timing.
 
 ### Game timing
 
@@ -617,15 +619,18 @@ During private development, incompatible old browser saves may be cleared instea
 
 ## TypeScript Strategy
 
-The browser gameplay port is type-checked TypeScript. `@ts-nocheck` is intentionally not allowed in source files.
+The browser gameplay port is type-checked TypeScript. `@ts-nocheck` and explicit TypeScript `any` are intentionally not allowed in PWA TypeScript source.
 
-The repository enforces that rule with:
+The repository enforces those rules with:
 
 ```sh
 npm run check:ts-nocheck
+npm run check:explicit-any
 ```
 
-The current budget is zero.
+Both budgets are zero.
+
+The compiler is also configured with stricter non-null-safe checks such as `noImplicitAny`, `strictFunctionTypes`, `strictBindCallApply`, `noImplicitThis`, `useUnknownInCatchVariables`, `alwaysStrict`, `noImplicitReturns`, `isolatedModules`, `noFallthroughCasesInSwitch`, `noImplicitOverride`, and `verbatimModuleSyntax`. `strictNullChecks` remains off because the Java-shaped port still deliberately uses nullable fields during translated initialization.
 
 Most gameplay classes were mechanically adapted from Java, so the TypeScript is still shaped like the source port. In particular, `GameElement` calls translated initialization hooks during construction to reproduce Java object initialization order.
 
@@ -635,6 +640,7 @@ When working in translated gameplay files:
 - do not replace those declarations with normal field initializers unless you have checked the `super()` ordering and runtime behavior;
 - preserve Java behavior unless intentionally fixing a known translation issue;
 - keep type-only cleanup separate from unrelated gameplay rewrites;
+- preserve constructor overload signatures for Java classes with multiple public constructors;
 - run `npm run verify` and smoke-test affected mechanics.
 
 Two Java patterns need special care in TypeScript/JavaScript:
@@ -643,6 +649,8 @@ Two Java patterns need special care in TypeScript/JavaScript:
 - **translated private/runtime names**: avoid subclass fields that collide with library superclass internals. For example, the title-screen image is `Main.titleImage` so it does not collide with Slick's `BasicGame` title string.
 
 If the policy evolves, prefer a stricter allowlist or explicit exception file rather than weakening the check.
+
+`scripts/test-java-translation-parity-guardrails.mjs` protects a few translated Java edge cases that are easy to accidentally "simplify" into different JavaScript behavior, including Java field hiding, boolean XOR translation, constructor overload signatures, and `useDefineForClassFields: false`.
 
 ---
 
@@ -1044,7 +1052,7 @@ Treat it as generated deployment output.
 npm run verify
 ```
 
-covers Node tests, formatting, lint, type checking, and the unchecked-TypeScript ratchet.
+covers Node tests, formatting, lint, type checking, and the unchecked-TypeScript / explicit-`any` ratchets.
 
 The Node tests focus heavily on infrastructure state that is easy to miss during manual play testing, including:
 
@@ -1195,6 +1203,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | `npm run lint`                | Run ESLint.                                                        |
 | `npm run typecheck`           | Run TypeScript compiler without emitting.                          |
 | `npm run check:ts-nocheck`    | Enforce the zero-`@ts-nocheck` policy.                             |
+| `npm run check:explicit-any`  | Enforce the zero explicit-TypeScript-`any` policy.                 |
 | `npm run verify`              | Run the normal source-quality gate.                                |
 | `npm run build:pwa`           | Build/verify PWA component output.                                 |
 | `npm run build:web`           | Build verified about + PWA + desktop ZIP component output.         |
@@ -1214,33 +1223,35 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 
 ## Where Do I Make This Change?
 
-| Goal                                 | Start here                                                                      |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| Player/enemy/game mechanics          | `pwa/src/jackal/`, compare `desktop/src/jackal/`                                |
-| Browser menu/game shell              | `pwa/src/app/JackalWebApp.ts`                                                   |
-| Keyboard/gamepad mapping persistence | `pwa/src/app/JackalInputMappingStore.ts`                                        |
-| Save/continue serialization          | `pwa/src/jackal/persistence/`                                                   |
-| Stable saved-entity IDs              | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts`                         |
-| Deployment-specific local storage    | `pwa/src/app/DeploymentStorageKeys.ts`                                          |
-| Service-worker registration          | `pwa/src/app/ServiceWorkerRegistrar.ts`                                         |
-| Offline/cache strategy               | `pwa/public/sw.js`                                                              |
-| PWA build/precache generation        | `pwa/vite.config.ts`                                                            |
-| Game preload resource inventory      | `pwa/src/app/ResourceManifest.ts`                                               |
-| Java compatibility helpers           | `pwa/src/java/`                                                                 |
-| Public project/about page            | `about/`, `scripts/build-about.mjs`                                             |
-| Desktop Java behavior                | `desktop/src/jackal/`                                                           |
-| Desktop runtime dependencies         | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/` |
-| Desktop packaging                    | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs`                   |
-| Full release orchestration           | `scripts/build-release.mjs`                                                     |
-| Release manifest                     | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs`            |
-| Source provenance                    | `scripts/source-state-utils.mjs`                                                |
-| Release locking                      | `scripts/release-lock-utils.mjs`                                                |
-| Atomic promotion/recovery            | `scripts/release-atomic-utils.mjs`                                              |
-| Atomic control-file writes           | `scripts/atomic-file-utils.mjs`                                                 |
-| Output/path safety                   | `scripts/build-utils.mjs`                                                       |
-| Version/build stamps                 | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`    |
-| Zero-`@ts-nocheck` policy            | `scripts/check-ts-nocheck-budget.mjs`                                           |
-| Third-party notices/source           | root/PWA notices plus desktop license/source material                           |
+| Goal                                  | Start here                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| Player/enemy/game mechanics           | `pwa/src/jackal/`, compare `desktop/src/jackal/`                                |
+| Browser menu/game shell               | `pwa/src/app/JackalWebApp.ts`                                                   |
+| Keyboard/gamepad mapping persistence  | `pwa/src/app/JackalInputMappingStore.ts`                                        |
+| Save/continue serialization           | `pwa/src/jackal/persistence/`                                                   |
+| Stable saved-entity IDs               | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts`                         |
+| Deployment-specific local storage     | `pwa/src/app/DeploymentStorageKeys.ts`                                          |
+| Service-worker registration           | `pwa/src/app/ServiceWorkerRegistrar.ts`                                         |
+| Offline/cache strategy                | `pwa/public/sw.js`                                                              |
+| PWA build/precache generation         | `pwa/vite.config.ts`                                                            |
+| Game preload resource inventory       | `pwa/src/app/ResourceManifest.ts`                                               |
+| Java compatibility helpers            | `pwa/src/java/`                                                                 |
+| Public project/about page             | `about/`, `scripts/build-about.mjs`                                             |
+| Desktop Java behavior                 | `desktop/src/jackal/`                                                           |
+| Desktop runtime dependencies          | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/` |
+| Desktop packaging                     | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs`                   |
+| Full release orchestration            | `scripts/build-release.mjs`                                                     |
+| Release manifest                      | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs`            |
+| Source provenance                     | `scripts/source-state-utils.mjs`                                                |
+| Release locking                       | `scripts/release-lock-utils.mjs`                                                |
+| Atomic promotion/recovery             | `scripts/release-atomic-utils.mjs`                                              |
+| Atomic control-file writes            | `scripts/atomic-file-utils.mjs`                                                 |
+| Output/path safety                    | `scripts/build-utils.mjs`                                                       |
+| Version/build stamps                  | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`    |
+| Zero-`@ts-nocheck` policy             | `scripts/check-ts-nocheck-budget.mjs`                                           |
+| Zero explicit-TypeScript-`any` policy | `scripts/check-explicit-any.mjs`                                                |
+| Java translation parity guardrails    | `scripts/test-java-translation-parity-guardrails.mjs`                           |
+| Third-party notices/source            | root/PWA notices plus desktop license/source material                           |
 
 ---
 

@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import type { ITankTracker } from "./ITankTracker.js";
@@ -75,7 +22,7 @@ export class BrownTank extends Enemy {
     declare public garage: boolean;
     declare public tankTracker: ITankTracker | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
         this.shootCount = 0;
@@ -100,13 +47,17 @@ export class BrownTank extends Enemy {
         this.tankTracker = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
+    public constructor(x: number, y: number);
+    public constructor(x: number, y: number, firstMove: number);
+    public constructor(x: number, y: number, tankTracker: ITankTracker);
+    public constructor(x: number, y: number, firstMove: number, tankTracker: ITankTracker);
+    public constructor(arg0?: number, arg1?: number, arg2?: number | ITankTracker, arg3?: ITankTracker) {
         super();
         const argCount = arguments.length;
         this.__construct_BrownTank(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_BrownTank(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    private __construct_BrownTank(argCount: number, arg0?: number, arg1?: number, arg2?: number | ITankTracker, arg3?: ITankTracker): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal4 = arg0;
             let yLocal4 = arg1;
@@ -124,7 +75,7 @@ export class BrownTank extends Enemy {
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal2 = arg0;
             let yLocal2 = arg1;
-            let tankTrackerLocal2 = arg2;
+            let tankTrackerLocal2 = arg2 as ITankTracker;
             this.__construct_BrownTank(2, xLocal2, yLocal2);
             this.tankTracker = tankTrackerLocal2;
             if (tankTrackerLocal2 != null) {
@@ -169,7 +120,7 @@ export class BrownTank extends Enemy {
     public targetAngle: number = 90;
     public displayAngle: number = 90;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -266,7 +217,7 @@ export class BrownTank extends Enemy {
         }
     }
 
-    private testCorners(nextX: any, nextY: any): void {
+    private testCorners(nextX: number, nextY: number): void {
         let sx1 = 0;
         let sy1 = 0;
         let sx2 = 0;
@@ -488,7 +439,7 @@ export class BrownTank extends Enemy {
         }
     }
 
-    public remove(): void {
+    public override remove(): void {
         super.remove();
         if (this.tankTracker != null) {
             this.tankTracker.tankDestroyed();

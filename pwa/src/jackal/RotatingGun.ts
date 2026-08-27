@@ -1,57 +1,5 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { Image } from "slick2d-ts";
+import { javaArray, javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 export enum RotatingGunState {
@@ -70,9 +18,9 @@ export class RotatingGun extends Enemy {
     declare public type: number;
     declare public sprites: Image[] | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.state = null as any;
+        this.state = null;
         this.angle = 0;
         this.recoil = 0;
         this.pause = 0;
@@ -85,17 +33,20 @@ export class RotatingGun extends Enemy {
         this.sprites = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
+    public constructor(x: number, y: number, bossGarageManager: BossGarageManager, white: boolean);
+    public constructor(x: number, y: number, white: boolean);
+    public constructor(x: number, y: number, type: number);
+    public constructor(arg0?: number, arg1?: number, arg2?: BossGarageManager | boolean | number, arg3?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_RotatingGun(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_RotatingGun(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    private __construct_RotatingGun(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager | boolean | number, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
             let xLocal3 = arg0;
             let yLocal3 = arg1;
-            let bossGarageManagerLocal = arg2;
+            let bossGarageManagerLocal = arg2 as BossGarageManager;
             let whiteLocal2 = arg3;
             this.x = xLocal3;
             this.y = yLocal3;
@@ -145,7 +96,7 @@ export class RotatingGun extends Enemy {
 
     public static readonly RECOIL_DURATION: number = 17;
     public static readonly RECOIL_AMPLITUDE: number = 8;
-    public static readonly recoils: any[] = javaArray(RotatingGun.RECOIL_DURATION, 0);
+    public static readonly recoils: number[] = javaArray(RotatingGun.RECOIL_DURATION, 0);
     public static readonly PAUSE_AFTER_RECOIL: number = 17;
     public static readonly PAUSE_BETWEEN_GROUPS: number = 50;
     public static readonly GROUP_SIZE: number = 3;
@@ -167,7 +118,7 @@ export class RotatingGun extends Enemy {
 
     public groupSize: number = RotatingGun.GROUP_SIZE;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 3;

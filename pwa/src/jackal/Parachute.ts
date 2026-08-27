@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { EnemySoldier } from "./EnemySoldier.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import { Explosion } from "./Explosion.js";
@@ -65,7 +12,7 @@ export class Parachute extends GameElement {
     declare public bossHelicopter: BossHelicopter | null;
     declare public left: boolean;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.delay = 0;
         this.state = 0;
@@ -76,13 +23,13 @@ export class Parachute extends GameElement {
         this.left = false;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: boolean, arg4?: BossHelicopter) {
         super();
         const argCount = arguments.length;
         this.__construct_Parachute(argCount, arg0, arg1, arg2, arg3, arg4);
     }
 
-    private __construct_Parachute(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    private __construct_Parachute(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean, arg4?: BossHelicopter): void {
         if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -110,9 +57,9 @@ export class Parachute extends GameElement {
     public static readonly MAX_HORIZONTAL_DRIFT_SPEED: number = 0.5;
     public static readonly INFLATE_TIME: number = 32;
 
-    public static readonly INFLATE_INDEX: any[] = [0, 1, 1, 2, 2, 3];
+    public static readonly INFLATE_INDEX: number[] = [0, 1, 1, 2, 2, 3];
 
-    public static readonly INFLATES: any[] = [
+    public static readonly INFLATES: number[][] = [
         [28 / 28, 38 / 28 - 28 / 28], //0: 28 -- 38
         [38 / 48, 48 / 48 - 38 / 48], //1: 38 -- 48
         [48 / 48, 56 / 48 - 48 / 48], //1: 48 -- 56

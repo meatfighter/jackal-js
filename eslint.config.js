@@ -28,9 +28,9 @@ export default [
             sourceType: "module"
         },
         rules: {
-            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-unused-vars": "off",
-            "@typescript-eslint/ban-ts-comment": "off",
+            "@typescript-eslint/ban-ts-comment": "error",
             "no-unused-vars": "off",
             "no-dupe-class-members": "off",
             "no-undef": "off",

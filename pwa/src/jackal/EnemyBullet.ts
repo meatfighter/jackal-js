@@ -1,57 +1,5 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { Image } from "slick2d-ts";
+
 import { BulletHit } from "./BulletHit.js";
 import { GameElement } from "./GameElement.js";
 import type { Player } from "./Player.js";
@@ -62,7 +10,7 @@ export class EnemyBullet extends GameElement {
     declare public sprite: Image | null;
     declare public player: Player | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.travelTime = 0;
         this.vx = 0;
@@ -71,13 +19,25 @@ export class EnemyBullet extends GameElement {
         this.player = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any) {
+    public constructor(x: number, y: number, dx: number, dy: number, travelTime: number);
+    public constructor(x: number, y: number, dx: number, dy: number, travelTime: number, white: boolean);
+    public constructor(x: number, y: number, dx: number, dy: number, travelTime: number, white: boolean, multiplySpeed: boolean);
+    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number, arg5?: boolean, arg6?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_EnemyBullet(argCount, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
-    private __construct_EnemyBullet(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any): void {
+    private __construct_EnemyBullet(
+        argCount: number,
+        arg0?: number,
+        arg1?: number,
+        arg2?: number,
+        arg3?: number,
+        arg4?: number,
+        arg5?: boolean,
+        arg6?: boolean
+    ): void {
         if (
             argCount === 5 &&
             typeof arg0 === "number" &&

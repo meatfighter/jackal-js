@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
 import type { Player } from "./Player.js";
@@ -65,7 +12,7 @@ export class ElephantMissile extends GameElement {
     declare public tipY: number;
     declare public player: Player | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
         this.vx = 0;
@@ -77,13 +24,13 @@ export class ElephantMissile extends GameElement {
         this.player = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_ElephantMissile(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_ElephantMissile(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    private __construct_ElephantMissile(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;

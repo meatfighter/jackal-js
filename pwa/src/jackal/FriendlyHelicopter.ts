@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { java2DArray, javaArray, javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { Airplane } from "./Airplane.js";
 import { EnemyHelicopter } from "./EnemyHelicopter.js";
@@ -76,7 +23,7 @@ export class FriendlyHelicopter extends GameElement {
     declare public turnY: number;
     declare public createdPlane: boolean;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
         this.rotorAngle = 0;
@@ -99,13 +46,13 @@ export class FriendlyHelicopter extends GameElement {
         this.createdPlane = false;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_FriendlyHelicopter(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_FriendlyHelicopter(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any): void {
+    private __construct_FriendlyHelicopter(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -164,9 +111,9 @@ export class FriendlyHelicopter extends GameElement {
     private static readonly SHADOW_Y0: number = 36;
     private static readonly SHADOW_K: number = (FriendlyHelicopter.Y1 - FriendlyHelicopter.SHADOW_Y0) / FriendlyHelicopter.SHADOW_Y0;
 
-    private static readonly HEIGHTS: any[] = javaArray(91, 0);
+    private static readonly HEIGHTS: number[] = javaArray(91, 0);
     // Assigned once in the static block, matching Java static-final initialization.
-    private static TURNS: number[][] = null as any;
+    private static TURNS: number[][] = null;
 
     static {
         for (let i = 0; i < 91; i++) {
@@ -216,7 +163,7 @@ export class FriendlyHelicopter extends GameElement {
         this.layer = 3;
     }
 
-    public remove(): void {
+    public override remove(): void {
         this.removeFlag = true;
         this.main.stopSound(this.main.helicopterSound2);
     }

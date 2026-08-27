@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaDouble, javaFloat } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
@@ -62,7 +9,7 @@ export class CliffGun extends Enemy {
     declare public shots: number;
     declare public player: Player | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
         this.spriteIndex = 0;
@@ -71,13 +18,13 @@ export class CliffGun extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_CliffGun(argCount, arg0, arg1);
     }
 
-    private __construct_CliffGun(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_CliffGun(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -107,7 +54,7 @@ export class CliffGun extends Enemy {
     public static readonly RECOIL_MAGNITUDE: number = 8;
     public static readonly DEACTIVATE_DISTANCE: number = 128;
 
-    public static readonly RECOILS: any[] = javaArray(CliffGun.RECOIL_TIME, 0);
+    public static readonly RECOILS: number[] = javaArray(CliffGun.RECOIL_TIME, 0);
 
     static {
         for (let i = 0; i < CliffGun.RECOIL_TIME; i++) {
@@ -120,7 +67,7 @@ export class CliffGun extends Enemy {
 
     public delay: number = CliffGun.HIDDEN_TIME;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.player = this.gameMode.player;
@@ -222,7 +169,7 @@ export class CliffGun extends Enemy {
 
     // returns true if attack successful
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (this.spriteIndex < 2) {
             return false;
         }
@@ -238,7 +185,7 @@ export class CliffGun extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.state == CliffGun.STATE_HIDDEN) {
             return false;
         }

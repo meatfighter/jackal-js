@@ -1,66 +1,13 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    type ControllerListener,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    type KeyListener,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Color, type ControllerListener, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
+import { javaArray } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
-import { IFadeListener } from "./IFadeListener.js";
-import { IMenuListener } from "./IMenuListener.js";
-import { IMode } from "./IMode.js";
+import type { IFadeListener } from "./IFadeListener.js";
+import type { IMenuListener } from "./IMenuListener.js";
+import type { IMode } from "./IMode.js";
 import { Menu } from "./Menu.js";
 import { Modes } from "./Modes.js";
+import type { Main } from "./Main.js";
 export class InputMode implements IMode, ControllerListener, KeyListener, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_MENU: number = 1;
@@ -83,8 +30,8 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public static readonly GAMEPAD_AXIS_LIMIT: number = 16;
     public static readonly AXIS_THRESHOLD: number = 0.5;
     public static readonly AXIS_RECENTER_THRESHOLD: number = 0.05;
-    public static readonly EXTRA_HORIZONTAL_AXES: any[] = [2, 6];
-    public static readonly EXTRA_VERTICAL_AXES: any[] = [3, 7];
+    public static readonly EXTRA_HORIZONTAL_AXES: number[] = [2, 6];
+    public static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
 
     public static readonly INPUT_TITLE: string = "INPUT";
     public static readonly INPUT_TITLE_X: number = (MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2;
@@ -94,7 +41,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public static readonly INPUT_MENU_X: number = 416;
     public static readonly INPUT_MENU_Y: number = 672;
 
-    public static readonly ACTIONS: any[] = [
+    public static readonly ACTIONS: number[] = [
         ButtonMapping.ACTION_UP,
         ButtonMapping.ACTION_DOWN,
         ButtonMapping.ACTION_LEFT,
@@ -104,10 +51,10 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         ButtonMapping.ACTION_START
     ];
 
-    public static readonly LABELS: any[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
+    public static readonly LABELS: string[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
 
-    public static readonly NAMES: any[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
-    public static readonly NAME_XS: any[] = javaArray(InputMode.NAMES.length, 0);
+    public static readonly NAMES: string[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
+    public static readonly NAME_XS: number[] = javaArray(InputMode.NAMES.length, 0);
 
     static {
         for (let i = 0; i < InputMode.NAMES.length; i++) {
@@ -115,29 +62,29 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    public main: any = null as any;
-    public gc: any = null as any;
-    public buttonMapping: any = null as any;
+    public main: Main = null;
+    public gc: GameContainer = null;
+    public buttonMapping: ButtonMapping = null;
     public state: number = InputMode.STATE_FADE_IN;
     public nameIndex: number = 0;
     public delay: number = 0;
-    public menu: any = null as any;
+    public menu: Menu = null;
     public selectedIndex: number = 0;
     public listeningForInput: boolean = false;
-    public draftButtonMapping: any = null as any;
-    public assignedKeys: any = new Set();
-    public assignedControllerButtons: any = new Set();
+    public draftButtonMapping: ButtonMapping = null;
+    public assignedKeys: Set<number> = new Set();
+    public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
-    public extraAxisBaselines: any[] = javaArray(InputMode.CONTROLLER_INDEX_LIMIT * InputMode.GAMEPAD_AXIS_LIMIT, Number.NaN);
+    public extraAxisBaselines: number[] = javaArray(InputMode.CONTROLLER_INDEX_LIMIT * InputMode.GAMEPAD_AXIS_LIMIT, Number.NaN);
     public extraAxisUpDown: boolean = false;
     public extraAxisDownDown: boolean = false;
     public extraAxisLeftDown: boolean = false;
     public extraAxisRightDown: boolean = false;
-    public inputMappingLines: any[] = javaArray(InputMode.LABELS.length, "");
+    public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
-    public init(main: any, gc: any): void {
+    public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
         this.buttonMapping = main.buttonMapping;
@@ -147,7 +94,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         main.startFade(false, this);
     }
 
-    private createMenu(selectedIndex: any): void {
+    private createMenu(selectedIndex: number): void {
         this.menu = new Menu(InputMode.INPUT_MENU_X, InputMode.INPUT_MENU_Y, this.main, selectedIndex, Menu.ICON_BROWN_TANK, this, "CHANGE", "RESET", "DONE");
     }
 
@@ -161,9 +108,9 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    public selectionChanged(selectedIndex: any): void {}
+    public selectionChanged(selectedIndex: number): void {}
 
-    public optionSelected(selectedIndex: any): void {
+    public optionSelected(selectedIndex: number): void {
         if (this.state != InputMode.STATE_MENU) {
             return;
         }
@@ -224,33 +171,33 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.listeningForInput = false;
     }
 
-    public controllerLeftPressed(controllerIndex: any): void {
+    public controllerLeftPressed(controllerIndex: number): void {
         this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT, controllerIndex);
     }
 
-    public controllerLeftReleased(i: any): void {}
+    public controllerLeftReleased(i: number): void {}
 
-    public controllerRightPressed(controllerIndex: any): void {
+    public controllerRightPressed(controllerIndex: number): void {
         this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT, controllerIndex);
     }
 
-    public controllerRightReleased(controllerIndex: any): void {}
+    public controllerRightReleased(controllerIndex: number): void {}
 
-    public controllerUpPressed(controllerIndex: any): void {
+    public controllerUpPressed(controllerIndex: number): void {
         this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP, controllerIndex);
     }
 
-    public controllerUpReleased(controllerIndex: any): void {}
+    public controllerUpReleased(controllerIndex: number): void {}
 
-    public controllerDownPressed(controllerIndex: any): void {
+    public controllerDownPressed(controllerIndex: number): void {
         this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN, controllerIndex);
     }
 
-    public controllerDownReleased(controllerIndex: any): void {}
+    public controllerDownReleased(controllerIndex: number): void {}
 
-    public controllerButtonReleased(controllerIndex: any, buttonIndex: any): void {}
+    public controllerButtonReleased(controllerIndex: number, buttonIndex: number): void {}
 
-    public setInput(input: any): void {}
+    public setInput(input: Input): void {}
 
     public isAcceptingInput(): boolean {
         return true;
@@ -260,7 +207,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     public inputStarted(): void {}
 
-    public controllerButtonPressed(controllerIndex: any, buttonIndex: any): void {
+    public controllerButtonPressed(controllerIndex: number, buttonIndex: number): void {
         if (this.state != InputMode.STATE_READING) {
             return;
         }
@@ -278,7 +225,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.advance();
     }
 
-    private bindControllerDirection(buttonIndex: any, controllerIndex: any): void {
+    private bindControllerDirection(buttonIndex: number, controllerIndex: number): void {
         if (this.state != InputMode.STATE_READING || this.isActionStep()) {
             return;
         }
@@ -291,7 +238,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.advance();
     }
 
-    public keyPressed(i: any, c: any): void {
+    public keyPressed(i: number, c: string): void {
         if (this.state != InputMode.STATE_READING) {
             return;
         }
@@ -308,9 +255,9 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.advance();
     }
 
-    public keyReleased(i: any, c: any): void {}
+    public keyReleased(i: number, c: string): void {}
 
-    private bindDraftKeyboardKey(i: any): boolean {
+    private bindDraftKeyboardKey(i: number): boolean {
         if (this.assignedKeys.has(i)) {
             return false;
         }
@@ -343,7 +290,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return true;
     }
 
-    private bindDraftControllerButton(buttonIndex: any, controllerIndex: any): boolean {
+    private bindDraftControllerButton(buttonIndex: number, controllerIndex: number): boolean {
         if (this.assignedControllerButtons.has(buttonIndex)) {
             return false;
         }
@@ -377,7 +324,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return true;
     }
 
-    private copyButtonMapping(source: any): any {
+    private copyButtonMapping(source: ButtonMapping): ButtonMapping {
         let copy = new ButtonMapping();
         copy.keyUp = source.keyUp;
         copy.keyDown = source.keyDown;
@@ -399,7 +346,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return copy;
     }
 
-    private clearDraftKey(key: any): void {
+    private clearDraftKey(key: number): void {
         if (this.draftButtonMapping.keyUp == key) {
             this.draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
         }
@@ -423,7 +370,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    private clearDraftControllerButton(buttonIndex: any): void {
+    private clearDraftControllerButton(buttonIndex: number): void {
         if (this.draftButtonMapping.controllerUp == buttonIndex) {
             this.draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
         }
@@ -474,7 +421,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return action == ButtonMapping.ACTION_GRENADE || action == ButtonMapping.ACTION_GUN || action == ButtonMapping.ACTION_START;
     }
 
-    private isDirectionalGamepadButton(buttonIndex: any): boolean {
+    private isDirectionalGamepadButton(buttonIndex: number): boolean {
         return buttonIndex >= ButtonMapping.DEFAULT_CONTROLLER_UP && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
 
@@ -489,7 +436,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    private getPressedExtraAxisDirection(): any {
+    private getPressedExtraAxisDirection(): number | null {
         if (this.isExtraAxisUpPressed()) {
             return ButtonMapping.DEFAULT_CONTROLLER_UP;
         }
@@ -549,7 +496,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return pressed;
     }
 
-    private isAnyAxisLessThan(axes: any, threshold: any): boolean {
+    private isAnyAxisLessThan(axes: readonly number[], threshold: number): boolean {
         for (let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
             for (let i = 0; i < axes.length; i++) {
                 if (this.readExtraAxisValue(controller, axes[i]) < threshold) {
@@ -560,7 +507,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return false;
     }
 
-    private isAnyAxisGreaterThan(axes: any, threshold: any): boolean {
+    private isAnyAxisGreaterThan(axes: readonly number[], threshold: number): boolean {
         for (let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
             for (let i = 0; i < axes.length; i++) {
                 if (this.readExtraAxisValue(controller, axes[i]) > threshold) {
@@ -571,7 +518,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return false;
     }
 
-    private readExtraAxisValue(controller: any, axis: any): number {
+    private readExtraAxisValue(controller: number, axis: number): number {
         try {
             let input = this.gc.getInput();
             if (input.getAxisCount(controller) <= axis) {
@@ -618,7 +565,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.delay = InputMode.FADE_TIME;
     }
 
-    public update(gc: any): void {
+    public update(gc: GameContainer): void {
         switch (this.state) {
             case InputMode.STATE_MENU:
                 this.menu.update();
@@ -658,7 +605,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    private renderInputMenu(gc: any, g: any): void {
+    private renderInputMenu(gc: GameContainer, g: Graphics): void {
         this.main.drawString(InputMode.INPUT_TITLE, InputMode.INPUT_TITLE_X, InputMode.INPUT_TITLE_Y, MainConstants.FONT_GRAY);
 
         let mappingX = this.getInputMappingX();
@@ -692,7 +639,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.inputMappingX = (MainConstants.DISPLAY_WIDTH - (maxLength << 5)) / 2;
     }
 
-    private renderReading(gc: any, g: any): void {
+    private renderReading(gc: GameContainer, g: Graphics): void {
         if (this.state == InputMode.STATE_SAVED) {
             this.main.drawString(this.message, this.centerStringX(this.message), 464, MainConstants.FONT_GRAY);
             return;
@@ -717,11 +664,11 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    private centerStringX(text: any): number {
+    private centerStringX(text: string): number {
         return (MainConstants.DISPLAY_WIDTH - (text.length << 5)) / 2;
     }
 
-    public render(gc: any, g: any): void {
+    public render(gc: GameContainer, g: Graphics): void {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 

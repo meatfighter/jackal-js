@@ -1,57 +1,5 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { Image } from "slick2d-ts";
+
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 export class StatueMissile extends Enemy {
@@ -64,7 +12,7 @@ export class StatueMissile extends Enemy {
     declare public clipX: number;
     declare public explodeDelay: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
         this.angle = 0;
@@ -76,13 +24,13 @@ export class StatueMissile extends Enemy {
         this.explodeDelay = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_StatueMissile(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_StatueMissile(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_StatueMissile(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
             let statueXLocal = arg0;
             let statueYLocal = arg1;
@@ -115,7 +63,7 @@ export class StatueMissile extends Enemy {
     public static readonly EXPLODE_DELAY: number = 91;
     public static readonly SPEED: number = 3.5;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 4;

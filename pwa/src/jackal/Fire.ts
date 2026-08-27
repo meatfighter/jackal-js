@@ -1,57 +1,3 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { Flame } from "./Flame.js";
 import { GameElement } from "./GameElement.js";
 import type { Enemy } from "./Enemy.js";
@@ -71,7 +17,7 @@ export class Fire extends GameElement {
     // `enemy: boolean`. Java field hiding keeps both slots; JavaScript needs distinct keys.
     declare public sourceEnemy: Enemy | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
         this.vy = 0;
@@ -88,13 +34,13 @@ export class Fire extends GameElement {
         this.sourceEnemy = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number, arg5?: Enemy) {
         super();
         const argCount = arguments.length;
         this.__construct_Fire(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
-    private __construct_Fire(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): void {
+    private __construct_Fire(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number, arg5?: Enemy): void {
         if (
             argCount === 6 &&
             typeof arg0 === "number" &&

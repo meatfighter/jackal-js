@@ -1,58 +1,6 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
 import { MainRuntimeState } from "./MainRuntimeState.js";
+import type { GameMode } from "./GameMode.js";
+import type { Main } from "./Main.js";
 export abstract class GameElement {
     /**
      * Java zero-initializes the complete derived object before a superclass constructor runs.
@@ -79,8 +27,8 @@ export abstract class GameElement {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public main: any = null as any;
-    public gameMode: any = null as any;
+    public main: Main = null;
+    public gameMode: GameMode = null;
 
     public removeFlag: boolean = false;
     public enemy: boolean = false;
@@ -90,7 +38,7 @@ export abstract class GameElement {
     public layer: number = 0;
     public changeLayerValue: number = -1;
 
-    public changeLayer(layer: any): void {
+    public changeLayer(layer: number): void {
         this.changeLayerValue = layer;
     }
 
@@ -98,7 +46,7 @@ export abstract class GameElement {
         this.removeFlag = true;
     }
 
-    public checkBounds(maxY: any): void {}
+    public checkBounds(maxY: number): void {}
 
     public abstract init(): void;
     public abstract update(): void;

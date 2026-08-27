@@ -1,83 +1,36 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { Music } from "slick2d-ts";
 export class Song {
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(intro: string);
+    public constructor(intro: Music);
+    public constructor(intro: string, loop: string);
+    public constructor(intro: Music, loop: Music);
+    public constructor(intro: string, intro2: string, loop: string);
+    public constructor(intro: Music, intro2: Music, loop: Music);
+    public constructor(arg0?: string | Music, arg1?: string | Music, arg2?: string | Music) {
         const argCount = arguments.length;
         this.__construct_Song(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_Song(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_Song(argCount: number, arg0?: string | Music, arg1?: string | Music, arg2?: string | Music): void {
         if (argCount === 1 && (arg0 === null || typeof arg0 === "string")) {
-            let introLocal6 = arg0;
+            let introLocal6 = arg0 as string | null;
             this.intro = new Music(introLocal6, Song.STREAMING);
             return;
         } else if (argCount === 1) {
-            let introLocal5 = arg0;
+            let introLocal5 = arg0 as Music;
             this.intro = introLocal5;
             return;
         } else if (argCount === 2 && (arg0 === null || typeof arg0 === "string") && (arg1 === null || typeof arg1 === "string")) {
-            let introLocal4 = arg0;
-            let loopLocal4 = arg1;
+            let introLocal4 = arg0 as string | null;
+            let loopLocal4 = arg1 as string | null;
             if (introLocal4 != null) {
                 this.intro = new Music(introLocal4, Song.STREAMING);
             }
             this.loop = new Music(loopLocal4, Song.STREAMING);
             return;
         } else if (argCount === 2) {
-            let introLocal3 = arg0;
-            let loopLocal3 = arg1;
+            let introLocal3 = arg0 as Music;
+            let loopLocal3 = arg1 as Music;
             this.intro = introLocal3;
             this.loop = loopLocal3;
             return;
@@ -87,9 +40,9 @@ export class Song {
             (arg1 === null || typeof arg1 === "string") &&
             (arg2 === null || typeof arg2 === "string")
         ) {
-            let introLocal2 = arg0;
-            let intro2Local2 = arg1;
-            let loopLocal2 = arg2;
+            let introLocal2 = arg0 as string | null;
+            let intro2Local2 = arg1 as string | null;
+            let loopLocal2 = arg2 as string | null;
             if (introLocal2 != null) {
                 this.intro = new Music(introLocal2, Song.STREAMING);
             }
@@ -99,9 +52,9 @@ export class Song {
             this.loop = new Music(loopLocal2, Song.STREAMING);
             return;
         } else if (argCount === 3) {
-            let introLocal = arg0;
-            let intro2Local = arg1;
-            let loopLocal = arg2;
+            let introLocal = arg0 as Music;
+            let intro2Local = arg1 as Music;
+            let loopLocal = arg2 as Music;
             this.intro = introLocal;
             this.intro2 = intro2Local;
             this.loop = loopLocal;
@@ -112,9 +65,9 @@ export class Song {
 
     public static readonly STREAMING: boolean = false;
 
-    public intro: any = null as any;
-    public intro2: any = null as any;
-    public loop: any = null as any;
+    public intro: Music = null;
+    public intro2: Music = null;
+    public loop: Music = null;
     public playing: boolean = false;
     public playedIntro2: boolean = false;
 
@@ -165,7 +118,7 @@ export class Song {
         }
     }
 
-    private resumeMusicPart(music: any): boolean {
+    private resumeMusicPart(music: Music | null): boolean {
         if (music == null || !music.playing()) {
             return false;
         }

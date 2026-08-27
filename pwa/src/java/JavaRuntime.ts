@@ -1,5 +1,4 @@
 import { BinaryReader, JavaRandom, ResourceLoader } from "slick2d-ts";
-
 const JAVA_INT_MIN = -2147483648;
 const JAVA_INT_MAX = 2147483647;
 const JAVA_LONG_MIN = -(1n << 63n);
@@ -53,6 +52,8 @@ export class ArrayList<T> {
         return previous;
     }
 
+    public remove(index: number): T;
+    public remove(value: T): boolean;
     public remove(valueOrIndex: T | number): T | boolean {
         if (typeof valueOrIndex === "number") {
             const index = Math.trunc(valueOrIndex);
@@ -121,7 +122,7 @@ export class Collections {
 export class Random extends JavaRandom {}
 
 export class System {
-    public static arraycopy(source: any[], sourcePosition: number, target: any[], targetPosition: number, length: number): void {
+    public static arraycopy<T>(source: readonly T[], sourcePosition: number, target: T[], targetPosition: number, length: number): void {
         for (let i = 0; i < length; i++) {
             target[targetPosition + i] = source[sourcePosition + i];
         }
@@ -149,11 +150,11 @@ export class Character {
 }
 
 export class JavaString {
-    public static valueOf(value: any): string {
+    public static valueOf(value: unknown): string {
         return String(value);
     }
 
-    public static format(format: string, ...args: any[]): string {
+    public static format(format: string, ...args: unknown[]): string {
         let index = 0;
         return format.replace(/%([0]?)(\d+)?([sd])/g, (_match, zero: string, width: string, type: string) => {
             const value = args[index++];
@@ -246,7 +247,7 @@ export function java4DArray<T>(a: number, b: number, c: number, d: number, value
     return array;
 }
 
-export function javaInt(value: any): number {
+export function javaInt(value: unknown): number {
     if (typeof value === "bigint") {
         return Number(BigInt.asIntN(32, value));
     }
@@ -263,7 +264,7 @@ export function javaInt(value: any): number {
     return number < 0 ? Math.ceil(number) : Math.floor(number);
 }
 
-export function javaIntDiv(dividend: any, divisor: any): number {
+export function javaIntDiv(dividend: unknown, divisor: unknown): number {
     const left = javaInt(dividend);
     const right = javaInt(divisor);
     if (right === 0) {
@@ -275,40 +276,40 @@ export function javaIntDiv(dividend: any, divisor: any): number {
     return Math.trunc(left / right);
 }
 
-export function javaRoundFloat(value: any): number {
+export function javaRoundFloat(value: unknown): number {
     return javaInt(Math.floor(Math.fround(Math.fround(Number(value)) + JAVA_FLOAT_HALF)));
 }
 
-export function javaByte(value: any): number {
+export function javaByte(value: unknown): number {
     if (typeof value === "bigint") {
         return Number(BigInt.asIntN(8, value));
     }
     return (javaInt(value) << 24) >> 24;
 }
 
-export function javaShort(value: any): number {
+export function javaShort(value: unknown): number {
     if (typeof value === "bigint") {
         return Number(BigInt.asIntN(16, value));
     }
     return (javaInt(value) << 16) >> 16;
 }
 
-export function javaChar(value: any): number {
+export function javaChar(value: unknown): number {
     if (typeof value === "bigint") {
         return Number(BigInt.asUintN(16, value));
     }
     return javaInt(value) & 0xffff;
 }
 
-export function javaFloat(value: any): number {
+export function javaFloat(value: unknown): number {
     return Math.fround(Number(value));
 }
 
-export function javaDouble(value: any): number {
+export function javaDouble(value: unknown): number {
     return Number(value);
 }
 
-export function javaLong(value: any): bigint {
+export function javaLong(value: unknown): bigint {
     if (typeof value === "bigint") {
         return BigInt.asIntN(64, value);
     }

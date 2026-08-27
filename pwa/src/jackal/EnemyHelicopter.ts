@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { BossHelicopter } from "./BossHelicopter.js";
 import { Enemy } from "./Enemy.js";
@@ -74,7 +21,7 @@ export class EnemyHelicopter extends Enemy {
     declare public va: number;
     declare public v: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
         this.rotorAngle = 0;
@@ -95,13 +42,13 @@ export class EnemyHelicopter extends Enemy {
         this.shootDelay = 0;
     }
 
-    public constructor(arg0?: any) {
+    public constructor(arg0?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_EnemyHelicopter(argCount, arg0);
     }
 
-    private __construct_EnemyHelicopter(argCount: number, arg0?: any): void {
+    private __construct_EnemyHelicopter(argCount: number, arg0?: boolean): void {
         if (argCount === 1 && typeof arg0 === "boolean") {
             let downLocal = arg0;
             this.x = this.gameMode.player.x + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE);
@@ -153,7 +100,7 @@ export class EnemyHelicopter extends Enemy {
 
     public shootDelay: number = EnemyHelicopter.SHOOT_DELAY;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 7;
@@ -166,7 +113,7 @@ export class EnemyHelicopter extends Enemy {
         this.points = 2000;
     }
 
-    public remove(): void {
+    public override remove(): void {
         this.removeFlag = true;
         this.main.stopSound(this.main.helicopterSound2);
         if (this.playSoundOnRemove) {
@@ -176,7 +123,7 @@ export class EnemyHelicopter extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
 
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         return false;
     }
 
@@ -277,7 +224,7 @@ export class EnemyHelicopter extends Enemy {
         }
     }
 
-    public checkBounds(maxY: any): void {}
+    public override checkBounds(maxY: number): void {}
 
     public render(): void {
         this.rotorAngle -= 30;

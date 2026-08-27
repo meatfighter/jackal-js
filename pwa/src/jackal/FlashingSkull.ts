@@ -1,64 +1,11 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { MissionAccomplished } from "./MissionAccomplished.js";
 export class FlashingSkull extends GameElement {
     declare public visible: boolean;
     declare public alpha: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
         this.delay = 0;
@@ -76,7 +23,7 @@ export class FlashingSkull extends GameElement {
     public static readonly FLASHING_TIME: number = FlashingSkull.FLASH_TIME * 32;
     public static readonly FADE_TIME: number = 91;
 
-    public static readonly TILES: any[] = [
+    public static readonly TILES: number[][] = [
         [800, 704, 302],
         [832, 704, 303],
         [864, 704, 303],

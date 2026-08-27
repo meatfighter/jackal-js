@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaFloat, javaInt, rotatePoint, type ArrayList } from "../java/JavaRuntime.js";
 import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
@@ -61,6 +8,9 @@ import { MainRuntimeState } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { PlayerBullet } from "./PlayerBullet.js";
 import { PlayerMissile } from "./PlayerMissile.js";
+import type { Enemy } from "./Enemy.js";
+import type { IInput } from "./IInput.js";
+import type { Main } from "./Main.js";
 export class Player {
     public constructor() {
         const argCount = arguments.length;
@@ -96,8 +46,8 @@ export class Player {
     public static SENSOR_D_Y1: number = 0;
     public static SENSOR_D_Y2: number = 0;
 
-    public static readonly RUMBLE: any[] = javaArray(17, 0);
-    public static readonly WAKE_ALPHAS: any[] = javaArray(17, 0);
+    public static readonly RUMBLE: number[] = javaArray(17, 0);
+    public static readonly WAKE_ALPHAS: number[] = javaArray(17, 0);
 
     static {
         let angle = 0;
@@ -119,10 +69,10 @@ export class Player {
         Player.SENSOR_D_Y2 = javaInt(p2.y);
     }
 
-    private main: any = null as any;
-    private gameMode: any = null as any;
-    private input: any = null as any;
-    public mines: any = null as any;
+    private main: Main = null;
+    private gameMode: GameMode = null;
+    private input: IInput = null;
+    public mines: ArrayList<Enemy> = null;
 
     public x: number = 512;
     public y: number = 480;
@@ -148,7 +98,7 @@ export class Player {
     public releaseablePows: number = 0;
     public inSwamp: boolean = false;
 
-    public setWeaponArmed(weaponArmed: any): void {
+    public setWeaponArmed(weaponArmed: boolean): void {
         this.weaponArmed = weaponArmed;
     }
 
@@ -201,7 +151,7 @@ export class Player {
         this.respawning = Player.RESPAWN_DELAY;
     }
 
-    public attack(arg0?: any, arg1?: any, arg2?: any, arg3?: any): any {
+    public attack(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
             return this.attack__overload0(arg0, arg1, arg2, arg3);
@@ -212,7 +162,7 @@ export class Player {
         throw new Error(`No Java method overload matched attack: ${argCount}`);
     }
 
-    public attack__overload0(x1: any, y1: any, x2: any, y2: any): boolean {
+    public attack__overload0(x1: number, y1: number, x2: number, y2: number): boolean {
         if (this.respawning == 0 && this.invincible == 0 && x1 <= this.x + 32 && x2 >= this.x - 32 && y1 <= this.y + 32 && y2 >= this.y - 32) {
             this.explode();
             return true;
@@ -221,7 +171,7 @@ export class Player {
         }
     }
 
-    public attack__overload1(x: any, y: any): boolean {
+    public attack__overload1(x: number, y: number): boolean {
         if (this.respawning == 0 && this.invincible == 0 && x >= this.x - 32 && x <= this.x + 32 && y >= this.y - 32 && y <= this.y + 32) {
             this.explode();
             return true;

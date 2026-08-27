@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaFloat, javaRoundFloat } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 export class SubmarineMissile extends Enemy {
     declare public vy: number;
@@ -61,7 +8,7 @@ export class SubmarineMissile extends Enemy {
     declare public angle: number;
     declare public explodeDelay: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vy = 0;
         this.vx = 0;
@@ -71,13 +18,13 @@ export class SubmarineMissile extends Enemy {
         this.explodeDelay = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_SubmarineMissile(argCount, arg0, arg1);
     }
 
-    private __construct_SubmarineMissile(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_SubmarineMissile(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -103,7 +50,7 @@ export class SubmarineMissile extends Enemy {
 
     public static readonly TO_DEGREES: number = javaFloat(180.0 / Math.PI);
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.layer = 4;

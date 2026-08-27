@@ -1,63 +1,10 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { BossGarage } from "./BossGarage.js";
 import { GameElement } from "./GameElement.js";
 import { Gate } from "./Gate.js";
-import { ICameraPanListener } from "./ICameraPanListener.js";
-import { ITankTracker } from "./ITankTracker.js";
+import type { ICameraPanListener } from "./ICameraPanListener.js";
+import type { ITankTracker } from "./ITankTracker.js";
 import { RotatingGun } from "./RotatingGun.js";
 export class BossGarageManager extends GameElement implements ICameraPanListener, ITankTracker {
     declare public ready: boolean;
@@ -66,7 +13,7 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
     declare public tanks: number;
     declare public sparkX: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;
         this.garages = null;

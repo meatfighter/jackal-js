@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import type { Player } from "./Player.js";
@@ -62,7 +9,7 @@ export class Train extends Enemy {
     declare public shootX: number;
     declare public shootY: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.mines = null;
         this.player = null;
@@ -72,13 +19,13 @@ export class Train extends Enemy {
         this.shootY = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any) {
+    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_Train(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_Train(argCount: number, arg0?: any, arg1?: any, arg2?: any): void {
+    private __construct_Train(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -100,7 +47,7 @@ export class Train extends Enemy {
 
     public shootDelay: number = this.main.random.nextInt(Train.SHOOT_DELAY);
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.mines = this.gameMode.mines;
@@ -133,9 +80,9 @@ export class Train extends Enemy {
         this.explosionY = 64;
     }
 
-    public checkBounds(maxY: any): void {}
+    public override checkBounds(maxY: number): void {}
 
-    public flatten(): void {}
+    public override flatten(): void {}
 
     public update(): void {
         this.y -= Train.SPEED;

@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { Fire } from "./Fire.js";
 import type { Player } from "./Player.js";
@@ -73,7 +20,7 @@ export class FireTank extends Enemy {
     declare public firstMove: number;
     declare public flamePause: number;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
         this.moveSteps = 0;
@@ -96,13 +43,13 @@ export class FireTank extends Enemy {
         this.flamePause = 0;
     }
 
-    public constructor(arg0?: any, arg1?: any) {
+    public constructor(arg0?: number, arg1?: number) {
         super();
         const argCount = arguments.length;
         this.__construct_FireTank(argCount, arg0, arg1);
     }
 
-    private __construct_FireTank(argCount: number, arg0?: any, arg1?: any): void {
+    private __construct_FireTank(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;
             let yLocal = arg1;
@@ -133,7 +80,7 @@ export class FireTank extends Enemy {
     public targetAngle: number = 90;
     public displayAngle: number = 90;
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         this.solids = this.gameMode.solids;
@@ -230,7 +177,7 @@ export class FireTank extends Enemy {
         }
     }
 
-    private testCorners(nextX: any, nextY: any): void {
+    private testCorners(nextX: number, nextY: number): void {
         let sx1 = 0;
         let sy1 = 0;
         let sx2 = 0;

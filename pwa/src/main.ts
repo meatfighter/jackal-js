@@ -1,6 +1,5 @@
 import "./styles.css";
 import { JackalWebApp } from "./app/JackalWebApp.js";
-
 declare global {
     interface Window {
         __jackalBooted?: boolean;

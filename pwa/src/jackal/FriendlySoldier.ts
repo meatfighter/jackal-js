@@ -1,57 +1,4 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import { javaArray, javaDouble, javaFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import type { FriendlyHelicopter } from "./FriendlyHelicopter.js";
@@ -86,7 +33,7 @@ export class FriendlySoldier extends Enemy {
     declare public left: boolean;
     declare public helicopter: FriendlyHelicopter | null;
 
-    protected __initializeJavaSubclassDefaults(): void {
+    protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = null;
         this.state = 0;
@@ -118,17 +65,27 @@ export class FriendlySoldier extends Enemy {
         this.helicopter = null;
     }
 
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
+    public constructor(x: number, y: number, helicopter: FriendlyHelicopter, colorChanging: boolean);
+    public constructor(x: number, y: number, type: FriendlySoldierType);
+    public constructor(x: number, y: number, type: FriendlySoldierType, houseCount: number, shack: boolean);
+    public constructor(arg0?: number, arg1?: number, arg2?: FriendlyHelicopter | FriendlySoldierType, arg3?: boolean | number, arg4?: boolean) {
         super();
         const argCount = arguments.length;
         this.__construct_FriendlySoldier(argCount, arg0, arg1, arg2, arg3, arg4);
     }
 
-    private __construct_FriendlySoldier(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    private __construct_FriendlySoldier(
+        argCount: number,
+        arg0?: number,
+        arg1?: number,
+        arg2?: FriendlyHelicopter | FriendlySoldierType,
+        arg3?: boolean | number,
+        arg4?: boolean
+    ): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
             let xLocal3 = arg0;
             let yLocal3 = arg1;
-            let helicopterLocal = arg2;
+            let helicopterLocal = arg2 as FriendlyHelicopter;
             let colorChangingLocal = arg3;
             this.x = xLocal3;
             this.y = yLocal3;
@@ -155,7 +112,7 @@ export class FriendlySoldier extends Enemy {
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal2 = arg0;
             let yLocal2 = arg1;
-            let typeLocal2 = arg2;
+            let typeLocal2 = arg2 as FriendlySoldierType;
             this.x = xLocal2;
             this.y = yLocal2;
             this.type = typeLocal2;
@@ -169,7 +126,7 @@ export class FriendlySoldier extends Enemy {
         } else if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
             let xLocal = arg0;
             let yLocal = arg1;
-            let typeLocal = arg2;
+            let typeLocal = arg2 as FriendlySoldierType;
             let houseCountLocal = arg3;
             let shack = arg4;
             this.x = xLocal;
@@ -253,7 +210,7 @@ export class FriendlySoldier extends Enemy {
     public static readonly ORIENTATION_WAVING_LEFT: number = 8;
     public static readonly ORIENTATION_WAVING_RIGHT: number = 10;
 
-    public static readonly WOBBLES: any[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);
+    public static readonly WOBBLES: number[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);
     static {
         for (let i = FriendlySoldier.LEG_FRAMES - 1; i >= 0; i--) {
             FriendlySoldier.WOBBLES[i] = -FriendlySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(FriendlySoldier.LEG_FRAMES)));
@@ -266,7 +223,7 @@ export class FriendlySoldier extends Enemy {
         FriendlySoldier.count = 0;
     }
 
-    public init(): void {
+    public override init(): void {
         super.init();
 
         FriendlySoldier.count++;
@@ -338,7 +295,7 @@ export class FriendlySoldier extends Enemy {
         this.computeOrientation();
     }
 
-    private startWaving(randomize: any, left: any): void {
+    private startWaving(randomize: boolean, left: boolean): void {
         this.state = FriendlySoldier.STATE_WAVING;
         this.wobbleX = 0;
         this.wobbleY = 0;
@@ -520,7 +477,7 @@ export class FriendlySoldier extends Enemy {
         }
     }
 
-    public bump(x1: any, y1: any, x2: any, y2: any, invincible: any): boolean {
+    public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
         if (this.type != FriendlySoldierType.WALKING_TO_HELICOPTER && this.isMine(x1, y1, x2, y2)) {
             this.remove();
             if (this.type == FriendlySoldierType.WEAPON_CARRIER || this.type == FriendlySoldierType.WEAPON_CARRIER_WANDERER) {
@@ -535,25 +492,25 @@ export class FriendlySoldier extends Enemy {
         return false;
     }
 
-    public attack(x1: any, y1: any, x2: any, y2: any, attackSource: any): boolean {
+    public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         return false;
     }
 
     // returns true if player bullet was absorbed by enemy
-    public bulletAttack(x1: any, y1: any, x2: any, y2: any): boolean {
+    public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
         return false;
     }
 
-    public remove(): void {
+    public override remove(): void {
         if (!this.removeFlag) {
             this.removeFlag = true;
             FriendlySoldier.count--;
         }
     }
 
-    public flatten(): void {}
+    public override flatten(): void {}
 
-    public explode(): void {}
+    public override explode(): void {}
 
     public update(): void {
         if (this.gameMode.endingCameraPan || !this.gameMode.playing) {

@@ -1,64 +1,13 @@
-import {
-    AppGameContainer,
-    ApplicationGameContainer,
-    BasicGame,
-    Color,
-    Cursor,
-    Display,
-    GameContainer,
-    GL11,
-    Graphics,
-    Image,
-    Input,
-    Log,
-    Music,
-    Mouse,
-    ResourceLoader,
-    ScalableGame,
-    SlickException,
-    Sound,
-    SoundStore,
-    Sys,
-    XMLPackedSheet
-} from "slick2d-ts";
-import {
-    ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
-    JAVA_LONG_LOW_3_BITS,
-    JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
-    Point2D,
-    Random,
-    System,
-    java2DArray,
-    java3DArray,
-    java4DArray,
-    javaArray,
-    javaByte,
-    javaChar,
-    javaDouble,
-    javaFloat,
-    javaInt,
-    javaIntDiv,
-    javaLong,
-    javaRoundFloat,
-    javaShort,
-    rotatePoint
-} from "../java/JavaRuntime.js";
+import type { Image } from "slick2d-ts";
+
+import type { Main } from "./Main.js";
 export class LargeImage {
-    public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
+    public constructor(arg0?: Main, arg1?: Image[], arg2?: number[][], arg3?: number, arg4?: number) {
         const argCount = arguments.length;
         this.__construct_LargeImage(argCount, arg0, arg1, arg2, arg3, arg4);
     }
 
-    private __construct_LargeImage(argCount: number, arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any): void {
+    private __construct_LargeImage(argCount: number, arg0?: Main, arg1?: Image[], arg2?: number[][], arg3?: number, arg4?: number): void {
         if (argCount === 5 && typeof arg3 === "number" && typeof arg4 === "number") {
             let mainLocal = arg0;
             let tilesLocal = arg1;
@@ -75,13 +24,13 @@ export class LargeImage {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    private main: any = null as any;
-    private tiles: any[] = null as any;
-    private map: any[] = null as any;
+    private main: Main = null;
+    private tiles: Image[] = null;
+    private map: number[][] = null;
     private width: number = 0;
     private height: number = 0;
 
-    public draw(x: any, y: any): void {
+    public draw(x: number, y: number): void {
         let main = this.main;
         let tiles = this.tiles;
         let map = this.map;
