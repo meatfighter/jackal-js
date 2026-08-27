@@ -100,11 +100,11 @@ async function loadGameStateStore() {
     const serializerModuleUrl = compileModule(`
         export class JackalGameStateSerializer {
             createSnapshot(main, appVersion) {
-                return { version: 3, kind: "mode", supported: true, appVersion, marker: main.marker ?? "saved" };
+                return { version: 4, kind: "mode", supported: true, appVersion, marker: main.marker ?? "saved" };
             }
 
             isSupportedSnapshot(snapshot) {
-                return typeof snapshot === "object" && snapshot !== null && snapshot.version === 3 && snapshot.supported === true;
+                return typeof snapshot === "object" && snapshot !== null && snapshot.version === 4 && snapshot.supported === true;
             }
 
             restoreSnapshot(main, gc, snapshot) {
@@ -144,7 +144,7 @@ async function loadWebApp() {
         )
         .replace(
             `import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "../jackal/persistence/GameStateSchema.js";`,
-            `const GAME_STATE_STORAGE_KEY = "${gameStateBaseKey}"; const GAME_STATE_VERSION = 3;`
+            `const GAME_STATE_STORAGE_KEY = "${gameStateBaseKey}"; const GAME_STATE_VERSION = 4;`
         )
         .replace(`import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";`, `import { getDeploymentStorageKey } from "${helperModuleUrl}";`)
         .replace(
@@ -161,7 +161,7 @@ test("restore exceptions preserve the stored game-state snapshot", async () => {
         resetStorage();
         const { JackalGameStateStore } = await loadGameStateStore();
         const key = gameStateStorageKey();
-        storage.set(key, JSON.stringify({ version: 3, kind: "mode", supported: true, marker: "keep", throwOnRestore: true }));
+        storage.set(key, JSON.stringify({ version: 4, kind: "mode", supported: true, marker: "keep", throwOnRestore: true }));
 
         assert.equal(new JackalGameStateStore("1.0.0").restore({}, {}), false);
         assert.equal(storage.has(key), true);
@@ -173,7 +173,7 @@ test("game-state preflight preserves future-version saves and storage read failu
         resetStorage();
         const { JackalWebApp } = await loadWebApp();
         const key = gameStateStorageKey();
-        storage.set(key, JSON.stringify({ version: 4, kind: "game", futureShape: true }));
+        storage.set(key, JSON.stringify({ version: 5, kind: "game", futureShape: true }));
 
         assert.equal(new JackalWebApp({}).hasPotentialSavedGameState(), false);
         assert.equal(storage.has(key), true);
@@ -190,7 +190,7 @@ test("game-state store preserves future-version saves but clears malformed and o
     const store = new JackalGameStateStore("1.0.0");
     const key = gameStateStorageKey();
 
-    storage.set(key, JSON.stringify({ version: 4, kind: "mode", futureShape: true }));
+    storage.set(key, JSON.stringify({ version: 5, kind: "mode", futureShape: true }));
     assert.equal(store.hasValidSave(), false);
     assert.equal(storage.has(key), true);
 
@@ -198,7 +198,7 @@ test("game-state store preserves future-version saves but clears malformed and o
     assert.equal(store.hasValidSave(), false);
     assert.equal(storage.has(key), false);
 
-    storage.set(key, JSON.stringify({ version: 3, kind: "game", supported: false }));
+    storage.set(key, JSON.stringify({ version: 4, kind: "game", supported: false }));
     assert.equal(store.hasValidSave(), false);
     assert.equal(storage.has(key), false);
 
@@ -212,7 +212,7 @@ test("game-state store inspection preserves saves when storage reads fail", asyn
         resetStorage();
         const { JackalGameStateStore } = await loadGameStateStore();
         const key = gameStateStorageKey();
-        storage.set(key, JSON.stringify({ version: 3, kind: "mode", supported: true }));
+        storage.set(key, JSON.stringify({ version: 4, kind: "mode", supported: true }));
         throwOnGet = true;
 
         assert.equal(new JackalGameStateStore("1.0.0").hasValidSave(), false);

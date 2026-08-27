@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,7 +55,16 @@ import {
 import { MainConstants } from "../java/MainConstants.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class SwampMissile extends Enemy {
+    declare public vx: number;
+    declare public vy: number;
+    declare public launcherX: number;
+    declare public launcherY: number;
+    declare public clipX: number;
+    declare public explodeDelay: number;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
@@ -66,7 +74,7 @@ export class SwampMissile extends Enemy {
         this.launcherY = 0;
         this.clipX = 0;
         this.explodeDelay = 0;
-        this.player = null as any;
+        this.player = null;
         this.entryDelay = 0;
     }
 

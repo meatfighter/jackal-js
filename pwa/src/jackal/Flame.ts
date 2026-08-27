@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,6 +54,9 @@ import {
 } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export class Flame extends GameElement {
+    declare public spriteCounter: number;
+    declare public spriteIndex: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.spriteCounter = 0;

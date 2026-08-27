@@ -429,7 +429,7 @@ The current `verify` command runs:
 2. Prettier check;
 3. ESLint;
 4. TypeScript type checking;
-5. the `@ts-nocheck` budget check.
+5. the zero-`@ts-nocheck` policy check.
 
 Useful individual commands:
 
@@ -604,38 +604,45 @@ When changing persistent state:
 
 1. decide whether the change is backward-compatible;
 2. update the snapshot/serializer deliberately;
-3. preserve stable entity IDs;
-4. update schema/entity tests;
-5. test New Game and Continue;
-6. test saves created in more than one mode/stage;
-7. test after a real page reload.
+3. bump `GAME_STATE_VERSION` when old snapshots should be invalidated;
+4. preserve stable entity IDs;
+5. update schema/entity tests;
+6. test New Game and Continue;
+7. test saves created in more than one mode/stage;
+8. test after a real page reload.
+
+During private development, incompatible old browser saves may be cleared instead of migrated. Make that choice explicit by bumping the schema version rather than leaving stale compatibility code in the serializer.
 
 ---
 
-## TypeScript Strategy and `@ts-nocheck`
+## TypeScript Strategy
 
-Much of the gameplay port was mechanically/structurally adapted from Java and still contains `@ts-nocheck`.
+The browser gameplay port is type-checked TypeScript. `@ts-nocheck` is intentionally not allowed in source files.
 
-That is known technical debt, but removing all unchecked files in one large refactor would create a broad gameplay-sensitive change with limited immediate release value.
-
-Instead the repository uses a ratchet:
+The repository enforces that rule with:
 
 ```sh
 npm run check:ts-nocheck
 ```
 
-The current budget prevents the number of unchecked gameplay files from increasing.
+The current budget is zero.
 
-The intended direction is to reduce unchecked coverage gradually.
+Most gameplay classes were mechanically adapted from Java, so the TypeScript is still shaped like the source port. In particular, `GameElement` calls translated initialization hooks during construction to reproduce Java object initialization order.
 
-When removing `@ts-nocheck`:
+When working in translated gameplay files:
 
-- preserve Java behavior unless intentionally fixing it;
-- do not mix unrelated gameplay rewrites into a typing cleanup;
-- run `npm run verify`;
-- smoke-test affected mechanics.
+- use no-emit `declare` fields for translated subclass fields whose values are assigned by `__initializeJavaSubclassDefaults()`;
+- do not replace those declarations with normal field initializers unless you have checked the `super()` ordering and runtime behavior;
+- preserve Java behavior unless intentionally fixing a known translation issue;
+- keep type-only cleanup separate from unrelated gameplay rewrites;
+- run `npm run verify` and smoke-test affected mechanics.
 
-If the policy evolves, prefer a stricter allowlist/ratchet rather than weakening the check.
+Two Java patterns need special care in TypeScript/JavaScript:
+
+- **field hiding**: Java can hide a superclass field with a subclass field of the same name, but JavaScript has one property namespace. Use distinct names, such as `sourceEnemy` for the Enemy reference in `Fire`/`Explosion` instead of colliding with `GameElement.enemy:boolean`.
+- **translated private/runtime names**: avoid subclass fields that collide with library superclass internals. For example, the title-screen image is `Main.titleImage` so it does not collide with Slick's `BasicGame` title string.
+
+If the policy evolves, prefer a stricter allowlist or explicit exception file rather than weakening the check.
 
 ---
 
@@ -1187,7 +1194,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | `npm run format:check`        | Check formatting.                                                  |
 | `npm run lint`                | Run ESLint.                                                        |
 | `npm run typecheck`           | Run TypeScript compiler without emitting.                          |
-| `npm run check:ts-nocheck`    | Enforce unchecked-TypeScript budget.                               |
+| `npm run check:ts-nocheck`    | Enforce the zero-`@ts-nocheck` policy.                             |
 | `npm run verify`              | Run the normal source-quality gate.                                |
 | `npm run build:pwa`           | Build/verify PWA component output.                                 |
 | `npm run build:web`           | Build verified about + PWA + desktop ZIP component output.         |
@@ -1232,7 +1239,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | Atomic control-file writes           | `scripts/atomic-file-utils.mjs`                                                 |
 | Output/path safety                   | `scripts/build-utils.mjs`                                                       |
 | Version/build stamps                 | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`    |
-| `@ts-nocheck` policy                 | `scripts/check-ts-nocheck-budget.mjs`                                           |
+| Zero-`@ts-nocheck` policy            | `scripts/check-ts-nocheck-budget.mjs`                                           |
 | Third-party notices/source           | root/PWA notices plus desktop license/source material                           |
 
 ---
@@ -1381,7 +1388,7 @@ The repository’s architecture and release machinery enforce a small set of rul
 9. **Parallel/nested release scripts must not race.**
 10. **Side-by-side PWA deployments must not interfere with each other’s caches or persistent storage.**
 11. **Release verification should inspect the generated artifact, not merely trust the build command.**
-12. **Known TypeScript technical debt should move in one direction through a ratchet, not a risky mass rewrite.**
+12. **Translated TypeScript should stay checked while preserving Java initialization semantics.**
 13. **Legacy desktop dependency changes include runtime, launcher, license, notice, source, and verifier updates as one coordinated change.**
 
 If a shortcut violates one of these rules, understand why the guardrail exists before removing it.

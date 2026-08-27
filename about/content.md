@@ -89,7 +89,7 @@ This port is a reimplementation, not an emulation. It does not run or include th
 
 The source code for the project is available in the [meatfighter/jackal-js repository](__REPO_URL__).
 
-The Java desktop version is available as a [desktop ZIP](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
+The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
 
 - Windows: `run-windows.cmd`
 - Linux: `run-linux.sh`

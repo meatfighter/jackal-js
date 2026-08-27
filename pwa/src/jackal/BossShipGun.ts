@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,17 +56,28 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
+import type { BossShipManager } from "./BossShipManager.js";
+import type { Player } from "./Player.js";
 export class BossShipGun extends Enemy {
+    declare public player: Player | null;
+    declare public openY: number;
+    declare public angle: number;
+    declare public aimingSpeed: number;
+    declare public colorIndex: number;
+    declare public bossShipManager: BossShipManager | null;
+    declare public wasHit: boolean;
+    declare public triggered: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.state = 0;
         this.delay = 0;
         this.openY = 0;
         this.angle = 0;
         this.aimingSpeed = 0;
         this.colorIndex = 0;
-        this.bossShipManager = null as any;
+        this.bossShipManager = null;
         this.hits = 0;
         this.wasHit = false;
         this.triggered = false;

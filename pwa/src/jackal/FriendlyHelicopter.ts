@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,7 +57,25 @@ import { Airplane } from "./Airplane.js";
 import { EnemyHelicopter } from "./EnemyHelicopter.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { GameElement } from "./GameElement.js";
+import type { Player } from "./Player.js";
 export class FriendlyHelicopter extends GameElement {
+    declare public angle: number;
+    declare public rotorAngle: number;
+    declare public rotorSpeed: number;
+    declare public slowRotor: boolean;
+    declare public z: number;
+    declare public leftStop: boolean;
+    declare public state: number;
+    declare public walkingSoldiers: number;
+    declare public player: Player | null;
+    declare public revvingUp: number;
+    declare public liftingOff: number;
+    declare public accelerating: number;
+    declare public turning: number;
+    declare public turnX: number;
+    declare public turnY: number;
+    declare public createdPlane: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
@@ -69,7 +86,7 @@ export class FriendlyHelicopter extends GameElement {
         this.leftStop = false;
         this.state = 0;
         this.walkingSoldiers = 0;
-        this.player = null as any;
+        this.player = null;
         this.dropOffDelay = 0;
         this.preparingToTakeOff = 0;
         this.revvingUp = 0;
@@ -123,7 +140,8 @@ export class FriendlyHelicopter extends GameElement {
     public static readonly TAKE_OFF_DELAY: number = 91 * 2;
     public static readonly TURN_RADIUS1: number = 192;
     public static readonly TURN_RADIUS2: number = 192;
-    public static readonly TURNS_LENGTH: number = 0;
+    // Assigned once in the static block, matching Java static-final initialization.
+    public static TURNS_LENGTH: number = 0;
     public static readonly INITIAL_PLANE_SPAWN_DELAY: number = 3 * 91;
     public static readonly PLANE_SPAWN_DELAY: number = 10 * 91;
 
@@ -147,7 +165,8 @@ export class FriendlyHelicopter extends GameElement {
     private static readonly SHADOW_K: number = (FriendlyHelicopter.Y1 - FriendlyHelicopter.SHADOW_Y0) / FriendlyHelicopter.SHADOW_Y0;
 
     private static readonly HEIGHTS: any[] = javaArray(91, 0);
-    private static readonly TURNS: any[] = null as any;
+    // Assigned once in the static block, matching Java static-final initialization.
+    private static TURNS: number[][] = null as any;
 
     static {
         for (let i = 0; i < 91; i++) {

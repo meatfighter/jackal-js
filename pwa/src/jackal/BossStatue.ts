@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,7 +56,14 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { StatueSeekerMissile } from "./StatueSeekerMissile.js";
+import type { BossStatuesManager } from "./BossStatuesManager.js";
 export class BossStatue extends Enemy {
+    declare public type: number;
+    declare public groupIndex: number;
+    declare public eyesVisible: number;
+    declare public hits: number;
+    declare public bossStatuesManager: BossStatuesManager | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = 0;
@@ -66,7 +72,7 @@ export class BossStatue extends Enemy {
         this.delay = 0;
         this.eyesVisible = 0;
         this.hits = 0;
-        this.bossStatuesManager = null as any;
+        this.bossStatuesManager = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {

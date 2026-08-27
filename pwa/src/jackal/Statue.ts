@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,6 +57,10 @@ import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { StatueMissile } from "./StatueMissile.js";
 export class Statue extends Enemy {
+    declare public type: number;
+    declare public groupIndex: number;
+    declare public eyesVisible: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = 0;

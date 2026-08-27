@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -256,7 +255,7 @@ export class Main extends BasicGame {
     public rescueHelicopters: any[] = javaArray(3, null);
 
     public jeepHere: any = null as any;
-    public title: any = null as any;
+    public titleImage: any = null as any;
     public map: any = null as any;
     public soldiers: any[] = javaArray(4, null);
     public sunset: any = null as any;
@@ -308,7 +307,7 @@ export class Main extends BasicGame {
 
     public triggerSizes: any[] = null as any;
     public unitVector: any[] = javaArray(3, 0);
-    public lastPlayTime: any = Collections.synchronizedMap(new HashMap<Sound, Long>());
+    public lastPlayTime: HashMap<Sound, number> = Collections.synchronizedMap(new HashMap<Sound, number>());
     public konamiCode: any = null as any;
 
     public gc: any = null as any;
@@ -1498,7 +1497,7 @@ export class Main extends BasicGame {
         this.soldiers[2] = this.loadLargeImage("soldier-2", "large-3");
         this.soldiers[3] = this.loadLargeImage("soldier-3", "large-3");
         this.jeepHere = this.loadLargeImage("jeep-here", "large-4");
-        this.title = this.loadLargeImage("title", "large-5");
+        this.titleImage = this.loadLargeImage("title", "large-5");
     }
 
     private loadSprites(): void {
@@ -1959,9 +1958,9 @@ export class Main extends BasicGame {
     }
 
     private loadTriggerMap__overload1(height: any, enemySizes: any, stageIndex: any, stage: any, hard: any): void {
-        let lists = javaArray(height, null);
+        let lists: ArrayList<number[]>[] = javaArray(height, null);
         for (let i = 0; i < height; i++) {
-            lists[i] = new ArrayList<int[]>();
+            lists[i] = new ArrayList<number[]>();
         }
         let classLoader = { getResourceAsStream: (ref) => ResourceLoader.getResourceAsStream(ref) };
         let dis = new DataInputStream(
@@ -2382,7 +2381,7 @@ export class Main extends BasicGame {
     }
 
     public static javaMain(args: any): void {
-        java.awt.Toolkit.getDefaultToolkit();
+        // The browser port has no AWT toolkit initialization equivalent.
 
         let mainLocal = new Main();
 

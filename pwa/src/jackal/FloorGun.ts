@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,10 +56,20 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class FloorGun extends Enemy {
+    declare public player: Player | null;
+    declare public openY: number;
+    declare public angle: number;
+    declare public aimingSpeed: number;
+    declare public colorIndex: number;
+    declare public ready: boolean;
+    declare public mask: Image | null;
+    declare public panel: Image | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.state = 0;
         this.delay = 0;
         this.openY = 0;
@@ -68,8 +77,8 @@ export class FloorGun extends Enemy {
         this.aimingSpeed = 0;
         this.colorIndex = 0;
         this.ready = false;
-        this.mask = null as any;
-        this.panel = null as any;
+        this.mask = null;
+        this.panel = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

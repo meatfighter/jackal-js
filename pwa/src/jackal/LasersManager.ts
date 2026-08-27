@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,15 +56,19 @@ import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 import { Laser } from "./Laser.js";
 export class LasersManager extends GameElement {
+    declare public flash: boolean;
+    declare public colorIndex: number;
+    declare public laser: Laser | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
         this.delay = 0;
         this.beamIndex = 0;
-        this.visibles = null as any;
+        this.visibles = null;
         this.flash = false;
         this.colorIndex = 0;
-        this.laser = null as any;
+        this.laser = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {
@@ -101,7 +104,7 @@ export class LasersManager extends GameElement {
     public state: number = LasersManager.STATE_OUTER_FLASHING;
     public delay: number = LasersManager.OUTER_FLASH_TIME;
     public beamIndex: number = 0;
-    public visibles: any[] = javaArray(3, false);
+    public visibles: boolean[] = javaArray(3, false);
 
     public init(): void {
         this.layer = 4;

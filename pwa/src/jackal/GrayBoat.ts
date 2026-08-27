@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,10 +56,18 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class GrayBoat extends Enemy {
+    declare public player: Player | null;
+    declare public spriteIndex: number;
+    declare public spriteIndexCounter: number;
+    declare public bulletDelay: number;
+    declare public gunAngle: number;
+    declare public updateGun: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.spriteIndex = 0;
         this.spriteIndexCounter = 0;
         this.bulletDelay = 0;

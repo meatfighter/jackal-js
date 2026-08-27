@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -174,7 +173,8 @@ export class HardEndingMode implements IMode, IFadeListener {
     public static readonly PAUSE_DELAY: number = 1 * 91;
     public static readonly CREDITS_TIME: number = 45 * 91;
 
-    public static readonly CREDITS_HEIGHT: number = 0;
+    // Assigned once in the static block, matching Java static-final initialization.
+    public static CREDITS_HEIGHT: number = 0;
 
     static {
         let indent = false;

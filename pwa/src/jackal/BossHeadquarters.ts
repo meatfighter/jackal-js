@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,7 +57,15 @@ import { BossSuperTank } from "./BossSuperTank.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { TileDebris } from "./TileDebris.js";
+import type { BossHeadquartersManager } from "./BossHeadquartersManager.js";
+import type { Player } from "./Player.js";
 export class BossHeadquarters extends Enemy {
+    declare public flashing: boolean;
+    declare public hits: number;
+    declare public explodeDelay: number;
+    declare public bossHeadquartersManager: BossHeadquartersManager | null;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.flashing = false;
@@ -68,8 +75,8 @@ export class BossHeadquarters extends Enemy {
         this.hits = 0;
         this.explodeDelay = 0;
         this.explodeTime = 0;
-        this.bossHeadquartersManager = null as any;
-        this.player = null as any;
+        this.bossHeadquartersManager = null;
+        this.player = null;
     }
 
     public constructor(arg0?: any) {

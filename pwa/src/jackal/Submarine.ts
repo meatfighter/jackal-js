@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,10 +56,14 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SubmarineMissile } from "./SubmarineMissile.js";
+import type { Player } from "./Player.js";
 export class Submarine extends Enemy {
+    declare public player: Player | null;
+    declare public moveable: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.state = 0;
         this.delay = 0;
         this.height = 0;

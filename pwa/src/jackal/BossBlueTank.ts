@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,7 +56,30 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
+import type { BossBlueTanksManager } from "./BossBlueTanksManager.js";
+import type { Player } from "./Player.js";
 export class BossBlueTank extends Enemy {
+    declare public moveSteps: number;
+    declare public directionX: number;
+    declare public directionY: number;
+    declare public vx: number;
+    declare public vy: number;
+    declare public sensorX: number;
+    declare public sensorY: number;
+    declare public lastDx: number;
+    declare public lastDy: number;
+    declare public solids: ArrayList<Enemy> | null;
+    declare public player: Player | null;
+    declare public handlingLoop: number;
+    declare public loopTargetX: number;
+    declare public loopTargetY: number;
+    declare public recoilOffset: number;
+    declare public recoilDelay: number;
+    declare public colorOffset: number;
+    declare public introVy: number;
+    declare public introDelay: number;
+    declare public bossBlueTanksManager: BossBlueTanksManager | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
@@ -73,8 +95,8 @@ export class BossBlueTank extends Enemy {
         this.sensorY = 0;
         this.lastDx = 0;
         this.lastDy = 0;
-        this.solids = null as any;
-        this.player = null as any;
+        this.solids = null;
+        this.player = null;
         this.handlingLoop = 0;
         this.loopTargetX = 0;
         this.loopTargetY = 0;
@@ -83,7 +105,7 @@ export class BossBlueTank extends Enemy {
         this.colorOffset = 0;
         this.introVy = 0;
         this.introDelay = 0;
-        this.bossBlueTanksManager = null as any;
+        this.bossBlueTanksManager = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

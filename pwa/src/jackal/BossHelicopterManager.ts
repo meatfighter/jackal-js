@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,6 +56,10 @@ import { BossHelicopter } from "./BossHelicopter.js";
 import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 export class BossHelicopterManager extends GameElement implements ICameraPanListener {
+    declare public ready: boolean;
+    declare public spawned: number;
+    declare public destroyed: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;

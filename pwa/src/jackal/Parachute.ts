@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,7 +56,15 @@ import { EnemySoldier } from "./EnemySoldier.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
+import type { BossHelicopter } from "./BossHelicopter.js";
 export class Parachute extends GameElement {
+    declare public delay: number;
+    declare public vx: number;
+    declare public inflate: number;
+    declare public inflate2: number;
+    declare public bossHelicopter: BossHelicopter | null;
+    declare public left: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.delay = 0;
@@ -65,7 +72,7 @@ export class Parachute extends GameElement {
         this.vx = 0;
         this.inflate = 0;
         this.inflate2 = 0;
-        this.bossHelicopter = null as any;
+        this.bossHelicopter = null;
         this.left = false;
     }
 

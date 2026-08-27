@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -60,6 +59,9 @@ import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
 export class BossStatuesManager extends GameElement implements ICameraPanListener, ITankTracker {
+    declare public ready: boolean;
+    declare public tanks: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;

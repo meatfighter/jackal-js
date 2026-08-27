@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,16 +54,25 @@ import {
 } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
+import type { BossSuperTank } from "./BossSuperTank.js";
+import type { Player } from "./Player.js";
 export class SuperFire extends GameElement {
+    declare public player: Player | null;
+    declare public length: number;
+    declare public flickerCounter: number;
+    declare public flickerIndex: number;
+    declare public asterDelay: number;
+    declare public bossSuperTank: BossSuperTank | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.state = 0;
         this.length = 0;
         this.flickerCounter = 0;
         this.flickerIndex = 0;
         this.asterDelay = 0;
-        this.bossSuperTank = null as any;
+        this.bossSuperTank = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

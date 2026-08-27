@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,7 +54,23 @@ import {
 } from "../java/JavaRuntime.js";
 import { Flame } from "./Flame.js";
 import { GameElement } from "./GameElement.js";
+import type { Enemy } from "./Enemy.js";
+import type { Player } from "./Player.js";
 export class Fire extends GameElement {
+    declare public vx: number;
+    declare public vy: number;
+    declare public dx: number;
+    declare public dy: number;
+    declare public length: number;
+    declare public angle: number;
+    declare public delay: number;
+    declare public flickerCounter: number;
+    declare public flickerIndex: number;
+    declare public player: Player | null;
+    // Java declares an Enemy-valued `enemy` field here while GameElement already has
+    // `enemy: boolean`. Java field hiding keeps both slots; JavaScript needs distinct keys.
+    declare public sourceEnemy: Enemy | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
@@ -69,8 +84,8 @@ export class Fire extends GameElement {
         this.flickerCounter = 0;
         this.flickerIndex = 0;
         this.alpha = 0;
-        this.player = null as any;
-        this.enemy = null as any;
+        this.player = null;
+        this.sourceEnemy = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
@@ -101,7 +116,7 @@ export class Fire extends GameElement {
             this.vx = Fire.SPEED * vxLocal;
             this.vy = Fire.SPEED * vyLocal;
             this.angle = angleLocal;
-            this.enemy = enemyLocal;
+            this.sourceEnemy = enemyLocal;
 
             this.enemyBullet = true;
             return;
@@ -130,7 +145,7 @@ export class Fire extends GameElement {
         switch (this.state) {
             case Fire.STATE_GROWING: {
                 this.length += Fire.SPEED;
-                if (this.length >= Fire.MAX_LENGTH || this.enemy.removeFlag) {
+                if (this.length >= Fire.MAX_LENGTH || this.sourceEnemy.removeFlag) {
                     this.state = Fire.STATE_TRAVELING;
                     this.delay = Fire.TRAVEL_TIME;
                 }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -54,10 +53,20 @@ import {
     rotatePoint
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
+import type { Player } from "./Player.js";
 export class Rock extends Enemy {
+    declare public player: Player | null;
+    declare public angle: number;
+    declare public vScale: number;
+    declare public vx: number;
+    declare public delay: number;
+    declare public rollsRight: boolean;
+    declare public acceleration: number;
+    declare public mines: ArrayList<Enemy> | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.angle = 0;
         this.scale = 0;
         this.vScale = 0;
@@ -66,7 +75,7 @@ export class Rock extends Enemy {
         this.delay = 0;
         this.rollsRight = false;
         this.acceleration = 0;
-        this.mines = null as any;
+        this.mines = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {

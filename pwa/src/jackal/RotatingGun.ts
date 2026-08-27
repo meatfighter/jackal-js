@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -60,7 +59,17 @@ export enum RotatingGunState {
     PAUSED_BETWEEN_FIRING,
     TRACKING
 }
+import type { BossGarageManager } from "./BossGarageManager.js";
 export class RotatingGun extends Enemy {
+    declare public recoil: number;
+    declare public pause: number;
+    declare public group: number;
+    declare public recoilIndex: number;
+    declare public white: boolean;
+    declare public bossGarageManager: BossGarageManager | null;
+    declare public type: number;
+    declare public sprites: Image[] | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = null as any;
@@ -71,9 +80,9 @@ export class RotatingGun extends Enemy {
         this.groupSize = 0;
         this.recoilIndex = 0;
         this.white = false;
-        this.bossGarageManager = null as any;
+        this.bossGarageManager = null;
         this.type = 0;
-        this.sprites = null as any;
+        this.sprites = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {
@@ -153,7 +162,7 @@ export class RotatingGun extends Enemy {
         }
     }
 
-    public state: any = RotatingGunState.PAUSED_BETWEEN_FIRING;
+    public state: RotatingGunState = RotatingGunState.PAUSED_BETWEEN_FIRING;
     public angle: number = 90;
 
     public groupSize: number = RotatingGun.GROUP_SIZE;

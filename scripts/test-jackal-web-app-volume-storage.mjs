@@ -79,7 +79,7 @@ async function loadWebApp() {
         )
         .replace(
             `import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "../jackal/persistence/GameStateSchema.js";`,
-            `const GAME_STATE_STORAGE_KEY = "jackal.game-state"; const GAME_STATE_VERSION = 3;`
+            `const GAME_STATE_STORAGE_KEY = "jackal.game-state"; const GAME_STATE_VERSION = 4;`
         )
         .replace(`import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";`, `import { getDeploymentStorageKey } from "${helperModuleUrl}";`)
         .replace(

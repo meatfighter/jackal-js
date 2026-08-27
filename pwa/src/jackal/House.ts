@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -59,6 +58,9 @@ import { Explosion } from "./Explosion.js";
 import { GameMode } from "./GameMode.js";
 import { Help } from "./Help.js";
 export class House extends Enemy {
+    declare public groupIndex: number;
+    declare public left: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.groupIndex = 0;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,6 +56,10 @@ import { MainConstants } from "../java/MainConstants.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
 export class Airplane extends Enemy {
+    declare public bombDelay: number;
+    declare public up: boolean;
+    declare public orientationIndex: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.bombDelay = 0;

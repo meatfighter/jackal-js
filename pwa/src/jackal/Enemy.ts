@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,6 +56,21 @@ import { AttackSource } from "./AttackSource.js";
 import { Explosion } from "./Explosion.js";
 import { HitElement } from "./HitElement.js";
 export abstract class Enemy extends HitElement {
+    declare public solid: boolean;
+    declare public mine: boolean;
+    declare public solidX1: number;
+    declare public solidY1: number;
+    declare public solidX2: number;
+    declare public solidY2: number;
+    declare public mineX1: number;
+    declare public mineY1: number;
+    declare public mineX2: number;
+    declare public mineY2: number;
+    declare public bulletHits: number;
+    declare public points: number;
+    declare public explosionX: number;
+    declare public explosionY: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.solid = false;

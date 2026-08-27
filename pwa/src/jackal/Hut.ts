@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -61,6 +60,10 @@ import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { GameMode } from "./GameMode.js";
 import { GrayTank } from "./GrayTank.js";
 export class Hut extends Enemy {
+    declare public groupIndex: number;
+    declare public shack: boolean;
+    declare public tank: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.groupIndex = 0;

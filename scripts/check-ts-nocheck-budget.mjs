@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { rootDir } from "./build-utils.mjs";
 
-const maxTsNocheckFiles = 80;
+const maxTsNocheckFiles = 0;
 const tsNocheckMarker = "@ts-" + "nocheck";
 const scannedExtensions = new Set([".cjs", ".js", ".jsx", ".mjs", ".ts", ".tsx", ".vue"]);
 const skippedDirectoryNames = new Set([

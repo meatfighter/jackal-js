@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,7 +56,19 @@ import { AttackSource } from "./AttackSource.js";
 import { ElephantMissile } from "./ElephantMissile.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class ElephantGun extends Enemy {
+    declare public destroyed: boolean;
+    declare public state: number;
+    declare public delay: number;
+    declare public targetDirection: number;
+    declare public fireballX: number;
+    declare public fireballY: number;
+    declare public fireballVx: number;
+    declare public left: boolean;
+    declare public hits: number;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.spriteIndex = 0;
@@ -65,13 +76,13 @@ export class ElephantGun extends Enemy {
         this.state = 0;
         this.delay = 0;
         this.targetDirection = 0;
-        this.asters = null as any;
+        this.asters = null;
         this.fireballX = 0;
         this.fireballY = 0;
         this.fireballVx = 0;
         this.left = false;
         this.hits = 0;
-        this.player = null as any;
+        this.player = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {
@@ -119,7 +130,7 @@ export class ElephantGun extends Enemy {
 
     public spriteIndex: number = ElephantGun.SPRITE_CENTER;
 
-    public asters: any[] = java2DArray(ElephantGun.ASTER_SPINES, 2, 0);
+    public asters: number[][] = java2DArray(ElephantGun.ASTER_SPINES, 2, 0);
 
     public init(): void {
         super.init();

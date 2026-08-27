@@ -8,7 +8,7 @@ const storeSource = readFileSync(new URL("../pwa/src/jackal/persistence/JackalGa
 const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", import.meta.url), "utf8");
 
 test("game-state schema constants have one runtime source", () => {
-    assert.match(schemaSource, /export const GAME_STATE_VERSION = 3;/);
+    assert.match(schemaSource, /export const GAME_STATE_VERSION = 4;/);
     assert.match(schemaSource, /export const GAME_STATE_STORAGE_KEY = "jackal\.game-state";/);
     assert.match(snapshotSource, /export \{ GAME_STATE_VERSION \} from "\.\/GameStateSchema\.js";/);
     assert.doesNotMatch(snapshotSource, /export const GAME_STATE_VERSION =/);

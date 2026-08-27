@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,6 +54,13 @@ import {
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 export class SubmarineMissile extends Enemy {
+    declare public vy: number;
+    declare public vx: number;
+    declare public tx: number;
+    declare public ty: number;
+    declare public angle: number;
+    declare public explodeDelay: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vy = 0;

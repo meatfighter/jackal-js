@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,7 +54,17 @@ import {
 } from "../java/JavaRuntime.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
+import type { Player } from "./Player.js";
 export class ElephantMissile extends GameElement {
+    declare public angle: number;
+    declare public vx: number;
+    declare public vy: number;
+    declare public maxY: number;
+    declare public explosionOffset: number;
+    declare public tipX: number;
+    declare public tipY: number;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
@@ -65,7 +74,7 @@ export class ElephantMissile extends GameElement {
         this.explosionOffset = 0;
         this.tipX = 0;
         this.tipY = 0;
-        this.player = null as any;
+        this.player = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {

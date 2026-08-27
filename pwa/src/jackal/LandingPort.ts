@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,6 +55,8 @@ import {
 import { FriendlyHelicopter } from "./FriendlyHelicopter.js";
 import { GameElement } from "./GameElement.js";
 export class LandingPort extends GameElement {
+    declare public type: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = 0;
@@ -199,7 +200,7 @@ export class LandingPort extends GameElement {
                 break;
             case LandingPort.TYPE_CIRCLE:
                 let blue = true;
-                for (let i = LandingPort.CIRCLE_LIGHTS.length - 1; i >= 0; i--, blue ^= true) {
+                for (let i = LandingPort.CIRCLE_LIGHTS.length - 1; i >= 0; i--, blue = !blue) {
                     let X = this.x + LandingPort.CIRCLE_LIGHTS[i][0];
                     let Y = this.y + LandingPort.CIRCLE_LIGHTS[i][1];
                     if (blue) {

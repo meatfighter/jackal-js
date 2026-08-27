@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -54,12 +53,17 @@ import {
     rotatePoint
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
+import type { Player } from "./Player.js";
 export class Mine extends Enemy {
+    declare public spriteIndex: number;
+    declare public visible: boolean;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.spriteIndex = 0;
         this.visible = false;
-        this.player = null as any;
+        this.player = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {

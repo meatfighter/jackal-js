@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,6 +57,9 @@ import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SwampMissile } from "./SwampMissile.js";
 export class FloorMissileLauncher extends Enemy {
+    declare public ready: boolean;
+    declare public panelOffset: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;

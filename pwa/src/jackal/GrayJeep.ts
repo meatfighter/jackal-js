@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,7 +54,24 @@ import {
 } from "../java/JavaRuntime.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
+import type { Player } from "./Player.js";
 export class GrayJeep extends Enemy {
+    declare public bombDelay: number;
+    declare public moveSteps: number;
+    declare public directionX: number;
+    declare public directionY: number;
+    declare public vx: number;
+    declare public vy: number;
+    declare public sensorX: number;
+    declare public sensorY: number;
+    declare public lastDx: number;
+    declare public lastDy: number;
+    declare public solids: ArrayList<Enemy> | null;
+    declare public player: Player | null;
+    declare public handlingLoop: number;
+    declare public loopTargetX: number;
+    declare public loopTargetY: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.bombDelay = 0;
@@ -70,8 +86,8 @@ export class GrayJeep extends Enemy {
         this.sensorY = 0;
         this.lastDx = 0;
         this.lastDy = 0;
-        this.solids = null as any;
-        this.player = null as any;
+        this.solids = null;
+        this.player = null;
         this.handlingLoop = 0;
         this.loopTargetX = 0;
         this.loopTargetY = 0;

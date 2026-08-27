@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -76,7 +75,7 @@ export class JeepYeahBullet {
 
         this.scale -= JeepYeahBullet.SCALE_SPEED;
         if (this.scale <= 0) {
-            this.removeFlag = true;
+            this.remove = true;
         }
     }
 

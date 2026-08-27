@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,11 +54,15 @@ import {
 } from "../java/JavaRuntime.js";
 import { BulletHit } from "./BulletHit.js";
 import { GameElement } from "./GameElement.js";
+import type { Enemy } from "./Enemy.js";
 export class PlayerBullet extends GameElement {
+    declare public t: number;
+    declare public enemies: ArrayList<Enemy> | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.t = 0;
-        this.enemies = null as any;
+        this.enemies = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -61,7 +60,13 @@ export enum BossSuperTankGunState {
     PAUSED_BETWEEN_FIRING,
     TRACKING
 }
+import type { BossSuperTank } from "./BossSuperTank.js";
 export class BossSuperTankGun extends Enemy {
+    declare public recoil: number;
+    declare public group: number;
+    declare public recoilIndex: number;
+    declare public bossSuperTank: BossSuperTank | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = null as any;
@@ -71,7 +76,7 @@ export class BossSuperTankGun extends Enemy {
         this.group = 0;
         this.groupSize = 0;
         this.recoilIndex = 0;
-        this.bossSuperTank = null as any;
+        this.bossSuperTank = null;
     }
 
     public constructor(arg0?: any) {
@@ -109,7 +114,7 @@ export class BossSuperTankGun extends Enemy {
         }
     }
 
-    public state: any = RotatingGunState.PAUSED_BETWEEN_FIRING;
+    public state: RotatingGunState = RotatingGunState.PAUSED_BETWEEN_FIRING;
     public angle: number = 90;
 
     public pause: number = 2 * 91;

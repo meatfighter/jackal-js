@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -138,7 +137,7 @@ export class JeepYeahExplosion {
         }
 
         if ((this.tiny && this.size > 68) || this.size > 128) {
-            this.removeFlag = true;
+            this.remove = true;
         }
     }
 

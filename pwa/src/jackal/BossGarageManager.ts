@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -61,10 +60,16 @@ import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
 import { RotatingGun } from "./RotatingGun.js";
 export class BossGarageManager extends GameElement implements ICameraPanListener, ITankTracker {
+    declare public ready: boolean;
+    declare public garages: ArrayList<BossGarage> | null;
+    declare public garageIndex: number;
+    declare public tanks: number;
+    declare public sparkX: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;
-        this.garages = null as any;
+        this.garages = null;
         this.openDelay = 0;
         this.garageIndex = 0;
         this.tanks = 0;

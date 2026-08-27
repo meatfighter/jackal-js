@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,6 +57,9 @@ import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SwampMissile } from "./SwampMissile.js";
 export class CliffMissileLauncher extends Enemy {
+    declare public launchDelay: number;
+    declare public ready: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.launchDelay = 0;

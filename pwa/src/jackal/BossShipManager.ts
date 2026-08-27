@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -60,11 +59,15 @@ import { GameElement } from "./GameElement.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { ITankTracker } from "./ITankTracker.js";
 export class BossShipManager extends GameElement implements ICameraPanListener, ITankTracker {
+    declare public ready: boolean;
+    declare public gunIndex: number;
+    declare public tanks: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.ready = false;
         this.brownTankDelay = 0;
-        this.shipGuns = null as any;
+        this.shipGuns = null;
         this.gunIndex = 0;
         this.triggerDelay = 0;
         this.tanks = 0;
@@ -93,7 +96,7 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
     public static readonly TRIGGER_DELAY: number = 4 * 91;
 
     public brownTankDelay: number = 45;
-    public shipGuns: any = new ArrayList<BossShipGun>();
+    public shipGuns: ArrayList<BossShipGun> = new ArrayList<BossShipGun>();
 
     public triggerDelay: number = 1;
 

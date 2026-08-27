@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,7 +55,15 @@ import {
 import { AttackSource } from "./AttackSource.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
+import type { Enemy } from "./Enemy.js";
 export class Grenade extends GameElement {
+    declare public vx: number;
+    declare public vy: number;
+    declare public scale: number;
+    declare public angle: number;
+    declare public t: number;
+    declare public enemies: ArrayList<Enemy> | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
@@ -64,7 +71,7 @@ export class Grenade extends GameElement {
         this.scale = 0;
         this.angle = 0;
         this.t = 0;
-        this.enemies = null as any;
+        this.enemies = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,6 +57,11 @@ import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SwampMissile } from "./SwampMissile.js";
 export class SwampMissileLauncher extends Enemy {
+    declare public splashIndex: number;
+    declare public launchDelay: number;
+    declare public splashing: number;
+    declare public ready: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.splashIndex = 0;

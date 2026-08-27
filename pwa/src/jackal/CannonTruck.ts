@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,6 +55,11 @@ import {
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 export class CannonTruck extends Enemy {
+    declare public directionIndex: number;
+    declare public right: boolean;
+    declare public fires: number;
+    declare public ready: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.directionIndex = 0;

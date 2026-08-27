@@ -1,9 +1,9 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
     BasicGame,
     Color,
+    type ControllerListener,
     Cursor,
     Display,
     GameContainer,
@@ -11,6 +11,7 @@ import {
     Graphics,
     Image,
     Input,
+    type KeyListener,
     Log,
     Music,
     Mouse,

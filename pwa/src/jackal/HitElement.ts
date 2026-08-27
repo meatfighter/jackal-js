@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,6 +54,13 @@ import {
 } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export abstract class HitElement extends GameElement {
+    // Java field `hit`; renamed because JavaScript cannot also expose hit(...) under the same key.
+    declare public hitField: boolean;
+    declare public hitX1: number;
+    declare public hitY1: number;
+    declare public hitX2: number;
+    declare public hitY2: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.hitField = false;
@@ -62,7 +68,7 @@ export abstract class HitElement extends GameElement {
         this.hitY1 = 0;
         this.hitX2 = 0;
         this.hitY2 = 0;
-        this.trail = null as any;
+        this.trail = null;
         this.trailIndex = 0;
     }
 
@@ -82,7 +88,7 @@ export abstract class HitElement extends GameElement {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public trail: any[] = javaArray(8, 0);
+    public trail: number[] = javaArray(8, 0);
     public trailIndex: number = 7;
 
     public init(): void {

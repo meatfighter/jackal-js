@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,14 +56,19 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class CliffGun extends Enemy {
+    declare public spriteIndex: number;
+    declare public shots: number;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
         this.spriteIndex = 0;
         this.delay = 0;
         this.shots = 0;
-        this.player = null as any;
+        this.player = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {

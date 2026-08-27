@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,7 +56,24 @@ import { MainConstants } from "../java/MainConstants.js";
 import { BossHelicopter } from "./BossHelicopter.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
+import type { Player } from "./Player.js";
 export class EnemyHelicopter extends Enemy {
+    declare public angle: number;
+    declare public rotorAngle: number;
+    declare public positionDriftTime: number;
+    declare public positionDriftDx: number;
+    declare public positionDriftDy: number;
+    declare public enteringAcceleration: number;
+    declare public vy: number;
+    declare public delay: number;
+    declare public down: boolean;
+    declare public player: Player | null;
+    declare public targetAngle: number;
+    declare public targetHalfAngle: number;
+    declare public positiveAngle: boolean;
+    declare public va: number;
+    declare public v: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
@@ -70,7 +86,7 @@ export class EnemyHelicopter extends Enemy {
         this.vy = 0;
         this.delay = 0;
         this.down = false;
-        this.player = null as any;
+        this.player = null;
         this.targetAngle = 0;
         this.targetHalfAngle = 0;
         this.positiveAngle = false;

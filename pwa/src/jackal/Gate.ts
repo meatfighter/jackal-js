@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,11 +55,15 @@ import {
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import type { BossGarageManager } from "./BossGarageManager.js";
 export class Gate extends Enemy {
+    declare public groupIndex: number;
+    declare public bossGarageManager: BossGarageManager | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.groupIndex = 0;
-        this.bossGarageManager = null as any;
+        this.bossGarageManager = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

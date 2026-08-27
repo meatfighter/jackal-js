@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,13 +55,24 @@ import {
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class Column extends Enemy {
+    declare public left: boolean;
+    declare public player: Player | null;
+    declare public groupIndex: number;
+    declare public vx: number;
+    declare public vy: number;
+    declare public angleInc: number;
+    declare public canDropLeft: boolean;
+    declare public canDropRight: boolean;
+    declare public mines: ArrayList<Enemy> | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.rotationOffset = 0;
         this.left = false;
         this.state = 0;
-        this.player = null as any;
+        this.player = null;
         this.groupIndex = 0;
         this.angle = 0;
         this.vx = 0;
@@ -71,7 +81,7 @@ export class Column extends Enemy {
         this.tipSteps = 0;
         this.canDropLeft = false;
         this.canDropRight = false;
-        this.mines = null as any;
+        this.mines = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {

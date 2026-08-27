@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,6 +55,12 @@ import {
 import { GameElement } from "./GameElement.js";
 import { IntroPlayer } from "./IntroPlayer.js";
 export class Chinook extends GameElement {
+    declare public angle: number;
+    declare public diagonalSteps: number;
+    declare public introPlayer: IntroPlayer | null;
+    declare public X: number;
+    declare public Y: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
@@ -65,7 +70,7 @@ export class Chinook extends GameElement {
         this.vt = 0;
         this.t = 0;
         this.diagonalSteps = 0;
-        this.introPlayer = null as any;
+        this.introPlayer = null;
         this.X = 0;
         this.Y = 0;
     }

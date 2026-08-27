@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -59,13 +58,42 @@ import { EnemyBullet } from "./EnemyBullet.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import { Explosion } from "./Explosion.js";
 import { Fire } from "./Fire.js";
+import type { BossHelicopter } from "./BossHelicopter.js";
+import type { Player } from "./Player.js";
 export class EnemySoldier extends Enemy {
+    declare public type: EnemySoldierType | null;
+    declare public solids: ArrayList<Enemy> | null;
+    declare public player: Player | null;
+    declare public targetX: number;
+    declare public targetY: number;
+    declare public targetVx: number;
+    declare public targetVy: number;
+    declare public directionX: number;
+    declare public directionY: number;
+    declare public walking: number;
+    declare public aiming: number;
+    declare public orientation: number;
+    declare public legIndex: number;
+    declare public legFrames: number;
+    declare public walkSteps: number;
+    declare public blink: number;
+    declare public wobbleX: number;
+    declare public wobbleY: number;
+    declare public spriteIndex: number;
+    declare public wobbleScaleX: number;
+    declare public wobbleScaleY: number;
+    declare public shots: number;
+    declare public totalShots: number;
+    declare public inSwamp: boolean;
+    declare public bossHelicopter: BossHelicopter | null;
+    declare public fire: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.type = null as any;
+        this.type = null;
         this.state = 0;
-        this.solids = null as any;
-        this.player = null as any;
+        this.solids = null;
+        this.player = null;
         this.targetX = 0;
         this.targetY = 0;
         this.targetVx = 0;
@@ -87,7 +115,7 @@ export class EnemySoldier extends Enemy {
         this.shots = 0;
         this.totalShots = 0;
         this.inSwamp = false;
-        this.bossHelicopter = null as any;
+        this.bossHelicopter = null;
         this.fire = false;
     }
 

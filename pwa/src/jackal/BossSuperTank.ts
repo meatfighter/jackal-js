@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -61,10 +60,23 @@ import { Explosion } from "./Explosion.js";
 import { FlashingSkull } from "./FlashingSkull.js";
 import { ICameraPanListener } from "./ICameraPanListener.js";
 import { SuperFire } from "./SuperFire.js";
+import type { Player } from "./Player.js";
 export class BossSuperTank extends Enemy implements ICameraPanListener {
+    declare public player: Player | null;
+    declare public colorIndex: number;
+    declare public wheelAngle: number;
+    declare public treadOffset: number;
+    declare public vx: number;
+    declare public targetX: number;
+    declare public ax: number;
+    declare public hits: number;
+    declare public smashed: number;
+    declare public exploding: number;
+    declare public superFire: SuperFire | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.colorIndex = 0;
         this.wheelAngle = 0;
         this.treadOffset = 0;
@@ -77,7 +89,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         this.delay = 0;
         this.smashed = 0;
         this.exploding = 0;
-        this.superFire = null as any;
+        this.superFire = null;
     }
 
     public constructor(arg0?: any, arg1?: any) {
@@ -116,7 +128,8 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     public static readonly ACCELERATION_TIME: number = 23;
     public static readonly MAX_SPEED: number = 2.5;
     public static readonly ACCELERATION: number = BossSuperTank.MAX_SPEED / BossSuperTank.ACCELERATION_TIME;
-    public static readonly ACCELERATION_DISTANCE: number = 0;
+    // Assigned once in the static block, matching Java static-final initialization.
+    public static ACCELERATION_DISTANCE: number = 0;
 
     static {
         let vx = 0;

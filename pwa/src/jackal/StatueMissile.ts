@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,11 +55,20 @@ import {
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 export class StatueMissile extends Enemy {
+    declare public vx: number;
+    declare public angle: number;
+    declare public sprite: Image | null;
+    declare public statueX: number;
+    declare public statueY: number;
+    declare public right: boolean;
+    declare public clipX: number;
+    declare public explodeDelay: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
         this.angle = 0;
-        this.sprite = null as any;
+        this.sprite = null;
         this.statueX = 0;
         this.statueY = 0;
         this.right = false;

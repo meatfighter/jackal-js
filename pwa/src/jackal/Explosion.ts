@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,7 +54,21 @@ import {
 } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { GameElement } from "./GameElement.js";
+import type { Enemy } from "./Enemy.js";
 export class Explosion extends GameElement {
+    declare public spriteIndex: number;
+    declare public scale: number;
+    declare public grenadeExplosion: boolean;
+    declare public enemies: ArrayList<Enemy> | null;
+    declare public type: number;
+    declare public tiny: boolean;
+    declare public delay: number;
+    declare public enemyX: number;
+    declare public enemyY: number;
+    // Java declares an Enemy-valued `enemy` field here while GameElement already has
+    // `enemy: boolean`. Java field hiding keeps both slots; JavaScript needs distinct keys.
+    declare public sourceEnemy: Enemy | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.size = 0;
@@ -63,14 +76,14 @@ export class Explosion extends GameElement {
         this.scale = 0;
         this.grenadeExplosion = false;
         this.damagesEnemies = false;
-        this.enemies = null as any;
+        this.enemies = null;
         this.type = 0;
         this.tiny = false;
         this.delay = 0;
         this.alpha = 0;
         this.enemyX = 0;
         this.enemyY = 0;
-        this.enemy = null as any;
+        this.sourceEnemy = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
@@ -95,7 +108,7 @@ export class Explosion extends GameElement {
             let alphaLocal2 = arg4;
             let enemyLocal = arg5;
             this.__construct_Explosion(5, xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
-            this.enemy = enemyLocal;
+            this.sourceEnemy = enemyLocal;
             this.enemyX = enemyLocal.x;
             this.enemyY = enemyLocal.y;
             return;
@@ -174,9 +187,9 @@ export class Explosion extends GameElement {
     public update(): void {
         if (this.delay > 0) {
             if (--this.delay == 0) {
-                if (this.enemy != null) {
-                    this.x += this.enemy.x - this.enemyX;
-                    this.y += this.enemy.y - this.enemyY;
+                if (this.sourceEnemy != null) {
+                    this.x += this.sourceEnemy.x - this.enemyX;
+                    this.y += this.sourceEnemy.y - this.enemyY;
                 }
             } else {
                 return;

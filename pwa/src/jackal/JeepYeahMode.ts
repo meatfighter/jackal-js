@@ -139,7 +139,7 @@ export class JeepYeahMode implements IMode, IFadeListener {
             this.smokeY -= 32;
         }
 
-        if (this.explosion == null || this.explosion.removeFlag) {
+        if (this.explosion == null || this.explosion.remove) {
             this.explosion = new JeepYeahExplosion(136, 608);
         }
         this.explosion.update();
@@ -164,7 +164,7 @@ export class JeepYeahMode implements IMode, IFadeListener {
         for (let i = this.bullets.size() - 1; i >= 0; i--) {
             let bullet = this.bullets.get(i);
             bullet.update();
-            if (bullet.removeFlag) {
+            if (bullet.remove) {
                 this.bullets.remove(i);
             }
         }

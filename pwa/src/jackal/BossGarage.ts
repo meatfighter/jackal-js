@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,18 +57,29 @@ import { BrownTank } from "./BrownTank.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { GrayTank } from "./GrayTank.js";
+import type { BossGarageManager } from "./BossGarageManager.js";
 export class BossGarage extends Enemy {
+    declare public bossGarageManager: BossGarageManager | null;
+    declare public doorY: number;
+    declare public isBrownTank: boolean;
+    declare public vehicle: Image[] | null;
+    declare public vehicleY: number;
+    declare public brownTank: BrownTank | null;
+    declare public grayTank: GrayTank | null;
+    declare public delay: number;
+    declare public groupIndex: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.bossGarageManager = null as any;
+        this.bossGarageManager = null;
         this.lightIndex = 0;
         this.state = 0;
         this.doorY = 0;
         this.isBrownTank = false;
-        this.vehicle = null as any;
+        this.vehicle = null;
         this.vehicleY = 0;
-        this.brownTank = null as any;
-        this.grayTank = null as any;
+        this.brownTank = null;
+        this.grayTank = null;
         this.delay = 0;
         this.groupIndex = 0;
     }

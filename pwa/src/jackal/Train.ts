@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,11 +54,18 @@ import {
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
+import type { Player } from "./Player.js";
 export class Train extends Enemy {
+    declare public mines: ArrayList<Enemy> | null;
+    declare public player: Player | null;
+    declare public carIndex: number;
+    declare public shootX: number;
+    declare public shootY: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.mines = null as any;
-        this.player = null as any;
+        this.mines = null;
+        this.player = null;
         this.carIndex = 0;
         this.shootDelay = 0;
         this.shootX = 0;

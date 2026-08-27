@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,6 +54,9 @@ import {
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 export class Star extends Enemy {
+    declare public type: number;
+    declare public flashingIndex: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.type = 0;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,13 +54,16 @@ import {
 } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 import { Player } from "./Player.js";
+import type { Chinook } from "./Chinook.js";
 export class IntroPlayer extends GameElement {
+    declare public chinook: Chinook | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.angle = 0;
         this.state = 0;
         this.delay = 0;
-        this.chinook = null as any;
+        this.chinook = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any) {

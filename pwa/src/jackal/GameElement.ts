@@ -54,6 +54,11 @@ import {
 } from "../java/JavaRuntime.js";
 import { MainRuntimeState } from "./MainRuntimeState.js";
 export abstract class GameElement {
+    /**
+     * Java zero-initializes the complete derived object before a superclass constructor runs.
+     * Subclasses use no-emit `declare` fields plus this hook to reproduce that ordering before
+     * the virtual init() call below. Do not replace those declarations with field initializers.
+     */
     protected __initializeJavaSubclassDefaults(): void {}
     public constructor() {
         const argCount = arguments.length;

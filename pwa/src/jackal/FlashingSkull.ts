@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,6 +55,9 @@ import {
 import { GameElement } from "./GameElement.js";
 import { MissionAccomplished } from "./MissionAccomplished.js";
 export class FlashingSkull extends GameElement {
+    declare public visible: boolean;
+    declare public alpha: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
@@ -170,7 +172,7 @@ export class FlashingSkull extends GameElement {
         switch (this.state) {
             case FlashingSkull.STATE_FLASHING:
                 if (--this.flashDelay == 0) {
-                    this.visible ^= true;
+                    this.visible = !this.visible;
                     this.flashDelay = FlashingSkull.FLASH_TIME;
                 }
                 if (this.visible) {

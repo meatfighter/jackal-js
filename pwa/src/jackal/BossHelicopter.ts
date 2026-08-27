@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -58,10 +57,31 @@ import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import { Explosion } from "./Explosion.js";
 import { Parachute } from "./Parachute.js";
+import type { Player } from "./Player.js";
 export class BossHelicopter extends Enemy {
+    declare public player: Player | null;
+    declare public angle: number;
+    declare public rotorAngle: number;
+    declare public tailIndexCounter: boolean;
+    declare public tailIndex: number;
+    declare public positionDriftTime: number;
+    declare public positionDriftDx: number;
+    declare public positionDriftDy: number;
+    declare public delay: number;
+    declare public vy: number;
+    declare public va: number;
+    declare public rotateCW: boolean;
+    declare public hits: number;
+    declare public tinyExplosions: number;
+    declare public tinyExplosionsDelay: number;
+    declare public shuttering: number;
+    declare public parachutes: number;
+    declare public soldiers: number;
+    declare public bulletDelay: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.player = null as any;
+        this.player = null;
         this.angle = 0;
         this.rotorAngle = 0;
         this.tailIndexCounter = false;
@@ -115,7 +135,8 @@ export class BossHelicopter extends Enemy {
     public static readonly MAX_Y: number = 480;
     public static readonly ENTERING_TIME: number = 2 * 91;
     public static readonly ENTERINGS: any[] = javaArray(BossHelicopter.ENTERING_TIME, 0);
-    public static readonly ENTER_ACCELERATION: number = 0;
+    // Assigned once in the static block, matching Java static-final initialization.
+    public static ENTER_ACCELERATION: number = 0;
     public static readonly HOVER_TIME: number = 45;
     public static readonly RELEASING_TIME_MIN: number = 23;
     public static readonly RELEASING_TIME_MAX: number = 45;
@@ -396,7 +417,7 @@ export class BossHelicopter extends Enemy {
         if (this.rotorAngle == -90) {
             this.rotorAngle = 0;
         }
-        this.tailIndexCounter ^= true;
+        this.tailIndexCounter = !this.tailIndexCounter;
         if (this.tailIndexCounter) {
             this.tailIndex = this.tailIndex == 3 ? 4 : 3;
         }

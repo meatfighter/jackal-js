@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -57,6 +56,8 @@ import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { GameElement } from "./GameElement.js";
 export class Help extends GameElement {
+    declare public left: boolean;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.left = false;

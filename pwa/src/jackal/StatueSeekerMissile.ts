@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,18 +55,28 @@ import {
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import type { Player } from "./Player.js";
 export class StatueSeekerMissile extends Enemy {
+    declare public vx: number;
+    declare public vy: number;
+    declare public sprite: Image | null;
+    declare public statueX: number;
+    declare public statueY: number;
+    declare public clipX: number;
+    declare public explodeDelay: number;
+    declare public player: Player | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.vx = 0;
         this.vy = 0;
         this.angle = 0;
-        this.sprite = null as any;
+        this.sprite = null;
         this.statueX = 0;
         this.statueY = 0;
         this.clipX = 0;
         this.explodeDelay = 0;
-        this.player = null as any;
+        this.player = null;
         this.entryDelay = 0;
     }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,9 +54,19 @@ import {
 } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export class TileDebris extends GameElement {
+    declare public sprite: Image | null;
+    declare public X: number;
+    declare public Y: number;
+    declare public tile: number;
+    declare public type: number;
+    declare public delay: number;
+    declare public moving: boolean;
+    declare public vx: number;
+    declare public vy: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.sprite = null as any;
+        this.sprite = null;
         this.X = 0;
         this.Y = 0;
         this.tile = 0;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,11 +55,15 @@ import {
 import { Enemy } from "./Enemy.js";
 import { EnemySoldier } from "./EnemySoldier.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
+import type { Player } from "./Player.js";
 export class TroopsTruck extends Enemy {
+    declare public player: Player | null;
+    declare public troopsDelay: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
-        this.player = null as any;
+        this.player = null;
         this.traveling = 0;
         this.troops = 0;
         this.troopsDelay = 0;

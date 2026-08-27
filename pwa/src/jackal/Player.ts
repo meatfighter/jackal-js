@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -89,12 +88,13 @@ export class Player {
 
     public static readonly SENSOR_X: number = 32;
     public static readonly SENSOR_Y: number = 16;
-    public static readonly SENSOR_D_X0: number = 0;
-    public static readonly SENSOR_D_X1: number = 0;
-    public static readonly SENSOR_D_X2: number = 0;
-    public static readonly SENSOR_D_Y0: number = 0;
-    public static readonly SENSOR_D_Y1: number = 0;
-    public static readonly SENSOR_D_Y2: number = 0;
+    // Assigned once in the static block, matching Java static-final initialization.
+    public static SENSOR_D_X0: number = 0;
+    public static SENSOR_D_X1: number = 0;
+    public static SENSOR_D_X2: number = 0;
+    public static SENSOR_D_Y0: number = 0;
+    public static SENSOR_D_Y1: number = 0;
+    public static SENSOR_D_Y2: number = 0;
 
     public static readonly RUMBLE: any[] = javaArray(17, 0);
     public static readonly WAKE_ALPHAS: any[] = javaArray(17, 0);

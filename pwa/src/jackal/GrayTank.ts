@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -55,7 +54,30 @@ import {
 } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
+import type { BossGarageManager } from "./BossGarageManager.js";
+import type { Player } from "./Player.js";
 export class GrayTank extends Enemy {
+    declare public moveSteps: number;
+    declare public directionX: number;
+    declare public directionY: number;
+    declare public vx: number;
+    declare public vy: number;
+    declare public sensorX: number;
+    declare public sensorY: number;
+    declare public lastDx: number;
+    declare public lastDy: number;
+    declare public solids: ArrayList<Enemy> | null;
+    declare public player: Player | null;
+    declare public handlingLoop: number;
+    declare public loopTargetX: number;
+    declare public loopTargetY: number;
+    declare public firstMove: number;
+    declare public shack: boolean;
+    declare public shackX: number;
+    declare public shackY: number;
+    declare public garage: boolean;
+    declare public bossGarageManager: BossGarageManager | null;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.shootDelay = 0;
@@ -71,8 +93,8 @@ export class GrayTank extends Enemy {
         this.sensorY = 0;
         this.lastDx = 0;
         this.lastDy = 0;
-        this.solids = null as any;
-        this.player = null as any;
+        this.solids = null;
+        this.player = null;
         this.handlingLoop = 0;
         this.loopTargetX = 0;
         this.loopTargetY = 0;
@@ -81,7 +103,7 @@ export class GrayTank extends Enemy {
         this.shackX = 0;
         this.shackY = 0;
         this.garage = false;
-        this.bossGarageManager = null as any;
+        this.bossGarageManager = null;
     }
 
     public constructor(arg0?: any, arg1?: any, arg2?: any, arg3?: any) {

@@ -214,13 +214,12 @@ const JEEP_YEAH_EXPLOSION_FIELD_NAMES = [
     "enemyY",
     "x",
     "y",
-    "remove",
-    "removeFlag"
+    "remove"
 ];
 
 const JEEP_YEAH_FIRE_FIELD_NAMES = ["scale", "state", "x", "y", "delay"];
 
-const JEEP_YEAH_BULLET_FIELD_NAMES = ["x", "y", "vx", "vy", "angle", "remove", "removeFlag", "scale"];
+const JEEP_YEAH_BULLET_FIELD_NAMES = ["x", "y", "vx", "vy", "angle", "remove", "scale"];
 
 const SUNSET_MODE_FIELD_NAMES = [
     "sunOffset",

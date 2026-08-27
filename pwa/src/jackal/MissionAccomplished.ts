@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     AppGameContainer,
     ApplicationGameContainer,
@@ -56,6 +55,9 @@ import {
 import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 export class MissionAccomplished extends GameElement {
+    declare public messageIndex: number;
+    declare public messageLength: number;
+
     protected __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
         this.state = 0;
