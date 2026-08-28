@@ -652,6 +652,15 @@ If the policy evolves, prefer a stricter allowlist or explicit exception file ra
 
 `scripts/test-java-translation-parity-guardrails.mjs` protects a few translated Java edge cases that are easy to accidentally "simplify" into different JavaScript behavior, including Java field hiding, boolean XOR translation, constructor overload signatures, and `useDefineForClassFields: false`.
 
+Additional parity and performance guardrails are available through:
+
+```sh
+npm run test:parity
+npm run benchmark:directions
+```
+
+`test:parity` runs the Java translation guardrails, JavaRuntime actual-use contracts, Java/TypeScript structural parity checks, a Java-vs-TypeScript JeepYeah mechanics differential, direction-cache parity checks, and persistence field coverage. The benchmark compares the PWA's predecoded direction cache with Java-style per-lookup packed-long extraction; it is informational and is intentionally not a CI timing threshold.
+
 ---
 
 ## Versioning and Build Identity
@@ -1116,6 +1125,7 @@ For gameplay changes:
 - test the changed mechanic;
 - test nearby systems that depend on it;
 - compare TypeScript with Java when parity matters;
+- run `npm run test:parity` when translated Java behavior, persistence, or hot-path direction lookup may be affected;
 - broaden testing for timing/input changes.
 
 ---
@@ -1223,35 +1233,40 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 
 ## Where Do I Make This Change?
 
-| Goal                                  | Start here                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------- |
-| Player/enemy/game mechanics           | `pwa/src/jackal/`, compare `desktop/src/jackal/`                                |
-| Browser menu/game shell               | `pwa/src/app/JackalWebApp.ts`                                                   |
-| Keyboard/gamepad mapping persistence  | `pwa/src/app/JackalInputMappingStore.ts`                                        |
-| Save/continue serialization           | `pwa/src/jackal/persistence/`                                                   |
-| Stable saved-entity IDs               | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts`                         |
-| Deployment-specific local storage     | `pwa/src/app/DeploymentStorageKeys.ts`                                          |
-| Service-worker registration           | `pwa/src/app/ServiceWorkerRegistrar.ts`                                         |
-| Offline/cache strategy                | `pwa/public/sw.js`                                                              |
-| PWA build/precache generation         | `pwa/vite.config.ts`                                                            |
-| Game preload resource inventory       | `pwa/src/app/ResourceManifest.ts`                                               |
-| Java compatibility helpers            | `pwa/src/java/`                                                                 |
-| Public project/about page             | `about/`, `scripts/build-about.mjs`                                             |
-| Desktop Java behavior                 | `desktop/src/jackal/`                                                           |
-| Desktop runtime dependencies          | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/` |
-| Desktop packaging                     | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs`                   |
-| Full release orchestration            | `scripts/build-release.mjs`                                                     |
-| Release manifest                      | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs`            |
-| Source provenance                     | `scripts/source-state-utils.mjs`                                                |
-| Release locking                       | `scripts/release-lock-utils.mjs`                                                |
-| Atomic promotion/recovery             | `scripts/release-atomic-utils.mjs`                                              |
-| Atomic control-file writes            | `scripts/atomic-file-utils.mjs`                                                 |
-| Output/path safety                    | `scripts/build-utils.mjs`                                                       |
-| Version/build stamps                  | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`    |
-| Zero-`@ts-nocheck` policy             | `scripts/check-ts-nocheck-budget.mjs`                                           |
-| Zero explicit-TypeScript-`any` policy | `scripts/check-explicit-any.mjs`                                                |
-| Java translation parity guardrails    | `scripts/test-java-translation-parity-guardrails.mjs`                           |
-| Third-party notices/source            | root/PWA notices plus desktop license/source material                           |
+| Goal                                  | Start here                                                                             |
+| ------------------------------------- | -------------------------------------------------------------------------------------- |
+| Player/enemy/game mechanics           | `pwa/src/jackal/`, compare `desktop/src/jackal/`                                       |
+| Browser menu/game shell               | `pwa/src/app/JackalWebApp.ts`                                                          |
+| Keyboard/gamepad mapping persistence  | `pwa/src/app/JackalInputMappingStore.ts`                                               |
+| Save/continue serialization           | `pwa/src/jackal/persistence/`                                                          |
+| Stable saved-entity IDs               | `pwa/src/jackal/persistence/GameElementTypeRegistry.ts`                                |
+| Deployment-specific local storage     | `pwa/src/app/DeploymentStorageKeys.ts`                                                 |
+| Service-worker registration           | `pwa/src/app/ServiceWorkerRegistrar.ts`                                                |
+| Offline/cache strategy                | `pwa/public/sw.js`                                                                     |
+| PWA build/precache generation         | `pwa/vite.config.ts`                                                                   |
+| Game preload resource inventory       | `pwa/src/app/ResourceManifest.ts`                                                      |
+| Java compatibility helpers            | `pwa/src/java/`                                                                        |
+| Public project/about page             | `about/`, `scripts/build-about.mjs`                                                    |
+| Desktop Java behavior                 | `desktop/src/jackal/`                                                                  |
+| Desktop runtime dependencies          | `desktop/RUNTIME_DEPENDENCIES.md`, full-repo `desktop/lib/`, `desktop/natives/`        |
+| Desktop packaging                     | `scripts/build-desktop.mjs`, `scripts/verify-desktop-zip.mjs`                          |
+| Full release orchestration            | `scripts/build-release.mjs`                                                            |
+| Release manifest                      | `scripts/release-manifest.mjs`, `scripts/write-release-manifest.mjs`                   |
+| Source provenance                     | `scripts/source-state-utils.mjs`                                                       |
+| Release locking                       | `scripts/release-lock-utils.mjs`                                                       |
+| Atomic promotion/recovery             | `scripts/release-atomic-utils.mjs`                                                     |
+| Atomic control-file writes            | `scripts/atomic-file-utils.mjs`                                                        |
+| Output/path safety                    | `scripts/build-utils.mjs`                                                              |
+| Version/build stamps                  | `version.json`, `scripts/version-stamp-utils.mjs`, `scripts/stamp-build.mjs`           |
+| Zero-`@ts-nocheck` policy             | `scripts/check-ts-nocheck-budget.mjs`                                                  |
+| Zero explicit-TypeScript-`any` policy | `scripts/check-explicit-any.mjs`                                                       |
+| Java translation parity guardrails    | `scripts/test-java-translation-parity-guardrails.mjs`                                  |
+| Java/TypeScript structural parity     | `scripts/test-java-ts-structural-parity.mjs`, `scripts/java-ts-parity-exceptions.json` |
+| JavaRuntime usage contracts           | `scripts/test-java-runtime-jackal-contracts.mjs`                                       |
+| Mechanics differential testing        | `scripts/test-java-ts-mechanics-differential.mjs`                                      |
+| Direction-cache parity/benchmark      | `scripts/test-direction-cache-parity.mjs`, `scripts/benchmark-direction-cache.mjs`     |
+| Persistence field coverage            | `scripts/test-persistence-parity-coverage.mjs`                                         |
+| Third-party notices/source            | root/PWA notices plus desktop license/source material                                  |
 
 ---
 
