@@ -78,5 +78,8 @@
     },
     "enumMemberExceptions": {
         "Modes.LOADING": "Browser loading is owned by JackalWebApp rather than a gameplay mode."
+    },
+    "behaviorExceptions": {
+        "Main.update.fadeTiming": "The browser advances the 23-level screen fade from Jackal's existing 10 ms fixed-update loop. This intentionally removes the Java desktop version's display-refresh dependency while leaving the Java source unchanged."
     }
 }

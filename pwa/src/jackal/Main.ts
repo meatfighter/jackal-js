@@ -356,37 +356,18 @@ export class Main extends BasicGame {
             return;
         }
 
-        if (this.fading) {
-            if (this.fadeOut) {
-                if (++this.fadeIndex == Main.FADES.length) {
-                    this.fading = false;
-                    if (this.fadeListener != null) {
-                        this.fadeListener.fadeCompleted();
-                    }
-                }
-            } else {
-                if (--this.fadeIndex == -1) {
-                    this.fading = false;
-                    if (this.fadeListener != null) {
-                        this.fadeListener.fadeCompleted();
-                    }
-                }
-            }
-        }
-
-        if (this.currentSong != this.requestedSong) {
-            if (this.currentSong != null) {
-                this.currentSong.stop();
-            }
-            this.currentSong = this.requestedSong;
-            this.currentSong.play();
-        }
-        if (this.currentSong != null) {
-            this.currentSong.update();
-        }
-
+        let musicUpdated = false;
         let count = 0;
         while (this.nextFrameTime <= Sys.getTime()) {
+            const fadeCompleted = this.fading && this.advanceFade();
+
+            if (!musicUpdated) {
+                this.updateMusic();
+                musicUpdated = true;
+            } else if (fadeCompleted) {
+                this.applyRequestedSongChange();
+            }
+
             this.fullScreenToggleCheck(gc);
             this.input.snap();
             this.mode.update(gc);
@@ -396,6 +377,44 @@ export class Main extends BasicGame {
                 break;
             }
         }
+
+        if (!musicUpdated) {
+            this.updateMusic();
+        }
+    }
+
+    private advanceFade(): boolean {
+        if (this.fadeOut) {
+            if (++this.fadeIndex != Main.FADES.length) {
+                return false;
+            }
+        } else if (--this.fadeIndex != -1) {
+            return false;
+        }
+
+        this.fading = false;
+        if (this.fadeListener != null) {
+            this.fadeListener.fadeCompleted();
+        }
+        return true;
+    }
+
+    private updateMusic(): void {
+        this.applyRequestedSongChange();
+        if (this.currentSong != null) {
+            this.currentSong.update();
+        }
+    }
+
+    private applyRequestedSongChange(): void {
+        if (this.currentSong == this.requestedSong) {
+            return;
+        }
+        if (this.currentSong != null) {
+            this.currentSong.stop();
+        }
+        this.currentSong = this.requestedSong;
+        this.currentSong.play();
     }
 
     public advancePlayerToHardMode(): void {

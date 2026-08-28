@@ -489,6 +489,8 @@ The browser/container layer must keep separate concepts of:
 - gameplay update cadence;
 - browser suspension/visibility interruptions.
 
+Screen fades are also advanced by Jackal's 10 ms fixed-update loop in the PWA. This is an intentional browser timing correction: fade completion can trigger mode and music transitions, so it must not vary with 30 Hz, 60 Hz, 144 Hz, or other display refresh rates.
+
 When execution resumes after a hidden/suspended tab, timing state must be reset appropriately instead of processing an enormous backlog of missed updates.
 
 Small timing changes can alter movement, collisions, enemy behavior, or input feel. Treat timing code as gameplay-sensitive.
