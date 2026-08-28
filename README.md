@@ -1,25 +1,17 @@
-# jackal-js
+# Jackal
 
-This repository contains the browser and desktop release project for **Jackal**.
+Project page: https://meatfighter.com/jackal/
 
-The browser version is a TypeScript Progressive Web App (PWA) port of SlickJackal, the preserved Java recreation of _Jackal_ for the NES. The repository keeps the Java implementation alongside the browser port, plus a static project/about page and the tooling needed to build, verify, package, and release them together.
+## Getting Started
 
-The TypeScript gameplay port deliberately retains much of the Java source structure. That is an architectural choice, not unfinished cleanup. Keeping gameplay classes comparable makes behavioral parity easier to reason about, while browser-only concerns—page lifecycle, service workers, deployment-scoped storage, save/continue, responsive layout, and web input persistence—live in separate browser layers.
+To get oriented, start with these key points:
 
-The root release system is intentionally defensive. `dist/` is treated as the canonical deployable release tree, and production output is assembled away from it, verified, tied to exact source provenance, and only then promoted.
-
----
-
-## Start Here
-
-If you are new to the repository, keep these points in mind:
-
-1. **`pwa/` is the browser game.** `pwa/src/jackal/` is the Java-shaped gameplay port; `pwa/src/app/` is the browser integration layer.
-2. **`desktop/` is the preserved Java game.** It remains buildable and is the primary behavioral reference when checking gameplay parity.
-3. **`about/` is the public project page source.** It is assembled into the same production release as the PWA and desktop download.
+1. **`pwa/` is the browser game.** `pwa/src/jackal/` is the TypeScript gameplay port, structured to closely mirror the Java implementation; `pwa/src/app/` is the browser integration layer.
+2. **`desktop/` is the Java game.** It is buildable and is the primary behavioral reference when checking gameplay parity.
+3. **`about/` is the about page source.** It is assembled into the same production release as the PWA and desktop download.
 4. **`scripts/` is the release system.** It owns component builds, version stamping, source provenance, path safety, desktop packaging, release verification, locking, atomic promotion, and recovery.
 5. **`dist/` is the canonical production artifact.** Never turn a component build into production by manually copying files into `dist/`.
-6. **Browser persistent state is explicit and deployment-scoped.** Save state and input/settings storage are isolated by deployment path.
+6. **Browser saves and settings are isolated by deployment.** Each deployment path gets its own saved games, input mappings, and settings, preventing production, staging, and other side-by-side installations from sharing browser state.
 7. **A production release comes from `npm run build`.** That command runs the normal verification gate and the canonical release pipeline from source to promoted `dist/`.
 
 For ordinary browser development:
@@ -51,9 +43,9 @@ The repository has three layers:
 
 ```text
 SOURCE
-  about/        project-page source
+  about/        about page
   pwa/          TypeScript browser game
-  desktop/      preserved Java game
+  desktop/      Java desktop game
        |
        v
 RELEASE TOOLING
@@ -67,9 +59,9 @@ CANONICAL ARTIFACT
 Within the PWA, keep another boundary in mind:
 
 ```text
-pwa/src/jackal/   gameplay port
+pwa/src/jackal/   game port
 pwa/src/app/      browser/PWA integration
-pwa/src/java/     small Java-compatibility helpers
+pwa/src/java/     helpers for preserving Java semantics
 ```
 
 The normal production path is:
@@ -116,10 +108,10 @@ The key distinction is that **development/component output is not canonical depl
 | ---------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------ |
 | Gameplay behavior            | `pwa/src/jackal/`, compared with `desktop/src/jackal/`                                 | bundled PWA JavaScript                     |
 | Browser lifecycle/UI/storage | `pwa/src/app/`                                                                         | bundled PWA JavaScript                     |
-| Small Java semantic helpers  | `pwa/src/java/`                                                                        | bundled PWA JavaScript                     |
+| Java semantic helpers        | `pwa/src/java/`                                                                        | bundled PWA JavaScript                     |
 | Save/continue format         | `pwa/src/jackal/persistence/`                                                          | browser save state                         |
 | Static PWA/offline behavior  | `pwa/public/`, `pwa/vite.config.ts`                                                    | generated PWA release                      |
-| Public project page          | `about/`                                                                               | root of assembled release                  |
+| About page                 | `about/`                                                                               | root of assembled release                  |
 | Desktop Java source          | `desktop/src/`                                                                         | `desktop/target/` and desktop ZIP          |
 | Desktop runtime contract     | `desktop/RUNTIME_DEPENDENCIES.md`, `desktop/lib/`, `desktop/natives/` in the full repo | packaged runtime files                     |
 | Release version              | `version.json`                                                                         | generated build identity/release filenames |
@@ -208,14 +200,14 @@ Production provenance depends on Git. The normal production build requires a cle
 
 | Path                          | Purpose                                                                                                         |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `about/`                      | Source template/assets for the public project page.                                                             |
+| `about/`                      | Source template/assets for the about page.                                                             |
 | `pwa/`                        | TypeScript browser/PWA implementation.                                                                          |
 | `pwa/src/app/`                | Browser shell, lifecycle, input/settings persistence, resource inventory, service-worker integration.           |
-| `pwa/src/jackal/`             | Java-shaped gameplay port.                                                                                      |
+| `pwa/src/jackal/`             | Game port port.                                                                                      |
 | `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store.                             |
-| `pwa/src/java/`               | Small compatibility helpers used to preserve selected Java semantics.                                           |
+| `pwa/src/java/`               | Compatibility helpers used to preserve selected Java semantics.                                           |
 | `pwa/public/`                 | Manifest, service-worker source, notices, icons, and game resources.                                            |
-| `desktop/`                    | Preserved Java implementation plus desktop packaging/runtime material.                                          |
+| `desktop/`                    | Java implementation plus desktop packaging/runtime material.                                          |
 | `scripts/`                    | Build, verification, versioning, source-provenance, path-safety, locking, ZIP, promotion, and recovery tooling. |
 | `version.json`                | Tracked application version/build-stamp source.                                                                 |
 | `package.json`                | Root command surface and JavaScript dependencies.                                                               |
@@ -243,7 +235,7 @@ Generated directories are disposable only when no recovery workflow needs them. 
 
 ## Source Trees
 
-### `about/` — Public project page
+### `about/` — About page
 
 `about/` contains the source deployed at the release root.
 
@@ -270,14 +262,14 @@ pwa/src/
 ├── main.ts
 ├── styles.css
 ├── app/                    # browser/PWA shell
-├── jackal/                 # Java-shaped gameplay port
+├── jackal/                 # game port
 │   └── persistence/        # save/continue implementation
-└── java/                   # small Java compatibility helpers
+└── java/                   # Java compatibility helpers
 ```
 
 #### `pwa/src/jackal/`
 
-This is the main TypeScript gameplay port.
+This is the main TypeScript game port.
 
 It contains player/enemy/game-object classes, stages/managers, modes, menus, input abstractions, bosses, projectiles, cutscenes, and game state.
 
@@ -289,8 +281,6 @@ When gameplay parity matters:
 2. locate the similarly named Java class;
 3. compare behavior directly;
 4. distinguish a real parity fix from an intentional browser-only divergence.
-
-Do not refactor Java-shaped gameplay merely because another browser architecture would be more fashionable. The direct comparability has maintenance value.
 
 #### `pwa/src/app/`
 
@@ -304,10 +294,6 @@ Important files include:
 - `ResourceManifest.ts` — explicit game resource inventory;
 - `ServiceWorkerRegistrar.ts` — production registration and development cleanup behavior.
 
-A useful rule is:
-
-> If the concern exists because Jackal runs inside a browser page rather than inside the game world, start in `pwa/src/app/`.
-
 #### `pwa/src/java/`
 
 This directory contains small compatibility helpers used where preserving Java-like semantics makes the TypeScript port easier to compare with the original code.
@@ -318,7 +304,7 @@ Keep helpers narrow and behavior-motivated.
 
 #### `pwa/src/jackal/persistence/`
 
-Save/continue is kept separate from ordinary gameplay classes.
+Save/continue is implemented as a dedicated persistence layer responsible for capturing, storing, validating, and restoring game state.
 
 Important pieces are:
 
@@ -330,7 +316,7 @@ Important pieces are:
 
 The stable entity registry is deliberate. Renaming, reordering, or minifying classes must not silently reinterpret an older save as a different game object type.
 
-### `desktop/` — Preserved Java desktop project
+### `desktop/` — Java desktop version
 
 The desktop tree serves two purposes:
 
@@ -359,11 +345,9 @@ desktop/
 └── RUNTIME_DEPENDENCIES.md
 ```
 
-Stripped review archives may omit large runtime JARs, natives, and game resources. The full repository must contain the material required to build the downloadable desktop ZIP.
-
 #### Desktop runtime contract
 
-The preserved desktop distribution uses the legacy SlickJackal runtime set, including Slick2D, LWJGL 2, JInput, and JOrbis/Jogg-era dependencies.
+The desktop distribution includes Slick2D, LWJGL 2, JInput, and JOrbis/Jogg-era dependencies.
 
 The package verifier checks required runtime/native entries, including the 64-bit native files needed by packaged platform launchers.
 
@@ -467,18 +451,6 @@ npm run run:desktop
 
 The PWA uses `slick2d-ts`, a TypeScript/browser adaptation of the Slick2D APIs used by the Java game.
 
-This dependency is declared as `#semver:^1.0.0`; the lockfile then records the exact resolved package version and Git revision.
-
-Do not refresh, widen, or replace that dependency without understanding that the runtime can affect:
-
-- rendering;
-- fixed-step timing;
-- audio;
-- keyboard/gamepad input;
-- fullscreen/container behavior.
-
-Refresh it as an intentional dependency change and retest gameplay/input/timing.
-
 ### Game timing
 
 The TypeScript port preserves the original fixed-step gameplay model rather than tying simulation speed directly to browser render frequency.
@@ -488,8 +460,6 @@ The browser/container layer must keep separate concepts of:
 - rendering cadence;
 - gameplay update cadence;
 - browser suspension/visibility interruptions.
-
-Screen fades are also advanced by Jackal's 10 ms fixed-update loop in the PWA. This is an intentional browser timing correction: fade completion can trigger mode and music transitions, so it must not vary with 30 Hz, 60 Hz, 144 Hz, or other display refresh rates.
 
 When execution resumes after a hidden/suspended tab, timing state must be reset appropriately instead of processing an enormous backlog of missed updates.
 
@@ -634,7 +604,7 @@ Both budgets are zero.
 
 The compiler runs with TypeScript `strict` mode enabled, including `strictNullChecks`. `strictPropertyInitialization` remains disabled because the Java-shaped port still deliberately uses translated initialization hooks and lifecycle-populated fields. Where Java fields are temporarily null during setup or restore, the TypeScript source uses erased non-null assertions such as `null!` so the emitted JavaScript keeps the translated runtime behavior.
 
-Most gameplay classes were mechanically adapted from Java, so the TypeScript is still shaped like the source port. In particular, `GameElement` calls translated initialization hooks during construction to reproduce Java object initialization order.
+Most gameplay classes were adapted from Java, so the TypeScript is still shaped like the source port. In particular, `GameElement` calls translated initialization hooks during construction to reproduce Java object initialization order.
 
 When working in translated gameplay files:
 
@@ -647,7 +617,7 @@ When working in translated gameplay files:
 
 Two Java patterns need special care in TypeScript/JavaScript:
 
-- **field hiding**: Java can hide a superclass field with a subclass field of the same name, but JavaScript has one property namespace. Use distinct names, such as `sourceEnemy` for the Enemy reference in `Fire`/`Explosion` instead of colliding with `GameElement.enemy:boolean`.
+- **field hiding**: Java can hide a superclass field with a subclass field of the same name, but JavaScript has one property namespace. 
 - **translated private/runtime names**: avoid subclass fields that collide with library superclass internals. For example, the title-screen image is `Main.titleImage` so it does not collide with Slick's `BasicGame` title string.
 
 If the policy evolves, prefer a stricter allowlist or explicit exception file rather than weakening the check.
