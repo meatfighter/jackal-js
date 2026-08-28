@@ -44,8 +44,8 @@ export class RotatingGun extends Enemy {
 
     private __construct_RotatingGun(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager | boolean | number, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
-            let xLocal3 = arg0;
-            let yLocal3 = arg1;
+            let xLocal3 = javaFloat(arg0);
+            let yLocal3 = javaFloat(arg1);
             let bossGarageManagerLocal = arg2 as BossGarageManager;
             let whiteLocal2 = arg3;
             this.x = xLocal3;
@@ -56,8 +56,8 @@ export class RotatingGun extends Enemy {
             this.sprites = this.main.grayGuns;
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let whiteLocal = arg2;
             this.x = xLocal2;
             this.y = yLocal2;
@@ -65,8 +65,8 @@ export class RotatingGun extends Enemy {
             this.sprites = this.main.grayGuns;
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -100,16 +100,16 @@ export class RotatingGun extends Enemy {
     public static readonly PAUSE_AFTER_RECOIL: number = 17;
     public static readonly PAUSE_BETWEEN_GROUPS: number = 50;
     public static readonly GROUP_SIZE: number = 3;
-    public static readonly ROTATION_SPEED: number = 0.9;
+    public static readonly ROTATION_SPEED: number = javaFloat(0.9);
     public static readonly BULLET_DISTANCE: number = 400;
     public static readonly GARAGE_BULLET_DISTANCE: number = 464;
-    public static readonly BULLET_TRAVEL_TIME: number = javaInt(RotatingGun.BULLET_DISTANCE / EnemyBullet.SPEED);
-    public static readonly GARAGE_BULLET_TRAVEL_TIME: number = javaInt(RotatingGun.GARAGE_BULLET_DISTANCE / EnemyBullet.SPEED);
+    public static readonly BULLET_TRAVEL_TIME: number = javaInt(javaFloat(RotatingGun.BULLET_DISTANCE / EnemyBullet.SPEED));
+    public static readonly GARAGE_BULLET_TRAVEL_TIME: number = javaInt(javaFloat(RotatingGun.GARAGE_BULLET_DISTANCE / EnemyBullet.SPEED));
     public static readonly YELLOW_BULLET_SPEED: number = 1.25;
 
     static {
         for (let i = 1; i <= RotatingGun.RECOIL_DURATION; i++) {
-            RotatingGun.recoils[i - 1] = RotatingGun.RECOIL_AMPLITUDE * javaFloat(Math.sin((i * Math.PI) / (RotatingGun.RECOIL_DURATION + 1)));
+            RotatingGun.recoils[i - 1] = javaFloat(RotatingGun.RECOIL_AMPLITUDE * javaFloat(Math.sin((i * Math.PI) / (RotatingGun.RECOIL_DURATION + 1))));
         }
     }
 
@@ -175,12 +175,12 @@ export class RotatingGun extends Enemy {
                     this.pause--;
                 }
                 let player = this.gameMode.player;
-                let targetAngle = javaFloat((Math.atan2(player.y - this.y, player.x - this.x) * 180) / Math.PI);
-                let deltaAngle = (targetAngle - this.angle + 180) % 360;
+                let targetAngle = javaFloat((Math.atan2(javaFloat(player.y - this.y), javaFloat(player.x - this.x)) * 180) / Math.PI);
+                let deltaAngle = javaFloat(javaFloat(javaFloat(targetAngle - this.angle) + 180) % 360);
                 if (deltaAngle < 0) {
-                    deltaAngle += 180;
+                    deltaAngle = javaFloat(deltaAngle + 180);
                 } else {
-                    deltaAngle -= 180;
+                    deltaAngle = javaFloat(deltaAngle - 180);
                 }
                 if (Math.abs(deltaAngle) < RotatingGun.ROTATION_SPEED) {
                     this.angle = targetAngle;
@@ -189,9 +189,9 @@ export class RotatingGun extends Enemy {
                     }
                 } else {
                     if (deltaAngle < 0) {
-                        this.angle -= RotatingGun.ROTATION_SPEED;
+                        this.angle = javaFloat(this.angle - RotatingGun.ROTATION_SPEED);
                     } else {
-                        this.angle += RotatingGun.ROTATION_SPEED;
+                        this.angle = javaFloat(this.angle + RotatingGun.ROTATION_SPEED);
                     }
                 }
                 if (!this.white) {
@@ -214,25 +214,32 @@ export class RotatingGun extends Enemy {
         let sin = javaFloat(Math.sin(ang));
         if (this.bossGarageManager != null) {
             if (this.white) {
-                new EnemyBullet(this.x + 60 * cos, this.y + 60 * sin, cos, sin, RotatingGun.GARAGE_BULLET_TRAVEL_TIME, true);
+                new EnemyBullet(
+                    javaFloat(this.x + javaFloat(60 * cos)),
+                    javaFloat(this.y + javaFloat(60 * sin)),
+                    cos,
+                    sin,
+                    RotatingGun.GARAGE_BULLET_TRAVEL_TIME,
+                    true
+                );
             } else {
                 new EnemyBullet(
-                    this.x + 60 * cos,
-                    this.y + 60 * sin,
-                    RotatingGun.YELLOW_BULLET_SPEED * cos,
-                    RotatingGun.YELLOW_BULLET_SPEED * sin,
+                    javaFloat(this.x + javaFloat(60 * cos)),
+                    javaFloat(this.y + javaFloat(60 * sin)),
+                    javaFloat(RotatingGun.YELLOW_BULLET_SPEED * cos),
+                    javaFloat(RotatingGun.YELLOW_BULLET_SPEED * sin),
                     RotatingGun.GARAGE_BULLET_TRAVEL_TIME,
                     false
                 );
             }
         } else if (this.white) {
-            new EnemyBullet(this.x + 60 * cos, this.y + 60 * sin, cos, sin, RotatingGun.BULLET_TRAVEL_TIME, true);
+            new EnemyBullet(javaFloat(this.x + javaFloat(60 * cos)), javaFloat(this.y + javaFloat(60 * sin)), cos, sin, RotatingGun.BULLET_TRAVEL_TIME, true);
         } else {
             new EnemyBullet(
-                this.x + 60 * cos,
-                this.y + 60 * sin,
-                RotatingGun.YELLOW_BULLET_SPEED * cos,
-                RotatingGun.YELLOW_BULLET_SPEED * sin,
+                javaFloat(this.x + javaFloat(60 * cos)),
+                javaFloat(this.y + javaFloat(60 * sin)),
+                javaFloat(RotatingGun.YELLOW_BULLET_SPEED * cos),
+                javaFloat(RotatingGun.YELLOW_BULLET_SPEED * sin),
                 RotatingGun.BULLET_TRAVEL_TIME,
                 false
             );

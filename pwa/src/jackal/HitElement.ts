@@ -1,4 +1,4 @@
-import { javaArray, javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaArray, javaInt } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export abstract class HitElement extends GameElement {
     // Java field `hit`; renamed because JavaScript cannot also expose hit(...) under the same key.
@@ -56,36 +56,45 @@ export abstract class HitElement extends GameElement {
             return this.hit__overload0(arg0 as HitElement);
         }
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.hit__overload1(arg0, arg1);
+            return this.hit__overload1(javaFloat(arg0), javaFloat(arg1));
         }
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.hit__overload2(arg0, arg1, arg2, arg3);
+            return this.hit__overload2(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         throw new Error(`No Java method overload matched hit: ${argCount}`);
     }
 
     public hit__overload0(h: HitElement): boolean {
         return this.overlap(
-            h.x + h.hitX1,
-            h.y + h.hitY1,
-            h.x + h.hitX2,
-            h.y + h.hitY2,
-            this.x + this.hitX1,
-            this.y + this.hitY1,
-            this.x + this.hitX2,
-            this.y + this.hitY2
+            javaFloat(h.x + h.hitX1),
+            javaFloat(h.y + h.hitY1),
+            javaFloat(h.x + h.hitX2),
+            javaFloat(h.y + h.hitY2),
+            javaFloat(this.x + this.hitX1),
+            javaFloat(this.y + this.hitY1),
+            javaFloat(this.x + this.hitX2),
+            javaFloat(this.y + this.hitY2)
         );
     }
 
     public hit__overload1(px: number, py: number): boolean {
-        px -= this.x;
-        py -= this.y;
+        px = javaFloat(px - this.x);
+        py = javaFloat(py - this.y);
 
         return py >= this.hitY1 && py <= this.hitY2 && px >= this.hitX1 && px <= this.hitX2;
     }
 
     public hit__overload2(x1: number, y1: number, x2: number, y2: number): boolean {
-        return this.overlap(x1, y1, x2, y2, this.x + this.hitX1, this.y + this.hitY1, this.x + this.hitX2, this.y + this.hitY2);
+        return this.overlap(
+            x1,
+            y1,
+            x2,
+            y2,
+            javaFloat(this.x + this.hitX1),
+            javaFloat(this.y + this.hitY1),
+            javaFloat(this.x + this.hitX2),
+            javaFloat(this.y + this.hitY2)
+        );
     }
 
     public isHit(): boolean {
@@ -134,7 +143,7 @@ export abstract class HitElement extends GameElement {
     }
 
     public override checkBounds(maxY: number): void {
-        if (this.y + this.hitY1 > maxY) {
+        if (javaFloat(this.y + this.hitY1) > maxY) {
             this.remove();
         }
     }

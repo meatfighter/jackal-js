@@ -1,4 +1,6 @@
 import { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Laser extends Enemy {
     protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
@@ -12,13 +14,13 @@ export class Laser extends Enemy {
 
     private __construct_Laser(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             this.playSoundOnRemove = false;
 
-            if (this.gameMode.cameraY <= yLocal + 896) {
+            if (this.gameMode.cameraY <= javaFloat(yLocal + 896)) {
                 this.main.playSound(this.main.laserSound);
             }
             return;

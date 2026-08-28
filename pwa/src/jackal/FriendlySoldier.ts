@@ -83,8 +83,8 @@ export class FriendlySoldier extends Enemy {
         arg4?: boolean
     ): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
-            let xLocal3 = arg0;
-            let yLocal3 = arg1;
+            let xLocal3 = javaFloat(arg0);
+            let yLocal3 = javaFloat(arg1);
             let helicopterLocal = arg2 as FriendlyHelicopter;
             let colorChangingLocal = arg3;
             this.x = xLocal3;
@@ -110,8 +110,8 @@ export class FriendlySoldier extends Enemy {
             this.wobbleScaleY = 1;
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let typeLocal2 = arg2 as FriendlySoldierType;
             this.x = xLocal2;
             this.y = yLocal2;
@@ -124,8 +124,8 @@ export class FriendlySoldier extends Enemy {
             this.startWandering();
             return;
         } else if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2 as FriendlySoldierType;
             let houseCountLocal = arg3;
             let shack = arg4;
@@ -213,7 +213,9 @@ export class FriendlySoldier extends Enemy {
     public static readonly WOBBLES: number[] = javaArray(FriendlySoldier.LEG_FRAMES, 0);
     static {
         for (let i = FriendlySoldier.LEG_FRAMES - 1; i >= 0; i--) {
-            FriendlySoldier.WOBBLES[i] = -FriendlySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(FriendlySoldier.LEG_FRAMES)));
+            FriendlySoldier.WOBBLES[i] = javaFloat(
+                -FriendlySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(FriendlySoldier.LEG_FRAMES)))
+            );
         }
     }
 
@@ -282,15 +284,15 @@ export class FriendlySoldier extends Enemy {
     private startWandering(): void {
         this.state = FriendlySoldier.STATE_WANDERING;
         for (let i = 0; i < 16; i++) {
-            let angle = 6.283 * this.main.random.nextFloat();
+            let angle = javaFloat(javaFloat(6.283) * this.main.random.nextFloat());
             this.directionX = javaFloat(Math.cos(angle));
             this.directionY = javaFloat(Math.sin(angle));
-            if (this.gameMode.isDriveable(this.x + this.directionX * 32, this.y + this.directionY * 32)) {
+            if (this.gameMode.isDriveable(javaFloat(this.x + javaFloat(this.directionX * 32)), javaFloat(this.y + javaFloat(this.directionY * 32)))) {
                 break;
             }
         }
-        this.vx = this.directionX * FriendlySoldier.WALK_SPEED;
-        this.vy = this.directionY * FriendlySoldier.WALK_SPEED;
+        this.vx = javaFloat(this.directionX * FriendlySoldier.WALK_SPEED);
+        this.vy = javaFloat(this.directionY * FriendlySoldier.WALK_SPEED);
         this.wandering = FriendlySoldier.MIN_WANDER_TIME + this.main.random.nextInt(FriendlySoldier.MAX_WANDER_TIME - FriendlySoldier.MIN_WANDER_TIME);
         this.computeOrientation();
     }
@@ -330,8 +332,8 @@ export class FriendlySoldier extends Enemy {
     }
 
     private computeOrientation(): void {
-        this.wobbleScaleX = Math.abs(this.directionY);
-        this.wobbleScaleY = Math.abs(this.directionX);
+        this.wobbleScaleX = javaFloat(Math.abs(this.directionY));
+        this.wobbleScaleY = javaFloat(Math.abs(this.directionX));
 
         if (this.wobbleScaleY > this.wobbleScaleX) {
             if (this.directionX > 0) {
@@ -352,8 +354,8 @@ export class FriendlySoldier extends Enemy {
         let direction = this.gameMode.suggestDirection(this.directionX, this.directionY);
         this.directionX = direction[0];
         this.directionY = direction[1];
-        this.vx = FriendlySoldier.WALK_SPEED * direction[0];
-        this.vy = FriendlySoldier.WALK_SPEED * direction[1];
+        this.vx = javaFloat(FriendlySoldier.WALK_SPEED * direction[0]);
+        this.vy = javaFloat(FriendlySoldier.WALK_SPEED * direction[1]);
         this.computeOrientation();
     }
 
@@ -364,8 +366,8 @@ export class FriendlySoldier extends Enemy {
         } else if (this.legFrames == 13) {
             this.legIndex = 0;
         }
-        this.wobbleX = this.wobbleScaleX * FriendlySoldier.WOBBLES[this.legFrames];
-        this.wobbleY = this.wobbleScaleY * FriendlySoldier.WOBBLES[this.legFrames];
+        this.wobbleX = javaFloat(this.wobbleScaleX * FriendlySoldier.WOBBLES[this.legFrames]);
+        this.wobbleY = javaFloat(this.wobbleScaleY * FriendlySoldier.WOBBLES[this.legFrames]);
         this.legFrames--;
     }
 
@@ -376,7 +378,7 @@ export class FriendlySoldier extends Enemy {
         }
 
         if (this.entry < 120) {
-            this.x -= 1;
+            this.x = javaFloat(this.x - 1);
             this.updateLegs();
         }
     }
@@ -388,7 +390,7 @@ export class FriendlySoldier extends Enemy {
         }
 
         if (this.entry < 120) {
-            this.x += 1;
+            this.x = javaFloat(this.x + 1);
             this.updateLegs();
         }
     }
@@ -400,13 +402,13 @@ export class FriendlySoldier extends Enemy {
         }
 
         if (this.entry < 79) {
-            this.y += 2;
+            this.y = javaFloat(this.y + 2);
             this.updateLegs();
         }
     }
 
     private walkToHelicopter(): void {
-        this.x += this.vx;
+        this.x = javaFloat(this.x + this.vx);
         this.updateLegs();
 
         if ((this.vx < 0 && this.x <= this.helicopter!.x) || (this.vx > 0 && this.x >= this.helicopter!.x)) {
@@ -417,17 +419,27 @@ export class FriendlySoldier extends Enemy {
 
     private convey(): void {
         if (this.gameMode.conveyorDelta > 0 && this.gameMode.isConveyor(this.x, this.y)) {
-            let nextY = this.y + this.gameMode.conveyorDelta;
+            let nextY = javaFloat(this.y + this.gameMode.conveyorDelta);
 
             let walkable = true;
-            if (this.gameMode.isDriveable(this.x - 16, nextY - 6, this.x + 16, nextY + 6)) {
+            if (this.gameMode.isDriveable(javaFloat(this.x - 16), javaFloat(nextY - 6), javaFloat(this.x + 16), javaFloat(nextY + 6))) {
                 // avoid bumping into other enemies
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
-                        solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, this.x + this.solidX2, nextY + this.solidY2) &&
-                        !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                        solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(nextY + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(nextY + this.solidY2)
+                        ) &&
+                        !solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(this.y + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(this.y + this.solidY2)
+                        )
                     ) {
                         walkable = false;
                         break;
@@ -444,17 +456,27 @@ export class FriendlySoldier extends Enemy {
     }
 
     private wander(): void {
-        let nextX = this.x + this.vx;
-        let nextY = this.y + this.vy;
+        let nextX = javaFloat(this.x + this.vx);
+        let nextY = javaFloat(this.y + this.vy);
         let walkable = true;
-        if (this.gameMode.isDriveable(nextX - 16, nextY - 6, nextX + 16, nextY + 6)) {
+        if (this.gameMode.isDriveable(javaFloat(nextX - 16), javaFloat(nextY - 6), javaFloat(nextX + 16), javaFloat(nextY + 6))) {
             // avoid bumping into other enemies
             for (let i = this.solids!.size() - 1; i >= 0; i--) {
                 let solidLocal = this.solids!.get(i);
                 if (
                     solidLocal != this &&
-                    solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
-                    !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                    solidLocal.isSolid(
+                        javaFloat(nextX + this.solidX1),
+                        javaFloat(nextY + this.solidY1),
+                        javaFloat(nextX + this.solidX2),
+                        javaFloat(nextY + this.solidY2)
+                    ) &&
+                    !solidLocal.isSolid(
+                        javaFloat(this.x + this.solidX1),
+                        javaFloat(this.y + this.solidY1),
+                        javaFloat(this.x + this.solidX2),
+                        javaFloat(this.y + this.solidY2)
+                    )
                 ) {
                     walkable = false;
                     break;

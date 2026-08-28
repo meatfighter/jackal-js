@@ -1,6 +1,8 @@
 import { AttackSource } from "./AttackSource.js";
 import { Explosion } from "./Explosion.js";
 import { HitElement } from "./HitElement.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export abstract class Enemy extends HitElement {
     declare public solid: boolean;
     declare public mine: boolean;
@@ -44,45 +46,63 @@ export abstract class Enemy extends HitElement {
     public isSolid(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isSolid__overload0(arg0, arg1);
+            return this.isSolid__overload0(javaFloat(arg0), javaFloat(arg1));
         }
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isSolid__overload1(arg0, arg1, arg2, arg3);
+            return this.isSolid__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         throw new Error(`No Java method overload matched isSolid: ${argCount}`);
     }
 
     public isSolid__overload0(px: number, py: number): boolean {
-        px -= this.x;
-        py -= this.y;
+        px = javaFloat(px - this.x);
+        py = javaFloat(py - this.y);
 
         return py >= this.solidY1 && py <= this.solidY2 && px >= this.solidX1 && px <= this.solidX2;
     }
 
     public isSolid__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
-        return this.overlap(x1, y1, x2, y2, this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2);
+        return this.overlap(
+            x1,
+            y1,
+            x2,
+            y2,
+            javaFloat(this.x + this.solidX1),
+            javaFloat(this.y + this.solidY1),
+            javaFloat(this.x + this.solidX2),
+            javaFloat(this.y + this.solidY2)
+        );
     }
 
     public isMine(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isMine__overload0(arg0, arg1);
+            return this.isMine__overload0(javaFloat(arg0), javaFloat(arg1));
         }
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isMine__overload1(arg0, arg1, arg2, arg3);
+            return this.isMine__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         throw new Error(`No Java method overload matched isMine: ${argCount}`);
     }
 
     public isMine__overload0(px: number, py: number): boolean {
-        px -= this.x;
-        py -= this.y;
+        px = javaFloat(px - this.x);
+        py = javaFloat(py - this.y);
 
         return py >= this.mineY1 && py <= this.mineY2 && px >= this.mineX1 && px <= this.mineX2;
     }
 
     public isMine__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
-        return this.overlap(x1, y1, x2, y2, this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2);
+        return this.overlap(
+            x1,
+            y1,
+            x2,
+            y2,
+            javaFloat(this.x + this.mineX1),
+            javaFloat(this.y + this.mineY1),
+            javaFloat(this.x + this.mineX2),
+            javaFloat(this.y + this.mineY2)
+        );
     }
 
     public flatten(): void {
@@ -92,7 +112,7 @@ export abstract class Enemy extends HitElement {
     public explode(): void {
         if (!this.removeFlag) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
         }
     }
@@ -104,7 +124,7 @@ export abstract class Enemy extends HitElement {
         }
         if (this.isMine(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -123,7 +143,7 @@ export abstract class Enemy extends HitElement {
     public attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -136,7 +156,7 @@ export abstract class Enemy extends HitElement {
         if (this.hit(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);
@@ -149,12 +169,12 @@ export abstract class Enemy extends HitElement {
 
     public override checkBounds(maxY: number): void {
         if (this.solid) {
-            if (this.y + this.solidY1 > maxY) {
+            if (javaFloat(this.y + this.solidY1) > maxY) {
                 this.playSoundOnRemove = false;
                 this.remove();
             }
         } else {
-            if (this.y + this.hitY1 > maxY) {
+            if (javaFloat(this.y + this.hitY1) > maxY) {
                 this.playSoundOnRemove = false;
                 this.remove();
             }

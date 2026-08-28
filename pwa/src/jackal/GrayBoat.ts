@@ -31,8 +31,8 @@ export class GrayBoat extends Enemy {
 
     private __construct_GrayBoat(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -46,7 +46,7 @@ export class GrayBoat extends Enemy {
     public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
     public static readonly SPEED: number = 1.75;
     public static readonly MOVEMENT_TIME: number = 227;
-    public static readonly TO_DEGREES: number = 180 / javaFloat(Math.PI);
+    public static readonly TO_DEGREES: number = javaFloat(180 / javaFloat(Math.PI));
 
     public movementDelay: number = GrayBoat.MOVEMENT_TIME;
 
@@ -70,7 +70,7 @@ export class GrayBoat extends Enemy {
     public update(): void {
         if (this.movementDelay > 0) {
             this.movementDelay--;
-            this.y += GrayBoat.SPEED;
+            this.y = javaFloat(this.y + GrayBoat.SPEED);
         }
         if (--this.spriteIndexCounter < 0) {
             this.spriteIndexCounter = GrayBoat.SPRITE_TOGGLE_FRAMES;
@@ -78,19 +78,22 @@ export class GrayBoat extends Enemy {
         }
         if (--this.updateGun < 0) {
             this.updateGun = GrayBoat.UPDATE_GUN_FRAMES;
-            this.gunAngle = GrayBoat.TO_DEGREES * javaFloat(Math.atan2(this.player!.y - (this.y + 131), this.player!.x - (this.x + 32)));
+            this.gunAngle = javaFloat(
+                GrayBoat.TO_DEGREES *
+                    javaFloat(Math.atan2(javaFloat(this.player!.y - javaFloat(this.y + 131)), javaFloat(this.player!.x - javaFloat(this.x + 32))))
+            );
         }
         if (--this.bulletDelay < 0) {
             this.bulletDelay = GrayBoat.BULLET_DELAY;
-            let X = this.x + 32;
-            let Y = this.y + 131;
-            let dx = this.player!.x - X;
-            let dy = this.player!.y - Y;
-            let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
-            dx *= imag;
-            dy *= imag;
+            let X = javaFloat(this.x + 32);
+            let Y = javaFloat(this.y + 131);
+            let dx = javaFloat(this.player!.x - X);
+            let dy = javaFloat(this.player!.y - Y);
+            let imag = javaFloat(1 / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
+            dx = javaFloat(dx * imag);
+            dy = javaFloat(dy * imag);
 
-            new EnemyBullet(X + 34 * dx, Y + 34 * dy, dx, dy, GrayBoat.BULLET_TRAVEL_TIME, true);
+            new EnemyBullet(javaFloat(X + javaFloat(34 * dx)), javaFloat(Y + javaFloat(34 * dy)), dx, dy, GrayBoat.BULLET_TRAVEL_TIME, true);
         }
     }
 
@@ -99,7 +102,7 @@ export class GrayBoat extends Enemy {
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + 32, this.y + 96);
+            new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 96));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -113,7 +116,7 @@ export class GrayBoat extends Enemy {
         if (this.hit(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(this.x + 32, this.y + 96);
+                new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 96));
                 this.main.addPoints(this.points);
             }
             return true;

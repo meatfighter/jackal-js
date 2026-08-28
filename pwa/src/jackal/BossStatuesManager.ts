@@ -4,6 +4,8 @@ import { BrownTank } from "./BrownTank.js";
 import { GameElement } from "./GameElement.js";
 import type { ICameraPanListener } from "./ICameraPanListener.js";
 import type { ITankTracker } from "./ITankTracker.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class BossStatuesManager extends GameElement implements ICameraPanListener, ITankTracker {
     declare public ready: boolean;
     declare public tanks: number;
@@ -71,13 +73,13 @@ export class BossStatuesManager extends GameElement implements ICameraPanListene
                 this.brownTankDelay = 91;
             } else {
                 this.brownTankDelay = 10 * 91;
-                let xLocal = this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH);
+                let xLocal = javaFloat(this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH));
                 if (xLocal < 352) {
                     xLocal = 352;
                 } else if (xLocal > 1760) {
                     xLocal = 1760;
                 }
-                new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);
+                new BrownTank(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
             }
         }
     }

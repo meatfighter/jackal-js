@@ -1,6 +1,8 @@
-import type { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import type { Enemy } from "./Enemy.js";
 import type { Main } from "./Main.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class JeepYeahExplosion {
     public constructor(arg0?: number, arg1?: number) {
         const argCount = arguments.length;
@@ -9,8 +11,8 @@ export class JeepYeahExplosion {
 
     private __construct_JeepYeahExplosion(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -18,7 +20,7 @@ export class JeepYeahExplosion {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly GROW_RATE: number = 1.03;
+    public static readonly GROW_RATE: number = javaFloat(1.03);
 
     public size: number = 32;
     public spriteIndex: number = 0;
@@ -64,25 +66,25 @@ export class JeepYeahExplosion {
         if (this.delay > 0) {
             if (--this.delay == 0) {
                 if (this.enemy != null) {
-                    this.x += this.enemy.x - this.enemyX;
-                    this.y += this.enemy.y - this.enemyY;
+                    this.x = javaFloat(javaFloat(this.x + this.enemy.x) - this.enemyX);
+                    this.y = javaFloat(javaFloat(this.y + this.enemy.y) - this.enemyY);
                 }
             } else {
                 return;
             }
         }
 
-        this.size *= JeepYeahExplosion.GROW_RATE;
+        this.size = javaFloat(this.size * JeepYeahExplosion.GROW_RATE);
 
         if (this.size >= 80) {
             this.spriteIndex = 2;
-            this.scale = this.size / 128;
+            this.scale = javaFloat(this.size / 128);
         } else if (this.size >= 56) {
             this.spriteIndex = 1;
-            this.scale = this.size / 56;
+            this.scale = javaFloat(this.size / 56);
         } else {
             this.spriteIndex = 0;
-            this.scale = this.size / 32;
+            this.scale = javaFloat(this.size / 32);
         }
 
         if ((this.tiny && this.size > 68) || this.size > 128) {

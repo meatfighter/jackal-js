@@ -54,6 +54,7 @@ const Sys = {
     getTimerResolution: () => 1000
 };
 const javaInt = (value) => Math.trunc(value);
+const javaFloat = (value) => Math.fround(value);
 
 class Main {
     static FADES = new Array(23);

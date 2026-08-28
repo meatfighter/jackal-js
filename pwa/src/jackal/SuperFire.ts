@@ -30,8 +30,8 @@ export class SuperFire extends GameElement {
 
     private __construct_SuperFire(argCount: number, arg0?: number, arg1?: number, arg2?: BossSuperTank): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let bossSuperTankLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -57,13 +57,13 @@ export class SuperFire extends GameElement {
 
     static {
         for (let i = 0; i < SuperFire.ASTER_DELAY; i++) {
-            SuperFire.ASTER_SCALES[i] = javaFloat(i) / javaFloat(SuperFire.ASTER_DELAY - 1);
-            let radius = (1 - SuperFire.ASTER_SCALES[i]) * SuperFire.ASTER_RADIUS;
-            let angle = SuperFire.ASTER_SCALES[i] * SuperFire.ASTER_ANGLE;
+            SuperFire.ASTER_SCALES[i] = javaFloat(javaFloat(i) / javaFloat(SuperFire.ASTER_DELAY - 1));
+            let radius = javaFloat(javaFloat(1 - SuperFire.ASTER_SCALES[i]) * SuperFire.ASTER_RADIUS);
+            let angle = javaFloat(SuperFire.ASTER_SCALES[i] * SuperFire.ASTER_ANGLE);
             for (let j = 0; j < SuperFire.ASTER_SPINES; j++) {
-                let ang = angle + SuperFire.ASTER_SPACER_ANGLE * j;
-                SuperFire.ASTERS_XYS[i][j][0] = radius * javaFloat(Math.cos(ang));
-                SuperFire.ASTERS_XYS[i][j][1] = radius * javaFloat(Math.sin(ang));
+                let ang = javaFloat(angle + javaFloat(SuperFire.ASTER_SPACER_ANGLE * j));
+                SuperFire.ASTERS_XYS[i][j][0] = javaFloat(radius * javaFloat(Math.cos(ang)));
+                SuperFire.ASTERS_XYS[i][j][1] = javaFloat(radius * javaFloat(Math.sin(ang)));
             }
         }
     }
@@ -87,27 +87,27 @@ export class SuperFire extends GameElement {
                 }
                 break;
             case SuperFire.STATE_DIAMOND:
-                this.length += SuperFire.SPEED;
+                this.length = javaFloat(this.length + SuperFire.SPEED);
                 if (this.length >= 128) {
                     this.state = SuperFire.STATE_GROWING;
                 }
                 break;
             case SuperFire.STATE_GROWING:
-                this.length += SuperFire.SPEED;
+                this.length = javaFloat(this.length + SuperFire.SPEED);
                 if (this.length >= 512) {
                     this.length = 512;
                     this.state = SuperFire.STATE_MOVING;
                 }
                 break;
             case SuperFire.STATE_MOVING:
-                this.y += SuperFire.SPEED;
-                if (this.y > this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 32) {
+                this.y = javaFloat(this.y + SuperFire.SPEED);
+                if (this.y > javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + 32)) {
                     this.remove();
                 }
                 break;
         }
         if (this.state != SuperFire.STATE_ASTER) {
-            this.player!.attack(this.x - 40, this.y + 32, this.x + 40, this.y + this.length - 32);
+            this.player!.attack(javaFloat(this.x - 40), javaFloat(this.y + 32), javaFloat(this.x + 40), javaFloat(javaFloat(this.y + this.length) - 32));
         }
         if (this.bossSuperTank!.removeFlag) {
             this.remove();

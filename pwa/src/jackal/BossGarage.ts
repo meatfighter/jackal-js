@@ -1,5 +1,5 @@
 import type { Image } from "slick2d-ts";
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { BrownTank } from "./BrownTank.js";
 import { Enemy } from "./Enemy.js";
@@ -40,8 +40,8 @@ export class BossGarage extends Enemy {
 
     private __construct_BossGarage(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let bossGarageManagerLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -86,7 +86,7 @@ export class BossGarage extends Enemy {
     public update(): void {
         switch (this.state) {
             case BossGarage.STATE_OPENING:
-                this.doorY += BossGarage.OPENING_SPEED;
+                this.doorY = javaFloat(this.doorY + BossGarage.OPENING_SPEED);
                 if (this.doorY >= 96) {
                     if (this.bossGarageManager!.full()) {
                         this.state = BossGarage.STATE_OPEN_3;
@@ -98,34 +98,34 @@ export class BossGarage extends Enemy {
                 break;
             case BossGarage.STATE_OPEN:
                 if (this.isBrownTank) {
-                    this.vehicleY += BrownTank.SPEED;
-                    if (this.vehicleY > this.y + 72) {
-                        this.brownTank = new BrownTank(this.x + 64, this.vehicleY, 125, this.bossGarageManager!);
+                    this.vehicleY = javaFloat(this.vehicleY + BrownTank.SPEED);
+                    if (this.vehicleY > javaFloat(this.y + 72)) {
+                        this.brownTank = new BrownTank(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
                         this.state = BossGarage.STATE_OPEN_2;
                     }
                 } else {
-                    this.vehicleY += GrayTank.SPEED;
-                    if (this.vehicleY > this.y + 80) {
-                        this.grayTank = new GrayTank(this.x + 64, this.vehicleY, 125, this.bossGarageManager!);
+                    this.vehicleY = javaFloat(this.vehicleY + GrayTank.SPEED);
+                    if (this.vehicleY > javaFloat(this.y + 80)) {
+                        this.grayTank = new GrayTank(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
                         this.state = BossGarage.STATE_OPEN_2;
                     }
                 }
                 break;
             case BossGarage.STATE_OPEN_2:
                 if (this.isBrownTank) {
-                    if (this.brownTank!.y > this.y + 138 || this.brownTank!.removeFlag) {
+                    if (this.brownTank!.y > javaFloat(this.y + 138) || this.brownTank!.removeFlag) {
                         this.brownTank = null;
                         this.state = BossGarage.STATE_CLOSING;
                     }
                 } else {
-                    if (this.grayTank!.y > this.y + 148 || this.grayTank!.removeFlag) {
+                    if (this.grayTank!.y > javaFloat(this.y + 148) || this.grayTank!.removeFlag) {
                         this.grayTank = null;
                         this.state = BossGarage.STATE_CLOSING;
                     }
                 }
                 break;
             case BossGarage.STATE_CLOSING:
-                this.doorY -= BossGarage.OPENING_SPEED;
+                this.doorY = javaFloat(this.doorY - BossGarage.OPENING_SPEED);
                 if (this.doorY <= 0) {
                     this.state = BossGarage.STATE_CLOSED;
                 }
@@ -144,10 +144,10 @@ export class BossGarage extends Enemy {
             this.isBrownTank = this.main.random.nextBoolean();
             if (this.isBrownTank) {
                 this.vehicle = this.main.brownTanks;
-                this.vehicleY = this.y - 8;
+                this.vehicleY = javaFloat(this.y - 8);
             } else {
                 this.vehicle = this.main.grayTanks;
-                this.vehicleY = this.y - 24;
+                this.vehicleY = javaFloat(this.y - 24);
             }
         }
     }
@@ -158,9 +158,9 @@ export class BossGarage extends Enemy {
         if (this.state >= BossGarage.STATE_OPEN && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.remove();
             if (this.state == BossGarage.STATE_OPEN) {
-                new Explosion(this.x + 64, this.vehicleY);
+                new Explosion(javaFloat(this.x + 64), this.vehicleY);
             }
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             this.bossGarageManager!.garageDestroyed();
             this.gameMode.triggerGroup(this.groupIndex);

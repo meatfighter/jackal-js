@@ -1,5 +1,5 @@
 import type { Image } from "slick2d-ts";
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { GameElement } from "./GameElement.js";
 export class TileDebris extends GameElement {
     declare public sprite: Image | null;
@@ -40,12 +40,12 @@ export class TileDebris extends GameElement {
             let typeLocal = arg3;
             this.X = xLocal;
             this.Y = yLocal;
-            this.x = (xLocal << 5) + 16;
-            this.y = (yLocal << 5) + 16;
+            this.x = javaFloat((xLocal << 5) + 16);
+            this.y = javaFloat((yLocal << 5) + 16);
             this.tile = tileLocal;
             this.type = typeLocal;
             this.sprite = this.gameMode.tiles[this.gameMode.tileMap[yLocal][xLocal]];
-            this.delay = javaInt(this.gameMode.player.x - this.x) >> 3;
+            this.delay = javaInt(javaFloat(this.gameMode.player.x - this.x)) >> 3;
 
             if (this.delay < 0) {
                 this.delay = -this.delay;
@@ -56,8 +56,8 @@ export class TileDebris extends GameElement {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly GRAVITY: number = 0.2;
-    public static readonly SCALER: number = 0.015;
+    public static readonly GRAVITY: number = javaFloat(0.2);
+    public static readonly SCALER: number = javaFloat(0.015);
 
     public scale: number = 1;
 
@@ -67,10 +67,10 @@ export class TileDebris extends GameElement {
 
     public update(): void {
         if (this.moving) {
-            this.vy += TileDebris.GRAVITY;
-            this.x += this.vx;
-            this.y += this.vy;
-            this.scale -= TileDebris.SCALER;
+            this.vy = javaFloat(this.vy + TileDebris.GRAVITY);
+            this.x = javaFloat(this.x + this.vx);
+            this.y = javaFloat(this.y + this.vy);
+            this.scale = javaFloat(this.scale - TileDebris.SCALER);
             if (this.scale <= 0) {
                 this.scale = 0;
                 this.remove();
@@ -80,11 +80,11 @@ export class TileDebris extends GameElement {
                 this.moving = true;
                 this.gameMode.tileMap[this.Y][this.X] = this.tile;
                 this.gameMode.typesMap[this.Y][this.X] = this.type;
-                this.vx = 1 + this.main.random.nextFloat() * 5;
+                this.vx = javaFloat(1 + javaFloat(this.main.random.nextFloat() * 5));
                 if (this.gameMode.player.x > this.x) {
                     this.vx = -this.vx;
                 }
-                this.vy = -2 - this.main.random.nextFloat() * 5;
+                this.vy = javaFloat(-2 - javaFloat(this.main.random.nextFloat() * 5));
             }
         }
     }

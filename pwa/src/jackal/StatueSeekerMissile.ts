@@ -36,15 +36,15 @@ export class StatueSeekerMissile extends Enemy {
 
     private __construct_StatueSeekerMissile(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let statueXLocal = arg0;
-            let statueYLocal = arg1;
+            let statueXLocal = javaFloat(arg0);
+            let statueYLocal = javaFloat(arg1);
             this.statueX = statueXLocal;
             this.statueY = statueYLocal;
 
             this.player = this.gameMode.player;
 
-            this.x = statueXLocal + 48;
-            this.y = statueYLocal + 86;
+            this.x = javaFloat(statueXLocal + 48);
+            this.y = javaFloat(statueYLocal + 86);
             this.vx = 0;
             this.vy = StatueSeekerMissile.SPEED;
 
@@ -54,11 +54,11 @@ export class StatueSeekerMissile extends Enemy {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly ROTATION_SPEED: number = 0.9;
+    public static readonly ROTATION_SPEED: number = javaFloat(0.9);
     public static readonly EXPLODE_DELAY: number = 8 * 91;
     public static readonly SPEED: number = 3.5;
     public static readonly TO_RADIANS: number = javaFloat(Math.PI / 180);
-    public static readonly EXPLODE_OFFSET: number = 18 / StatueSeekerMissile.SPEED;
+    public static readonly EXPLODE_OFFSET: number = javaFloat(18 / StatueSeekerMissile.SPEED);
     public static readonly ENTRY_DELAY: number = 16;
 
     public angle: number = 90;
@@ -98,7 +98,7 @@ export class StatueSeekerMissile extends Enemy {
             this.playSoundOnRemove = false;
             this.remove();
             this.main.playHitExplodeSound();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -109,30 +109,30 @@ export class StatueSeekerMissile extends Enemy {
     public update(): void {
         if (this.entryDelay > 0) {
             this.entryDelay--;
-            this.y += StatueSeekerMissile.SPEED;
+            this.y = javaFloat(this.y + StatueSeekerMissile.SPEED);
         } else {
-            let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
-            let deltaAngle = (targetAngle - this.angle + 180) % 360;
+            let targetAngle = javaFloat((Math.atan2(javaFloat(this.player!.y - this.y), javaFloat(this.player!.x - this.x)) * 180) / Math.PI);
+            let deltaAngle = javaFloat(javaFloat(javaFloat(targetAngle - this.angle) + 180) % 360);
             if (deltaAngle < 0) {
-                deltaAngle += 180;
+                deltaAngle = javaFloat(deltaAngle + 180);
             } else {
-                deltaAngle -= 180;
+                deltaAngle = javaFloat(deltaAngle - 180);
             }
             if (Math.abs(deltaAngle) < StatueSeekerMissile.ROTATION_SPEED) {
                 this.angle = targetAngle;
             } else {
                 if (deltaAngle < 0) {
-                    this.angle -= StatueSeekerMissile.ROTATION_SPEED;
+                    this.angle = javaFloat(this.angle - StatueSeekerMissile.ROTATION_SPEED);
                 } else {
-                    this.angle += StatueSeekerMissile.ROTATION_SPEED;
+                    this.angle = javaFloat(this.angle + StatueSeekerMissile.ROTATION_SPEED);
                 }
             }
 
-            let ang = StatueSeekerMissile.TO_RADIANS * this.angle;
-            this.vx = StatueSeekerMissile.SPEED * javaFloat(Math.cos(ang));
-            this.vy = StatueSeekerMissile.SPEED * javaFloat(Math.sin(ang));
-            this.x += this.vx;
-            this.y += this.vy;
+            let ang = javaFloat(StatueSeekerMissile.TO_RADIANS * this.angle);
+            this.vx = javaFloat(StatueSeekerMissile.SPEED * javaFloat(Math.cos(ang)));
+            this.vy = javaFloat(StatueSeekerMissile.SPEED * javaFloat(Math.sin(ang)));
+            this.x = javaFloat(this.x + this.vx);
+            this.y = javaFloat(this.y + this.vy);
         }
 
         if (++this.explodeDelay == StatueSeekerMissile.EXPLODE_DELAY) {
@@ -141,7 +141,10 @@ export class StatueSeekerMissile extends Enemy {
                 this.main.playExplodeSound2();
             }
             this.remove();
-            new Explosion(this.x + StatueSeekerMissile.EXPLODE_OFFSET * this.vx, this.y + StatueSeekerMissile.EXPLODE_OFFSET * this.vy).setTiny(true);
+            new Explosion(
+                javaFloat(this.x + javaFloat(StatueSeekerMissile.EXPLODE_OFFSET * this.vx)),
+                javaFloat(this.y + javaFloat(StatueSeekerMissile.EXPLODE_OFFSET * this.vy))
+            ).setTiny(true);
         }
     }
 

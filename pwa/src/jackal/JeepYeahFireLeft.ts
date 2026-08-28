@@ -27,14 +27,14 @@ export class JeepYeahFireLeft {
     public static readonly RADIANS: number = (JeepYeahFireLeft.ANGLE * Math.PI) / 180;
     public static readonly rx: number = javaFloat(Math.cos(JeepYeahFireLeft.RADIANS));
     public static readonly ry: number = javaFloat(Math.sin(JeepYeahFireLeft.RADIANS));
-    public static readonly vx: number = JeepYeahFireLeft.SPEED * JeepYeahFireLeft.rx;
-    public static readonly vy: number = JeepYeahFireLeft.SPEED * JeepYeahFireLeft.ry;
+    public static readonly vx: number = javaFloat(JeepYeahFireLeft.SPEED * JeepYeahFireLeft.rx);
+    public static readonly vy: number = javaFloat(JeepYeahFireLeft.SPEED * JeepYeahFireLeft.ry);
 
     public static readonly MOVE_TIME: number = 1;
-    public static readonly SHRINK_STEPS: number = javaInt(63 / JeepYeahFireLeft.SPEED);
+    public static readonly SHRINK_STEPS: number = javaInt(javaFloat(63 / JeepYeahFireLeft.SPEED));
     public static readonly PAUSE_TIME: number = 3;
 
-    public static readonly I_SHRINK_STEPS: number = 1 / JeepYeahFireLeft.SHRINK_STEPS;
+    public static readonly I_SHRINK_STEPS: number = javaFloat(1 / JeepYeahFireLeft.SHRINK_STEPS);
 
     public scale: number = 0;
     public state: number = 0;
@@ -45,8 +45,8 @@ export class JeepYeahFireLeft {
     public update(): void {
         switch (this.state) {
             case JeepYeahFireLeft.STATE_GROWING:
-                this.x += JeepYeahFireLeft.SPEED;
-                this.scale = this.x / 63;
+                this.x = javaFloat(this.x + JeepYeahFireLeft.SPEED);
+                this.scale = javaFloat(this.x / 63);
                 if (this.scale >= 1) {
                     this.state = JeepYeahFireLeft.STATE_MOVING;
                     this.delay = JeepYeahFireLeft.MOVE_TIME;
@@ -55,17 +55,17 @@ export class JeepYeahFireLeft {
                 }
                 break;
             case JeepYeahFireLeft.STATE_MOVING:
-                this.x += JeepYeahFireLeft.vx;
-                this.y += JeepYeahFireLeft.vy;
+                this.x = javaFloat(this.x + JeepYeahFireLeft.vx);
+                this.y = javaFloat(this.y + JeepYeahFireLeft.vy);
                 if (--this.delay == 0) {
                     this.state = JeepYeahFireLeft.STATE_SHRINKING;
                     this.delay = JeepYeahFireLeft.SHRINK_STEPS;
                 }
                 break;
             case JeepYeahFireLeft.STATE_SHRINKING:
-                this.x += JeepYeahFireLeft.vx;
-                this.y += JeepYeahFireLeft.vy;
-                this.scale = JeepYeahFireLeft.I_SHRINK_STEPS * this.delay;
+                this.x = javaFloat(this.x + JeepYeahFireLeft.vx);
+                this.y = javaFloat(this.y + JeepYeahFireLeft.vy);
+                this.scale = javaFloat(JeepYeahFireLeft.I_SHRINK_STEPS * this.delay);
                 if (--this.delay == 0) {
                     this.state = JeepYeahFireLeft.STATE_PAUSED;
                     this.delay = JeepYeahFireLeft.PAUSE_TIME;

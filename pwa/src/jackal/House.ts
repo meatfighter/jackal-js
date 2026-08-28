@@ -1,4 +1,4 @@
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -22,8 +22,8 @@ export class House extends Enemy {
 
     private __construct_House(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let leftLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -61,9 +61,9 @@ export class House extends Enemy {
             this.playSoundOnRemove = false;
             this.main.playSound(this.main.hutSound);
             this.remove();
-            new Explosion(this.x + 96, this.y + 96);
+            new Explosion(javaFloat(this.x + 96), javaFloat(this.y + 96));
             this.gameMode.triggerGroup(this.groupIndex);
-            new Help(this.x + 96, this.y + 84, this.left);
+            new Help(javaFloat(this.x + 96), javaFloat(this.y + 84), this.left);
             this.main.addPoints(800);
             return true;
         } else {

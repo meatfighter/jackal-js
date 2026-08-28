@@ -1,6 +1,8 @@
 import { MainConstants } from "../java/MainConstants.js";
 import { BrownTank } from "./BrownTank.js";
 import { GameElement } from "./GameElement.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class AppearingBrownTank extends GameElement {
     protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
@@ -14,8 +16,8 @@ export class AppearingBrownTank extends GameElement {
 
     private __construct_AppearingBrownTank(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -28,7 +30,7 @@ export class AppearingBrownTank extends GameElement {
     }
 
     public update(): void {
-        if (this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT < this.y - 48) {
+        if (javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) < javaFloat(this.y - 48)) {
             let brownTank = new BrownTank(this.x, this.y);
             brownTank.targetAngle = 270;
             brownTank.displayAngle = 270;

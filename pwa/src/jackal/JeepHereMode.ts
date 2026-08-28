@@ -17,12 +17,12 @@ export class JeepHereMode implements IMode, IFadeListener {
     public static readonly SLIDE_TIME: number = 91;
     public static readonly HERE_DELAY: number = 3 * 91;
 
-    public static readonly SLIDE_SPEED: number = (MainConstants.DISPLAY_WIDTH - 224) / javaFloat(JeepHereMode.SLIDE_TIME);
+    public static readonly SLIDE_SPEED: number = javaFloat((MainConstants.DISPLAY_WIDTH - 224) / javaFloat(JeepHereMode.SLIDE_TIME));
 
     public main: Main = null!;
     public gc: GameContainer = null!;
     public state: number = JeepHereMode.STATE_FADE_IN;
-    public jeepHereX: number = MainConstants.DISPLAY_WIDTH;
+    public jeepHereX: number = javaFloat(MainConstants.DISPLAY_WIDTH);
     public delay: number = JeepHereMode.HERE_DELAY;
 
     public init(main: Main, gc: GameContainer): void {
@@ -45,7 +45,7 @@ export class JeepHereMode implements IMode, IFadeListener {
     public update(gc: GameContainer): void {
         switch (this.state) {
             case JeepHereMode.STATE_SLIDE:
-                this.jeepHereX -= JeepHereMode.SLIDE_SPEED;
+                this.jeepHereX = javaFloat(this.jeepHereX - JeepHereMode.SLIDE_SPEED);
                 if (this.jeepHereX <= 224) {
                     this.jeepHereX = 224;
                     this.state = JeepHereMode.STATE_HERE;

@@ -33,8 +33,8 @@ export class Rock extends Enemy {
 
     private __construct_Rock(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             this.rollsRight = xLocal > 32 * 35;
@@ -50,16 +50,16 @@ export class Rock extends Enemy {
     public static readonly STATE_RESTING_LOW: number = 4;
 
     public static readonly TRIGGER_DISTANCE: number = 224;
-    public static readonly HIGH_DISTANCE: number = 2 * 32;
-    public static readonly FALL_DISTANCE: number = 5 * 32;
-    public static readonly LOW_DISTANCE: number = 6 * 32;
+    public static readonly HIGH_DISTANCE: number = javaFloat(2 * 32);
+    public static readonly FALL_DISTANCE: number = javaFloat(5 * 32);
+    public static readonly LOW_DISTANCE: number = javaFloat(6 * 32);
 
     public static readonly HIGH_TIME: number = 60;
     public static readonly FALL_TIME: number = 60;
     public static readonly LOW_TIME: number = 60;
 
-    public static readonly HIGH_ACCELERATION: number = (2 * Rock.HIGH_DISTANCE) / javaFloat(Rock.HIGH_TIME * Rock.HIGH_TIME);
-    public static readonly SCALE_ACCLERATION: number = -0.5 / javaFloat(Rock.FALL_TIME * Rock.FALL_TIME);
+    public static readonly HIGH_ACCELERATION: number = javaFloat(javaFloat(2 * Rock.HIGH_DISTANCE) / javaFloat(Rock.HIGH_TIME * Rock.HIGH_TIME));
+    public static readonly SCALE_ACCLERATION: number = javaFloat(-0.5 / javaFloat(Rock.FALL_TIME * Rock.FALL_TIME));
 
     public static readonly SQRT2: number = javaFloat(Math.sqrt(2));
     public static readonly ISQRT2: number = javaFloat(1.0 / Math.sqrt(2));
@@ -101,7 +101,15 @@ export class Rock extends Enemy {
     private rollOverEnemies(): void {
         for (let i = this.mines!.size() - 1; i >= 0; i--) {
             let mineLocal = this.mines!.get(i);
-            if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
+            if (
+                mineLocal != this &&
+                mineLocal.isMine(
+                    javaFloat(this.x + this.mineX1),
+                    javaFloat(this.y + this.mineY1),
+                    javaFloat(this.x + this.mineX2),
+                    javaFloat(this.y + this.mineY2)
+                )
+            ) {
                 mineLocal.flatten();
             }
         }
@@ -117,7 +125,7 @@ export class Rock extends Enemy {
         switch (this.state) {
             case Rock.STATE_RESTING_HIGH:
                 if (
-                    this.player!.y - this.y <= Rock.TRIGGER_DISTANCE &&
+                    javaFloat(this.player!.y - this.y) <= Rock.TRIGGER_DISTANCE &&
                     ((this.rollsRight && this.player!.x > 1024) || (!this.rollsRight && this.player!.x < 1024))
                 ) {
                     this.state = Rock.STATE_ROLLING_FOWARD_HIGH;
@@ -125,48 +133,50 @@ export class Rock extends Enemy {
                 }
                 break;
             case Rock.STATE_ROLLING_FOWARD_HIGH:
-                this.vx += Rock.HIGH_ACCELERATION;
+                this.vx = javaFloat(this.vx + Rock.HIGH_ACCELERATION);
                 if (this.rollsRight) {
-                    this.x += this.vx;
-                    this.angle += 4 * this.vx;
+                    this.x = javaFloat(this.x + this.vx);
+                    this.angle = javaFloat(this.angle + javaFloat(4 * this.vx));
                 } else {
-                    this.x -= this.vx;
-                    this.angle -= 4 * this.vx;
+                    this.x = javaFloat(this.x - this.vx);
+                    this.angle = javaFloat(this.angle - javaFloat(4 * this.vx));
                 }
                 if (--this.delay == 0) {
                     this.state = Rock.STATE_ROLLING_DOWN;
-                    this.vx *= Rock.ISQRT2;
+                    this.vx = javaFloat(this.vx * Rock.ISQRT2);
                     this.delay = Rock.FALL_TIME;
-                    this.acceleration = (2 * (Rock.FALL_DISTANCE - this.vx * Rock.FALL_TIME)) / javaFloat(Rock.FALL_TIME * Rock.FALL_TIME);
+                    this.acceleration = javaFloat(
+                        javaFloat(2 * javaFloat(Rock.FALL_DISTANCE - javaFloat(this.vx * Rock.FALL_TIME))) / javaFloat(Rock.FALL_TIME * Rock.FALL_TIME)
+                    );
                 }
                 break;
             case Rock.STATE_ROLLING_DOWN:
-                this.vx += this.acceleration;
+                this.vx = javaFloat(this.vx + this.acceleration);
                 if (this.rollsRight) {
-                    this.x += this.vx;
-                    this.angle += 4 * this.vx;
+                    this.x = javaFloat(this.x + this.vx);
+                    this.angle = javaFloat(this.angle + javaFloat(4 * this.vx));
                 } else {
-                    this.x -= this.vx;
-                    this.angle -= 4 * this.vx;
+                    this.x = javaFloat(this.x - this.vx);
+                    this.angle = javaFloat(this.angle - javaFloat(4 * this.vx));
                 }
-                this.vScale += Rock.SCALE_ACCLERATION;
-                this.scale += this.vScale;
-                this.y += this.vx;
+                this.vScale = javaFloat(this.vScale + Rock.SCALE_ACCLERATION);
+                this.scale = javaFloat(this.scale + this.vScale);
+                this.y = javaFloat(this.y + this.vx);
                 if (--this.delay == 0) {
                     this.state = Rock.STATE_ROLLING_FOWARD_LOW;
-                    this.vx *= Rock.SQRT2;
+                    this.vx = javaFloat(this.vx * Rock.SQRT2);
                     this.delay = Rock.LOW_TIME;
-                    this.acceleration = -this.vx / javaFloat(Rock.LOW_TIME);
+                    this.acceleration = javaFloat(-this.vx / javaFloat(Rock.LOW_TIME));
                 }
                 break;
             case Rock.STATE_ROLLING_FOWARD_LOW:
-                this.vx += this.acceleration;
+                this.vx = javaFloat(this.vx + this.acceleration);
                 if (this.rollsRight) {
-                    this.x += this.vx;
-                    this.angle += 4 * this.vx;
+                    this.x = javaFloat(this.x + this.vx);
+                    this.angle = javaFloat(this.angle + javaFloat(4 * this.vx));
                 } else {
-                    this.x -= this.vx;
-                    this.angle -= 4 * this.vx;
+                    this.x = javaFloat(this.x - this.vx);
+                    this.angle = javaFloat(this.angle - javaFloat(4 * this.vx));
                 }
                 if (--this.delay == 0) {
                     this.state = Rock.STATE_RESTING_LOW;

@@ -51,25 +51,26 @@ export class EnemyHelicopter extends Enemy {
     private __construct_EnemyHelicopter(argCount: number, arg0?: boolean): void {
         if (argCount === 1 && typeof arg0 === "boolean") {
             let downLocal = arg0;
-            this.x = this.gameMode.player.x + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE);
-            if (this.x - 96 < this.gameMode.cameraX) {
-                this.x = this.gameMode.player.x + EnemyHelicopter.APPEAR_DISTANCE;
-            } else if (this.x + 96 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
-                this.x = this.gameMode.player.x - EnemyHelicopter.APPEAR_DISTANCE;
+            this.x = javaFloat(this.gameMode.player.x + (this.main.random.nextBoolean() ? -EnemyHelicopter.APPEAR_DISTANCE : EnemyHelicopter.APPEAR_DISTANCE));
+            if (javaFloat(this.x - 96) < this.gameMode.cameraX) {
+                this.x = javaFloat(this.gameMode.player.x + EnemyHelicopter.APPEAR_DISTANCE);
+            } else if (javaFloat(this.x + 96) > javaFloat(this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH)) {
+                this.x = javaFloat(this.gameMode.player.x - EnemyHelicopter.APPEAR_DISTANCE);
             }
 
             if (downLocal) {
                 this.angle = 90;
-                this.y = this.gameMode.cameraY - 60;
+                this.y = javaFloat(this.gameMode.cameraY - 60);
             } else {
                 this.angle = 270;
-                this.y = this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 60;
+                this.y = javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + 60);
             }
 
-            this.enteringAcceleration =
-                (2 * (this.y - (this.gameMode.cameraY + 0.5 * MainConstants.DISPLAY_HEIGHT))) /
-                (javaFloat(EnemyHelicopter.ENTERING_TIME) * javaFloat(EnemyHelicopter.ENTERING_TIME));
-            this.vy = -this.enteringAcceleration * javaFloat(EnemyHelicopter.ENTERING_TIME);
+            this.enteringAcceleration = javaFloat(
+                javaFloat(2 * javaFloat(this.y - javaFloat(this.gameMode.cameraY + javaFloat(0.5 * MainConstants.DISPLAY_HEIGHT)))) /
+                    javaFloat(javaFloat(EnemyHelicopter.ENTERING_TIME) * javaFloat(EnemyHelicopter.ENTERING_TIME))
+            );
+            this.vy = javaFloat(-this.enteringAcceleration * javaFloat(EnemyHelicopter.ENTERING_TIME));
 
             this.down = downLocal;
             this.player = this.gameMode.player;
@@ -88,7 +89,10 @@ export class EnemyHelicopter extends Enemy {
     public static readonly PAUSED_TIME: number = 45;
     public static readonly ROTATION_TIME: number = 91;
 
-    public static readonly ROTATION_ACCELERATION: number = 90 / (javaFloat(EnemyHelicopter.ROTATION_TIME) * javaFloat(EnemyHelicopter.ROTATION_TIME));
+    public static readonly ROTATION_ACCELERATION: number = javaFloat(
+        90 / javaFloat(javaFloat(EnemyHelicopter.ROTATION_TIME) * javaFloat(EnemyHelicopter.ROTATION_TIME))
+    );
+
     public static readonly TO_RADIANS: number = javaFloat(Math.PI / 180);
 
     public static readonly SHOOT_DELAY: number = 68;
@@ -132,30 +136,30 @@ export class EnemyHelicopter extends Enemy {
 
         if (--this.shootDelay < 0) {
             this.shootDelay = EnemyHelicopter.SHOOT_DELAY;
-            let dx = this.player!.x - this.x;
-            let dy = this.player!.y - this.y;
-            let imag = EnemyHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
-            dx *= imag;
-            dy *= imag;
+            let dx = javaFloat(this.player!.x - this.x);
+            let dy = javaFloat(this.player!.y - this.y);
+            let imag = javaFloat(EnemyHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
+            dx = javaFloat(dx * imag);
+            dy = javaFloat(dy * imag);
 
-            new EnemyBullet(this.x + dx, this.y + dy, dx, dy, EnemyHelicopter.BULLET_TRAVEL_TIME, true);
+            new EnemyBullet(javaFloat(this.x + dx), javaFloat(this.y + dy), dx, dy, EnemyHelicopter.BULLET_TRAVEL_TIME, true);
         }
 
         if (--this.positionDriftTime <= 0) {
             this.positionDriftTime = BossHelicopter.POSITION_DRIFT_TIME - 1;
-            let driftAngle = BossHelicopter.PI2 * this.main.random.nextFloat();
+            let driftAngle = javaFloat(BossHelicopter.PI2 * this.main.random.nextFloat());
             this.positionDriftDx = javaFloat(Math.cos(driftAngle));
             this.positionDriftDy = javaFloat(Math.sin(driftAngle));
         }
-        this.x += this.positionDriftDx * BossHelicopter.POSITIONS[this.positionDriftTime];
-        this.y += this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime];
+        this.x = javaFloat(this.x + javaFloat(this.positionDriftDx * BossHelicopter.POSITIONS[this.positionDriftTime]));
+        this.y = javaFloat(this.y + javaFloat(this.positionDriftDy * BossHelicopter.POSITIONS[this.positionDriftTime]));
 
         switch (this.state) {
             case EnemyHelicopter.STATE_ENTERING:
                 let lastVy = this.vy;
-                this.vy += this.enteringAcceleration;
-                this.y += this.vy;
-                if (lastVy * this.vy <= 0) {
+                this.vy = javaFloat(this.vy + this.enteringAcceleration);
+                this.y = javaFloat(this.y + this.vy);
+                if (javaFloat(lastVy * this.vy) <= 0) {
                     this.state = EnemyHelicopter.STATE_PAUSED;
                     this.delay = EnemyHelicopter.PAUSED_TIME;
                 }
@@ -191,32 +195,32 @@ export class EnemyHelicopter extends Enemy {
                 break;
             case EnemyHelicopter.STATE_EXITING:
                 if (this.angle != this.targetAngle) {
-                    this.angle += this.va;
+                    this.angle = javaFloat(this.angle + this.va);
                     if (this.positiveAngle) {
                         if (this.angle >= this.targetHalfAngle) {
-                            this.va -= EnemyHelicopter.ROTATION_ACCELERATION;
+                            this.va = javaFloat(this.va - EnemyHelicopter.ROTATION_ACCELERATION);
                             if (this.va <= 0) {
                                 this.angle = this.targetAngle;
                             }
                         } else {
-                            this.va += EnemyHelicopter.ROTATION_ACCELERATION;
+                            this.va = javaFloat(this.va + EnemyHelicopter.ROTATION_ACCELERATION);
                         }
                     } else {
                         if (this.angle <= this.targetHalfAngle) {
-                            this.va += EnemyHelicopter.ROTATION_ACCELERATION;
+                            this.va = javaFloat(this.va + EnemyHelicopter.ROTATION_ACCELERATION);
                             if (this.va >= 0) {
                                 this.angle = this.targetAngle;
                             }
                         } else {
-                            this.va -= EnemyHelicopter.ROTATION_ACCELERATION;
+                            this.va = javaFloat(this.va - EnemyHelicopter.ROTATION_ACCELERATION);
                         }
                     }
                 }
-                let ang = EnemyHelicopter.TO_RADIANS * this.angle;
-                this.v += this.enteringAcceleration;
-                this.x += this.v * javaFloat(Math.cos(ang));
-                this.y += this.v * javaFloat(Math.sin(ang));
-                if (this.gameMode.isOutsideOfFrame(this.x - 96, this.y - 96, this.x + 96, this.y + 96)) {
+                let ang = javaFloat(EnemyHelicopter.TO_RADIANS * this.angle);
+                this.v = javaFloat(this.v + this.enteringAcceleration);
+                this.x = javaFloat(this.x + javaFloat(this.v * javaFloat(Math.cos(ang))));
+                this.y = javaFloat(this.y + javaFloat(this.v * javaFloat(Math.sin(ang))));
+                if (this.gameMode.isOutsideOfFrame(javaFloat(this.x - 96), javaFloat(this.y - 96), javaFloat(this.x + 96), javaFloat(this.y + 96))) {
                     this.playSoundOnRemove = false;
                     this.remove();
                 }

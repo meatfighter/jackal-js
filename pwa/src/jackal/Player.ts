@@ -30,7 +30,7 @@ export class Player {
 
     public static readonly SPEED: number = 2.5;
     public static readonly ANGLE_STEPS: number = 8;
-    public static readonly ANGLE_VELOCITY: number = 45 / Player.ANGLE_STEPS;
+    public static readonly ANGLE_VELOCITY: number = javaFloat(45 / Player.ANGLE_STEPS);
     public static readonly DIAGONAL_DELAY: number = 4;
     public static readonly GUN_ARMED_DELAY: number = 45;
     public static readonly RESPAWN_DELAY: number = 91 * 2;
@@ -52,14 +52,14 @@ export class Player {
     static {
         let angle = 0;
         for (let i = 0; i < 17; i++) {
-            Player.WAKE_ALPHAS[i] = 0.5 + 0.5 * javaFloat(Math.sin(angle));
-            Player.RUMBLE[i] = 1.6 * javaFloat(Math.sin(angle));
-            angle += 0.74;
+            Player.WAKE_ALPHAS[i] = javaFloat(0.5 + javaFloat(0.5 * javaFloat(Math.sin(angle))));
+            Player.RUMBLE[i] = javaFloat(javaFloat(1.6) * javaFloat(Math.sin(angle)));
+            angle = javaFloat(angle + javaFloat(0.74));
         }
 
-        let p0 = rotatePoint(Player.SENSOR_X + Player.SPEED, 0, javaFloat(Math.PI / 4));
-        let p1 = rotatePoint(Player.SENSOR_X + Player.SPEED, Player.SENSOR_Y, javaFloat(Math.PI / 4));
-        let p2 = rotatePoint(Player.SENSOR_X + Player.SPEED, -Player.SENSOR_Y, javaFloat(Math.PI / 4));
+        let p0 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), 0, javaFloat(Math.PI / 4));
+        let p1 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), Player.SENSOR_Y, javaFloat(Math.PI / 4));
+        let p2 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), -Player.SENSOR_Y, javaFloat(Math.PI / 4));
 
         Player.SENSOR_D_X0 = javaInt(p0.x);
         Player.SENSOR_D_Y0 = javaInt(p0.y);
@@ -78,7 +78,7 @@ export class Player {
     public y: number = 480;
     public angle: number = 270;
     public nextAngle: number = this.angle;
-    public displayAngle: number = this.angle;
+    public displayAngle: number = javaFloat(this.angle);
     public angleVelocity: number = 0;
     public angleSteps: number = 0;
     public diagonalDelay: number = 0;
@@ -154,16 +154,23 @@ export class Player {
     public attack(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.attack__overload0(arg0, arg1, arg2, arg3);
+            return this.attack__overload0(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.attack__overload1(arg0, arg1);
+            return this.attack__overload1(javaFloat(arg0), javaFloat(arg1));
         }
         throw new Error(`No Java method overload matched attack: ${argCount}`);
     }
 
     public attack__overload0(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.respawning == 0 && this.invincible == 0 && x1 <= this.x + 32 && x2 >= this.x - 32 && y1 <= this.y + 32 && y2 >= this.y - 32) {
+        if (
+            this.respawning == 0 &&
+            this.invincible == 0 &&
+            x1 <= javaFloat(this.x + 32) &&
+            x2 >= javaFloat(this.x - 32) &&
+            y1 <= javaFloat(this.y + 32) &&
+            y2 >= javaFloat(this.y - 32)
+        ) {
             this.explode();
             return true;
         } else {
@@ -172,7 +179,14 @@ export class Player {
     }
 
     public attack__overload1(x: number, y: number): boolean {
-        if (this.respawning == 0 && this.invincible == 0 && x >= this.x - 32 && x <= this.x + 32 && y >= this.y - 32 && y <= this.y + 32) {
+        if (
+            this.respawning == 0 &&
+            this.invincible == 0 &&
+            x >= javaFloat(this.x - 32) &&
+            x <= javaFloat(this.x + 32) &&
+            y >= javaFloat(this.y - 32) &&
+            y <= javaFloat(this.y + 32)
+        ) {
             this.explode();
             return true;
         } else {
@@ -187,7 +201,7 @@ export class Player {
     }
 
     public getSpeed(): number {
-        return this.inSwamp ? 0.5 * Player.SPEED : Player.SPEED;
+        return javaFloat(this.inSwamp ? javaFloat(0.5 * Player.SPEED) : Player.SPEED);
     }
 
     public makeInvincible(): void {
@@ -197,7 +211,7 @@ export class Player {
     public update(): void {
         let tileType = this.gameMode.getTileType(this.x, this.y);
         this.inSwamp = tileType == GameMode.TYPE_SWAMP;
-        let speed = this.getSpeed();
+        let speed = javaFloat(this.getSpeed());
 
         if (this.respawning > 0) {
             if (--this.respawning == 0) {
@@ -214,13 +228,13 @@ export class Player {
         }
 
         if (tileType == GameMode.TYPE_CONVEYOR) {
-            let Y = this.y + Player.SENSOR_X + Player.SPEED;
+            let Y = javaFloat(javaFloat(this.y + Player.SENSOR_X) + Player.SPEED);
             if (
                 this.gameMode.isDriveable(this.x, Y) &&
-                this.gameMode.isDriveable(this.x - Player.SENSOR_Y, Y) &&
-                this.gameMode.isDriveable(this.x + Player.SENSOR_Y, Y)
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_Y), Y) &&
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_Y), Y)
             ) {
-                this.y += this.gameMode.conveyorDelta;
+                this.y = javaFloat(this.y + this.gameMode.conveyorDelta);
             }
         }
 
@@ -232,12 +246,12 @@ export class Player {
             this.diagonalDelay = Player.DIAGONAL_DELAY;
 
             if (
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X0, this.y + Player.SENSOR_D_Y0) &&
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X1, this.y + Player.SENSOR_D_Y1) &&
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X2, this.y + Player.SENSOR_D_Y2)
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X0), javaFloat(this.y + Player.SENSOR_D_Y0)) &&
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X1), javaFloat(this.y + Player.SENSOR_D_Y1)) &&
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X2), javaFloat(this.y + Player.SENSOR_D_Y2))
             ) {
-                this.x += speed;
-                this.y += speed;
+                this.x = javaFloat(this.x + speed);
+                this.y = javaFloat(this.y + speed);
             }
         } else if (this.input.isDown() && this.input.isLeft()) {
             // 135
@@ -246,12 +260,12 @@ export class Player {
             this.diagonalDelay = Player.DIAGONAL_DELAY;
 
             if (
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X0, this.y + Player.SENSOR_D_Y0) &&
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X1, this.y + Player.SENSOR_D_Y1) &&
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X2, this.y + Player.SENSOR_D_Y2)
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X0), javaFloat(this.y + Player.SENSOR_D_Y0)) &&
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X1), javaFloat(this.y + Player.SENSOR_D_Y1)) &&
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X2), javaFloat(this.y + Player.SENSOR_D_Y2))
             ) {
-                this.x -= speed;
-                this.y += speed;
+                this.x = javaFloat(this.x - speed);
+                this.y = javaFloat(this.y + speed);
             }
         } else if (this.input.isUp() && this.input.isLeft()) {
             // 225
@@ -260,12 +274,12 @@ export class Player {
             this.diagonalDelay = Player.DIAGONAL_DELAY;
 
             if (
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X0, this.y - Player.SENSOR_D_Y0) &&
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X1, this.y - Player.SENSOR_D_Y1) &&
-                this.gameMode.isDriveable(this.x - Player.SENSOR_D_X2, this.y - Player.SENSOR_D_Y2)
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X0), javaFloat(this.y - Player.SENSOR_D_Y0)) &&
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X1), javaFloat(this.y - Player.SENSOR_D_Y1)) &&
+                this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_D_X2), javaFloat(this.y - Player.SENSOR_D_Y2))
             ) {
-                this.x -= speed;
-                this.y -= speed;
+                this.x = javaFloat(this.x - speed);
+                this.y = javaFloat(this.y - speed);
             }
         } else if (this.input.isUp() && this.input.isRight()) {
             // 315
@@ -274,12 +288,12 @@ export class Player {
             this.diagonalDelay = Player.DIAGONAL_DELAY;
 
             if (
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X0, this.y - Player.SENSOR_D_Y0) &&
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X1, this.y - Player.SENSOR_D_Y1) &&
-                this.gameMode.isDriveable(this.x + Player.SENSOR_D_X2, this.y - Player.SENSOR_D_Y2)
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X0), javaFloat(this.y - Player.SENSOR_D_Y0)) &&
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X1), javaFloat(this.y - Player.SENSOR_D_Y1)) &&
+                this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_D_X2), javaFloat(this.y - Player.SENSOR_D_Y2))
             ) {
-                this.x += speed;
-                this.y -= speed;
+                this.x = javaFloat(this.x + speed);
+                this.y = javaFloat(this.y - speed);
             }
         } else if (this.input.isRight()) {
             // 0
@@ -291,13 +305,13 @@ export class Player {
                 this.lastTargetAngle = this.targetAngle;
                 this.diagonalDelay = 0;
 
-                let X = this.x + Player.SENSOR_X + Player.SPEED;
+                let X = javaFloat(javaFloat(this.x + Player.SENSOR_X) + Player.SPEED);
                 if (
                     this.gameMode.isDriveable(X, this.y) &&
-                    this.gameMode.isDriveable(X, this.y - Player.SENSOR_Y) &&
-                    this.gameMode.isDriveable(X, this.y + Player.SENSOR_Y)
+                    this.gameMode.isDriveable(X, javaFloat(this.y - Player.SENSOR_Y)) &&
+                    this.gameMode.isDriveable(X, javaFloat(this.y + Player.SENSOR_Y))
                 ) {
-                    this.x += speed;
+                    this.x = javaFloat(this.x + speed);
                 }
             }
         } else if (this.input.isDown()) {
@@ -310,13 +324,13 @@ export class Player {
                 this.lastTargetAngle = this.targetAngle;
                 this.diagonalDelay = 0;
 
-                let Y = this.y + Player.SENSOR_X + Player.SPEED;
+                let Y = javaFloat(javaFloat(this.y + Player.SENSOR_X) + Player.SPEED);
                 if (
                     this.gameMode.isDriveable(this.x, Y) &&
-                    this.gameMode.isDriveable(this.x - Player.SENSOR_Y, Y) &&
-                    this.gameMode.isDriveable(this.x + Player.SENSOR_Y, Y)
+                    this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_Y), Y) &&
+                    this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_Y), Y)
                 ) {
-                    this.y += speed;
+                    this.y = javaFloat(this.y + speed);
                 }
             }
         } else if (this.input.isLeft()) {
@@ -329,13 +343,13 @@ export class Player {
                 this.lastTargetAngle = this.targetAngle;
                 this.diagonalDelay = 0;
 
-                let X = this.x - Player.SENSOR_X - Player.SPEED;
+                let X = javaFloat(javaFloat(this.x - Player.SENSOR_X) - Player.SPEED);
                 if (
                     this.gameMode.isDriveable(X, this.y) &&
-                    this.gameMode.isDriveable(X, this.y - Player.SENSOR_Y) &&
-                    this.gameMode.isDriveable(X, this.y + Player.SENSOR_Y)
+                    this.gameMode.isDriveable(X, javaFloat(this.y - Player.SENSOR_Y)) &&
+                    this.gameMode.isDriveable(X, javaFloat(this.y + Player.SENSOR_Y))
                 ) {
-                    this.x -= speed;
+                    this.x = javaFloat(this.x - speed);
                 }
             }
         } else if (this.input.isUp()) {
@@ -348,29 +362,29 @@ export class Player {
                 this.lastTargetAngle = this.targetAngle;
                 this.diagonalDelay = 0;
 
-                let Y = this.y - Player.SENSOR_X - Player.SPEED;
+                let Y = javaFloat(javaFloat(this.y - Player.SENSOR_X) - Player.SPEED);
                 if (
                     this.gameMode.isDriveable(this.x, Y) &&
-                    this.gameMode.isDriveable(this.x - Player.SENSOR_Y, Y) &&
-                    this.gameMode.isDriveable(this.x + Player.SENSOR_Y, Y)
+                    this.gameMode.isDriveable(javaFloat(this.x - Player.SENSOR_Y), Y) &&
+                    this.gameMode.isDriveable(javaFloat(this.x + Player.SENSOR_Y), Y)
                 ) {
-                    this.y -= speed;
+                    this.y = javaFloat(this.y - speed);
                 }
             }
         } else {
             this.diagonalDelay = 0;
         }
 
-        if (this.y > this.gameMode.maxCameraY + 928) {
-            this.y = this.gameMode.maxCameraY + 928;
+        if (this.y > javaFloat(this.gameMode.maxCameraY + 928)) {
+            this.y = javaFloat(this.gameMode.maxCameraY + 928);
         }
 
         if (this.angleSteps > 0) {
             if (--this.angleSteps == 0) {
                 this.angle = this.nextAngle;
-                this.displayAngle = this.nextAngle;
+                this.displayAngle = javaFloat(this.nextAngle);
             } else {
-                this.displayAngle += this.angleVelocity;
+                this.displayAngle = javaFloat(this.displayAngle + this.angleVelocity);
             }
         }
 
@@ -467,7 +481,9 @@ export class Player {
         }
         for (let i = this.mines.size() - 1; i >= 0; i--) {
             let mine = this.mines.get(i);
-            if (mine.bump(this.x - xMargin, this.y - yMargin, this.x + xMargin, this.y + yMargin, invincibleLocal)) {
+            if (
+                mine.bump(javaFloat(this.x - xMargin), javaFloat(this.y - yMargin), javaFloat(this.x + xMargin), javaFloat(this.y + yMargin), invincibleLocal)
+            ) {
                 if (!invincibleLocal) {
                     this.explode();
                     break;

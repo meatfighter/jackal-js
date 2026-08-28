@@ -1,5 +1,5 @@
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
-import { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMode } from "./IMode.js";
@@ -78,14 +78,14 @@ export class JeepYeahMode implements IMode, IFadeListener {
             this.yeahVisible--;
         }
 
-        this.smokeX += JeepYeahMode.SMOKE_VX;
+        this.smokeX = javaFloat(this.smokeX + JeepYeahMode.SMOKE_VX);
         if (this.smokeX >= 64) {
-            this.smokeX -= 64;
+            this.smokeX = javaFloat(this.smokeX - 64);
         }
 
-        this.smokeY += JeepYeahMode.SMOKE_VY;
+        this.smokeY = javaFloat(this.smokeY + JeepYeahMode.SMOKE_VY);
         if (this.smokeY >= 32) {
-            this.smokeY -= 32;
+            this.smokeY = javaFloat(this.smokeY - 32);
         }
 
         if (this.explosion == null || this.explosion.remove) {

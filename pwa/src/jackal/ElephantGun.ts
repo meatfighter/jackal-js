@@ -40,8 +40,8 @@ export class ElephantGun extends Enemy {
 
     private __construct_ElephantGun(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let leftLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -70,7 +70,7 @@ export class ElephantGun extends Enemy {
     public static readonly ASTER_SPINES: number = 5;
     public static readonly ASTER_RADIUS: number = 128;
     public static readonly ASTER_MAX_OFFSET_ANGLE: number = javaFloat((2 * Math.PI) / ElephantGun.ASTER_SPINES);
-    public static readonly INVERSE_ASTER_DELAY: number = 1 / javaFloat(ElephantGun.ASTER_DELAY);
+    public static readonly INVERSE_ASTER_DELAY: number = javaFloat(1 / javaFloat(ElephantGun.ASTER_DELAY));
     public static readonly FIREBALL_SPEED: number = 6;
 
     public static readonly HITS: number = 3;
@@ -100,19 +100,19 @@ export class ElephantGun extends Enemy {
     private startAstering(): void {
         this.state = ElephantGun.STATE_ASTERING;
         this.delay = ElephantGun.ASTER_DELAY;
-        let offsetAngle = ElephantGun.ASTER_MAX_OFFSET_ANGLE * this.main.random.nextFloat();
+        let offsetAngle = javaFloat(ElephantGun.ASTER_MAX_OFFSET_ANGLE * this.main.random.nextFloat());
         for (let i = 0; i < ElephantGun.ASTER_SPINES; i++) {
-            this.asters[i][0] = javaFloat(Math.cos(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i));
-            this.asters[i][1] = javaFloat(Math.sin(offsetAngle + ElephantGun.ASTER_MAX_OFFSET_ANGLE * i));
+            this.asters[i][0] = javaFloat(Math.cos(javaFloat(offsetAngle + javaFloat(ElephantGun.ASTER_MAX_OFFSET_ANGLE * i))));
+            this.asters[i][1] = javaFloat(Math.sin(javaFloat(offsetAngle + javaFloat(ElephantGun.ASTER_MAX_OFFSET_ANGLE * i))));
         }
     }
 
     private startNosing(): void {
         this.state = ElephantGun.STATE_NOSE;
         this.delay = ElephantGun.NOSE_DELAY;
-        this.fireballVx = ElephantGun.FIREBALL_SPEED * (this.spriteIndex - 1);
-        this.fireballX = this.x + 48;
-        this.fireballY = this.y + 36;
+        this.fireballVx = javaFloat(ElephantGun.FIREBALL_SPEED * (this.spriteIndex - 1));
+        this.fireballX = javaFloat(this.x + 48);
+        this.fireballY = javaFloat(this.y + 36);
     }
 
     private startAiming(): void {
@@ -124,13 +124,13 @@ export class ElephantGun extends Enemy {
     private fire(): void {
         switch (this.spriteIndex) {
             case 0:
-                new ElephantMissile(this.x + 4, this.y + 81, 135, this.left);
+                new ElephantMissile(javaFloat(this.x + 4), javaFloat(this.y + 81), 135, this.left);
                 break;
             case 1:
-                new ElephantMissile(this.x + 48, this.y + 86, 90, this.left);
+                new ElephantMissile(javaFloat(this.x + 48), javaFloat(this.y + 86), 90, this.left);
                 break;
             case 2:
-                new ElephantMissile(this.x + 93, this.y + 81, 45, this.left);
+                new ElephantMissile(javaFloat(this.x + 93), javaFloat(this.y + 81), 45, this.left);
                 break;
         }
     }
@@ -162,11 +162,11 @@ export class ElephantGun extends Enemy {
                 }
                 break;
             case ElephantGun.STATE_NOSE:
-                this.fireballX += this.fireballVx;
+                this.fireballX = javaFloat(this.fireballX + this.fireballVx);
                 if (this.spriteIndex == 1) {
-                    this.fireballY += ElephantGun.FIREBALL_SPEED + 2;
+                    this.fireballY = javaFloat(javaFloat(this.fireballY + ElephantGun.FIREBALL_SPEED) + 2);
                 } else {
-                    this.fireballY += ElephantGun.FIREBALL_SPEED;
+                    this.fireballY = javaFloat(this.fireballY + ElephantGun.FIREBALL_SPEED);
                 }
                 if (--this.delay == 0) {
                     this.fire();
@@ -181,15 +181,21 @@ export class ElephantGun extends Enemy {
         if (this.state != ElephantGun.STATE_DESTROYED && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.main.playHitExplodeSound();
             if (++this.hits == ElephantGun.HITS) {
-                new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
                 this.state = ElephantGun.STATE_DESTROYED;
                 this.spriteIndex = ElephantGun.SPRITE_DESTROYED;
             } else {
                 for (let i = 0; i < 3; i++) {
-                    let Y = this.y + 76 - (i << 5);
+                    let Y = javaFloat(javaFloat(this.y + 76) - (i << 5));
                     for (let j = 0; j < 3; j++) {
-                        new Explosion(this.x + (j << 5) + 12 + this.main.random.nextInt(8), Y + this.main.random.nextInt(8), true, (i + 1) * 4, 0.5);
+                        new Explosion(
+                            javaFloat(javaFloat(javaFloat(this.x + (j << 5)) + 12) + this.main.random.nextInt(8)),
+                            javaFloat(Y + this.main.random.nextInt(8)),
+                            true,
+                            (i + 1) * 4,
+                            0.5
+                        );
                     }
                 }
             }

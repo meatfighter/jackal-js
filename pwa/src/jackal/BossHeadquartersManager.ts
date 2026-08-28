@@ -6,6 +6,8 @@ import { EnemyHelicopter } from "./EnemyHelicopter.js";
 import { GameElement } from "./GameElement.js";
 import type { ICameraPanListener } from "./ICameraPanListener.js";
 import type { ITankTracker } from "./ITankTracker.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class BossHeadquartersManager extends GameElement implements ICameraPanListener, ITankTracker {
     declare public ready: boolean;
     declare public createdEnemyHelicopter: boolean;
@@ -72,8 +74,12 @@ export class BossHeadquartersManager extends GameElement implements ICameraPanLi
                 this.tankSpawnDelay = 45;
             } else {
                 this.tankSpawnDelay = BossHeadquartersManager.TANK_SPAWN_DELAY;
-                let brownTank = new BrownTank(256 + this.main.random.nextInt(1536), this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 48, this);
-                brownTank.displayAngle = brownTank.targetAngle = 270;
+                let brownTank = new BrownTank(
+                    javaFloat(256 + this.main.random.nextInt(1536)),
+                    javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + 48),
+                    this
+                );
+                brownTank.displayAngle = javaFloat((brownTank.targetAngle = 270));
             }
         }
     }

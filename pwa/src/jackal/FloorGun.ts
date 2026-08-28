@@ -39,13 +39,13 @@ export class FloorGun extends Enemy {
 
     private __construct_FloorGun(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             this.__construct_FloorGun(3, xLocal2, yLocal2, false);
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let plain = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -74,7 +74,7 @@ export class FloorGun extends Enemy {
 
     public static readonly SHOOT_SPREAD_ANGLE: number = javaFloat((20 * Math.PI) / 180);
 
-    public static readonly OPEN_SPEED: number = 32 / FloorGun.OPEN_DELAY;
+    public static readonly OPEN_SPEED: number = javaFloat(32 / FloorGun.OPEN_DELAY);
 
     public static readonly BULLET_SPEED: number = 1.625;
     public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
@@ -116,7 +116,7 @@ export class FloorGun extends Enemy {
 
     public update(): void {
         if (!this.ready) {
-            if (!this.gameMode.isOutsideOfFrame(this.x + 32, this.y + 32)) {
+            if (!this.gameMode.isOutsideOfFrame(javaFloat(this.x + 32), javaFloat(this.y + 32))) {
                 this.ready = true;
             } else {
                 return;
@@ -132,25 +132,25 @@ export class FloorGun extends Enemy {
                 }
                 break;
             case FloorGun.STATE_OPENING:
-                this.openY += FloorGun.OPEN_SPEED;
+                this.openY = javaFloat(this.openY + FloorGun.OPEN_SPEED);
                 if (--this.delay == 0) {
                     this.state = FloorGun.STATE_AIMING;
                     this.angle = 90;
                     this.delay = FloorGun.AIMING_DELAY;
 
-                    let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
-                    let deltaAngle = (targetAngle + 90) % 360;
+                    let targetAngle = javaFloat((Math.atan2(javaFloat(this.player!.y - this.y), javaFloat(this.player!.x - this.x)) * 180) / Math.PI);
+                    let deltaAngle = javaFloat(javaFloat(targetAngle + 90) % 360);
                     if (deltaAngle < 0) {
-                        deltaAngle += 180;
+                        deltaAngle = javaFloat(deltaAngle + 180);
                     } else {
-                        deltaAngle -= 180;
+                        deltaAngle = javaFloat(deltaAngle - 180);
                     }
 
-                    this.aimingSpeed = deltaAngle / FloorGun.AIMING_DELAY;
+                    this.aimingSpeed = javaFloat(deltaAngle / FloorGun.AIMING_DELAY);
                 }
                 break;
             case FloorGun.STATE_AIMING:
-                this.angle += this.aimingSpeed;
+                this.angle = javaFloat(this.angle + this.aimingSpeed);
                 if (--this.delay == 0) {
                     this.state = FloorGun.STATE_SHOOTING;
                     this.delay = FloorGun.SHOOT_DELAY;
@@ -162,17 +162,19 @@ export class FloorGun extends Enemy {
                     this.delay = FloorGun.OPEN_DELAY;
                     this.openY = 32;
 
-                    let shootAngle = javaFloat(Math.atan2(this.player!.y - (this.y + 32), this.player!.x - (this.x + 32)));
-                    shootAngle -= 2 * FloorGun.SHOOT_SPREAD_ANGLE;
+                    let shootAngle = javaFloat(
+                        Math.atan2(javaFloat(this.player!.y - javaFloat(this.y + 32)), javaFloat(this.player!.x - javaFloat(this.x + 32)))
+                    );
+                    shootAngle = javaFloat(shootAngle - javaFloat(2 * FloorGun.SHOOT_SPREAD_ANGLE));
 
-                    for (let i = 0; i < 5; i++, shootAngle += FloorGun.SHOOT_SPREAD_ANGLE) {
+                    for (let i = 0; i < 5; i++, shootAngle = javaFloat(shootAngle + FloorGun.SHOOT_SPREAD_ANGLE)) {
                         let cos = javaFloat(Math.cos(shootAngle));
                         let sin = javaFloat(Math.sin(shootAngle));
                         new EnemyBullet(
-                            this.x + 32 + 13 * cos,
-                            this.y + 32 + 13 * sin,
-                            FloorGun.BULLET_SPEED * cos,
-                            FloorGun.BULLET_SPEED * sin,
+                            javaFloat(javaFloat(this.x + 32) + javaFloat(13 * cos)),
+                            javaFloat(javaFloat(this.y + 32) + javaFloat(13 * sin)),
+                            javaFloat(FloorGun.BULLET_SPEED * cos),
+                            javaFloat(FloorGun.BULLET_SPEED * sin),
                             FloorGun.BULLET_TRAVEL_TIME,
                             true
                         );
@@ -180,7 +182,7 @@ export class FloorGun extends Enemy {
                 }
                 break;
             case FloorGun.STATE_CLOSING:
-                this.openY -= FloorGun.OPEN_SPEED;
+                this.openY = javaFloat(this.openY - FloorGun.OPEN_SPEED);
                 if (--this.delay == 0) {
                     this.state = FloorGun.STATE_CLOSED;
                     this.delay = FloorGun.CLOSED_DELAY;
@@ -197,7 +199,7 @@ export class FloorGun extends Enemy {
         }
         if (this.isMine(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -213,7 +215,7 @@ export class FloorGun extends Enemy {
         }
         if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -230,7 +232,7 @@ export class FloorGun extends Enemy {
         if (this.hit(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);

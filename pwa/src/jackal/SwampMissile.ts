@@ -33,15 +33,15 @@ export class SwampMissile extends Enemy {
 
     private __construct_SwampMissile(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let launcherXLocal = arg0;
-            let launcherYLocal = arg1;
+            let launcherXLocal = javaFloat(arg0);
+            let launcherYLocal = javaFloat(arg1);
             this.launcherX = launcherXLocal;
             this.launcherY = launcherYLocal;
 
             this.player = this.gameMode.player;
 
             this.x = launcherXLocal;
-            this.y = launcherYLocal + 32;
+            this.y = javaFloat(launcherYLocal + 32);
             this.vx = 0;
             this.vy = -SwampMissile.SPEED;
             return;
@@ -49,11 +49,11 @@ export class SwampMissile extends Enemy {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly ROTATION_SPEED: number = 0.9;
+    public static readonly ROTATION_SPEED: number = javaFloat(0.9);
     public static readonly EXPLODE_DELAY: number = 8 * 91;
     public static readonly SPEED: number = 4;
     public static readonly TO_RADIANS: number = javaFloat(Math.PI / 180);
-    public static readonly EXPLODE_OFFSET: number = 21 / SwampMissile.SPEED;
+    public static readonly EXPLODE_OFFSET: number = javaFloat(21 / SwampMissile.SPEED);
     public static readonly ENTRY_DELAY: number = 45;
     public static readonly REMOVE_MARGIN: number = 336;
 
@@ -83,43 +83,46 @@ export class SwampMissile extends Enemy {
     public update(): void {
         if (this.entryDelay > 0) {
             this.entryDelay--;
-            this.y -= SwampMissile.SPEED;
+            this.y = javaFloat(this.y - SwampMissile.SPEED);
         } else {
-            let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
-            let deltaAngle = (targetAngle - this.angle + 180) % 360;
+            let targetAngle = javaFloat((Math.atan2(javaFloat(this.player!.y - this.y), javaFloat(this.player!.x - this.x)) * 180) / Math.PI);
+            let deltaAngle = javaFloat(javaFloat(javaFloat(targetAngle - this.angle) + 180) % 360);
             if (deltaAngle < 0) {
-                deltaAngle += 180;
+                deltaAngle = javaFloat(deltaAngle + 180);
             } else {
-                deltaAngle -= 180;
+                deltaAngle = javaFloat(deltaAngle - 180);
             }
             if (Math.abs(deltaAngle) < SwampMissile.ROTATION_SPEED) {
                 this.angle = targetAngle;
             } else {
                 if (deltaAngle < 0) {
-                    this.angle -= SwampMissile.ROTATION_SPEED;
+                    this.angle = javaFloat(this.angle - SwampMissile.ROTATION_SPEED);
                 } else {
-                    this.angle += SwampMissile.ROTATION_SPEED;
+                    this.angle = javaFloat(this.angle + SwampMissile.ROTATION_SPEED);
                 }
             }
 
-            let ang = SwampMissile.TO_RADIANS * this.angle;
-            this.vx = SwampMissile.SPEED * javaFloat(Math.cos(ang));
-            this.vy = SwampMissile.SPEED * javaFloat(Math.sin(ang));
-            this.x += this.vx;
-            this.y += this.vy;
+            let ang = javaFloat(SwampMissile.TO_RADIANS * this.angle);
+            this.vx = javaFloat(SwampMissile.SPEED * javaFloat(Math.cos(ang)));
+            this.vy = javaFloat(SwampMissile.SPEED * javaFloat(Math.sin(ang)));
+            this.x = javaFloat(this.x + this.vx);
+            this.y = javaFloat(this.y + this.vy);
         }
 
         if (
-            this.y < this.gameMode.cameraY - SwampMissile.REMOVE_MARGIN ||
-            this.y > this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + SwampMissile.REMOVE_MARGIN ||
-            this.x < this.gameMode.cameraX - SwampMissile.REMOVE_MARGIN ||
-            this.x > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH + SwampMissile.REMOVE_MARGIN
+            this.y < javaFloat(this.gameMode.cameraY - SwampMissile.REMOVE_MARGIN) ||
+            this.y > javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + SwampMissile.REMOVE_MARGIN) ||
+            this.x < javaFloat(this.gameMode.cameraX - SwampMissile.REMOVE_MARGIN) ||
+            this.x > javaFloat(javaFloat(this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) + SwampMissile.REMOVE_MARGIN)
         ) {
             this.playSoundOnRemove = false;
             this.remove();
         } else if (++this.explodeDelay == SwampMissile.EXPLODE_DELAY) {
             this.remove();
-            new Explosion(this.x + SwampMissile.EXPLODE_OFFSET * this.vx, this.y + SwampMissile.EXPLODE_OFFSET * this.vy).setTiny(true);
+            new Explosion(
+                javaFloat(this.x + javaFloat(SwampMissile.EXPLODE_OFFSET * this.vx)),
+                javaFloat(this.y + javaFloat(SwampMissile.EXPLODE_OFFSET * this.vy))
+            ).setTiny(true);
         }
     }
 

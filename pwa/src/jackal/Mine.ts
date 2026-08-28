@@ -1,5 +1,7 @@
 import { Enemy } from "./Enemy.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Mine extends Enemy {
     declare public spriteIndex: number;
     declare public visible: boolean;
@@ -20,8 +22,8 @@ export class Mine extends Enemy {
 
     private __construct_Mine(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
 
@@ -36,7 +38,7 @@ export class Mine extends Enemy {
 
     public static readonly VISIBLE_DISTANCE: number = 300;
 
-    public static readonly VISIBLE_DISTANCE2: number = Mine.VISIBLE_DISTANCE * Mine.VISIBLE_DISTANCE;
+    public static readonly VISIBLE_DISTANCE2: number = javaFloat(Mine.VISIBLE_DISTANCE * Mine.VISIBLE_DISTANCE);
 
     public override init(): void {
         super.init();
@@ -62,9 +64,9 @@ export class Mine extends Enemy {
     }
 
     public update(): void {
-        let dx = this.player!.x - (this.x + 16);
-        let dy = this.player!.y - (this.y + 16);
-        this.visible = dx * dx + dy * dy <= Mine.VISIBLE_DISTANCE2;
+        let dx = javaFloat(this.player!.x - javaFloat(this.x + 16));
+        let dy = javaFloat(this.player!.y - javaFloat(this.y + 16));
+        this.visible = javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)) <= Mine.VISIBLE_DISTANCE2;
     }
 
     // returns true if attack successful

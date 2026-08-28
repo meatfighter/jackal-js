@@ -1,4 +1,4 @@
-import { javaIntDiv, type ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, javaIntDiv, type ArrayList } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { GameElement } from "./GameElement.js";
 import type { Enemy } from "./Enemy.js";
@@ -35,16 +35,16 @@ export class TravelingExplosion extends GameElement {
             typeof arg3 === "number" &&
             typeof arg4 === "boolean"
         ) {
-            let xLocal = arg0;
-            let yLocal = arg1;
-            let vxLocal = arg2;
-            let vyLocal = arg3;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
+            let vxLocal = javaFloat(arg2);
+            let vyLocal = javaFloat(arg3);
             let notifierLocal = arg4;
             this.x = xLocal;
             this.y = yLocal;
             this.notifier = notifierLocal;
-            this.vx = TravelingExplosion.VELOCITY * vxLocal;
-            this.vy = TravelingExplosion.VELOCITY * vyLocal;
+            this.vx = javaFloat(TravelingExplosion.VELOCITY * vxLocal);
+            this.vy = javaFloat(TravelingExplosion.VELOCITY * vyLocal);
 
             this.enemies = this.gameMode.enemies;
             return;
@@ -56,20 +56,20 @@ export class TravelingExplosion extends GameElement {
     public static readonly TRAVEL_TIME: number = 64;
     public static readonly PERIOD0: number = javaIntDiv(TravelingExplosion.TRAVEL_TIME, 3);
     public static readonly PERIOD1: number = javaIntDiv(2 * TravelingExplosion.TRAVEL_TIME, 3);
-    public static readonly VELOCITY: number = TravelingExplosion.DISTANCE / TravelingExplosion.TRAVEL_TIME;
-    public static readonly ALPHA: number = 0.6;
+    public static readonly VELOCITY: number = javaFloat(TravelingExplosion.DISTANCE / TravelingExplosion.TRAVEL_TIME);
+    public static readonly ALPHA: number = javaFloat(0.6);
 
-    public static readonly K0: number = 1.25 / TravelingExplosion.PERIOD0;
-    public static readonly K1: number = 0.75 / (TravelingExplosion.PERIOD1 - TravelingExplosion.PERIOD0);
-    public static readonly K2: number = 0.333 / (TravelingExplosion.TRAVEL_TIME - TravelingExplosion.PERIOD1);
+    public static readonly K0: number = javaFloat(1.25 / TravelingExplosion.PERIOD0);
+    public static readonly K1: number = javaFloat(0.75 / (TravelingExplosion.PERIOD1 - TravelingExplosion.PERIOD0));
+    public static readonly K2: number = javaFloat(javaFloat(0.333) / (TravelingExplosion.TRAVEL_TIME - TravelingExplosion.PERIOD1));
 
     public init(): void {
         this.layer = 4;
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
 
         if (++this.t > TravelingExplosion.TRAVEL_TIME) {
             this.removeFlag = true;
@@ -79,20 +79,20 @@ export class TravelingExplosion extends GameElement {
         } else {
             let margin = 0;
             if (this.t < TravelingExplosion.PERIOD0) {
-                this.scale = 2.25 - this.t * TravelingExplosion.K0;
-                margin = 28 * this.scale;
+                this.scale = javaFloat(2.25 - javaFloat(this.t * TravelingExplosion.K0));
+                margin = javaFloat(28 * this.scale);
             } else if (this.t < TravelingExplosion.PERIOD1) {
-                this.scale = 1.75 - (this.t - TravelingExplosion.PERIOD0) * TravelingExplosion.K1;
-                margin = 18 * this.scale;
+                this.scale = javaFloat(1.75 - javaFloat((this.t - TravelingExplosion.PERIOD0) * TravelingExplosion.K1));
+                margin = javaFloat(18 * this.scale);
             } else {
-                this.scale = 1.333 - (this.t - TravelingExplosion.PERIOD1) * TravelingExplosion.K2;
-                margin = 16 * this.scale;
+                this.scale = javaFloat(javaFloat(1.333) - javaFloat((this.t - TravelingExplosion.PERIOD1) * TravelingExplosion.K2));
+                margin = javaFloat(16 * this.scale);
             }
 
-            let x1 = this.x - margin;
-            let y1 = this.y - margin;
-            let x2 = this.x + margin;
-            let y2 = this.y + margin;
+            let x1 = javaFloat(this.x - margin);
+            let y1 = javaFloat(this.y - margin);
+            let x2 = javaFloat(this.x + margin);
+            let y2 = javaFloat(this.y + margin);
             if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
                 for (let i = this.enemies!.size() - 1; i >= 0; i--) {
                     let enemyLocal = this.enemies!.get(i);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import ts from "typescript";
@@ -12,8 +12,8 @@ function toolAvailable(command, args) {
     return result.status === 0;
 }
 
-function writeText(path, text) {
-    mkdirSync(dirname(path), { recursive: true });
+function write(path, text) {
+    mkdirSync(join(path, ".."), { recursive: true });
     writeFileSync(path, text, "utf8");
 }
 
@@ -33,7 +33,6 @@ function parseJavaRows(text) {
         if (!line) {
             continue;
         }
-
         const columns = line.split("|");
         const scenario = columns[0];
         const tick = Number(columns[1]);
@@ -79,9 +78,9 @@ function runJavaHarness(workDir) {
     copyFileSync(join(rootDir, "desktop", "src", "jackal", "JeepYeahBullet.java"), join(sourceRoot, "jackal", "JeepYeahBullet.java"));
     copyFileSync(join(rootDir, "desktop", "src", "jackal", "JeepYeahExplosion.java"), join(sourceRoot, "jackal", "JeepYeahExplosion.java"));
 
-    writeText(join(sourceRoot, "org", "newdawn", "slick", "Placeholder.java"), "package org.newdawn.slick;\npublic final class Placeholder {}\n");
-    writeText(join(sourceRoot, "jackal", "Enemy.java"), "package jackal;\npublic class Enemy { public float x; public float y; }\n");
-    writeText(
+    write(join(sourceRoot, "org", "newdawn", "slick", "Placeholder.java"), `package org.newdawn.slick;\npublic final class Placeholder {}\n`);
+    write(join(sourceRoot, "jackal", "Enemy.java"), `package jackal;\npublic class Enemy { public float x; public float y; }\n`);
+    write(
         join(sourceRoot, "jackal", "Main.java"),
         `package jackal;
 public class Main {
@@ -93,7 +92,7 @@ public class Main {
 }
 `
     );
-    writeText(
+    write(
         join(sourceRoot, "jackal", "MechanicsHarness.java"),
         `package jackal;
 
@@ -167,10 +166,9 @@ public final class MechanicsHarness {
 
 async function loadTypeScriptMechanics() {
     const paths = [join(rootDir, "pwa", "src", "jackal", "JeepYeahBullet.ts"), join(rootDir, "pwa", "src", "jackal", "JeepYeahExplosion.ts")];
-
-    let output = "";
+    let output = "const javaFloat = Math.fround;\n";
     for (const path of paths) {
-        const source = readFileSync(path, "utf8");
+        const source = readFileSync(path, "utf8").replace(/^import[\s\S]*?;\s*$/gm, "");
         output += ts.transpileModule(source, {
             compilerOptions: {
                 target: ts.ScriptTarget.ES2022,
@@ -182,7 +180,6 @@ async function loadTypeScriptMechanics() {
             fileName: path
         }).outputText;
     }
-
     return import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`);
 }
 
@@ -270,16 +267,19 @@ function compareRows(javaRows, tsRows) {
         assert.equal(tsRow.scenario, javaRow.scenario, `Scenario mismatch at row ${i}.`);
         assert.equal(tsRow.tick, javaRow.tick, `Tick mismatch at row ${i}.`);
         assert.deepEqual(Object.keys(tsRow), Object.keys(javaRow), `State shape mismatch for ${javaRow.scenario} tick ${javaRow.tick}.`);
-
         for (const key of Object.keys(javaRow)) {
             if (key === "scenario" || key === "tick") {
                 continue;
             }
-
             const expected = javaRow[key];
             const actual = tsRow[key];
             if (typeof expected === "number") {
-                assert.ok(Math.abs(actual - expected) <= 0.001, `${javaRow.scenario} tick ${javaRow.tick} ${key}: Java=${expected}, TypeScript=${actual}`);
+                const javaFloatFields = new Set(["x", "y", "vx", "vy", "angle", "scale", "size", "alpha"]);
+                if (javaFloatFields.has(key)) {
+                    assert.equal(actual, Math.fround(expected), `${javaRow.scenario} tick ${javaRow.tick} ${key}: Java=${expected}, TypeScript=${actual}`);
+                } else {
+                    assert.equal(actual, expected, `${javaRow.scenario} tick ${javaRow.tick} ${key} differs.`);
+                }
             } else {
                 assert.equal(actual, expected, `${javaRow.scenario} tick ${javaRow.tick} ${key} differs.`);
             }
@@ -299,7 +299,9 @@ test("actual Java and TypeScript JeepYeah mechanics stay synchronized", async (t
 
     const workDir = mkdtempSync(join(tmpdir(), "jackal-mechanics-"));
     try {
-        compareRows(runJavaHarness(workDir), await runTypeScriptHarness());
+        const javaRows = runJavaHarness(workDir);
+        const tsRows = await runTypeScriptHarness();
+        compareRows(javaRows, tsRows);
     } finally {
         rmSync(workDir, { recursive: true, force: true });
     }

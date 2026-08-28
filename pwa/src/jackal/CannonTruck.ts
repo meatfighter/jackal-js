@@ -25,8 +25,8 @@ export class CannonTruck extends Enemy {
 
     private __construct_CannonTruck(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let rightLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -68,12 +68,12 @@ export class CannonTruck extends Enemy {
         ],
         [
             [
-                javaFloat(CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE)),
-                javaFloat(CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - 2 * CannonTruck.BULLET_ANGLE))
+                javaFloat(CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 - javaFloat(2 * CannonTruck.BULLET_ANGLE))),
+                javaFloat(CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 - javaFloat(2 * CannonTruck.BULLET_ANGLE)))
             ],
             [
-                javaFloat(CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE)),
-                javaFloat(CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + 2 * CannonTruck.BULLET_ANGLE))
+                javaFloat(CannonTruck.BULLET_SPEED * Math.cos(Math.PI / 4 + javaFloat(2 * CannonTruck.BULLET_ANGLE))),
+                javaFloat(CannonTruck.BULLET_SPEED * Math.sin(Math.PI / 4 + javaFloat(2 * CannonTruck.BULLET_ANGLE)))
             ]
         ]
     ];
@@ -115,42 +115,42 @@ export class CannonTruck extends Enemy {
         switch (this.fires) {
             case 0:
                 new EnemyBullet(
-                    this.x + CannonTruck.BULLET_ORIGIN_X,
-                    this.y + CannonTruck.BULLET_ORIGIN_Y,
-                    this.right ? CannonTruck.DIRS[0][0][0] : -CannonTruck.DIRS[0][0][0],
-                    CannonTruck.DIRS[0][0][1],
+                    javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
+                    javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
+                    javaFloat(this.right ? CannonTruck.DIRS[0][0][0] : -CannonTruck.DIRS[0][0][0]),
+                    javaFloat(CannonTruck.DIRS[0][0][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
                 break;
             case 1:
                 new EnemyBullet(
-                    this.x + CannonTruck.BULLET_ORIGIN_X,
-                    this.y + CannonTruck.BULLET_ORIGIN_Y,
-                    this.right ? CannonTruck.DIRS[1][0][0] : -CannonTruck.DIRS[1][0][0],
-                    CannonTruck.DIRS[1][0][1],
+                    javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
+                    javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
+                    javaFloat(this.right ? CannonTruck.DIRS[1][0][0] : -CannonTruck.DIRS[1][0][0]),
+                    javaFloat(CannonTruck.DIRS[1][0][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
                 new EnemyBullet(
-                    this.x + CannonTruck.BULLET_ORIGIN_X,
-                    this.y + CannonTruck.BULLET_ORIGIN_Y,
-                    this.right ? CannonTruck.DIRS[1][1][0] : -CannonTruck.DIRS[1][1][0],
-                    CannonTruck.DIRS[1][1][1],
+                    javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
+                    javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
+                    javaFloat(this.right ? CannonTruck.DIRS[1][1][0] : -CannonTruck.DIRS[1][1][0]),
+                    javaFloat(CannonTruck.DIRS[1][1][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
                 break;
             case 2:
                 new EnemyBullet(
-                    this.x + CannonTruck.BULLET_ORIGIN_X,
-                    this.y + CannonTruck.BULLET_ORIGIN_Y,
-                    this.right ? CannonTruck.DIRS[2][0][0] : -CannonTruck.DIRS[2][0][0],
-                    CannonTruck.DIRS[2][0][1],
+                    javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
+                    javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
+                    javaFloat(this.right ? CannonTruck.DIRS[2][0][0] : -CannonTruck.DIRS[2][0][0]),
+                    javaFloat(CannonTruck.DIRS[2][0][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
                 new EnemyBullet(
-                    this.x + CannonTruck.BULLET_ORIGIN_X,
-                    this.y + CannonTruck.BULLET_ORIGIN_Y,
-                    this.right ? CannonTruck.DIRS[2][1][0] : -CannonTruck.DIRS[2][1][0],
-                    CannonTruck.DIRS[2][1][1],
+                    javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
+                    javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
+                    javaFloat(this.right ? CannonTruck.DIRS[2][1][0] : -CannonTruck.DIRS[2][1][0]),
+                    javaFloat(CannonTruck.DIRS[2][1][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
                 break;
@@ -160,7 +160,7 @@ export class CannonTruck extends Enemy {
 
     public update(): void {
         if (!this.ready) {
-            if (this.y + 48 > this.gameMode.cameraY) {
+            if (javaFloat(this.y + 48) > this.gameMode.cameraY) {
                 this.ready = true;
             } else {
                 return;

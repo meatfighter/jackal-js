@@ -54,8 +54,8 @@ export class FriendlyHelicopter extends GameElement {
 
     private __construct_FriendlyHelicopter(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let landing = arg2;
             let leftStopLocal = arg3;
             this.x = xLocal;
@@ -83,7 +83,7 @@ export class FriendlyHelicopter extends GameElement {
     public static readonly DROP_OFF_DELAY: number = 91;
     public static readonly FLIGHT_SPEED: number = 6;
     public static readonly ACCELERATION_TIME: number = 45;
-    public static readonly ACCELERATION: number = FriendlyHelicopter.FLIGHT_SPEED / FriendlyHelicopter.ACCELERATION_TIME;
+    public static readonly ACCELERATION: number = javaFloat(FriendlyHelicopter.FLIGHT_SPEED / FriendlyHelicopter.ACCELERATION_TIME);
     public static readonly TAKE_OFF_DELAY: number = 91 * 2;
     public static readonly TURN_RADIUS1: number = 192;
     public static readonly TURN_RADIUS2: number = 192;
@@ -105,11 +105,11 @@ export class FriendlyHelicopter extends GameElement {
 
     private static readonly Y0: number = 128;
     private static readonly Y1: number = 116;
-    private static readonly K1: number = FriendlyHelicopter.Y1 / FriendlyHelicopter.Y0;
-    private static readonly Z0: number = FriendlyHelicopter.K1 / (FriendlyHelicopter.K1 - 1);
+    private static readonly K1: number = javaFloat(FriendlyHelicopter.Y1 / FriendlyHelicopter.Y0);
+    private static readonly Z0: number = javaFloat(FriendlyHelicopter.K1 / javaFloat(FriendlyHelicopter.K1 - 1));
 
     private static readonly SHADOW_Y0: number = 36;
-    private static readonly SHADOW_K: number = (FriendlyHelicopter.Y1 - FriendlyHelicopter.SHADOW_Y0) / FriendlyHelicopter.SHADOW_Y0;
+    private static readonly SHADOW_K: number = javaFloat(javaFloat(FriendlyHelicopter.Y1 - FriendlyHelicopter.SHADOW_Y0) / FriendlyHelicopter.SHADOW_Y0);
 
     private static readonly HEIGHTS: number[] = javaArray(91, 0);
     // Assigned once in the static block, matching Java static-final initialization.
@@ -117,36 +117,36 @@ export class FriendlyHelicopter extends GameElement {
 
     static {
         for (let i = 0; i < 91; i++) {
-            FriendlyHelicopter.HEIGHTS[i] = 0.5 * (1 + javaFloat(Math.cos((Math.PI * i) / 91.0)));
+            FriendlyHelicopter.HEIGHTS[i] = javaFloat(0.5 * javaFloat(1 + javaFloat(Math.cos((Math.PI * i) / 91.0))));
         }
 
-        let turn1Steps = javaInt(Math.ceil((2 * Math.PI * (45 / 360) * FriendlyHelicopter.TURN_RADIUS1) / FriendlyHelicopter.FLIGHT_SPEED));
-        let turn2Steps = javaInt(Math.ceil((2 * Math.PI * (225 / 360) * FriendlyHelicopter.TURN_RADIUS2) / FriendlyHelicopter.FLIGHT_SPEED));
+        let turn1Steps = javaInt(Math.ceil((2 * Math.PI * javaFloat(45 / 360) * FriendlyHelicopter.TURN_RADIUS1) / FriendlyHelicopter.FLIGHT_SPEED));
+        let turn2Steps = javaInt(Math.ceil((2 * Math.PI * javaFloat(225 / 360) * FriendlyHelicopter.TURN_RADIUS2) / FriendlyHelicopter.FLIGHT_SPEED));
         FriendlyHelicopter.TURNS_LENGTH = turn1Steps + turn2Steps;
         FriendlyHelicopter.TURNS = java2DArray(FriendlyHelicopter.TURNS_LENGTH, 3, 0); // (x, y, angle)
 
         for (let i = 0; i < turn1Steps; i++) {
-            let percent = i / javaFloat(turn1Steps);
-            let helicopterAngle = 45 * percent;
-            let angle = percent * javaFloat(Math.PI / 4);
-            let X = FriendlyHelicopter.TURN_RADIUS1 - FriendlyHelicopter.TURN_RADIUS1 * javaFloat(Math.cos(angle));
-            let Y = FriendlyHelicopter.TURN_RADIUS1 * javaFloat(-Math.sin(angle));
+            let percent = javaFloat(i / javaFloat(turn1Steps));
+            let helicopterAngle = javaFloat(45 * percent);
+            let angle = javaFloat(percent * javaFloat(Math.PI / 4));
+            let X = javaFloat(FriendlyHelicopter.TURN_RADIUS1 - javaFloat(FriendlyHelicopter.TURN_RADIUS1 * javaFloat(Math.cos(angle))));
+            let Y = javaFloat(FriendlyHelicopter.TURN_RADIUS1 * javaFloat(-Math.sin(angle)));
             FriendlyHelicopter.TURNS[i][0] = X;
             FriendlyHelicopter.TURNS[i][1] = Y;
             FriendlyHelicopter.TURNS[i][2] = helicopterAngle;
         }
 
-        let distance = FriendlyHelicopter.TURN_RADIUS1 + FriendlyHelicopter.TURN_RADIUS2;
-        let k = 1 / javaFloat(Math.sqrt(2));
-        let centerX = FriendlyHelicopter.TURN_RADIUS1 - k * distance;
-        let centerY = -k * distance;
+        let distance = javaFloat(FriendlyHelicopter.TURN_RADIUS1 + FriendlyHelicopter.TURN_RADIUS2);
+        let k = javaFloat(1 / javaFloat(Math.sqrt(2)));
+        let centerX = javaFloat(FriendlyHelicopter.TURN_RADIUS1 - javaFloat(k * distance));
+        let centerY = javaFloat(-k * distance);
 
         for (let i = 0; i < turn2Steps; i++) {
-            let percent = i / javaFloat(turn2Steps);
-            let helicopterAngle = 45 - 225 * percent;
+            let percent = javaFloat(i / javaFloat(turn2Steps));
+            let helicopterAngle = javaFloat(45 - javaFloat(225 * percent));
             let angle = javaFloat(Math.PI / 4 - Math.PI * 1.25 * percent);
-            let X = centerX + FriendlyHelicopter.TURN_RADIUS2 * javaFloat(Math.cos(angle));
-            let Y = centerY + FriendlyHelicopter.TURN_RADIUS2 * javaFloat(Math.sin(angle));
+            let X = javaFloat(centerX + javaFloat(FriendlyHelicopter.TURN_RADIUS2 * javaFloat(Math.cos(angle))));
+            let Y = javaFloat(centerY + javaFloat(FriendlyHelicopter.TURN_RADIUS2 * javaFloat(Math.sin(angle))));
 
             FriendlyHelicopter.TURNS[turn1Steps + i][0] = X;
             FriendlyHelicopter.TURNS[turn1Steps + i][1] = Y;
@@ -170,12 +170,12 @@ export class FriendlyHelicopter extends GameElement {
 
     public update(): void {
         if (this.slowRotor) {
-            this.rotorAngle -= this.rotorSpeed;
+            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);
         } else {
-            this.rotorAngle -= this.rotorSpeed;
+            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);
         }
         if (this.rotorAngle <= -360) {
-            this.rotorAngle += 360;
+            this.rotorAngle = javaFloat(this.rotorAngle + 360);
         }
 
         if (this.state >= FriendlyHelicopter.STATE_ACCELERATING) {
@@ -185,9 +185,9 @@ export class FriendlyHelicopter extends GameElement {
         switch (this.state) {
             case FriendlyHelicopter.STATE_PICK_UP: {
                 if (this.player!.pows > 0) {
-                    let dx = this.player!.x - this.x;
+                    let dx = javaFloat(this.player!.x - this.x);
 
-                    if (Math.abs(this.player!.y - this.y) <= 128) {
+                    if (Math.abs(javaFloat(this.player!.y - this.y)) <= 128) {
                         if (--this.planeSpawnDelay == 0) {
                             this.planeSpawnDelay = FriendlyHelicopter.PLANE_SPAWN_DELAY;
                             if (this.gameMode.stageIndex == 5) {
@@ -204,15 +204,15 @@ export class FriendlyHelicopter extends GameElement {
                     }
 
                     if (
-                        this.player!.y > this.y - 66 &&
-                        this.player!.y < this.y + 49 &&
+                        this.player!.y > javaFloat(this.y - 66) &&
+                        this.player!.y < javaFloat(this.y + 49) &&
                         ((!this.leftStop && dx > 0 && dx < 320) || (this.leftStop && dx < 0 && dx > -320))
                     ) {
                         if (this.dropOffDelay > 0) {
                             this.dropOffDelay--;
                         } else {
                             this.dropOffDelay = FriendlyHelicopter.DROP_OFF_DELAY;
-                            new FriendlySoldier(this.player!.x, this.player!.y + 28, this, this.player!.pows == 1);
+                            new FriendlySoldier(this.player!.x, javaFloat(this.player!.y + 28), this, this.player!.pows == 1);
                             this.player!.dropOffPOW();
                             this.walkingSoldiers++;
                         }
@@ -220,8 +220,8 @@ export class FriendlyHelicopter extends GameElement {
                 }
                 if (
                     this.walkingSoldiers == 0 &&
-                    this.player!.y < this.y + 80 &&
-                    ((FriendlySoldier.count == 0 && this.player!.pows == 0) || this.player!.y < this.y - 512)
+                    this.player!.y < javaFloat(this.y + 80) &&
+                    ((FriendlySoldier.count == 0 && this.player!.pows == 0) || this.player!.y < javaFloat(this.y - 512))
                 ) {
                     if (this.preparingToTakeOff > 0) {
                         this.preparingToTakeOff--;
@@ -234,7 +234,7 @@ export class FriendlyHelicopter extends GameElement {
                 break;
             }
             case FriendlyHelicopter.STATE_REVVING_UP:
-                this.rotorSpeed = 15 + (15 * this.revvingUp) / 90;
+                this.rotorSpeed = javaFloat(15 + javaFloat(javaFloat(15 * this.revvingUp) / 90));
                 if (this.revvingUp >= 45) {
                     this.slowRotor = false;
                     this.changeLayer(7);
@@ -255,7 +255,7 @@ export class FriendlyHelicopter extends GameElement {
                 }
                 break;
             case FriendlyHelicopter.STATE_ACCELERATING:
-                this.y -= this.accelerating * FriendlyHelicopter.ACCELERATION;
+                this.y = javaFloat(this.y - javaFloat(this.accelerating * FriendlyHelicopter.ACCELERATION));
                 if (++this.accelerating == FriendlyHelicopter.ACCELERATION_TIME) {
                     this.state = FriendlyHelicopter.STATE_TURNING;
                     this.turnX = this.x;
@@ -263,23 +263,23 @@ export class FriendlyHelicopter extends GameElement {
                 }
                 break;
             case FriendlyHelicopter.STATE_TURNING:
-                this.x = this.turnX + FriendlyHelicopter.TURNS[this.turning][0];
-                this.y = this.turnY + FriendlyHelicopter.TURNS[this.turning][1];
-                this.angle = FriendlyHelicopter.TURNS[this.turning][2];
+                this.x = javaFloat(this.turnX + FriendlyHelicopter.TURNS[this.turning][0]);
+                this.y = javaFloat(this.turnY + FriendlyHelicopter.TURNS[this.turning][1]);
+                this.angle = javaFloat(FriendlyHelicopter.TURNS[this.turning][2]);
                 if (++this.turning == FriendlyHelicopter.TURNS_LENGTH) {
                     this.state = FriendlyHelicopter.STATE_FLYING_AWAY;
                     this.angle = -180;
                 }
                 break;
             case FriendlyHelicopter.STATE_FLYING_AWAY:
-                this.y += FriendlyHelicopter.FLIGHT_SPEED;
-                if (this.y > this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT + 128) {
+                this.y = javaFloat(this.y + FriendlyHelicopter.FLIGHT_SPEED);
+                if (this.y > javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + 128)) {
                     this.remove();
                 }
                 break;
             case FriendlyHelicopter.STATE_FLYING_TOWARD:
-                this.y -= FriendlyHelicopter.FLIGHT_SPEED;
-                if (this.y < this.gameMode.cameraY - 128) {
+                this.y = javaFloat(this.y - FriendlyHelicopter.FLIGHT_SPEED);
+                if (this.y < javaFloat(this.gameMode.cameraY - 128)) {
                     this.remove();
                 }
                 break;

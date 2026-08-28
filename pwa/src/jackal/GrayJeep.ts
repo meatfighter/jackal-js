@@ -1,4 +1,4 @@
-import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
 import type { Player } from "./Player.js";
@@ -48,8 +48,8 @@ export class GrayJeep extends Enemy {
 
     private __construct_GrayJeep(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -60,7 +60,7 @@ export class GrayJeep extends Enemy {
     public static readonly SPEED: number = 3;
     public static readonly SENSOR_RADIUS: number = 53;
     public static readonly ANGLE_STEPS: number = 16;
-    public static readonly ANGLE_VELOCITY: number = 45 / GrayJeep.ANGLE_STEPS;
+    public static readonly ANGLE_VELOCITY: number = javaFloat(45 / GrayJeep.ANGLE_STEPS);
     public static readonly BOMB_DELAY: number = 91;
     public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
 
@@ -132,8 +132,8 @@ export class GrayJeep extends Enemy {
         } else if (this.targetAngle < 0) {
             this.targetAngle += 360;
         }
-        this.sensorX = this.directionX * GrayJeep.SENSOR_RADIUS;
-        this.sensorY = this.directionY * GrayJeep.SENSOR_RADIUS;
+        this.sensorX = javaFloat(this.directionX * GrayJeep.SENSOR_RADIUS);
+        this.sensorY = javaFloat(this.directionY * GrayJeep.SENSOR_RADIUS);
 
         if (this.main.random.nextInt(5) != 4) {
             this.computeMoveSteps();
@@ -155,14 +155,14 @@ export class GrayJeep extends Enemy {
         let d = 0;
 
         if (v > 0) {
-            d = 32 - (v % 32);
+            d = javaFloat(32 - javaFloat(v % 32));
         } else {
-            d = v % 32;
+            d = javaFloat(v % 32);
         }
 
-        d += 32 * (1 + this.main.random.nextInt(GrayJeep.MAX_MOVE_SQUARES));
+        d = javaFloat(d + 32 * (1 + this.main.random.nextInt(GrayJeep.MAX_MOVE_SQUARES)));
 
-        this.moveSteps = javaRoundFloat(d / GrayJeep.SPEED);
+        this.moveSteps = javaRoundFloat(javaFloat(d / GrayJeep.SPEED));
     }
 
     private testCorners(nextX: number, nextY: number): void {
@@ -173,28 +173,28 @@ export class GrayJeep extends Enemy {
 
         switch (this.targetAngle) {
             case 0:
-                sx1 = nextX + GrayJeep.DIMENSION_1;
-                sy1 = nextY - GrayJeep.DIMENSION_2;
-                sx2 = nextX + GrayJeep.DIMENSION_1;
-                sy2 = nextY + GrayJeep.DIMENSION_2;
+                sx1 = javaFloat(nextX + GrayJeep.DIMENSION_1);
+                sy1 = javaFloat(nextY - GrayJeep.DIMENSION_2);
+                sx2 = javaFloat(nextX + GrayJeep.DIMENSION_1);
+                sy2 = javaFloat(nextY + GrayJeep.DIMENSION_2);
                 break;
             case 90:
-                sx1 = nextX + GrayJeep.DIMENSION_2;
-                sy1 = nextY + GrayJeep.DIMENSION_1;
-                sx2 = nextX - GrayJeep.DIMENSION_2;
-                sy2 = nextY + GrayJeep.DIMENSION_1;
+                sx1 = javaFloat(nextX + GrayJeep.DIMENSION_2);
+                sy1 = javaFloat(nextY + GrayJeep.DIMENSION_1);
+                sx2 = javaFloat(nextX - GrayJeep.DIMENSION_2);
+                sy2 = javaFloat(nextY + GrayJeep.DIMENSION_1);
                 break;
             case 180:
-                sx1 = nextX - GrayJeep.DIMENSION_1;
-                sy1 = nextY + GrayJeep.DIMENSION_2;
-                sx2 = nextX - GrayJeep.DIMENSION_1;
-                sy2 = nextY - GrayJeep.DIMENSION_2;
+                sx1 = javaFloat(nextX - GrayJeep.DIMENSION_1);
+                sy1 = javaFloat(nextY + GrayJeep.DIMENSION_2);
+                sx2 = javaFloat(nextX - GrayJeep.DIMENSION_1);
+                sy2 = javaFloat(nextY - GrayJeep.DIMENSION_2);
                 break;
             case 270:
-                sx1 = nextX - GrayJeep.DIMENSION_2;
-                sy1 = nextY - GrayJeep.DIMENSION_1;
-                sx2 = nextX + GrayJeep.DIMENSION_2;
-                sy2 = nextY - GrayJeep.DIMENSION_1;
+                sx1 = javaFloat(nextX - GrayJeep.DIMENSION_2);
+                sy1 = javaFloat(nextY - GrayJeep.DIMENSION_1);
+                sx2 = javaFloat(nextX + GrayJeep.DIMENSION_2);
+                sy2 = javaFloat(nextY - GrayJeep.DIMENSION_1);
                 break;
             default:
                 return;
@@ -235,8 +235,8 @@ export class GrayJeep extends Enemy {
         } else if (this.targetAngle < 0) {
             this.targetAngle += 360;
         }
-        this.sensorX = this.directionX * GrayJeep.SENSOR_RADIUS;
-        this.sensorY = this.directionY * GrayJeep.SENSOR_RADIUS;
+        this.sensorX = javaFloat(this.directionX * GrayJeep.SENSOR_RADIUS);
+        this.sensorY = javaFloat(this.directionY * GrayJeep.SENSOR_RADIUS);
 
         if (this.main.random.nextInt(5) != 4) {
             this.computeMoveSteps();
@@ -246,26 +246,26 @@ export class GrayJeep extends Enemy {
     private handleLoop(): void {
         if (this.handlingLoop == 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
-            this.loopTargetX = this.main.random.nextFloat() * 2048;
-            this.loopTargetY = this.main.random.nextFloat() * this.player!.y;
+            this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
+            this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
         }
     }
 
     public update(): void {
         if (this.displayAngle != this.targetAngle) {
-            let deltaAngle = (this.targetAngle - this.displayAngle + 180) % 360;
+            let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
-                deltaAngle += 180;
+                deltaAngle = javaFloat(deltaAngle + 180);
             } else {
-                deltaAngle -= 180;
+                deltaAngle = javaFloat(deltaAngle - 180);
             }
             if (Math.abs(deltaAngle) < GrayJeep.ANGLE_VELOCITY) {
-                this.displayAngle = this.targetAngle;
+                this.displayAngle = javaFloat(this.targetAngle);
             } else {
                 if (deltaAngle < 0) {
-                    this.displayAngle -= GrayJeep.ANGLE_VELOCITY;
+                    this.displayAngle = javaFloat(this.displayAngle - GrayJeep.ANGLE_VELOCITY);
                 } else {
-                    this.displayAngle += GrayJeep.ANGLE_VELOCITY;
+                    this.displayAngle = javaFloat(this.displayAngle + GrayJeep.ANGLE_VELOCITY);
                 }
             }
         } else {
@@ -282,37 +282,61 @@ export class GrayJeep extends Enemy {
                 }
                 let v =
                     this.handlingLoop > 0
-                        ? this.gameMode.suggestDirection(this.x, this.y, this.loopTargetX + dx, this.loopTargetY + dy, this.targetAngle, false)
-                        : this.gameMode.suggestDirection(this.x, this.y, this.player!.x + dx, this.player!.y + dy, this.targetAngle, false);
-                this.vx = v[0] * GrayJeep.SPEED;
-                this.vy = v[1] * GrayJeep.SPEED;
+                        ? this.gameMode.suggestDirection(
+                              this.x,
+                              this.y,
+                              javaFloat(this.loopTargetX + dx),
+                              javaFloat(this.loopTargetY + dy),
+                              this.targetAngle,
+                              false
+                          )
+                        : this.gameMode.suggestDirection(
+                              this.x,
+                              this.y,
+                              javaFloat(this.player!.x + dx),
+                              javaFloat(this.player!.y + dy),
+                              this.targetAngle,
+                              false
+                          );
+                this.vx = javaFloat(v[0] * GrayJeep.SPEED);
+                this.vy = javaFloat(v[1] * GrayJeep.SPEED);
                 this.directionX = v[0];
                 this.directionY = v[1];
                 this.targetAngle = javaInt(v[2]);
-                this.sensorX = this.directionX * GrayJeep.SENSOR_RADIUS;
-                this.sensorY = this.directionY * GrayJeep.SENSOR_RADIUS;
+                this.sensorX = javaFloat(this.directionX * GrayJeep.SENSOR_RADIUS);
+                this.sensorY = javaFloat(this.directionY * GrayJeep.SENSOR_RADIUS);
                 this.computeMoveSteps();
             }
 
-            let nextX = this.x + this.vx;
-            let nextY = this.y + this.vy;
+            let nextX = javaFloat(this.x + this.vx);
+            let nextY = javaFloat(this.y + this.vy);
 
             if (this.gameMode.conveyorDelta > 0 && this.gameMode.isConveyor(this.x, this.y)) {
-                nextY += this.gameMode.conveyorDelta;
+                nextY = javaFloat(nextY + this.gameMode.conveyorDelta);
             }
 
             this.testCorners(nextX, nextY);
 
             let driveable = true;
 
-            if (this.gameMode.isDriveable(nextX + this.sensorX, nextY + this.sensorY)) {
+            if (this.gameMode.isDriveable(javaFloat(nextX + this.sensorX), javaFloat(nextY + this.sensorY))) {
                 // avoid bumping into other enemies
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
-                        solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
-                        !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                        solidLocal.isSolid(
+                            javaFloat(nextX + this.solidX1),
+                            javaFloat(nextY + this.solidY1),
+                            javaFloat(nextX + this.solidX2),
+                            javaFloat(nextY + this.solidY2)
+                        ) &&
+                        !solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(this.y + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(this.y + this.solidY2)
+                        )
                     ) {
                         driveable = false;
                         break;
@@ -333,8 +357,8 @@ export class GrayJeep extends Enemy {
                 this.driveAtRightAngleToBarrier();
             }
 
-            let dx = this.player!.x - this.x;
-            let dy = this.player!.y - this.y;
+            let dx = javaFloat(this.player!.x - this.x);
+            let dy = javaFloat(this.player!.y - this.y);
 
             if (
                 this.moveSteps == 1 &&
@@ -343,7 +367,7 @@ export class GrayJeep extends Enemy {
             ) {
                 this.moveSteps = 2;
             }
-            if ((this.lastDx * dx <= 0 || this.lastDy * dy <= 0) && this.main.random.nextInt(3) != 2) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2) {
                 this.moveSteps = 0;
             }
 
@@ -352,7 +376,7 @@ export class GrayJeep extends Enemy {
 
             if (--this.bombDelay < 0) {
                 this.bombDelay = GrayJeep.BOMB_DELAY;
-                new Bomb(this.x, this.y, false, 0.75 * this.vx, 0.75 * this.vy);
+                new Bomb(this.x, this.y, false, javaFloat(0.75 * this.vx), javaFloat(0.75 * this.vy));
             }
         }
     }

@@ -1,4 +1,4 @@
-import { javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt, javaRoundFloat, type ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { Fire } from "./Fire.js";
 import type { Player } from "./Player.js";
@@ -51,8 +51,8 @@ export class FireTank extends Enemy {
 
     private __construct_FireTank(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             this.firstMove = 2 * 91;
@@ -64,10 +64,10 @@ export class FireTank extends Enemy {
     public static readonly SPEED: number = 1.5;
     public static readonly SENSOR_RADIUS: number = 56;
     public static readonly ANGLE_STEPS: number = 24;
-    public static readonly ANGLE_VELOCITY: number = 45 / FireTank.ANGLE_STEPS;
+    public static readonly ANGLE_VELOCITY: number = javaFloat(45 / FireTank.ANGLE_STEPS);
     public static readonly SHOOT_DELAY: number = 91;
     public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
-    public static readonly BULLET_SPEED: number = 1.4;
+    public static readonly BULLET_SPEED: number = javaFloat(1.4);
     public static readonly FLAME_PAUSE: number = 45;
 
     public static readonly MAX_MOVE_SQUARES: number = 8;
@@ -140,8 +140,8 @@ export class FireTank extends Enemy {
         } else if (this.targetAngle < 0) {
             this.targetAngle += 360;
         }
-        this.sensorX = this.directionX * FireTank.SENSOR_RADIUS;
-        this.sensorY = this.directionY * FireTank.SENSOR_RADIUS;
+        this.sensorX = javaFloat(this.directionX * FireTank.SENSOR_RADIUS);
+        this.sensorY = javaFloat(this.directionY * FireTank.SENSOR_RADIUS);
 
         if (this.main.random.nextInt(5) != 4) {
             this.computeMoveSteps();
@@ -163,17 +163,17 @@ export class FireTank extends Enemy {
         let d = 0;
 
         if (v > 0) {
-            d = 32 - (v % 32);
+            d = javaFloat(32 - javaFloat(v % 32));
         } else {
-            d = v % 32;
+            d = javaFloat(v % 32);
         }
 
-        d += 32 * (1 + this.main.random.nextInt(FireTank.MAX_MOVE_SQUARES));
+        d = javaFloat(d + 32 * (1 + this.main.random.nextInt(FireTank.MAX_MOVE_SQUARES)));
 
         if (this.firstMove > 0) {
             this.moveSteps = 16;
         } else {
-            this.moveSteps = javaRoundFloat(d / FireTank.SPEED);
+            this.moveSteps = javaRoundFloat(javaFloat(d / FireTank.SPEED));
         }
     }
 
@@ -185,28 +185,28 @@ export class FireTank extends Enemy {
 
         switch (this.targetAngle) {
             case 0:
-                sx1 = nextX + FireTank.DIMENSION_1;
-                sy1 = nextY - FireTank.DIMENSION_2;
-                sx2 = nextX + FireTank.DIMENSION_1;
-                sy2 = nextY + FireTank.DIMENSION_2;
+                sx1 = javaFloat(nextX + FireTank.DIMENSION_1);
+                sy1 = javaFloat(nextY - FireTank.DIMENSION_2);
+                sx2 = javaFloat(nextX + FireTank.DIMENSION_1);
+                sy2 = javaFloat(nextY + FireTank.DIMENSION_2);
                 break;
             case 90:
-                sx1 = nextX + FireTank.DIMENSION_2;
-                sy1 = nextY + FireTank.DIMENSION_1;
-                sx2 = nextX - FireTank.DIMENSION_2;
-                sy2 = nextY + FireTank.DIMENSION_1;
+                sx1 = javaFloat(nextX + FireTank.DIMENSION_2);
+                sy1 = javaFloat(nextY + FireTank.DIMENSION_1);
+                sx2 = javaFloat(nextX - FireTank.DIMENSION_2);
+                sy2 = javaFloat(nextY + FireTank.DIMENSION_1);
                 break;
             case 180:
-                sx1 = nextX - FireTank.DIMENSION_1;
-                sy1 = nextY + FireTank.DIMENSION_2;
-                sx2 = nextX - FireTank.DIMENSION_1;
-                sy2 = nextY - FireTank.DIMENSION_2;
+                sx1 = javaFloat(nextX - FireTank.DIMENSION_1);
+                sy1 = javaFloat(nextY + FireTank.DIMENSION_2);
+                sx2 = javaFloat(nextX - FireTank.DIMENSION_1);
+                sy2 = javaFloat(nextY - FireTank.DIMENSION_2);
                 break;
             case 270:
-                sx1 = nextX - FireTank.DIMENSION_2;
-                sy1 = nextY - FireTank.DIMENSION_1;
-                sx2 = nextX + FireTank.DIMENSION_2;
-                sy2 = nextY - FireTank.DIMENSION_1;
+                sx1 = javaFloat(nextX - FireTank.DIMENSION_2);
+                sy1 = javaFloat(nextY - FireTank.DIMENSION_1);
+                sx2 = javaFloat(nextX + FireTank.DIMENSION_2);
+                sy2 = javaFloat(nextY - FireTank.DIMENSION_1);
                 break;
             default:
                 return;
@@ -247,8 +247,8 @@ export class FireTank extends Enemy {
         } else if (this.targetAngle < 0) {
             this.targetAngle += 360;
         }
-        this.sensorX = this.directionX * FireTank.SENSOR_RADIUS;
-        this.sensorY = this.directionY * FireTank.SENSOR_RADIUS;
+        this.sensorX = javaFloat(this.directionX * FireTank.SENSOR_RADIUS);
+        this.sensorY = javaFloat(this.directionY * FireTank.SENSOR_RADIUS);
 
         if (this.main.random.nextInt(5) != 4) {
             this.computeMoveSteps();
@@ -258,26 +258,26 @@ export class FireTank extends Enemy {
     private handleLoop(): void {
         if (this.handlingLoop == 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
-            this.loopTargetX = this.main.random.nextFloat() * 2048;
-            this.loopTargetY = this.main.random.nextFloat() * this.player!.y;
+            this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
+            this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
         }
     }
 
     public update(): void {
         if (this.displayAngle != this.targetAngle) {
-            let deltaAngle = (this.targetAngle - this.displayAngle + 180) % 360;
+            let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
-                deltaAngle += 180;
+                deltaAngle = javaFloat(deltaAngle + 180);
             } else {
-                deltaAngle -= 180;
+                deltaAngle = javaFloat(deltaAngle - 180);
             }
             if (Math.abs(deltaAngle) < FireTank.ANGLE_VELOCITY) {
-                this.displayAngle = this.targetAngle;
+                this.displayAngle = javaFloat(this.targetAngle);
             } else {
                 if (deltaAngle < 0) {
-                    this.displayAngle -= FireTank.ANGLE_VELOCITY;
+                    this.displayAngle = javaFloat(this.displayAngle - FireTank.ANGLE_VELOCITY);
                 } else {
-                    this.displayAngle += FireTank.ANGLE_VELOCITY;
+                    this.displayAngle = javaFloat(this.displayAngle + FireTank.ANGLE_VELOCITY);
                 }
             }
         } else if (this.flamePause > 0) {
@@ -305,34 +305,44 @@ export class FireTank extends Enemy {
                 } else {
                     v =
                         this.handlingLoop > 0
-                            ? this.gameMode.suggestDirection(this.x, this.y, this.loopTargetX + dx, this.loopTargetY + dy, false)
-                            : this.gameMode.suggestDirection(this.x, this.y, this.player!.x + dx, this.player!.y + dy, false);
+                            ? this.gameMode.suggestDirection(this.x, this.y, javaFloat(this.loopTargetX + dx), javaFloat(this.loopTargetY + dy), false)
+                            : this.gameMode.suggestDirection(this.x, this.y, javaFloat(this.player!.x + dx), javaFloat(this.player!.y + dy), false);
                 }
-                this.vx = v[0] * FireTank.SPEED;
-                this.vy = v[1] * FireTank.SPEED;
+                this.vx = javaFloat(v[0] * FireTank.SPEED);
+                this.vy = javaFloat(v[1] * FireTank.SPEED);
                 this.directionX = v[0];
                 this.directionY = v[1];
                 this.targetAngle = javaInt(v[2]);
-                this.sensorX = this.directionX * FireTank.SENSOR_RADIUS;
-                this.sensorY = this.directionY * FireTank.SENSOR_RADIUS;
+                this.sensorX = javaFloat(this.directionX * FireTank.SENSOR_RADIUS);
+                this.sensorY = javaFloat(this.directionY * FireTank.SENSOR_RADIUS);
                 this.computeMoveSteps();
             }
 
-            let nextX = this.x + this.vx;
-            let nextY = this.y + this.vy;
+            let nextX = javaFloat(this.x + this.vx);
+            let nextY = javaFloat(this.y + this.vy);
 
             this.testCorners(nextX, nextY);
 
             let driveable = true;
 
-            if (this.gameMode.isDriveable(nextX + this.sensorX, nextY + this.sensorY)) {
+            if (this.gameMode.isDriveable(javaFloat(nextX + this.sensorX), javaFloat(nextY + this.sensorY))) {
                 // avoid bumping into other enemies
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
-                        solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
-                        !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                        solidLocal.isSolid(
+                            javaFloat(nextX + this.solidX1),
+                            javaFloat(nextY + this.solidY1),
+                            javaFloat(nextX + this.solidX2),
+                            javaFloat(nextY + this.solidY2)
+                        ) &&
+                        !solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(this.y + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(this.y + this.solidY2)
+                        )
                     ) {
                         driveable = false;
                         break;
@@ -353,8 +363,8 @@ export class FireTank extends Enemy {
                 this.driveAtRightAngleToBarrier();
             }
 
-            let dx = this.player!.x - this.x;
-            let dy = this.player!.y - this.y;
+            let dx = javaFloat(this.player!.x - this.x);
+            let dy = javaFloat(this.player!.y - this.y);
 
             if (
                 this.moveSteps == 1 &&
@@ -363,7 +373,7 @@ export class FireTank extends Enemy {
             ) {
                 this.moveSteps = 2;
             }
-            if ((this.lastDx * dx <= 0 || this.lastDy * dy <= 0) && this.main.random.nextInt(3) != 2 && this.firstMove == 0) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2 && this.firstMove == 0) {
                 this.moveSteps = 0;
             }
 
@@ -409,7 +419,7 @@ export class FireTank extends Enemy {
                         by = -37;
                         break;
                 }
-                new Fire(this.x + bx, this.y + by, this.directionX, this.directionY, this.targetAngle, this);
+                new Fire(javaFloat(this.x + bx), javaFloat(this.y + by), this.directionX, this.directionY, javaFloat(this.targetAngle), this);
                 this.flamePause = FireTank.FLAME_PAUSE;
             }
         }

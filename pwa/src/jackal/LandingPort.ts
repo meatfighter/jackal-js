@@ -19,8 +19,8 @@ export class LandingPort extends GameElement {
 
     private __construct_LandingPort(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -28,13 +28,13 @@ export class LandingPort extends GameElement {
 
             switch (typeLocal) {
                 case LandingPort.TYPE_LEFT:
-                    new FriendlyHelicopter(xLocal + 320, yLocal + 192, false, true);
+                    new FriendlyHelicopter(javaFloat(xLocal + 320), javaFloat(yLocal + 192), false, true);
                     break;
                 case LandingPort.TYPE_RIGHT:
-                    new FriendlyHelicopter(xLocal + 192, yLocal + 192, false, false);
+                    new FriendlyHelicopter(javaFloat(xLocal + 192), javaFloat(yLocal + 192), false, false);
                     break;
                 case LandingPort.TYPE_CIRCLE:
-                    new FriendlyHelicopter(xLocal + 224, yLocal + 256, false, false);
+                    new FriendlyHelicopter(javaFloat(xLocal + 224), javaFloat(yLocal + 256), false, false);
                     break;
             }
             return;
@@ -67,7 +67,7 @@ export class LandingPort extends GameElement {
 
     static {
         for (let i = 0; i < 182; i++) {
-            LandingPort.ALPHAS[i] = 0.5 + javaFloat(Math.sin((Math.PI * i) / 91)) / 2;
+            LandingPort.ALPHAS[i] = javaFloat(0.5 + javaFloat(javaFloat(Math.sin((Math.PI * i) / 91)) / 2));
         }
     }
 

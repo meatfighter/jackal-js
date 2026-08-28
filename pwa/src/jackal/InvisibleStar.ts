@@ -2,6 +2,8 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { Star } from "./Star.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class InvisibleStar extends Enemy {
     declare public type: number;
 
@@ -18,8 +20,8 @@ export class InvisibleStar extends Enemy {
 
     private __construct_InvisibleStar(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;

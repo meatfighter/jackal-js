@@ -27,8 +27,8 @@ export class Submarine extends Enemy {
 
     private __construct_Submarine(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -41,19 +41,19 @@ export class Submarine extends Enemy {
     public static readonly STATE_SHOOTING: number = 2;
     public static readonly STATE_LOWERING: number = 3;
 
-    public static readonly MINIMUM_ALPHA: number = 0.3;
-    public static readonly MAXIMUM_ALPHA: number = 0.6;
+    public static readonly MINIMUM_ALPHA: number = javaFloat(0.3);
+    public static readonly MAXIMUM_ALPHA: number = javaFloat(0.6);
 
     public static readonly SUBMERGED_DELAY: number = 2 * 91;
     public static readonly ELEVATION_DELAY: number = 69;
     public static readonly SHOOT_DELAY: number = 91 + 68;
-    public static readonly MOVE_SPEED: number = 0.775;
+    public static readonly MOVE_SPEED: number = javaFloat(0.775);
     public static readonly MOVES: number = 3;
 
     public state: number = Submarine.STATE_SUBMERGED;
     public delay: number = 91;
     public height: number = 0;
-    public alpha: number = Submarine.MINIMUM_ALPHA;
+    public alpha: number = javaFloat(Submarine.MINIMUM_ALPHA);
 
     public moves: number = Submarine.MOVES;
 
@@ -107,20 +107,20 @@ export class Submarine extends Enemy {
         switch (this.state) {
             case Submarine.STATE_SUBMERGED:
                 if (--this.delay <= 0) {
-                    if (this.gameMode.cameraY < this.y - 64) {
+                    if (this.gameMode.cameraY < javaFloat(this.y - 64)) {
                         this.startRising();
                     }
                 } else if (this.moveable && this.moves >= 0) {
-                    this.y -= Submarine.MOVE_SPEED;
+                    this.y = javaFloat(this.y - Submarine.MOVE_SPEED);
                 }
                 break;
             case Submarine.STATE_RISING:
                 if (--this.delay <= 0) {
                     this.startShooting();
                 } else {
-                    let percent = 1 - this.delay / javaFloat(Submarine.ELEVATION_DELAY);
-                    this.height = javaInt(3 * percent);
-                    this.alpha = Submarine.MINIMUM_ALPHA + (Submarine.MAXIMUM_ALPHA - Submarine.MINIMUM_ALPHA) * percent;
+                    let percent = javaFloat(1 - javaFloat(this.delay / javaFloat(Submarine.ELEVATION_DELAY)));
+                    this.height = javaInt(javaFloat(3 * percent));
+                    this.alpha = javaFloat(Submarine.MINIMUM_ALPHA + javaFloat(javaFloat(Submarine.MAXIMUM_ALPHA - Submarine.MINIMUM_ALPHA) * percent));
                 }
                 break;
             case Submarine.STATE_SHOOTING:
@@ -135,9 +135,9 @@ export class Submarine extends Enemy {
                 if (--this.delay <= 0) {
                     this.startSubmerging();
                 } else {
-                    let percent = this.delay / javaFloat(Submarine.ELEVATION_DELAY);
-                    this.height = javaInt(3 * percent);
-                    this.alpha = Submarine.MINIMUM_ALPHA + (Submarine.MAXIMUM_ALPHA - Submarine.MINIMUM_ALPHA) * percent;
+                    let percent = javaFloat(this.delay / javaFloat(Submarine.ELEVATION_DELAY));
+                    this.height = javaInt(javaFloat(3 * percent));
+                    this.alpha = javaFloat(Submarine.MINIMUM_ALPHA + javaFloat(javaFloat(Submarine.MAXIMUM_ALPHA - Submarine.MINIMUM_ALPHA) * percent));
                 }
                 break;
         }

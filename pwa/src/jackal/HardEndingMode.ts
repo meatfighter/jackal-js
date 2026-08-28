@@ -76,7 +76,7 @@ export class HardEndingMode implements IMode, IFadeListener {
         [0, HardEndingMode.computeCenter(3)]
     ];
 
-    public static readonly CARD0_Y: number = (MainConstants.DISPLAY_HEIGHT - (((HardEndingMode.CARDS[0].length << 1) - 1) << 5)) >> 1;
+    public static readonly CARD0_Y: number = javaFloat((MainConstants.DISPLAY_HEIGHT - (((HardEndingMode.CARDS[0].length << 1) - 1) << 5)) >> 1);
 
     public static readonly CREDITS: string[] = [
         "programmed by",
@@ -141,7 +141,9 @@ export class HardEndingMode implements IMode, IFadeListener {
         HardEndingMode.CREDITS_HEIGHT = y;
     }
 
-    public static readonly CREDITS_SPEED: number = (MainConstants.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / javaFloat(HardEndingMode.CREDITS_TIME);
+    public static readonly CREDITS_SPEED: number = javaFloat(
+        (MainConstants.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / javaFloat(HardEndingMode.CREDITS_TIME)
+    );
 
     public finalScore: string = null!;
     public finalScoreX: number = 0;
@@ -153,7 +155,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     public lineLength: number = 0;
     public cardIndex: number = 0;
     public delay: number = HardEndingMode.TYPE_DELAY;
-    public creditsY: number = MainConstants.DISPLAY_HEIGHT;
+    public creditsY: number = javaFloat(MainConstants.DISPLAY_HEIGHT);
     public input: IInput = null!;
     public jeepX: number = -50;
     public rumble: number = 0;
@@ -168,7 +170,7 @@ export class HardEndingMode implements IMode, IFadeListener {
         this.input = main.input;
 
         this.finalScore = "final score: " + main.scoreStr;
-        this.finalScoreX = (MainConstants.DISPLAY_WIDTH - (this.finalScore.length << 5)) >> 1;
+        this.finalScoreX = javaFloat((MainConstants.DISPLAY_WIDTH - (this.finalScore.length << 5)) >> 1);
     }
 
     private updateTyping(): void {
@@ -195,7 +197,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     }
 
     private updateCredits(): void {
-        this.creditsY -= HardEndingMode.CREDITS_SPEED;
+        this.creditsY = javaFloat(this.creditsY - HardEndingMode.CREDITS_SPEED);
         if (this.creditsY < -(32 + HardEndingMode.CREDITS_HEIGHT)) {
             this.state = HardEndingMode.STATE_FINAL_SCORE_FADE_IN;
             this.main.startFade(false, this);
@@ -204,7 +206,7 @@ export class HardEndingMode implements IMode, IFadeListener {
 
     private updateFinalScoreJeep(): void {
         if (this.jeepX < MainConstants.DISPLAY_WIDTH + 50) {
-            this.jeepX += Player.SPEED;
+            this.jeepX = javaFloat(this.jeepX + Player.SPEED);
         } else {
             this.state = HardEndingMode.STATE_FINAL_SCORE;
             this.input.clearKeyPressedRecord();

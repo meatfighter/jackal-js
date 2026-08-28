@@ -1,5 +1,5 @@
 import { Color, type ControllerListener, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
-import { javaArray } from "../java/JavaRuntime.js";
+import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IFadeListener } from "./IFadeListener.js";
@@ -23,7 +23,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     public static readonly FADE_TIME: number = 11;
 
-    public static readonly I_FADE_TIME: number = 1 / InputMode.FADE_TIME;
+    public static readonly I_FADE_TIME: number = javaFloat(1 / InputMode.FADE_TIME);
     public static readonly DONE_DELAY: number = 30;
     public static readonly ARM_DELAY: number = 8;
     public static readonly CONTROLLER_INDEX_LIMIT: number = 16;
@@ -34,7 +34,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
 
     public static readonly INPUT_TITLE: string = "INPUT";
-    public static readonly INPUT_TITLE_X: number = (MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2;
+    public static readonly INPUT_TITLE_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2);
     public static readonly INPUT_TITLE_Y: number = 96;
     public static readonly INPUT_MAPPING_Y: number = 192;
     public static readonly INPUT_MAPPING_ROW_HEIGHT: number = 64;
@@ -58,7 +58,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     static {
         for (let i = 0; i < InputMode.NAMES.length; i++) {
-            InputMode.NAME_XS[i] = (MainConstants.DISPLAY_WIDTH - (InputMode.NAMES[i].length << 5)) / 2;
+            InputMode.NAME_XS[i] = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.NAMES[i].length << 5)) / 2);
         }
     }
 
@@ -624,7 +624,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private getInputMappingX(): number {
-        return this.inputMappingX;
+        return javaFloat(this.inputMappingX);
     }
 
     private refreshInputMappingLines(): void {
@@ -665,7 +665,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private centerStringX(text: string): number {
-        return (MainConstants.DISPLAY_WIDTH - (text.length << 5)) / 2;
+        return javaFloat((MainConstants.DISPLAY_WIDTH - (text.length << 5)) / 2);
     }
 
     public render(gc: GameContainer, g: Graphics): void {

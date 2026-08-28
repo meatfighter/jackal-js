@@ -2,6 +2,8 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SwampMissile } from "./SwampMissile.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class CliffMissileLauncher extends Enemy {
     declare public launchDelay: number;
     declare public ready: boolean;
@@ -20,8 +22,8 @@ export class CliffMissileLauncher extends Enemy {
 
     private __construct_CliffMissileLauncher(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -51,7 +53,7 @@ export class CliffMissileLauncher extends Enemy {
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if ((attackSource == AttackSource.PLAYER_WEAPON || attackSource == AttackSource.TRAVELING_EXPLOSION) && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -63,12 +65,12 @@ export class CliffMissileLauncher extends Enemy {
         if (this.ready) {
             if (this.launchDelay > 0) {
                 this.launchDelay--;
-            } else if (!this.gameMode.isOutsideOfFrame(this.x + 48, this.y + 69)) {
+            } else if (!this.gameMode.isOutsideOfFrame(javaFloat(this.x + 48), javaFloat(this.y + 69))) {
                 this.launchDelay = CliffMissileLauncher.LAUNCH_DELAY;
-                new SwampMissile(this.x + 48, this.y + 69);
+                new SwampMissile(javaFloat(this.x + 48), javaFloat(this.y + 69));
             }
         } else {
-            if (!this.gameMode.isOutsideOfFrame(this.x + 48, this.y + 69)) {
+            if (!this.gameMode.isOutsideOfFrame(javaFloat(this.x + 48), javaFloat(this.y + 69))) {
                 this.ready = true;
             }
         }

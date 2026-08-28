@@ -74,8 +74,8 @@ export class EnemySoldier extends Enemy {
 
     private __construct_EnemySoldier(argCount: number, arg0?: number, arg1?: number, arg2?: EnemySoldierType): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -148,7 +148,7 @@ export class EnemySoldier extends Enemy {
     public static readonly WOBBLES: number[] = javaArray(EnemySoldier.LEG_FRAMES, 0);
     static {
         for (let i = EnemySoldier.LEG_FRAMES - 1; i >= 0; i--) {
-            EnemySoldier.WOBBLES[i] = -EnemySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(EnemySoldier.LEG_FRAMES)));
+            EnemySoldier.WOBBLES[i] = javaFloat(-EnemySoldier.LEG_AMPLITUDE * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(EnemySoldier.LEG_FRAMES))));
         }
     }
 
@@ -189,8 +189,8 @@ export class EnemySoldier extends Enemy {
     }
 
     private computeOrientation(): void {
-        this.wobbleScaleX = Math.abs(this.directionY);
-        this.wobbleScaleY = Math.abs(this.directionX);
+        this.wobbleScaleX = javaFloat(Math.abs(this.directionY));
+        this.wobbleScaleY = javaFloat(Math.abs(this.directionX));
 
         if (this.wobbleScaleY > this.wobbleScaleX) {
             if (this.directionX > 0) {
@@ -208,7 +208,7 @@ export class EnemySoldier extends Enemy {
     }
 
     public getWalkSpeed(): number {
-        return this.inSwamp ? 0.5 * EnemySoldier.WALK_SPEED : EnemySoldier.WALK_SPEED;
+        return javaFloat(this.inSwamp ? javaFloat(0.5 * EnemySoldier.WALK_SPEED) : EnemySoldier.WALK_SPEED);
     }
 
     private targetPlayer(): void {
@@ -216,8 +216,8 @@ export class EnemySoldier extends Enemy {
 
         this.directionX = direction[0];
         this.directionY = direction[1];
-        this.targetVx = this.getWalkSpeed() * direction[0];
-        this.targetVy = this.getWalkSpeed() * direction[1];
+        this.targetVx = javaFloat(this.getWalkSpeed() * direction[0]);
+        this.targetVy = javaFloat(this.getWalkSpeed() * direction[1]);
 
         this.walking = this.main.random.nextInt(EnemySoldier.MAX_WALK_TIME - EnemySoldier.MIN_WALK_TIME) + EnemySoldier.MIN_WALK_TIME;
 
@@ -225,19 +225,19 @@ export class EnemySoldier extends Enemy {
     }
 
     private avoidGettingToCloseToPlayer(): void {
-        let dx = this.player!.x - this.x;
-        let dy = this.player!.y - this.y;
-        let r2 = dx * dx + dy * dy;
-        if (r2 < 16384 && dx * this.directionX + dy * this.directionY > 0) {
+        let dx = javaFloat(this.player!.x - this.x);
+        let dy = javaFloat(this.player!.y - this.y);
+        let r2 = javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy));
+        if (r2 < 16384 && javaFloat(javaFloat(dx * this.directionX) + javaFloat(dy * this.directionY)) > 0) {
             let v = this.main.unitVector;
-            let ir = 1 / javaFloat(Math.sqrt(r2));
-            v[0] = ir * -dx;
-            v[1] = ir * -dy;
-            this.gameMode.rotate(v, this.main.random.nextFloat() * 0.3927 - 0.1963);
+            let ir = javaFloat(1 / javaFloat(Math.sqrt(r2)));
+            v[0] = javaFloat(ir * -dx);
+            v[1] = javaFloat(ir * -dy);
+            this.gameMode.rotate(v, javaFloat(javaFloat(this.main.random.nextFloat() * javaFloat(0.3927)) - javaFloat(0.1963)));
             this.directionX = v[0];
             this.directionY = v[1];
-            this.targetVx = this.getWalkSpeed() * this.directionX;
-            this.targetVy = this.getWalkSpeed() * this.directionY;
+            this.targetVx = javaFloat(this.getWalkSpeed() * this.directionX);
+            this.targetVy = javaFloat(this.getWalkSpeed() * this.directionY);
             this.walking = this.main.random.nextInt(EnemySoldier.MAX_WALK_TIME - EnemySoldier.MIN_WALK_TIME) + EnemySoldier.MIN_WALK_TIME;
             this.computeOrientation();
         }
@@ -247,18 +247,18 @@ export class EnemySoldier extends Enemy {
         let direction = this.gameMode.suggestDirection(this.directionX, this.directionY);
         this.directionX = direction[0];
         this.directionY = direction[1];
-        this.targetVx = this.getWalkSpeed() * direction[0];
-        this.targetVy = this.getWalkSpeed() * direction[1];
+        this.targetVx = javaFloat(this.getWalkSpeed() * direction[0]);
+        this.targetVy = javaFloat(this.getWalkSpeed() * direction[1]);
         this.computeOrientation();
     }
 
     private aim(): void {
-        this.directionX = this.player!.x - this.x;
-        this.directionY = this.player!.y - (this.y - 30);
+        this.directionX = javaFloat(this.player!.x - this.x);
+        this.directionY = javaFloat(this.player!.y - javaFloat(this.y - 30));
         this.computeOrientation();
 
         if (this.aiming > EnemySoldier.AIM_BLINKING) {
-            let r2 = this.directionX * this.directionX + this.directionY * this.directionY;
+            let r2 = javaFloat(javaFloat(this.directionX * this.directionX) + javaFloat(this.directionY * this.directionY));
             if (r2 <= 9216) {
                 if (this.type == EnemySoldierType.WALKER) {
                     this.startSeeking();
@@ -284,18 +284,25 @@ export class EnemySoldier extends Enemy {
     }
 
     private shoot(): void {
-        let imag = 1 / javaFloat(Math.sqrt(this.directionX * this.directionX + this.directionY * this.directionY));
+        let imag = javaFloat(1 / javaFloat(Math.sqrt(javaFloat(javaFloat(this.directionX * this.directionX) + javaFloat(this.directionY * this.directionY)))));
         if (this.fire) {
             new Fire(
                 this.x,
-                this.y - 30,
-                this.directionX * imag,
-                this.directionY * imag,
-                EnemySoldier.TO_DEGREES * javaFloat(Math.atan2(this.directionY, this.directionX)),
+                javaFloat(this.y - 30),
+                javaFloat(this.directionX * imag),
+                javaFloat(this.directionY * imag),
+                javaFloat(EnemySoldier.TO_DEGREES * javaFloat(Math.atan2(this.directionY, this.directionX))),
                 this
             );
         } else {
-            new EnemyBullet(this.x, this.y - 30, this.directionX * imag, this.directionY * imag, EnemySoldier.BULLET_TRAVEL_TIME, true);
+            new EnemyBullet(
+                this.x,
+                javaFloat(this.y - 30),
+                javaFloat(this.directionX * imag),
+                javaFloat(this.directionY * imag),
+                EnemySoldier.BULLET_TRAVEL_TIME,
+                true
+            );
         }
     }
 
@@ -314,7 +321,7 @@ export class EnemySoldier extends Enemy {
 
         this.directionX = -1;
         this.directionY = 0;
-        this.targetVx = -this.getWalkSpeed();
+        this.targetVx = javaFloat(-this.getWalkSpeed());
         this.targetVy = 0;
 
         this.walkSteps = EnemySoldier.MAX_WALK_STEPS;
@@ -330,7 +337,7 @@ export class EnemySoldier extends Enemy {
         this.directionX = 0;
         this.directionY = -1;
         this.targetVx = 0;
-        this.targetVy = -this.getWalkSpeed();
+        this.targetVy = javaFloat(-this.getWalkSpeed());
 
         this.walkSteps = EnemySoldier.MAX_WALK_STEPS;
         this.walking = EnemySoldier.MAX_WALK_TIME;
@@ -347,9 +354,9 @@ export class EnemySoldier extends Enemy {
     private seek(): void {
         if (--this.walking <= 0) {
             if (--this.walkSteps <= 0) {
-                let dx = this.player!.x - this.x;
-                let dy = this.player!.y - this.y;
-                let r2 = dx * dx + dy * dy;
+                let dx = javaFloat(this.player!.x - this.x);
+                let dy = javaFloat(this.player!.y - this.y);
+                let r2 = javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy));
                 if (r2 > 9216) {
                     this.startAiming();
                     return;
@@ -363,17 +370,27 @@ export class EnemySoldier extends Enemy {
 
         this.avoidGettingToCloseToPlayer();
 
-        let nextX = this.x + this.targetVx;
-        let nextY = this.y + this.targetVy;
+        let nextX = javaFloat(this.x + this.targetVx);
+        let nextY = javaFloat(this.y + this.targetVy);
         let walkable = true;
-        if (this.gameMode.isDriveable(nextX - 16, nextY - 6, nextX + 16, nextY + 6)) {
+        if (this.gameMode.isDriveable(javaFloat(nextX - 16), javaFloat(nextY - 6), javaFloat(nextX + 16), javaFloat(nextY + 6))) {
             // avoid bumping into other enemies
             for (let i = this.solids!.size() - 1; i >= 0; i--) {
                 let solidLocal = this.solids!.get(i);
                 if (
                     solidLocal != this &&
-                    solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
-                    !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                    solidLocal.isSolid(
+                        javaFloat(nextX + this.solidX1),
+                        javaFloat(nextY + this.solidY1),
+                        javaFloat(nextX + this.solidX2),
+                        javaFloat(nextY + this.solidY2)
+                    ) &&
+                    !solidLocal.isSolid(
+                        javaFloat(this.x + this.solidX1),
+                        javaFloat(this.y + this.solidY1),
+                        javaFloat(this.x + this.solidX2),
+                        javaFloat(this.y + this.solidY2)
+                    )
                 ) {
                     walkable = false;
                     break;
@@ -393,8 +410,8 @@ export class EnemySoldier extends Enemy {
             } else if (this.legFrames == 13) {
                 this.legIndex = 0;
             }
-            this.wobbleX = this.wobbleScaleX * EnemySoldier.WOBBLES[this.legFrames];
-            this.wobbleY = this.wobbleScaleY * EnemySoldier.WOBBLES[this.legFrames];
+            this.wobbleX = javaFloat(this.wobbleScaleX * EnemySoldier.WOBBLES[this.legFrames]);
+            this.wobbleY = javaFloat(this.wobbleScaleY * EnemySoldier.WOBBLES[this.legFrames]);
             this.legFrames--;
         } else {
             this.walkAtRightAngleToBarrier();
@@ -403,16 +420,26 @@ export class EnemySoldier extends Enemy {
 
     private convey(): void {
         if (this.gameMode.conveyorDelta > 0 && this.gameMode.isConveyor(this.x, this.y)) {
-            let nextY = this.y + this.gameMode.conveyorDelta;
+            let nextY = javaFloat(this.y + this.gameMode.conveyorDelta);
             let walkable = true;
-            if (this.gameMode.isDriveable(this.x - 16, nextY - 6, this.x + 16, nextY + 6)) {
+            if (this.gameMode.isDriveable(javaFloat(this.x - 16), javaFloat(nextY - 6), javaFloat(this.x + 16), javaFloat(nextY + 6))) {
                 // avoid bumping into other enemies
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
-                        solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, this.x + this.solidX2, nextY + this.solidY2) &&
-                        !solidLocal.isSolid(this.x + this.solidX1, this.y + this.solidY1, this.x + this.solidX2, this.y + this.solidY2)
+                        solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(nextY + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(nextY + this.solidY2)
+                        ) &&
+                        !solidLocal.isSolid(
+                            javaFloat(this.x + this.solidX1),
+                            javaFloat(this.y + this.solidY1),
+                            javaFloat(this.x + this.solidX2),
+                            javaFloat(this.y + this.solidY2)
+                        )
                     ) {
                         walkable = false;
                         break;
@@ -484,7 +511,15 @@ export class EnemySoldier extends Enemy {
         if (this.bossHelicopter != null) {
             this.bossHelicopter.soldierKilled();
         }
-        if (this.playSoundOnRemove && !this.gameMode.isOutsideOfFrame(this.x + this.hitX1, this.y + this.hitY1, this.x + this.hitX2, this.y + this.hitY2)) {
+        if (
+            this.playSoundOnRemove &&
+            !this.gameMode.isOutsideOfFrame(
+                javaFloat(this.x + this.hitX1),
+                javaFloat(this.y + this.hitY1),
+                javaFloat(this.x + this.hitX2),
+                javaFloat(this.y + this.hitY2)
+            )
+        ) {
             this.main.playSound(this.main.soldierKilledSound);
         }
     }

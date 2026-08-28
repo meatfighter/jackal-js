@@ -47,8 +47,8 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     private __construct_BossSuperTank(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             this.player = this.gameMode.player;
@@ -74,7 +74,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     public static readonly ACCELERATION_TIME: number = 23;
     public static readonly MAX_SPEED: number = 2.5;
-    public static readonly ACCELERATION: number = BossSuperTank.MAX_SPEED / BossSuperTank.ACCELERATION_TIME;
+    public static readonly ACCELERATION: number = javaFloat(BossSuperTank.MAX_SPEED / BossSuperTank.ACCELERATION_TIME);
     // Assigned once in the static block, matching Java static-final initialization.
     public static ACCELERATION_DISTANCE: number = 0;
 
@@ -82,21 +82,21 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         let vx = 0;
         let x = 0;
         while (vx < BossSuperTank.MAX_SPEED) {
-            vx += BossSuperTank.ACCELERATION;
-            x += vx;
+            vx = javaFloat(vx + BossSuperTank.ACCELERATION);
+            x = javaFloat(x + vx);
         }
         BossSuperTank.ACCELERATION_DISTANCE = x;
     }
 
     public static readonly FIRE_PROBABILITY: number = 0.75;
-    public static readonly TARGET_PLAYER_PROBABILITY: number = 0.1;
+    public static readonly TARGET_PLAYER_PROBABILITY: number = javaFloat(0.1);
 
     public static readonly WHEEL_ANGLE_CONST: number = javaFloat(180 / (Math.PI * 32));
     public static readonly ANGLED_TREAD_ANGLE: number = 30;
     public static readonly ANGLED_TREAD_RADIANS: number = (BossSuperTank.ANGLED_TREAD_ANGLE * Math.PI) / 180;
     public static readonly ANGLED_TREAD_X: number = javaFloat(Math.cos(BossSuperTank.ANGLED_TREAD_RADIANS));
     public static readonly ANGLED_TREAD_Y: number = javaFloat(Math.sin(BossSuperTank.ANGLED_TREAD_RADIANS));
-    public static readonly APPEARING_SCALE: number = 1 / 23;
+    public static readonly APPEARING_SCALE: number = javaFloat(1 / 23);
 
     public static readonly HITS_ORANGE: number = 5;
     public static readonly HITS_RED: number = 10;
@@ -108,7 +108,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     public static readonly EXPLODING_TIME: number = 460;
     public static readonly EXPLODING_FINISHING_TIME: number = 100;
-    public static readonly INV_EXPLODING_TIME: number = 1 / javaFloat(BossSuperTank.EXPLODING_TIME);
+    public static readonly INV_EXPLODING_TIME: number = javaFloat(1 / javaFloat(BossSuperTank.EXPLODING_TIME));
 
     public state: number = BossSuperTank.STATE_APPEARING;
     public appearingDelay: number = 23;
@@ -130,22 +130,22 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     private chooseTarget(): void {
         this.state = BossSuperTank.STATE_ACCELERATING;
-        if (this.main.random.nextFloat() <= BossSuperTank.TARGET_PLAYER_PROBABILITY * this.colorIndex) {
+        if (this.main.random.nextFloat() <= javaFloat(BossSuperTank.TARGET_PLAYER_PROBABILITY * this.colorIndex)) {
             this.targetX = this.player!.x;
         } else {
-            this.targetX = this.gameMode.cameraX + 48 + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH - 96);
+            this.targetX = javaFloat(javaFloat(this.gameMode.cameraX + 48) + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH - 96));
         }
         if (this.targetX < 176) {
             this.targetX = 176;
         } else if (this.targetX > 1872) {
             this.targetX = 1872;
         }
-        this.targetX -= 210;
-        if (Math.abs(this.x - this.targetX) < 3 * BossSuperTank.ACCELERATION_DISTANCE) {
-            if (this.targetX + 210 < 1024) {
-                this.targetX = this.x + 3 * BossSuperTank.ACCELERATION_DISTANCE;
+        this.targetX = javaFloat(this.targetX - 210);
+        if (Math.abs(javaFloat(this.x - this.targetX)) < javaFloat(3 * BossSuperTank.ACCELERATION_DISTANCE)) {
+            if (javaFloat(this.targetX + 210) < 1024) {
+                this.targetX = javaFloat(this.x + javaFloat(3 * BossSuperTank.ACCELERATION_DISTANCE));
             } else {
-                this.targetX = this.x - 3 * BossSuperTank.ACCELERATION_DISTANCE;
+                this.targetX = javaFloat(this.x - javaFloat(3 * BossSuperTank.ACCELERATION_DISTANCE));
             }
         }
         if (this.targetX < this.x) {
@@ -156,21 +156,21 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     }
 
     private move(dx: number): void {
-        this.x += dx;
-        this.wheelAngle += BossSuperTank.WHEEL_ANGLE_CONST * dx;
-        this.treadOffset -= dx;
+        this.x = javaFloat(this.x + dx);
+        this.wheelAngle = javaFloat(this.wheelAngle + javaFloat(BossSuperTank.WHEEL_ANGLE_CONST * dx));
+        this.treadOffset = javaFloat(this.treadOffset - dx);
         while (this.treadOffset < 0) {
-            this.treadOffset += 16;
+            this.treadOffset = javaFloat(this.treadOffset + 16);
         }
         while (this.treadOffset >= 16) {
-            this.treadOffset -= 16;
+            this.treadOffset = javaFloat(this.treadOffset - 16);
         }
     }
 
     private stopMoving(): void {
         this.state = BossSuperTank.STATE_STOPPED;
         if (this.main.random.nextFloat() <= BossSuperTank.FIRE_PROBABILITY) {
-            this.superFire = new SuperFire(this.x + 210, this.y + 314, this);
+            this.superFire = new SuperFire(javaFloat(this.x + 210), javaFloat(this.y + 314), this);
         }
         this.delay = 91;
     }
@@ -186,7 +186,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                 }
                 break;
             case BossSuperTank.STATE_ACCELERATING:
-                this.vx += this.ax;
+                this.vx = javaFloat(this.vx + this.ax);
                 this.move(this.vx);
                 if (this.ax < 0) {
                     if (this.vx <= -BossSuperTank.MAX_SPEED) {
@@ -200,12 +200,12 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                 break;
             case BossSuperTank.STATE_MOVING:
                 this.move(this.vx);
-                if (Math.abs(this.targetX - this.x) <= BossSuperTank.ACCELERATION_DISTANCE) {
+                if (Math.abs(javaFloat(this.targetX - this.x)) <= BossSuperTank.ACCELERATION_DISTANCE) {
                     this.state = BossSuperTank.STATE_DECELERATING;
                 }
                 break;
             case BossSuperTank.STATE_DECELERATING:
-                this.vx -= this.ax;
+                this.vx = javaFloat(this.vx - this.ax);
                 this.move(this.vx);
                 if (this.ax < 0) {
                     if (this.vx >= 0) {
@@ -225,11 +225,14 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
             case BossSuperTank.STATE_EXPLODING:
                 if (--this.delay == 0) {
                     if (this.exploding + 1 < BossSuperTank.EXPLODING_TIME) {
-                        new Explosion(this.x + this.main.random.nextInt(456), this.y + 32 + this.main.random.nextInt(230)).setDamagesEnemies(false);
+                        new Explosion(
+                            javaFloat(this.x + this.main.random.nextInt(456)),
+                            javaFloat(javaFloat(this.y + 32) + this.main.random.nextInt(230))
+                        ).setDamagesEnemies(false);
                     }
                     this.delay = 8;
                 }
-                this.smashed = this.exploding * BossSuperTank.INV_EXPLODING_TIME;
+                this.smashed = javaFloat(this.exploding * BossSuperTank.INV_EXPLODING_TIME);
                 if (++this.exploding == BossSuperTank.EXPLODING_TIME) {
                     this.state = BossSuperTank.STATE_EXPLODING_FINISHING;
                     this.exploding = BossSuperTank.EXPLODING_FINISHING_TIME;
@@ -298,7 +301,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
             if (this.hits == BossSuperTank.HITS_EXPLODE) {
                 this.kaboom();
             } else {
-                this.displayHit(0.5 * (x1 + x2), 0.5 * (y1 + y2));
+                this.displayHit(javaFloat(0.5 * javaFloat(x1 + x2)), javaFloat(0.5 * javaFloat(y1 + y2)));
                 if (this.hits == BossSuperTank.HITS_ORANGE) {
                     this.colorIndex = 1;
                 } else if (this.hits == BossSuperTank.HITS_RED) {

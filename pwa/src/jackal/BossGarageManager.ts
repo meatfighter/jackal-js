@@ -1,4 +1,4 @@
-import { ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, ArrayList } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { BossGarage } from "./BossGarage.js";
 import { GameElement } from "./GameElement.js";
@@ -56,16 +56,16 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
 
         this.garages = new ArrayList<BossGarage>();
 
-        this.garages.add(new BossGarage(14 * 32, 9 * 32, this));
-        this.garages.add(new BossGarage(20 * 32, 9 * 32, this));
-        this.garages.add(new BossGarage(46 * 32, 9 * 32, this));
-        this.garages.add(new BossGarage(52 * 32, 9 * 32, this));
+        this.garages.add(new BossGarage(javaFloat(14 * 32), javaFloat(9 * 32), this));
+        this.garages.add(new BossGarage(javaFloat(20 * 32), javaFloat(9 * 32), this));
+        this.garages.add(new BossGarage(javaFloat(46 * 32), javaFloat(9 * 32), this));
+        this.garages.add(new BossGarage(javaFloat(52 * 32), javaFloat(9 * 32), this));
 
-        new RotatingGun(4.5 * 32, 5 * 32 + 4, this, false);
-        new RotatingGun(9.5 * 32, 5 * 32 + 4, this, false);
-        new RotatingGun(28.5 * 32, 5 * 32 + 4, this, true);
-        new RotatingGun(41.5 * 32, 5 * 32 + 4, this, true);
-        new RotatingGun(60.5 * 32, 5 * 32 + 4, this, false);
+        new RotatingGun(javaFloat(4.5 * 32), javaFloat(5 * 32 + 4), this, false);
+        new RotatingGun(javaFloat(9.5 * 32), javaFloat(5 * 32 + 4), this, false);
+        new RotatingGun(javaFloat(28.5 * 32), javaFloat(5 * 32 + 4), this, true);
+        new RotatingGun(javaFloat(41.5 * 32), javaFloat(5 * 32 + 4), this, true);
+        new RotatingGun(javaFloat(60.5 * 32), javaFloat(5 * 32 + 4), this, false);
 
         this.layer = 0;
     }
@@ -91,7 +91,7 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
         this.garageCount--;
         if (this.garageCount == 0) {
             this.sparking = false;
-            new Gate(32 * 32, 6 * 32, this);
+            new Gate(javaFloat(32 * 32), javaFloat(6 * 32), this);
         }
     }
 
@@ -108,7 +108,7 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
             let bossGarage = null;
             while (true) {
                 let b = this.garages!.get(this.garageIndex++);
-                if (!b.removeFlag && b.x + 128 > this.gameMode.cameraX && b.x < this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
+                if (!b.removeFlag && javaFloat(b.x + 128) > this.gameMode.cameraX && b.x < javaFloat(this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH)) {
                     bossGarage = b;
                     break;
                 } else if (this.garageIndex == 4) {
@@ -127,7 +127,7 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
         }
 
         if (this.sparking) {
-            this.sparkX += BossGarageManager.SPARK_SPEED;
+            this.sparkX = javaFloat(this.sparkX + BossGarageManager.SPARK_SPEED);
             switch (this.sparkState) {
                 case 0:
                     if (this.sparkX > 32) {

@@ -2,6 +2,8 @@ import { Enemy } from "./Enemy.js";
 import { EnemySoldier } from "./EnemySoldier.js";
 import { EnemySoldierType } from "./EnemySoldierType.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class TroopsTruck extends Enemy {
     declare public player: Player | null;
     declare public troopsDelay: number;
@@ -23,8 +25,8 @@ export class TroopsTruck extends Enemy {
 
     private __construct_TroopsTruck(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -82,12 +84,12 @@ export class TroopsTruck extends Enemy {
     public update(): void {
         switch (this.state) {
             case TroopsTruck.STATE_PAUSED:
-                if (this.player!.y - this.y <= TroopsTruck.PLAYER_DISTANCE) {
+                if (javaFloat(this.player!.y - this.y) <= TroopsTruck.PLAYER_DISTANCE) {
                     this.state = TroopsTruck.STATE_MOVING;
                 }
                 break;
             case TroopsTruck.STATE_MOVING:
-                this.x += TroopsTruck.SPEED;
+                this.x = javaFloat(this.x + TroopsTruck.SPEED);
                 if (--this.traveling == 0) {
                     this.state = TroopsTruck.STATE_RELEASING_TROOPS;
                 }
@@ -97,7 +99,7 @@ export class TroopsTruck extends Enemy {
                     this.troopsDelay = TroopsTruck.TROOPS_DELAY;
                     if (this.troops > 0) {
                         this.troops--;
-                        new EnemySoldier(this.x + 16, this.y + 66, EnemySoldierType.TROOPS_TRUCK);
+                        new EnemySoldier(javaFloat(this.x + 16), javaFloat(this.y + 66), EnemySoldierType.TROOPS_TRUCK);
                     }
                 }
                 break;

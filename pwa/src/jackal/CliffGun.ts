@@ -26,8 +26,8 @@ export class CliffGun extends Enemy {
 
     private __construct_CliffGun(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -112,7 +112,7 @@ export class CliffGun extends Enemy {
                 break;
             case CliffGun.STATE_VISIBLE_1:
                 if (--this.delay == 0) {
-                    if (this.player!.y - this.y < CliffGun.DEACTIVATE_DISTANCE) {
+                    if (javaFloat(this.player!.y - this.y) < CliffGun.DEACTIVATE_DISTANCE) {
                         this.state = CliffGun.STATE_VISIBLE_2;
                         this.delay = CliffGun.DEACTIVE_TIME;
                     } else {
@@ -157,13 +157,13 @@ export class CliffGun extends Enemy {
     private shoot(): void {
         this.delay = CliffGun.RECOIL_TIME - 1;
         this.shots--;
-        let X = this.x + 48;
-        let Y = this.y + 36;
-        let dx = this.player!.x - X;
-        let dy = this.player!.y - Y;
-        let iMag = CliffGun.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
-        dx *= iMag;
-        dy *= iMag;
+        let X = javaFloat(this.x + 48);
+        let Y = javaFloat(this.y + 36);
+        let dx = javaFloat(this.player!.x - X);
+        let dy = javaFloat(this.player!.y - Y);
+        let iMag = javaFloat(CliffGun.BULLET_SPEED / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
+        dx = javaFloat(dx * iMag);
+        dy = javaFloat(dy * iMag);
         new EnemyBullet(X, Y, dx, dy, CliffGun.BULLET_TRAVEL_TIME);
     }
 
@@ -175,7 +175,7 @@ export class CliffGun extends Enemy {
         }
         if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {

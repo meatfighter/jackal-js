@@ -111,7 +111,7 @@ The key distinction is that **development/component output is not canonical depl
 | Java semantic helpers        | `pwa/src/java/`                                                                        | bundled PWA JavaScript                     |
 | Save/continue format         | `pwa/src/jackal/persistence/`                                                          | browser save state                         |
 | Static PWA/offline behavior  | `pwa/public/`, `pwa/vite.config.ts`                                                    | generated PWA release                      |
-| About page                 | `about/`                                                                               | root of assembled release                  |
+| About page                   | `about/`                                                                               | root of assembled release                  |
 | Desktop Java source          | `desktop/src/`                                                                         | `desktop/target/` and desktop ZIP          |
 | Desktop runtime contract     | `desktop/RUNTIME_DEPENDENCIES.md`, `desktop/lib/`, `desktop/natives/` in the full repo | packaged runtime files                     |
 | Release version              | `version.json`                                                                         | generated build identity/release filenames |
@@ -200,14 +200,14 @@ Production provenance depends on Git. The normal production build requires a cle
 
 | Path                          | Purpose                                                                                                         |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `about/`                      | Source template/assets for the about page.                                                             |
+| `about/`                      | Source template/assets for the about page.                                                                      |
 | `pwa/`                        | TypeScript browser/PWA implementation.                                                                          |
 | `pwa/src/app/`                | Browser shell, lifecycle, input/settings persistence, resource inventory, service-worker integration.           |
-| `pwa/src/jackal/`             | Game port port.                                                                                      |
+| `pwa/src/jackal/`             | Game port port.                                                                                                 |
 | `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store.                             |
-| `pwa/src/java/`               | Compatibility helpers used to preserve selected Java semantics.                                           |
+| `pwa/src/java/`               | Compatibility helpers used to preserve selected Java semantics.                                                 |
 | `pwa/public/`                 | Manifest, service-worker source, notices, icons, and game resources.                                            |
-| `desktop/`                    | Java implementation plus desktop packaging/runtime material.                                          |
+| `desktop/`                    | Java implementation plus desktop packaging/runtime material.                                                    |
 | `scripts/`                    | Build, verification, versioning, source-provenance, path-safety, locking, ZIP, promotion, and recovery tooling. |
 | `version.json`                | Tracked application version/build-stamp source.                                                                 |
 | `package.json`                | Root command surface and JavaScript dependencies.                                                               |
@@ -311,6 +311,7 @@ Important pieces are:
 - `GameStateSchema.ts` — serialized-format/version constants;
 - `GameStateSnapshot.ts` — typed snapshot structures;
 - `GameElementTypeRegistry.ts` — stable serialized IDs for entity types;
+- `JavaFloatState.ts` — generated Java `float` field map used to normalize restored saves;
 - `JackalGameStateSerializer.ts` — converts live state to/from snapshots;
 - `JackalGameStateStore.ts` — local-storage persistence/validation.
 
@@ -617,21 +618,26 @@ When working in translated gameplay files:
 
 Two Java patterns need special care in TypeScript/JavaScript:
 
-- **field hiding**: Java can hide a superclass field with a subclass field of the same name, but JavaScript has one property namespace. 
+- **field hiding**: Java can hide a superclass field with a subclass field of the same name, but JavaScript has one property namespace.
 - **translated private/runtime names**: avoid subclass fields that collide with library superclass internals. For example, the title-screen image is `Main.titleImage` so it does not collide with Slick's `BasicGame` title string.
+- **Java float boundaries**: Java `float` stores and operations round to IEEE-754 binary32, while JavaScript `number` is binary64. Gameplay code uses `javaFloat(...)` where the original Java source stores, passes, returns, or operates on `float` state that can affect future mechanics.
 
 If the policy evolves, prefer a stricter allowlist or explicit exception file rather than weakening the check.
 
 `scripts/test-java-translation-parity-guardrails.mjs` protects a few translated Java edge cases that are easy to accidentally "simplify" into different JavaScript behavior, including Java field hiding, boolean XOR translation, constructor overload signatures, and `useDefineForClassFields: false`.
 
+Java-float parity is checked by generated metadata under `scripts/java-float-parity/`. The metadata is derived from `desktop/src/jackal`, and the checkers verify TypeScript storage/operation boundaries plus the generated save-restore normalization table. The generated `JavaFloatState.ts` map runs only while restoring saved state, so legacy binary64 browser values are rounded back to Java-compatible float state before gameplay resumes.
+
 Additional parity and performance guardrails are available through:
 
 ```sh
 npm run test:parity
+npm run check:java-float-parity
 npm run benchmark:directions
+npm run benchmark:float-parity
 ```
 
-`test:parity` runs the Java translation guardrails, JavaRuntime actual-use contracts, Java/TypeScript structural parity checks, a Java-vs-TypeScript JeepYeah mechanics differential, direction-cache parity checks, and persistence field coverage. The benchmark compares the PWA's predecoded direction cache with Java-style per-lookup packed-long extraction; it is informational and is intentionally not a CI timing threshold.
+`test:parity` runs the Java translation guardrails, JavaRuntime actual-use contracts, Java/TypeScript structural parity checks, Java-vs-TypeScript mechanics differentials, direction-cache parity checks, Java-float parity tests, and persistence field coverage. The benchmarks are informational and are intentionally not CI timing thresholds.
 
 ---
 
@@ -1098,6 +1104,7 @@ For gameplay changes:
 - test nearby systems that depend on it;
 - compare TypeScript with Java when parity matters;
 - run `npm run test:parity` when translated Java behavior, persistence, or hot-path direction lookup may be affected;
+- run `npm run check:java-float-parity` when Java `float` storage, math, constructor parameters, or save-state normalization may be affected;
 - broaden testing for timing/input changes.
 
 ---
@@ -1175,31 +1182,33 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 
 ## Useful Commands
 
-| Command                       | Purpose                                                            |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `npm run dev`                 | Start local PWA development server.                                |
-| `npm run clean`               | Remove/recreate managed canonical `dist/` output.                  |
-| `npm test`                    | Run Node test suite.                                               |
-| `npm run format`              | Apply Prettier.                                                    |
-| `npm run format:check`        | Check formatting.                                                  |
-| `npm run lint`                | Run ESLint.                                                        |
-| `npm run typecheck`           | Run TypeScript compiler without emitting.                          |
-| `npm run check:ts-nocheck`    | Enforce the zero-`@ts-nocheck` policy.                             |
-| `npm run check:explicit-any`  | Enforce the zero explicit-TypeScript-`any` policy.                 |
-| `npm run verify`              | Run the normal source-quality gate.                                |
-| `npm run build:pwa`           | Build/verify PWA component output.                                 |
-| `npm run build:web`           | Build verified about + PWA + desktop ZIP component output.         |
-| `npm run build:about`         | Build the about-page component.                                    |
-| `npm run build:desktop`       | Build desktop JAR/ZIP.                                             |
-| `npm run verify:desktop`      | Verify generated desktop ZIP.                                      |
-| `npm run release:desktop`     | Stage a verified standalone desktop ZIP.                           |
-| `npm run run:desktop`         | Run desktop Java build.                                            |
-| **`npm run build`**           | **Build, verify, and promote full production release to `dist/`.** |
-| `npm run verify:release`      | Verify promoted release manifest/artifacts.                        |
-| `npm run verify:pwa-precache` | Verify PWA precache/relocation behavior.                           |
-| `npm run preview:pwa`         | Preview PWA build configuration.                                   |
-| `npm run preview:dist`        | Serve promoted `dist/` locally.                                    |
-| `npm run stamp`               | Intentionally update tracked `version.json` build stamp.           |
+| Command                           | Purpose                                                                                         |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Start local PWA development server.                                                             |
+| `npm run clean`                   | Remove/recreate managed canonical `dist/` output.                                               |
+| `npm test`                        | Run Node test suite.                                                                            |
+| `npm run format`                  | Apply Prettier.                                                                                 |
+| `npm run format:check`            | Check formatting.                                                                               |
+| `npm run lint`                    | Run ESLint.                                                                                     |
+| `npm run typecheck`               | Run TypeScript compiler without emitting.                                                       |
+| `npm run check:ts-nocheck`        | Enforce the zero-`@ts-nocheck` policy.                                                          |
+| `npm run check:explicit-any`      | Enforce the zero explicit-TypeScript-`any` policy.                                              |
+| `npm run check:java-float-parity` | Verify Java `float` metadata, storage boundaries, operation boundaries, and save normalization. |
+| `npm run verify`                  | Run the normal source-quality gate.                                                             |
+| `npm run build:pwa`               | Build/verify PWA component output.                                                              |
+| `npm run build:web`               | Build verified about + PWA + desktop ZIP component output.                                      |
+| `npm run build:about`             | Build the about-page component.                                                                 |
+| `npm run build:desktop`           | Build desktop JAR/ZIP.                                                                          |
+| `npm run verify:desktop`          | Verify generated desktop ZIP.                                                                   |
+| `npm run release:desktop`         | Stage a verified standalone desktop ZIP.                                                        |
+| `npm run run:desktop`             | Run desktop Java build.                                                                         |
+| **`npm run build`**               | **Build, verify, and promote full production release to `dist/`.**                              |
+| `npm run verify:release`          | Verify promoted release manifest/artifacts.                                                     |
+| `npm run verify:pwa-precache`     | Verify PWA precache/relocation behavior.                                                        |
+| `npm run benchmark:float-parity`  | Run an informational Java-float parity microbenchmark.                                          |
+| `npm run preview:pwa`             | Preview PWA build configuration.                                                                |
+| `npm run preview:dist`            | Serve promoted `dist/` locally.                                                                 |
+| `npm run stamp`                   | Intentionally update tracked `version.json` build stamp.                                        |
 
 ---
 
@@ -1236,6 +1245,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | Java/TypeScript structural parity     | `scripts/test-java-ts-structural-parity.mjs`, `scripts/java-ts-parity-exceptions.json` |
 | JavaRuntime usage contracts           | `scripts/test-java-runtime-jackal-contracts.mjs`                                       |
 | Mechanics differential testing        | `scripts/test-java-ts-mechanics-differential.mjs`                                      |
+| Java-float parity tooling             | `scripts/check-java-float-parity.mjs`, `scripts/java-float-parity/`                    |
 | Direction-cache parity/benchmark      | `scripts/test-direction-cache-parity.mjs`, `scripts/benchmark-direction-cache.mjs`     |
 | Persistence field coverage            | `scripts/test-persistence-parity-coverage.mjs`                                         |
 | Third-party notices/source            | root/PWA notices plus desktop license/source material                                  |

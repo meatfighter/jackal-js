@@ -82,7 +82,7 @@ export class FlashingSkull extends GameElement {
         [1024, 896, 306]
     ];
 
-    public static readonly INV_FADE_TIME: number = 1 / javaFloat(FlashingSkull.FADE_TIME);
+    public static readonly INV_FADE_TIME: number = javaFloat(1 / javaFloat(FlashingSkull.FADE_TIME));
 
     public state: number = FlashingSkull.STATE_FLASHING;
     public delay: number = FlashingSkull.FLASHING_TIME;
@@ -101,7 +101,7 @@ export class FlashingSkull extends GameElement {
                 }
                 break;
             case FlashingSkull.STATE_FADING:
-                this.alpha = 1 - FlashingSkull.INV_FADE_TIME * this.delay;
+                this.alpha = javaFloat(1 - javaFloat(FlashingSkull.INV_FADE_TIME * this.delay));
                 if (--this.delay == 0) {
                     this.state = FlashingSkull.STATE_PAUSED;
                 }

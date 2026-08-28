@@ -1,6 +1,8 @@
 import { GameElement } from "./GameElement.js";
 import { Player } from "./Player.js";
 import type { Chinook } from "./Chinook.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class IntroPlayer extends GameElement {
     declare public chinook: Chinook | null;
 
@@ -20,8 +22,8 @@ export class IntroPlayer extends GameElement {
 
     private __construct_IntroPlayer(argCount: number, arg0?: number, arg1?: number, arg2?: Chinook): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let chinookLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -52,8 +54,8 @@ export class IntroPlayer extends GameElement {
     public update(): void {
         switch (this.state) {
             case IntroPlayer.STATE_DIAGONAL:
-                this.x -= Player.SPEED;
-                this.y += Player.SPEED;
+                this.x = javaFloat(this.x - Player.SPEED);
+                this.y = javaFloat(this.y + Player.SPEED);
                 if (--this.delay == 0) {
                     this.state = IntroPlayer.STATE_REVERSE;
                     this.delay = IntroPlayer.REVERSE_TIME;
@@ -61,7 +63,7 @@ export class IntroPlayer extends GameElement {
                 break;
             case IntroPlayer.STATE_REVERSE:
                 if (this.angle > -90) {
-                    this.angle -= Player.ANGLE_VELOCITY;
+                    this.angle = javaFloat(this.angle - Player.ANGLE_VELOCITY);
                 } else {
                     this.angle = -90;
                 }

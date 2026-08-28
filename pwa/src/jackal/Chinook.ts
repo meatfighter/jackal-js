@@ -47,18 +47,18 @@ export class Chinook extends GameElement {
     public static readonly DIAGONAL_TIME: number = 91;
 
     public static readonly DT: number = javaFloat(Math.PI / 2);
-    public static readonly AT: number = (2 * Chinook.DT) / (Chinook.FOWARD_TIME * Chinook.FOWARD_TIME);
-    public static readonly VT0: number = Chinook.AT * Chinook.FOWARD_TIME;
+    public static readonly AT: number = javaFloat(javaFloat(2 * Chinook.DT) / (Chinook.FOWARD_TIME * Chinook.FOWARD_TIME));
+    public static readonly VT0: number = javaFloat(Chinook.AT * Chinook.FOWARD_TIME);
 
     public static readonly Z1: number = 1;
     public static readonly SCALE_1: number = 10;
-    public static readonly Z0: number = (Chinook.SCALE_1 * Chinook.Z1) / (Chinook.SCALE_1 - 1);
+    public static readonly Z0: number = javaFloat(javaFloat(Chinook.SCALE_1 * Chinook.Z1) / javaFloat(Chinook.SCALE_1 - 1));
 
-    public rotorAngle: number = 90 + Chinook.TO_DEGREES * Chinook.DT;
+    public rotorAngle: number = javaFloat(90 + javaFloat(Chinook.TO_DEGREES * Chinook.DT));
     public z: number = 1;
     public state: number = Chinook.STATE_FOWARDS;
-    public vt: number = Chinook.VT0;
-    public t: number = Chinook.DT;
+    public vt: number = javaFloat(Chinook.VT0);
+    public t: number = javaFloat(Chinook.DT);
 
     public init(): void {
         this.layer = 7;
@@ -74,16 +74,16 @@ export class Chinook extends GameElement {
     public update(): void {
         switch (this.state) {
             case Chinook.STATE_FOWARDS:
-                this.vt -= Chinook.AT;
+                this.vt = javaFloat(this.vt - Chinook.AT);
                 if (this.vt >= 0) {
-                    this.angle = 90 + Chinook.TO_DEGREES * this.t;
-                    this.z = (Chinook.PI - this.t) * Chinook.IPI2;
-                    this.t += this.vt;
-                    this.x = 1540 + 1024 * javaFloat(Math.cos(this.t));
-                    this.y = 10780 + 1024 * javaFloat(Math.sin(this.t));
+                    this.angle = javaFloat(90 + javaFloat(Chinook.TO_DEGREES * this.t));
+                    this.z = javaFloat(javaFloat(Chinook.PI - this.t) * Chinook.IPI2);
+                    this.t = javaFloat(this.t + this.vt);
+                    this.x = javaFloat(1540 + javaFloat(1024 * javaFloat(Math.cos(this.t))));
+                    this.y = javaFloat(10780 + javaFloat(1024 * javaFloat(Math.sin(this.t))));
                 } else {
                     this.state = Chinook.STATE_UNLOADING;
-                    this.introPlayer = new IntroPlayer(this.x, this.y + 102, this);
+                    this.introPlayer = new IntroPlayer(this.x, javaFloat(this.y + 102), this);
                 }
                 this.main.playSoundIfNotPlaying(this.main.helicopterSound, 0.5);
                 break;
@@ -91,17 +91,17 @@ export class Chinook extends GameElement {
                 this.main.playSoundIfNotPlaying(this.main.helicopterSound, 0.5);
                 break;
             case Chinook.STATE_AWAY:
-                this.vt += Chinook.AT;
-                this.angle = Chinook.TO_DEGREES * this.t - 90;
-                this.z = -this.t * Chinook.IPI2;
-                this.t -= this.vt;
-                this.x = this.X + 1024 * javaFloat(Math.cos(this.t));
-                this.y = this.Y + 1024 * javaFloat(Math.sin(this.t));
+                this.vt = javaFloat(this.vt + Chinook.AT);
+                this.angle = javaFloat(javaFloat(Chinook.TO_DEGREES * this.t) - 90);
+                this.z = javaFloat(-this.t * Chinook.IPI2);
+                this.t = javaFloat(this.t - this.vt);
+                this.x = javaFloat(this.X + javaFloat(1024 * javaFloat(Math.cos(this.t))));
+                this.y = javaFloat(this.Y + javaFloat(1024 * javaFloat(Math.sin(this.t))));
                 if (this.angle < -128) {
                     this.remove();
                     this.createPlayer();
                 } else {
-                    this.main.playSoundIfNotPlaying(this.main.helicopterSound, 0.5 + (this.angle + 90) / 76);
+                    this.main.playSoundIfNotPlaying(this.main.helicopterSound, javaFloat(0.5 + javaFloat(javaFloat(this.angle + 90) / 76)));
                 }
                 break;
         }
@@ -119,7 +119,7 @@ export class Chinook extends GameElement {
 
     public unloadCompleted(): void {
         this.state = Chinook.STATE_AWAY;
-        this.X = this.x - 1024;
+        this.X = javaFloat(this.x - 1024);
         this.Y = this.y;
         this.vt = 0;
         this.t = 0;

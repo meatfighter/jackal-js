@@ -2,6 +2,8 @@ import type { GameContainer, Music } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
 import { BossGarage } from "../BossGarage.js";
 import { EnemyBullet } from "../EnemyBullet.js";
+import { Explosion } from "../Explosion.js";
+import { Fire } from "../Fire.js";
 import { FloorGun } from "../FloorGun.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
 import type { Enemy } from "../Enemy.js";
@@ -64,6 +66,21 @@ import {
     type GameElementConstructor,
     type GameElementTypeId
 } from "./GameElementTypeRegistry.js";
+import {
+    GAME_ELEMENT_JAVA_FLOAT_FIELDS,
+    GAME_MODE_JAVA_FLOAT_FIELDS,
+    JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS,
+    JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS,
+    JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS,
+    JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS,
+    JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS,
+    MAIN_JAVA_FLOAT_FIELDS,
+    MENU_JAVA_FLOAT_FIELDS,
+    PLAYER_JAVA_FLOAT_FIELDS,
+    STANDALONE_MODE_JAVA_FLOAT_FIELDS,
+    normalizeJavaFloatFields,
+    type JavaFloatStateSpec
+} from "./JavaFloatState.js";
 type EntityContext = {
     main: Main;
     gameMode: GameMode | null;
@@ -738,12 +755,12 @@ export class JackalGameStateSerializer {
             audioState: snapshot.audioState
         };
 
-        this.decodeFieldsInto(main, snapshot.mainFields, context);
+        this.decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = this.restoreRandom(snapshot.random);
         this.restoreKonamiCode(main, snapshot, context);
 
-        this.decodeFieldsInto(gameMode, snapshot.gameMode.fields, context);
-        this.decodeFieldsInto(player, snapshot.playerFields, context);
+        this.decodeFieldsInto(gameMode, snapshot.gameMode.fields, context, GAME_MODE_JAVA_FLOAT_FIELDS);
+        this.decodeFieldsInto(player, snapshot.playerFields, context, PLAYER_JAVA_FLOAT_FIELDS);
         this.restoreBackPointers(main, gameMode, player, gc);
 
         for (const entitySnapshot of snapshot.gameMode.entities) {
@@ -751,7 +768,8 @@ export class JackalGameStateSerializer {
             if (entity === undefined) {
                 throw new Error(`Missing restored entity ${entitySnapshot.id}.`);
             }
-            this.decodeFieldsInto(entity, entitySnapshot.fields, context);
+            this.decodeFieldsInto(entity, entitySnapshot.fields, context, GAME_ELEMENT_JAVA_FLOAT_FIELDS[entitySnapshot.type]);
+            this.normalizeTranslatedEntityFields(entity);
             this.restoreEntityRuntimePointers(entity, main, gameMode);
         }
 
@@ -780,15 +798,15 @@ export class JackalGameStateSerializer {
             audioState: snapshot.audioState
         };
 
-        this.decodeFieldsInto(main, snapshot.mainFields, context);
+        this.decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = this.restoreRandom(snapshot.random);
         this.restoreKonamiCode(main, snapshot, context);
 
         const mode = this.createStandaloneMode(snapshot.modeId);
         mode.init(main, gc);
-        this.decodeFieldsInto(main, snapshot.mainFields, context);
+        this.decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = this.restoreRandom(snapshot.random);
-        this.decodeFieldsInto(mode, snapshot.modeFields, context);
+        this.decodeFieldsInto(mode, snapshot.modeFields, context, STANDALONE_MODE_JAVA_FLOAT_FIELDS[snapshot.modeId] ?? []);
         this.restoreModeRuntimePointers(mode, main, gc);
         this.restoreModeExtraSnapshot(mode, snapshot.modeExtra, context);
 
@@ -981,11 +999,11 @@ export class JackalGameStateSerializer {
         const bullets: EncodedRecord[] = [];
         if (mutableMode.bullets !== null) {
             for (let i = 0; i < mutableMode.bullets.size(); i++) {
-                bullets.push(this.encodeNamedFields(mutableMode.bullets.get(i), JEEP_YEAH_BULLET_FIELD_NAMES, context));
+                bullets.push(this.encodeLegacyJeepYeahFields(mutableMode.bullets.get(i), JEEP_YEAH_BULLET_FIELD_NAMES, context));
             }
         }
         return {
-            explosion: this.encodeNullableNamedFields(mutableMode.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, context),
+            explosion: this.encodeNullableLegacyJeepYeahFields(mutableMode.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, context),
             leftPlane: this.encodeNullableNamedFields(mutableMode.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
             rightPlane: this.encodeNullableNamedFields(mutableMode.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
             fireLeft: this.encodeNullableNamedFields(mutableMode.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES, context),
@@ -1022,7 +1040,7 @@ export class JackalGameStateSerializer {
         if (mutableMode.menu === null) {
             mutableMode.menu = Object.create(Menu.prototype);
         }
-        this.decodeFieldsInto(mutableMode.menu!, snapshot.fields, context);
+        this.decodeFieldsInto(mutableMode.menu!, snapshot.fields, context, MENU_JAVA_FLOAT_FIELDS);
         this.restoreMenuRuntimePointers(mutableMode.menu!, context.main, mode);
     }
 
@@ -1052,25 +1070,60 @@ export class JackalGameStateSerializer {
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
         const mutableMode = mode;
-        mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context)!;
-        mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context)!;
-        mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context)!;
-        mutableMode.fireLeft = this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context)!;
-        mutableMode.fireRight = this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context)!;
+        mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context, JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS)!;
+        this.normalizeLegacyJeepYeahRemoval(mutableMode.explosion);
+        mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS)!;
+        mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS)!;
+        mutableMode.fireLeft = this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context, JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS)!;
+        mutableMode.fireRight = this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context, JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS)!;
         mutableMode.bullets = new ArrayList<JeepYeahBullet>(snapshot.bullets.length);
         for (const bulletSnapshot of snapshot.bullets) {
             const bullet = Object.create(JeepYeahBullet.prototype) as JeepYeahBullet;
-            this.decodeFieldsInto(bullet, bulletSnapshot, context);
+            this.decodeFieldsInto(bullet, bulletSnapshot, context, JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS);
+            this.normalizeLegacyJeepYeahRemoval(bullet);
             mutableMode.bullets.add(bullet);
         }
     }
 
-    private restoreNullableTypedRecord<T extends object>(constructor: { prototype: T }, snapshot: EncodedRecord | null, context: RestoreContext): T | null {
+    /**
+     * Java lets Fire/Explosion hide GameElement.enemy:boolean with Enemy enemy.
+     * JavaScript has one property namespace, so the translated reference is sourceEnemy.
+     * Also migrates snapshots written before the two Java fields were separated.
+     */
+    private normalizeTranslatedEntityFields(entity: object): void {
+        if (!(entity instanceof Fire) && !(entity instanceof Explosion)) {
+            return;
+        }
+
+        const mutableEntity = entity as { enemy?: unknown; sourceEnemy?: unknown };
+        if (!Object.prototype.hasOwnProperty.call(mutableEntity, "sourceEnemy")) {
+            mutableEntity.sourceEnemy = mutableEntity.enemy !== null && typeof mutableEntity.enemy === "object" ? mutableEntity.enemy : null;
+        }
+        mutableEntity.enemy = false;
+    }
+
+    /** Migrates JeepYeah snapshots produced by the old accidental removeFlag translation. */
+    private normalizeLegacyJeepYeahRemoval(value: { remove: boolean; removeFlag?: unknown } | null): void {
+        if (value === null) {
+            return;
+        }
+        if (value.removeFlag === true) {
+            value.remove = true;
+        }
+        delete value.removeFlag;
+    }
+
+    private restoreNullableTypedRecord<T extends object>(
+        constructor: { prototype: T },
+        snapshot: EncodedRecord | null,
+        context: RestoreContext,
+        javaFloatFields: JavaFloatStateSpec
+    ): T | null {
         if (snapshot === null) {
             return null;
         }
         const value = Object.create(constructor.prototype) as T;
-        this.decodeFieldsInto(value, snapshot, context);
+        this.decodeFieldsInto(value, snapshot, context, javaFloatFields);
         return value;
     }
 
@@ -1118,7 +1171,7 @@ export class JackalGameStateSerializer {
         if (id === undefined) {
             throw new Error(`Unregistered Jackal entity: ${type}`);
         }
-        const fields = this.encodeObjectFields(entity, context);
+        const fields = this.encodeEntityFields(entity, context);
         this.encodeEntityRuntimeFields(entity, fields, context);
         return {
             id,
@@ -1343,6 +1396,31 @@ export class JackalGameStateSerializer {
         return record;
     }
 
+    /**
+     * Keeps the persisted Fire/Explosion shape compatible with releases from before
+     * the two Java `enemy` fields were separated in TypeScript. Old and new readers
+     * therefore see the Enemy reference under the legacy `enemy` key.
+     */
+    private encodeEntityFields(entity: GameElement, context: EntityContext): EncodedRecord {
+        const record = this.encodeObjectFields(entity, context);
+        if (entity instanceof Fire || entity instanceof Explosion) {
+            record.enemy = this.encodeValue(entity.sourceEnemy, context);
+            delete record.sourceEnemy;
+        }
+        return record;
+    }
+
+    /** Writes the old removeFlag alias so a rolled-back release can read new saves. */
+    private encodeLegacyJeepYeahFields(source: JeepYeahBullet | JeepYeahExplosion, names: string[], context: EntityContext): EncodedRecord {
+        const record = this.encodeNamedFields(source, names, context);
+        record.removeFlag = this.encodeValue(source.remove, context);
+        return record;
+    }
+
+    private encodeNullableLegacyJeepYeahFields(source: JeepYeahExplosion | null, names: string[], context: EntityContext): EncodedRecord | null {
+        return source === null ? null : this.encodeLegacyJeepYeahFields(source, names, context);
+    }
+
     private encodeValue(value: unknown, context: EntityContext): EncodedValue {
         if (typeof value === "number") {
             if (Number.isFinite(value)) {
@@ -1391,10 +1469,11 @@ export class JackalGameStateSerializer {
         return null;
     }
 
-    private decodeFieldsInto(target: object, fields: EncodedRecord, context: RestoreContext): void {
+    private decodeFieldsInto(target: object, fields: EncodedRecord, context: RestoreContext, javaFloatFields: JavaFloatStateSpec = []): void {
         for (const [key, value] of Object.entries(fields)) {
             (target as Record<string, unknown>)[key] = this.decodeValue(value, context);
         }
+        normalizeJavaFloatFields(target, javaFloatFields);
     }
 
     private decodeValue(value: EncodedValue, context: RestoreContext): unknown {
@@ -1472,9 +1551,8 @@ export class JackalGameStateSerializer {
         if (song === null) {
             return null;
         }
-        const songs = main as unknown as Record<string, Song | null | undefined>;
         for (const id of SONG_IDS) {
-            if (songs[id] === song) {
+            if ((main as unknown as Record<string, Song | null | undefined>)[id] === song) {
                 return id;
             }
         }
@@ -1487,12 +1565,12 @@ export class JackalGameStateSerializer {
             return null;
         }
 
-        const songValue = song!;
+        const songValue = song;
         return {
             id,
-            playing: Boolean(songValue.playing),
-            playedIntro2: Boolean(songValue.playedIntro2),
-            activeMusic: this.captureActiveSongMusic(main, songValue)
+            playing: Boolean(songValue!.playing),
+            playedIntro2: Boolean(songValue!.playedIntro2),
+            activeMusic: this.captureActiveSongMusic(main, songValue!)
         };
     }
 

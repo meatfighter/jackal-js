@@ -2,6 +2,8 @@ import { Flame } from "./Flame.js";
 import { GameElement } from "./GameElement.js";
 import type { Enemy } from "./Enemy.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Fire extends GameElement {
     declare public vx: number;
     declare public vy: number;
@@ -49,18 +51,18 @@ export class Fire extends GameElement {
             typeof arg3 === "number" &&
             typeof arg4 === "number"
         ) {
-            let xLocal = arg0;
-            let yLocal = arg1;
-            let vxLocal = arg2;
-            let vyLocal = arg3;
-            let angleLocal = arg4;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
+            let vxLocal = javaFloat(arg2);
+            let vyLocal = javaFloat(arg3);
+            let angleLocal = javaFloat(arg4);
             let enemyLocal = arg5;
             this.x = xLocal;
             this.y = yLocal;
             this.dx = vxLocal;
             this.dy = vyLocal;
-            this.vx = Fire.SPEED * vxLocal;
-            this.vy = Fire.SPEED * vyLocal;
+            this.vx = javaFloat(Fire.SPEED * vxLocal);
+            this.vy = javaFloat(Fire.SPEED * vyLocal);
             this.angle = angleLocal;
             this.sourceEnemy = enemyLocal!;
 
@@ -90,41 +92,41 @@ export class Fire extends GameElement {
     public update(): void {
         switch (this.state) {
             case Fire.STATE_GROWING: {
-                this.length += Fire.SPEED;
+                this.length = javaFloat(this.length + Fire.SPEED);
                 if (this.length >= Fire.MAX_LENGTH || this.sourceEnemy!.removeFlag) {
                     this.state = Fire.STATE_TRAVELING;
                     this.delay = Fire.TRAVEL_TIME;
                 }
                 for (let i = 0; i <= 5; i++) {
-                    let mag = 0.2 * i * this.length;
-                    this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                    let mag = javaFloat(javaFloat(javaFloat(0.2) * i) * this.length);
+                    this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                 }
                 break;
             }
             case Fire.STATE_TRAVELING:
-                this.x += this.vx;
-                this.y += this.vy;
+                this.x = javaFloat(this.x + this.vx);
+                this.y = javaFloat(this.y + this.vy);
                 if (--this.delay == 0) {
                     this.state = Fire.STATE_SHRINKING;
-                    this.x += this.dx * this.length;
-                    this.y += this.dy * this.length;
+                    this.x = javaFloat(this.x + javaFloat(this.dx * this.length));
+                    this.y = javaFloat(this.y + javaFloat(this.dy * this.length));
                     new Flame(this.x, this.y);
                 } else {
                     for (let i = 0; i <= 5; i++) {
-                        let mag = 0.2 * i * this.length;
-                        this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                        let mag = javaFloat(javaFloat(javaFloat(0.2) * i) * this.length);
+                        this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                     }
                 }
                 break;
             case Fire.STATE_SHRINKING:
-                this.alpha *= 0.98;
-                this.length -= Fire.SPEED;
+                this.alpha = javaFloat(this.alpha * javaFloat(0.98));
+                this.length = javaFloat(this.length - Fire.SPEED);
                 if (this.length <= 0) {
                     this.remove();
                 }
                 for (let i = 0; i <= 5; i++) {
-                    let mag = -0.2 * i * this.length;
-                    this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                    let mag = javaFloat(javaFloat(-javaFloat(0.2) * i) * this.length);
+                    this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                 }
                 break;
         }

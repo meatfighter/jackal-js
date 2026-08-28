@@ -1,4 +1,4 @@
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -30,8 +30,8 @@ export class BossStatue extends Enemy {
 
     private __construct_BossStatue(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: BossStatuesManager): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let startDelay = arg2;
             let bossStatuesManagerLocal = arg3;
             this.x = xLocal;
@@ -80,19 +80,25 @@ export class BossStatue extends Enemy {
             if (++this.hits == BossStatue.HITS) {
                 this.remove();
                 this.bossStatuesManager!.statueDestroyed();
-                new Explosion(this.x + 48, this.y + 64);
+                new Explosion(javaFloat(this.x + 48), javaFloat(this.y + 64));
                 this.gameMode.triggerGroup(this.groupIndex);
                 this.main.addPoints(800);
             } else {
                 this.main.playHitExplodeSound();
-                let X = 0.5 * (x1 + x2);
-                if (X < this.x + 32) {
-                    X = this.x + 32;
-                } else if (X > this.x + 64) {
-                    X = this.x + 64;
+                let X = javaFloat(0.5 * javaFloat(x1 + x2));
+                if (X < javaFloat(this.x + 32)) {
+                    X = javaFloat(this.x + 32);
+                } else if (X > javaFloat(this.x + 64)) {
+                    X = javaFloat(this.x + 64);
                 }
                 for (let i = 0; i < 5; i++) {
-                    new Explosion(X + this.main.random.nextInt(8) - 4, this.y + 156 + this.main.random.nextInt(8) - (i << 5), true, (i + 1) * 4, 0.5);
+                    new Explosion(
+                        javaFloat(javaFloat(X + this.main.random.nextInt(8)) - 4),
+                        javaFloat(javaFloat(javaFloat(this.y + 156) + this.main.random.nextInt(8)) - (i << 5)),
+                        true,
+                        (i + 1) * 4,
+                        0.5
+                    );
                 }
             }
             return true;

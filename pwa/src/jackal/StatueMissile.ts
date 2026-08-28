@@ -2,6 +2,8 @@ import type { Image } from "slick2d-ts";
 
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class StatueMissile extends Enemy {
     declare public vx: number;
     declare public angle: number;
@@ -32,28 +34,28 @@ export class StatueMissile extends Enemy {
 
     private __construct_StatueMissile(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let statueXLocal = arg0;
-            let statueYLocal = arg1;
+            let statueXLocal = javaFloat(arg0);
+            let statueYLocal = javaFloat(arg1);
             let rightLocal = arg2;
             this.statueX = statueXLocal;
             this.statueY = statueYLocal;
             this.right = rightLocal;
 
-            this.x = statueXLocal + 48;
-            this.y = statueYLocal + 86;
+            this.x = javaFloat(statueXLocal + 48);
+            this.y = javaFloat(statueYLocal + 86);
 
             if (rightLocal) {
-                this.x -= 26;
+                this.x = javaFloat(this.x - 26);
                 this.vx = StatueMissile.SPEED;
                 this.angle = 45;
                 this.sprite = this.main.statueMissiles[0];
-                this.clipX = statueXLocal + 74;
+                this.clipX = javaFloat(statueXLocal + 74);
             } else {
-                this.x += 26;
+                this.x = javaFloat(this.x + 26);
                 this.vx = -StatueMissile.SPEED;
                 this.angle = 315;
                 this.sprite = this.main.statueMissiles[1];
-                this.clipX = statueXLocal - 22;
+                this.clipX = javaFloat(statueXLocal - 22);
             }
             return;
         }
@@ -83,8 +85,8 @@ export class StatueMissile extends Enemy {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += StatueMissile.SPEED;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + StatueMissile.SPEED);
 
         if (++this.explodeDelay == StatueMissile.EXPLODE_DELAY) {
             this.playSoundOnRemove = false;
@@ -92,7 +94,7 @@ export class StatueMissile extends Enemy {
                 this.main.playExplodeSound2();
             }
             this.remove();
-            new Explosion(this.x + (this.right ? 18 : -18), this.y + 18).setTiny(true);
+            new Explosion(javaFloat(this.x + (this.right ? 18 : -18)), javaFloat(this.y + 18)).setTiny(true);
         }
     }
 

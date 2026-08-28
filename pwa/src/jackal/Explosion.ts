@@ -1,7 +1,9 @@
-import type { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { GameElement } from "./GameElement.js";
 import type { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Explosion extends GameElement {
     declare public spriteIndex: number;
     declare public scale: number;
@@ -52,11 +54,11 @@ export class Explosion extends GameElement {
             typeof arg3 === "number" &&
             typeof arg4 === "number"
         ) {
-            let xLocal4 = arg0;
-            let yLocal4 = arg1;
+            let xLocal4 = javaFloat(arg0);
+            let yLocal4 = javaFloat(arg1);
             let tinyLocal2 = arg2;
             let delayLocal2 = arg3;
-            let alphaLocal2 = arg4;
+            let alphaLocal2 = javaFloat(arg4);
             let enemyLocal = arg5;
             this.__construct_Explosion(5, xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
             this.sourceEnemy = enemyLocal!;
@@ -71,24 +73,24 @@ export class Explosion extends GameElement {
             typeof arg3 === "number" &&
             typeof arg4 === "number"
         ) {
-            let xLocal3 = arg0;
-            let yLocal3 = arg1;
+            let xLocal3 = javaFloat(arg0);
+            let yLocal3 = javaFloat(arg1);
             let tinyLocal = arg2;
             let delayLocal = arg3;
-            let alphaLocal = arg4;
+            let alphaLocal = javaFloat(arg4);
             this.__construct_Explosion(3, xLocal3, yLocal3, false);
             this.setTiny(tinyLocal);
             this.setDelayed(delayLocal);
             this.setAlpha(alphaLocal);
             return;
         } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             this.__construct_Explosion(3, xLocal2, yLocal2, false);
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let playerExplosion = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -100,7 +102,7 @@ export class Explosion extends GameElement {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly GROW_RATE: number = 1.03;
+    public static readonly GROW_RATE: number = javaFloat(1.03);
 
     public size: number = 32;
 
@@ -139,32 +141,32 @@ export class Explosion extends GameElement {
         if (this.delay > 0) {
             if (--this.delay == 0) {
                 if (this.sourceEnemy != null) {
-                    this.x += this.sourceEnemy.x - this.enemyX;
-                    this.y += this.sourceEnemy.y - this.enemyY;
+                    this.x = javaFloat(javaFloat(this.x + this.sourceEnemy.x) - this.enemyX);
+                    this.y = javaFloat(javaFloat(this.y + this.sourceEnemy.y) - this.enemyY);
                 }
             } else {
                 return;
             }
         }
 
-        this.size *= Explosion.GROW_RATE;
+        this.size = javaFloat(this.size * Explosion.GROW_RATE);
 
         if (this.size >= 80) {
             this.spriteIndex = 2;
-            this.scale = this.size / 128;
+            this.scale = javaFloat(this.size / 128);
         } else if (this.size >= 56) {
             this.spriteIndex = 1;
-            this.scale = this.size / 56;
+            this.scale = javaFloat(this.size / 56);
         } else {
             this.spriteIndex = 0;
-            this.scale = this.size / 32;
+            this.scale = javaFloat(this.size / 32);
         }
 
-        let margin = this.size * 0.35;
-        let x1 = this.x - margin;
-        let y1 = this.y - margin;
-        let x2 = this.x + margin;
-        let y2 = this.y + margin;
+        let margin = javaFloat(this.size * javaFloat(0.35));
+        let x1 = javaFloat(this.x - margin);
+        let y1 = javaFloat(this.y - margin);
+        let x2 = javaFloat(this.x + margin);
+        let y2 = javaFloat(this.y + margin);
         if (this.damagesEnemies && !this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
             for (let i = this.enemies!.size() - 1; i >= 0; i--) {
                 let enemyLocal = this.enemies!.get(i);

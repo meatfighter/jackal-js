@@ -25,8 +25,8 @@ export class GreenBoat extends Enemy {
 
     private __construct_GreenBoat(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -62,8 +62,8 @@ export class GreenBoat extends Enemy {
     public update(): void {
         if (this.movementDelay > 0) {
             this.movementDelay--;
-            this.x -= GreenBoat.SPEED;
-            this.y += GreenBoat.SPEED;
+            this.x = javaFloat(this.x - GreenBoat.SPEED);
+            this.y = javaFloat(this.y + GreenBoat.SPEED);
         }
         if (--this.spriteIndexCounter < 0) {
             this.spriteIndexCounter = GreenBoat.SPRITE_TOGGLE_FRAMES;
@@ -71,13 +71,13 @@ export class GreenBoat extends Enemy {
         }
         if (--this.bulletDelay < 0) {
             this.bulletDelay = GreenBoat.BULLET_DELAY;
-            let X = this.x - 16;
-            let Y = this.y + 16;
-            let dx = this.player!.x - X;
-            let dy = this.player!.y - Y;
-            let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
+            let X = javaFloat(this.x - 16);
+            let Y = javaFloat(this.y + 16);
+            let dx = javaFloat(this.player!.x - X);
+            let dy = javaFloat(this.player!.y - Y);
+            let imag = javaFloat(1 / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
 
-            new EnemyBullet(X, Y, dx * imag, dy * imag, GreenBoat.BULLET_TRAVEL_TIME, true);
+            new EnemyBullet(X, Y, javaFloat(dx * imag), javaFloat(dy * imag), GreenBoat.BULLET_TRAVEL_TIME, true);
         }
     }
 

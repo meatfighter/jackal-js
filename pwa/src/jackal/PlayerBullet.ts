@@ -1,7 +1,9 @@
-import type { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { BulletHit } from "./BulletHit.js";
 import { GameElement } from "./GameElement.js";
 import type { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class PlayerBullet extends GameElement {
     declare public t: number;
     declare public enemies: ArrayList<Enemy> | null;
@@ -20,8 +22,8 @@ export class PlayerBullet extends GameElement {
 
     private __construct_PlayerBullet(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
 
@@ -33,7 +35,7 @@ export class PlayerBullet extends GameElement {
 
     public static readonly DISTANCE: number = 360;
     public static readonly TRAVEL_TIME: number = 20;
-    public static readonly VELOCITY: number = PlayerBullet.DISTANCE / PlayerBullet.TRAVEL_TIME;
+    public static readonly VELOCITY: number = javaFloat(PlayerBullet.DISTANCE / PlayerBullet.TRAVEL_TIME);
     public static readonly MARGIN: number = 16;
 
     public init(): void {
@@ -42,13 +44,13 @@ export class PlayerBullet extends GameElement {
     }
 
     public update(): void {
-        this.y -= PlayerBullet.VELOCITY;
+        this.y = javaFloat(this.y - PlayerBullet.VELOCITY);
 
         let hit = false;
-        let x1 = this.x - PlayerBullet.MARGIN;
-        let y1 = this.y - PlayerBullet.MARGIN;
-        let x2 = this.x + PlayerBullet.MARGIN;
-        let y2 = this.y + PlayerBullet.MARGIN;
+        let x1 = javaFloat(this.x - PlayerBullet.MARGIN);
+        let y1 = javaFloat(this.y - PlayerBullet.MARGIN);
+        let x2 = javaFloat(this.x + PlayerBullet.MARGIN);
+        let y2 = javaFloat(this.y + PlayerBullet.MARGIN);
         for (let i = this.enemies!.size() - 1; i >= 0; i--) {
             let enemyLocal = this.enemies!.get(i);
             if (!enemyLocal.removeFlag && enemyLocal.bulletAttack(x1, y1, x2, y2)) {

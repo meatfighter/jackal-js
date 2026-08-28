@@ -1,4 +1,4 @@
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -23,15 +23,15 @@ export class Gate extends Enemy {
 
     private __construct_Gate(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let bossGarageManagerLocal = arg2;
             this.__construct_Gate(2, xLocal2, yLocal2);
             this.bossGarageManager = bossGarageManagerLocal!;
             return;
         } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
 
@@ -56,7 +56,7 @@ export class Gate extends Enemy {
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + 96, this.y + 64);
+            new Explosion(javaFloat(this.x + 96), javaFloat(this.y + 64));
             this.gameMode.triggerGroup(this.groupIndex);
             if (this.bossGarageManager != null) {
                 this.bossGarageManager.gateOpen();

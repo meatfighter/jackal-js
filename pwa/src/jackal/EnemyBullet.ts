@@ -3,6 +3,8 @@ import type { Image } from "slick2d-ts";
 import { BulletHit } from "./BulletHit.js";
 import { GameElement } from "./GameElement.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class EnemyBullet extends GameElement {
     declare public travelTime: number;
     declare public vx: number;
@@ -46,15 +48,15 @@ export class EnemyBullet extends GameElement {
             typeof arg3 === "number" &&
             typeof arg4 === "number"
         ) {
-            let xLocal3 = arg0;
-            let yLocal3 = arg1;
+            let xLocal3 = javaFloat(arg0);
+            let yLocal3 = javaFloat(arg1);
             let dx = arg2;
             let dy = arg3;
             let travelTimeLocal3 = arg4;
             this.x = xLocal3;
             this.y = yLocal3;
-            this.vx = EnemyBullet.SPEED * dx;
-            this.vy = EnemyBullet.SPEED * dy;
+            this.vx = javaFloat(EnemyBullet.SPEED * dx);
+            this.vy = javaFloat(EnemyBullet.SPEED * dy);
             this.travelTime = travelTimeLocal3;
             this.sprite = this.main.cannonball;
 
@@ -69,16 +71,16 @@ export class EnemyBullet extends GameElement {
             typeof arg4 === "number" &&
             typeof arg5 === "boolean"
         ) {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let dx = arg2;
             let dy = arg3;
             let travelTimeLocal2 = arg4;
             let white = arg5;
             this.x = xLocal2;
             this.y = yLocal2;
-            this.vx = EnemyBullet.SPEED * dx;
-            this.vy = EnemyBullet.SPEED * dy;
+            this.vx = javaFloat(EnemyBullet.SPEED * dx);
+            this.vy = javaFloat(EnemyBullet.SPEED * dy);
             this.travelTime = travelTimeLocal2;
             this.sprite = white ? this.main.whiteBullet : this.main.yellowBullet;
 
@@ -94,8 +96,8 @@ export class EnemyBullet extends GameElement {
             typeof arg5 === "boolean" &&
             typeof arg6 === "boolean"
         ) {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let dx = arg2;
             let dy = arg3;
             let travelTimeLocal = arg4;
@@ -104,11 +106,11 @@ export class EnemyBullet extends GameElement {
             this.x = xLocal;
             this.y = yLocal;
             if (multiplySpeed) {
-                this.vx = EnemyBullet.SPEED * dx;
-                this.vy = EnemyBullet.SPEED * dy;
+                this.vx = javaFloat(EnemyBullet.SPEED * dx);
+                this.vy = javaFloat(EnemyBullet.SPEED * dy);
             } else {
-                this.vx = dx;
-                this.vy = dy;
+                this.vx = javaFloat(dx);
+                this.vy = javaFloat(dy);
             }
             this.travelTime = travelTimeLocal;
             this.sprite = white ? this.main.whiteBullet : this.main.yellowBullet;
@@ -130,11 +132,16 @@ export class EnemyBullet extends GameElement {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
 
         if (
-            this.gameMode.isOutsideOfFrame(this.x - EnemyBullet.MARGIN, this.y - EnemyBullet.MARGIN, this.x + EnemyBullet.MARGIN, this.y + EnemyBullet.MARGIN)
+            this.gameMode.isOutsideOfFrame(
+                javaFloat(this.x - EnemyBullet.MARGIN),
+                javaFloat(this.y - EnemyBullet.MARGIN),
+                javaFloat(this.x + EnemyBullet.MARGIN),
+                javaFloat(this.y + EnemyBullet.MARGIN)
+            )
         ) {
             this.remove();
         } else if (--this.travelTime < 0 || this.gameMode.isSolid(this.x, this.y) || this.player!.attack(this.x, this.y)) {

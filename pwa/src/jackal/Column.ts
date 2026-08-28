@@ -1,4 +1,4 @@
-import { javaInt, type ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt, type ArrayList } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -39,8 +39,8 @@ export class Column extends Enemy {
 
     private __construct_Column(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
 
@@ -71,29 +71,30 @@ export class Column extends Enemy {
     public static readonly STATE_ROLLING: number = 2;
     public static readonly STATE_STATIONARY: number = 3;
 
-    public static readonly ROTATION_SPEED: number = 0.6;
+    public static readonly ROTATION_SPEED: number = javaFloat(0.6);
 
-    public static readonly TRAP_X1: number = -3 * 32;
-    public static readonly TRAP_Y1: number = 8 * 32;
-    public static readonly TRAP_X2: number = 5 * 32;
-    public static readonly TRAP_Y2: number = 16 * 32;
+    public static readonly TRAP_X1: number = javaFloat(-3 * 32);
+    public static readonly TRAP_Y1: number = javaFloat(8 * 32);
+    public static readonly TRAP_X2: number = javaFloat(5 * 32);
+    public static readonly TRAP_Y2: number = javaFloat(16 * 32);
 
-    public static readonly GRAVITY: number = 0.1;
+    public static readonly GRAVITY: number = javaFloat(0.1);
     public static readonly TIP_VX: number = 2.5;
     public static readonly TIP_ANGLE_INC: number = 2;
     public static readonly ROLL_VY: number = 6;
-    public static readonly ROLL_DISTANCE: number = 10 * 32;
+    public static readonly ROLL_DISTANCE: number = javaFloat(10 * 32);
     public static readonly ROLL_STEPS: number = 91;
-    public static readonly ROLL_ACCELERATION: number =
-        (2 * (Column.ROLL_DISTANCE - Column.ROLL_VY * Column.ROLL_STEPS)) / (Column.ROLL_STEPS * Column.ROLL_STEPS);
+    public static readonly ROLL_ACCELERATION: number = javaFloat(
+        javaFloat(2 * javaFloat(Column.ROLL_DISTANCE - javaFloat(Column.ROLL_VY * Column.ROLL_STEPS))) / (Column.ROLL_STEPS * Column.ROLL_STEPS)
+    );
 
-    public rotationOffset: number = 27.933975;
+    public rotationOffset: number = javaFloat(27.933975);
 
     public state: number = Column.STATE_HIDDEN;
 
     public angle: number = -90;
 
-    public tipSteps: number = javaInt(90 / Column.TIP_ANGLE_INC);
+    public tipSteps: number = javaInt(javaFloat(90 / Column.TIP_ANGLE_INC));
 
     public override init(): void {
         super.init();
@@ -126,7 +127,15 @@ export class Column extends Enemy {
     private rollOverEnemies(): void {
         for (let i = this.mines!.size() - 1; i >= 0; i--) {
             let mineLocal = this.mines!.get(i);
-            if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
+            if (
+                mineLocal != this &&
+                mineLocal.isMine(
+                    javaFloat(this.x + this.mineX1),
+                    javaFloat(this.y + this.mineY1),
+                    javaFloat(this.x + this.mineX2),
+                    javaFloat(this.y + this.mineY2)
+                )
+            ) {
                 mineLocal.flatten();
             }
         }
@@ -143,23 +152,23 @@ export class Column extends Enemy {
             case Column.STATE_HIDDEN:
                 break;
             case Column.STATE_TIPPING:
-                this.vy += Column.GRAVITY;
-                this.x += this.vx;
-                this.y += this.vy;
-                this.angle += this.angleInc;
+                this.vy = javaFloat(this.vy + Column.GRAVITY);
+                this.x = javaFloat(this.x + this.vx);
+                this.y = javaFloat(this.y + this.vy);
+                this.angle = javaFloat(this.angle + this.angleInc);
                 if (--this.tipSteps == 0) {
                     this.startRolling();
                 }
                 break;
             case Column.STATE_ROLLING:
-                this.vy += Column.ROLL_ACCELERATION;
+                this.vy = javaFloat(this.vy + Column.ROLL_ACCELERATION);
                 if (this.vy <= 0) {
                     this.stopRolling();
                 }
-                this.y += this.vy;
-                this.rotationOffset += Column.ROTATION_SPEED * this.vy;
+                this.y = javaFloat(this.y + this.vy);
+                this.rotationOffset = javaFloat(this.rotationOffset + javaFloat(Column.ROTATION_SPEED * this.vy));
                 if (this.rotationOffset >= 56) {
-                    this.rotationOffset -= 56;
+                    this.rotationOffset = javaFloat(this.rotationOffset - 56);
                 }
                 this.rollOverEnemies();
                 break;
@@ -194,7 +203,7 @@ export class Column extends Enemy {
     private startTipping(attacked: boolean): void {
         if (!attacked) {
             if (this.canDropLeft && this.canDropRight) {
-                if (this.player!.x < this.x + 32) {
+                if (this.player!.x < javaFloat(this.x + 32)) {
                     if (!(this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270)) {
                         return;
                     }
@@ -202,11 +211,11 @@ export class Column extends Enemy {
                     return;
                 }
             } else if (this.canDropLeft) {
-                if (this.player!.x < this.x + 32 || this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270) {
+                if (this.player!.x < javaFloat(this.x + 32) || this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270) {
                     return;
                 }
             } else {
-                if (this.player!.x > this.x + 32 || !(this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270)) {
+                if (this.player!.x > javaFloat(this.x + 32) || !(this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270)) {
                     return;
                 }
             }
@@ -214,11 +223,11 @@ export class Column extends Enemy {
 
         this.state = Column.STATE_TIPPING;
         this.main.playHitExplodeSound();
-        new Explosion(this.x + 32, this.y + 48);
+        new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 48));
         this.gameMode.triggerGroup(this.groupIndex);
 
-        this.x += 32;
-        this.y += 46;
+        this.x = javaFloat(this.x + 32);
+        this.y = javaFloat(this.y + 46);
 
         if (this.canDropLeft && this.canDropRight) {
             if (this.main.random.nextInt(7) == 3) {

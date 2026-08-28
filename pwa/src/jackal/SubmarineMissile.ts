@@ -26,21 +26,23 @@ export class SubmarineMissile extends Enemy {
 
     private __construct_SubmarineMissile(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
-            yLocal -= 20;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
+            yLocal = javaFloat(yLocal - 20);
 
             let player = this.gameMode.player;
-            let ang = 180 + SubmarineMissile.TO_DEGREES * javaFloat(Math.atan2(yLocal - player.y, xLocal - player.x));
+            let ang = javaFloat(
+                180 + javaFloat(SubmarineMissile.TO_DEGREES * javaFloat(Math.atan2(javaFloat(yLocal - player.y), javaFloat(xLocal - player.x))))
+            );
             this.angle = 45 * javaRoundFloat(ang / 45);
             let v = this.main.createUnitVector(this.angle);
-            this.vx = SubmarineMissile.SPEED * v[0];
-            this.vy = SubmarineMissile.SPEED * v[1];
-            this.tx = 18 * v[0];
-            this.ty = 18 * v[1];
+            this.vx = javaFloat(SubmarineMissile.SPEED * v[0]);
+            this.vy = javaFloat(SubmarineMissile.SPEED * v[1]);
+            this.tx = javaFloat(18 * v[0]);
+            this.ty = javaFloat(18 * v[1]);
 
-            this.x = xLocal + v[0] * 24;
-            this.y = yLocal + v[1] * 24;
+            this.x = javaFloat(xLocal + v[0] * 24);
+            this.y = javaFloat(yLocal + v[1] * 24);
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -70,10 +72,10 @@ export class SubmarineMissile extends Enemy {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
 
-        if (this.gameMode.isOutsideOfFrame(this.x - 32, this.y - 32, this.x + 32, this.y + 32)) {
+        if (this.gameMode.isOutsideOfFrame(javaFloat(this.x - 32), javaFloat(this.y - 32), javaFloat(this.x + 32), javaFloat(this.y + 32))) {
             this.playSoundOnRemove = false;
             this.remove();
         }

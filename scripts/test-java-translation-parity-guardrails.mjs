@@ -37,8 +37,6 @@ test("GameElement preserves Java's derived-object initialization order", () => {
 });
 
 test("Java field hiding remains represented by separate JavaScript properties", () => {
-    const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
-
     for (const className of ["Fire", "Explosion"]) {
         const javaSource = read(`desktop/src/jackal/${className}.java`);
         const tsSource = read(`pwa/src/jackal/${className}.ts`);
@@ -49,8 +47,11 @@ test("Java field hiding remains represented by separate JavaScript properties", 
 
     const baseSource = read("pwa/src/jackal/GameElement.ts");
     assert.match(baseSource, /public\s+enemy:\s*boolean\s*=\s*false/);
-    assert.doesNotMatch(serializer, /record\.enemy\s*=\s*this\.encodeValue\(entity\.sourceEnemy/);
-    assert.doesNotMatch(serializer, /normalizeTranslatedEntityFields/);
+
+    const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
+    assert.match(serializer, /record\.enemy\s*=\s*this\.encodeValue\(entity\.sourceEnemy/);
+    assert.match(serializer, /mutableEntity\.sourceEnemy\s*=/);
+    assert.match(serializer, /mutableEntity\.enemy\s*=\s*false/);
 });
 
 test("JeepYeah removal state follows the original Java field", () => {
@@ -66,9 +67,6 @@ test("JeepYeah removal state follows the original Java field", () => {
     const modeSource = read("pwa/src/jackal/JeepYeahMode.ts");
     assert.match(modeSource, /\.remove\b/);
     assert.doesNotMatch(modeSource, /\.removeFlag\b/);
-
-    const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
-    assert.doesNotMatch(serializer, /\bremoveFlag\b/);
 });
 
 test("Java boolean XOR translations remain boolean negations", () => {

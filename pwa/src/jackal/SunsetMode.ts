@@ -18,9 +18,9 @@ export class SunsetMode implements IMode, IFadeListener {
     public static readonly STATE_HARD_MODE_WAITING: number = 8;
     public static readonly STATE_DONE: number = 9;
 
-    public static readonly CENTER_X: number = MainConstants.DISPLAY_WIDTH / 2;
-    public static readonly CENTER_Y: number = MainConstants.DISPLAY_HEIGHT / 2;
-    public static readonly HELICOPTER_SCALE_0: number = 0.2;
+    public static readonly CENTER_X: number = javaFloat(MainConstants.DISPLAY_WIDTH / 2);
+    public static readonly CENTER_Y: number = javaFloat(MainConstants.DISPLAY_HEIGHT / 2);
+    public static readonly HELICOPTER_SCALE_0: number = javaFloat(0.2);
     public static readonly HELICOPTER_X0: number = -215;
     public static readonly HELICOPTER_X1: number = 215;
     public static readonly HELICOPTER_Y0: number = -275;
@@ -29,21 +29,23 @@ export class SunsetMode implements IMode, IFadeListener {
     public static readonly HELICOPTER_Z1: number = 0;
     public static readonly HELICOPTER_ANGLE0: number = 0;
     public static readonly HELICOPTER_ANGLE1: number = 8.75;
-    public static readonly Z0: number = (SunsetMode.HELICOPTER_SCALE_0 * SunsetMode.HELICOPTER_Z0) / (SunsetMode.HELICOPTER_SCALE_0 - 1);
+    public static readonly Z0: number = javaFloat(
+        javaFloat(SunsetMode.HELICOPTER_SCALE_0 * SunsetMode.HELICOPTER_Z0) / javaFloat(SunsetMode.HELICOPTER_SCALE_0 - 1)
+    );
 
     public static readonly PAUSE_TIME_1: number = 1;
     public static readonly HELICOPTER_TIME: number = 18 * 91;
     public static readonly HELICOPTER_HARD_TIME: number = 1900;
-    public static readonly FADE_TIME: number = 1 * 91;
-    public static readonly SHADE_TIME: number = 12 * 91;
+    public static readonly FADE_TIME: number = javaFloat(1 * 91);
+    public static readonly SHADE_TIME: number = javaFloat(12 * 91);
     public static readonly PAUSE_TIME_2: number = 91;
     public static readonly TYPE_TIME: number = 11;
     public static readonly EOL_PAUSE_TIME: number = 64;
     public static readonly EOM_PAUSE_TIME: number = 2 * 91;
 
-    public static readonly I_HELICOPTER: number = 1 / SunsetMode.HELICOPTER_TIME;
-    public static readonly I_FADE_TIME: number = 1 / SunsetMode.FADE_TIME;
-    public static readonly I_SHADE_TIME: number = 1 / SunsetMode.SHADE_TIME;
+    public static readonly I_HELICOPTER: number = javaFloat(1 / SunsetMode.HELICOPTER_TIME);
+    public static readonly I_FADE_TIME: number = javaFloat(1 / SunsetMode.FADE_TIME);
+    public static readonly I_SHADE_TIME: number = javaFloat(1 / SunsetMode.SHADE_TIME);
 
     public static readonly SUN_HEIGHT: number = 92;
     public static readonly SUN_AMPLITUDE: number = 2;
@@ -53,10 +55,10 @@ export class SunsetMode implements IMode, IFadeListener {
     public static readonly sunOffsets: number[] = javaArray(SunsetMode.SUN_HEIGHT, 0);
 
     static {
-        let PERCENT = javaFloat((SunsetMode.SUN_WAVES * 2 * Math.PI) / SunsetMode.SUN_HEIGHT);
+        let PERCENT = javaFloat((javaFloat(SunsetMode.SUN_WAVES * 2) * Math.PI) / SunsetMode.SUN_HEIGHT);
 
         for (let i = 0; i < SunsetMode.SUN_HEIGHT; i++) {
-            SunsetMode.sunOffsets[i] = SunsetMode.SUN_AMPLITUDE * javaFloat(Math.sin(i * PERCENT));
+            SunsetMode.sunOffsets[i] = javaFloat(SunsetMode.SUN_AMPLITUDE * javaFloat(Math.sin(javaFloat(i * PERCENT))));
         }
     }
 
@@ -85,10 +87,10 @@ export class SunsetMode implements IMode, IFadeListener {
     public sunOffset: number = 0;
     public sunOffsetCounter: number = 0;
     public rotorAngle: number = 0;
-    public helicopterX: number = SunsetMode.HELICOPTER_X0;
-    public helicopterY: number = SunsetMode.HELICOPTER_Y0;
-    public helicopterZ: number = SunsetMode.HELICOPTER_Z0;
-    public helicopterAngle: number = SunsetMode.HELICOPTER_ANGLE0;
+    public helicopterX: number = javaFloat(SunsetMode.HELICOPTER_X0);
+    public helicopterY: number = javaFloat(SunsetMode.HELICOPTER_Y0);
+    public helicopterZ: number = javaFloat(SunsetMode.HELICOPTER_Z0);
+    public helicopterAngle: number = javaFloat(SunsetMode.HELICOPTER_ANGLE0);
     public delay: number = SunsetMode.PAUSE_TIME_1;
     public helicopterDelay: number = 0;
     public state: number = SunsetMode.STATE_FADE_IN;
@@ -115,15 +117,17 @@ export class SunsetMode implements IMode, IFadeListener {
                 }
                 break;
             case SunsetMode.STATE_HELICOPTER:
-                let t = this.helicopterDelay * SunsetMode.I_HELICOPTER;
+                let t = javaFloat(this.helicopterDelay * SunsetMode.I_HELICOPTER);
                 if (!this.main.isSoundPlaying(this.main.helicopterSound)) {
-                    let volume = t + 0.15;
+                    let volume = javaFloat(t + javaFloat(0.15));
                     this.main.playSound(this.main.helicopterSound, volume < 1 ? volume : 1);
                 }
-                this.helicopterX = SunsetMode.HELICOPTER_X0 + (SunsetMode.HELICOPTER_X1 - SunsetMode.HELICOPTER_X0) * t;
-                this.helicopterY = SunsetMode.HELICOPTER_Y0 + (SunsetMode.HELICOPTER_Y1 - SunsetMode.HELICOPTER_Y0) * t;
-                this.helicopterZ = SunsetMode.HELICOPTER_Z0 + (SunsetMode.HELICOPTER_Z1 - SunsetMode.HELICOPTER_Z0) * t;
-                this.helicopterAngle = SunsetMode.HELICOPTER_ANGLE0 + (SunsetMode.HELICOPTER_ANGLE1 - SunsetMode.HELICOPTER_ANGLE0) * t;
+                this.helicopterX = javaFloat(SunsetMode.HELICOPTER_X0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_X1 - SunsetMode.HELICOPTER_X0) * t));
+                this.helicopterY = javaFloat(SunsetMode.HELICOPTER_Y0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_Y1 - SunsetMode.HELICOPTER_Y0) * t));
+                this.helicopterZ = javaFloat(SunsetMode.HELICOPTER_Z0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_Z1 - SunsetMode.HELICOPTER_Z0) * t));
+                this.helicopterAngle = javaFloat(
+                    SunsetMode.HELICOPTER_ANGLE0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_ANGLE1 - SunsetMode.HELICOPTER_ANGLE0) * t)
+                );
                 this.helicopterDelay++;
                 if (this.main.hardMode) {
                     if (this.helicopterDelay == SunsetMode.HELICOPTER_HARD_TIME) {

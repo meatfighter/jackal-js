@@ -47,17 +47,19 @@ export class BossSuperTankGun extends Enemy {
     public static readonly PAUSE_AFTER_RECOIL: number = 17;
     public static readonly PAUSE_BETWEEN_GROUPS: number = 50;
     public static readonly GROUP_SIZE: number = 3;
-    public static readonly ROTATION_SPEED: number = 0.9;
+    public static readonly ROTATION_SPEED: number = javaFloat(0.9);
     public static readonly BULLET_DISTANCE: number = 480;
     public static readonly GARAGE_BULLET_DISTANCE: number = 464;
-    public static readonly YELLOW_BULLET_SPEED: number = 1.75 * EnemyBullet.SPEED;
-    public static readonly BULLET_TRAVEL_TIME: number = javaInt(BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED);
+    public static readonly YELLOW_BULLET_SPEED: number = javaFloat(1.75 * EnemyBullet.SPEED);
+    public static readonly BULLET_TRAVEL_TIME: number = javaInt(javaFloat(BossSuperTankGun.BULLET_DISTANCE / BossSuperTankGun.YELLOW_BULLET_SPEED));
     public static readonly X_OFFSET: number = 244;
     public static readonly Y_OFFSET: number = 88;
 
     static {
         for (let i = 1; i <= BossSuperTankGun.RECOIL_DURATION; i++) {
-            BossSuperTankGun.recoils[i - 1] = BossSuperTankGun.RECOIL_AMPLITUDE * javaFloat(Math.sin((i * Math.PI) / (BossSuperTankGun.RECOIL_DURATION + 1)));
+            BossSuperTankGun.recoils[i - 1] = javaFloat(
+                BossSuperTankGun.RECOIL_AMPLITUDE * javaFloat(Math.sin((i * Math.PI) / (BossSuperTankGun.RECOIL_DURATION + 1)))
+            );
         }
     }
 
@@ -75,8 +77,8 @@ export class BossSuperTankGun extends Enemy {
     }
 
     public update(): void {
-        this.x = this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET;
-        this.y = this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET;
+        this.x = javaFloat(this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET);
+        this.y = javaFloat(this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET);
 
         switch (this.state) {
             case RotatingGunState.FIRING:
@@ -109,17 +111,17 @@ export class BossSuperTankGun extends Enemy {
                 let player = this.gameMode.player;
                 let targetAngle = javaFloat(
                     (Math.atan2(
-                        player.y - (this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET),
-                        player.x - (this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET)
+                        javaFloat(player.y - javaFloat(this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET)),
+                        javaFloat(player.x - javaFloat(this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET))
                     ) *
                         180) /
                         Math.PI
                 );
-                let deltaAngle = (targetAngle - this.angle + 180) % 360;
+                let deltaAngle = javaFloat(javaFloat(javaFloat(targetAngle - this.angle) + 180) % 360);
                 if (deltaAngle < 0) {
-                    deltaAngle += 180;
+                    deltaAngle = javaFloat(deltaAngle + 180);
                 } else {
-                    deltaAngle -= 180;
+                    deltaAngle = javaFloat(deltaAngle - 180);
                 }
                 if (Math.abs(deltaAngle) < BossSuperTankGun.ROTATION_SPEED) {
                     this.angle = targetAngle;
@@ -128,9 +130,9 @@ export class BossSuperTankGun extends Enemy {
                     }
                 } else {
                     if (deltaAngle < 0) {
-                        this.angle -= BossSuperTankGun.ROTATION_SPEED;
+                        this.angle = javaFloat(this.angle - BossSuperTankGun.ROTATION_SPEED);
                     } else {
-                        this.angle += BossSuperTankGun.ROTATION_SPEED;
+                        this.angle = javaFloat(this.angle + BossSuperTankGun.ROTATION_SPEED);
                     }
                 }
                 break;
@@ -149,10 +151,10 @@ export class BossSuperTankGun extends Enemy {
         let cos = javaFloat(Math.cos(ang));
         let sin = javaFloat(Math.sin(ang));
         new EnemyBullet(
-            this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET + 93 * cos,
-            this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET + 93 * sin,
-            BossSuperTankGun.YELLOW_BULLET_SPEED * cos + this.bossSuperTank!.vx,
-            BossSuperTankGun.YELLOW_BULLET_SPEED * sin,
+            javaFloat(javaFloat(this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET) + javaFloat(93 * cos)),
+            javaFloat(javaFloat(this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET) + javaFloat(93 * sin)),
+            javaFloat(javaFloat(BossSuperTankGun.YELLOW_BULLET_SPEED * cos) + this.bossSuperTank!.vx),
+            javaFloat(BossSuperTankGun.YELLOW_BULLET_SPEED * sin),
             BossSuperTankGun.BULLET_TRAVEL_TIME,
             false,
             false

@@ -128,15 +128,15 @@ export class Main extends BasicGame {
     public static readonly FONT_ORANGE_GRAY: number = 3;
 
     public static readonly ISQRT2: number = javaFloat(1.0 / Math.sqrt(2));
-    public static readonly I_QUARTER_WIDTH: number = 4 / Main.DISPLAY_WIDTH;
-    public static readonly I_WIDTH: number = 1 / Main.DISPLAY_WIDTH;
+    public static readonly I_QUARTER_WIDTH: number = javaFloat(4 / Main.DISPLAY_WIDTH);
+    public static readonly I_WIDTH: number = javaFloat(1 / Main.DISPLAY_WIDTH);
     public static readonly MINIMUM_SOUND_TIME: number = 125;
 
     public static readonly CHARS: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'-0123456789©!:()&`\" ";
 
     public static readonly TILES: number[] = [218, 235, 273, 233, 328, 330];
 
-    public static readonly FADES: Color[] = javaArray<Color>(23, null!);
+    public static readonly FADES: Color[] = javaArray(23, null!);
 
     static {
         for (let i = 0; i < Main.FADES.length; i++) {
@@ -176,88 +176,88 @@ export class Main extends BasicGame {
     public controllerGrenadePressed: boolean = false;
     public controllerGunPressed: boolean = false;
 
-    public stages: Stage[] = javaArray<Stage>(6, null!);
+    public stages: Stage[] = javaArray(6, null!);
 
-    public players: Image[][] = java2DArray<Image>(4, 5, null!);
-    public explosions: Image[] = javaArray<Image>(4, null!);
+    public players: Image[][] = java2DArray(4, 5, null!);
+    public explosions: Image[] = javaArray(4, null!);
     public grenade: Image = null!;
     public playerMissile: Image = null!;
     public yellowBullet: Image = null!;
     public whiteBullet: Image = null!;
     public bulletHit: Image = null!;
-    public grayGuns: Image[] = javaArray<Image>(2, null!);
-    public enemySoldiers: Image[][] = java2DArray<Image>(2, 8, null!);
-    public swampSoldiers: Image[][] = java2DArray<Image>(2, 8, null!);
+    public grayGuns: Image[] = javaArray(2, null!);
+    public enemySoldiers: Image[][] = java2DArray(2, 8, null!);
+    public swampSoldiers: Image[][] = java2DArray(2, 8, null!);
     public deadEnemySoldier: Image = null!;
-    public brownTanks: Image[] = javaArray<Image>(5, null!);
-    public friendlySoldiers: Image[][] = java2DArray<Image>(4, 12, null!);
+    public brownTanks: Image[] = javaArray(5, null!);
+    public friendlySoldiers: Image[][] = java2DArray(4, 12, null!);
     public help: Image = null!;
-    public greenBoats: Image[] = javaArray<Image>(2, null!);
-    public stars: Image[] = javaArray<Image>(4, null!);
-    public friendlyHelicopters: Image[] = javaArray<Image>(4, null!);
-    public lamps: Image[] = javaArray<Image>(4, null!);
-    public bossBlueTanks: Image[][] = java2DArray<Image>(4, 5, null!);
-    public fonts: Image[][] = java2DArray<Image>(4, 256, null!);
+    public greenBoats: Image[] = javaArray(2, null!);
+    public stars: Image[] = javaArray(4, null!);
+    public friendlyHelicopters: Image[] = javaArray(4, null!);
+    public lamps: Image[] = javaArray(4, null!);
+    public bossBlueTanks: Image[][] = java2DArray(4, 5, null!);
+    public fonts: Image[][] = java2DArray(4, 256, null!);
     public statueBlueEyes: Image = null!;
     public statueBlueMouth: Image = null!;
     public statueWhiteEyes: Image = null!;
     public statueWhiteMouth: Image = null!;
-    public statueMissiles: Image[] = javaArray<Image>(2, null!);
-    public airplanes: Image[][] = java2DArray<Image>(2, 2, null!);
+    public statueMissiles: Image[] = javaArray(2, null!);
+    public airplanes: Image[][] = java2DArray(2, 2, null!);
     public bomb: Image = null!;
-    public grayJeeps: Image[] = javaArray<Image>(5, null!);
-    public grayTanks: Image[] = javaArray<Image>(5, null!);
+    public grayJeeps: Image[] = javaArray(5, null!);
+    public grayTanks: Image[] = javaArray(5, null!);
     public cannonball: Image = null!;
-    public columns: Image[] = javaArray<Image>(2, null!);
+    public columns: Image[] = javaArray(2, null!);
     public parkedGrayJeep: Image = null!;
-    public grayBoats: Image[] = javaArray<Image>(3, null!);
-    public submarines: Image[] = javaArray<Image>(4, null!);
-    public lasers: Image[] = javaArray<Image>(6, null!);
+    public grayBoats: Image[] = javaArray(3, null!);
+    public submarines: Image[] = javaArray(4, null!);
+    public lasers: Image[] = javaArray(6, null!);
     public troopsTruck: Image = null!;
-    public floorGuns: Image[] = javaArray<Image>(8, null!);
-    public shipGuns: Image[] = javaArray<Image>(3, null!);
-    public plainFloorGuns: Image[] = javaArray<Image>(2, null!);
-    public playerWakes: Image[] = javaArray<Image>(6, null!);
-    public swampMissiles: Image[] = javaArray<Image>(5, null!);
-    public mines: Image[] = javaArray<Image>(4, null!);
+    public floorGuns: Image[] = javaArray(8, null!);
+    public shipGuns: Image[] = javaArray(3, null!);
+    public plainFloorGuns: Image[] = javaArray(2, null!);
+    public playerWakes: Image[] = javaArray(6, null!);
+    public swampMissiles: Image[] = javaArray(5, null!);
+    public mines: Image[] = javaArray(4, null!);
     public rock: Image = null!;
-    public cannonTruck: Image[][] = java2DArray<Image>(2, 2, null!);
+    public cannonTruck: Image[][] = java2DArray(2, 2, null!);
     public cliffMissileLauncher: Image = null!;
-    public trains: Image[] = javaArray<Image>(3, null!);
-    public bossHelicopters: Image[] = javaArray<Image>(6, null!);
-    public parachutes: Image[] = javaArray<Image>(5, null!);
+    public trains: Image[] = javaArray(3, null!);
+    public bossHelicopters: Image[] = javaArray(6, null!);
+    public parachutes: Image[] = javaArray(5, null!);
     public tankShack: Image = null!;
-    public cliffGuns: Image[] = javaArray<Image>(5, null!);
-    public fires: Image[][] = java2DArray<Image>(2, 3, null!);
-    public fireTanks: Image[] = javaArray<Image>(5, null!);
-    public garages: Image[] = javaArray<Image>(5, null!);
-    public sparks: Image[][] = java2DArray<Image>(2, 7, null!);
-    public conveyors: Image[] = javaArray<Image>(16, null!);
-    public greenGuns: Image[] = javaArray<Image>(2, null!);
-    public brownGuns: Image[] = javaArray<Image>(2, null!);
+    public cliffGuns: Image[] = javaArray(5, null!);
+    public fires: Image[][] = java2DArray(2, 3, null!);
+    public fireTanks: Image[] = javaArray(5, null!);
+    public garages: Image[] = javaArray(5, null!);
+    public sparks: Image[][] = java2DArray(2, 7, null!);
+    public conveyors: Image[] = javaArray(16, null!);
+    public greenGuns: Image[] = javaArray(2, null!);
+    public brownGuns: Image[] = javaArray(2, null!);
     public parkedBrownTank: Image = null!;
-    public floorMissileLauncher: Image[] = javaArray<Image>(4, null!);
-    public enemyHelicopters: Image[] = javaArray<Image>(3, null!);
-    public headquartersLights: Image[] = javaArray<Image>(2, null!);
-    public elephantGuns: Image[] = javaArray<Image>(9, null!);
-    public superTanks: Image[][] = java2DArray<Image>(4, 5, null!);
-    public superFires: Image[][] = java2DArray<Image>(2, 3, null!);
-    public superGuns: Image[] = javaArray<Image>(2, null!);
-    public chinooks: Image[] = javaArray<Image>(4, null!);
-    public heres: Image[] = javaArray<Image>(2, null!);
+    public floorMissileLauncher: Image[] = javaArray(4, null!);
+    public enemyHelicopters: Image[] = javaArray(3, null!);
+    public headquartersLights: Image[] = javaArray(2, null!);
+    public elephantGuns: Image[] = javaArray(9, null!);
+    public superTanks: Image[][] = java2DArray(4, 5, null!);
+    public superFires: Image[][] = java2DArray(2, 3, null!);
+    public superGuns: Image[] = javaArray(2, null!);
+    public chinooks: Image[] = javaArray(4, null!);
+    public heres: Image[] = javaArray(2, null!);
     public smoke: Image = null!;
     public blackPlane: Image = null!;
-    public gunFires: Image[] = javaArray<Image>(2, null!);
+    public gunFires: Image[] = javaArray(2, null!);
     public jeepYeahBullet: Image = null!;
-    public yeahs: Image[] = javaArray<Image>(4, null!);
+    public yeahs: Image[] = javaArray(4, null!);
     public suns: Image[] = null!;
     public waves: Image[] = null!;
-    public rescueHelicopters: Image[] = javaArray<Image>(3, null!);
+    public rescueHelicopters: Image[] = javaArray(3, null!);
 
     public jeepHere: LargeImage = null!;
     public titleImage: LargeImage = null!;
     public map: LargeImage = null!;
-    public soldiers: LargeImage[] = javaArray<LargeImage>(4, null!);
+    public soldiers: LargeImage[] = javaArray(4, null!);
     public sunset: ExtraLargeImage = null!;
     public jeepYeah: ExtraLargeImage = null!;
 
@@ -362,16 +362,21 @@ export class Main extends BasicGame {
             const fadeCompleted = this.fading && this.advanceFade();
 
             if (!musicUpdated) {
+                // Preserve Jackal's original outer-update music cadence and its
+                // fade-before-music-before-mode ordering on the first fixed tick.
                 this.updateMusic();
                 musicUpdated = true;
             } else if (fadeCompleted) {
+                // A later catch-up tick can complete a fade and enter a mode that
+                // requests a new song. Start it before that tick updates the mode,
+                // but do not poll Song twice during one outer browser update.
                 this.applyRequestedSongChange();
             }
 
             this.fullScreenToggleCheck(gc);
             this.input.snap();
             this.mode.update(gc);
-            this.nextFrameTime += javaInt(Sys.getTimerResolution() * 0.01 + 0.5);
+            this.nextFrameTime += javaInt(javaFloat(javaFloat(Sys.getTimerResolution() * javaFloat(0.01)) + 0.5));
             if (++count == 8) {
                 this.resetNextFrameTime();
                 break;
@@ -379,6 +384,8 @@ export class Main extends BasicGame {
         }
 
         if (!musicUpdated) {
+            // High-refresh displays often produce an outer callback with no fixed
+            // game tick due. Music polling remains outer-update-driven as before.
             this.updateMusic();
         }
     }
@@ -753,16 +760,16 @@ export class Main extends BasicGame {
     }
 
     public playHitExplodeSound(): void {
-        this.playSound(this.enemyHitSound, 0.6);
-        this.playSound(this.explodeSound, 0.65);
+        this.playSound(this.enemyHitSound, javaFloat(0.6));
+        this.playSound(this.explodeSound, javaFloat(0.65));
     }
 
     public playExplodeSound2(): void {
-        this.playSound(this.explodeSound2, 0.65);
+        this.playSound(this.explodeSound2, javaFloat(0.65));
     }
 
     public playExplodeSound3(): void {
-        this.playSound(this.explodeSound3, 0.65);
+        this.playSound(this.explodeSound3, javaFloat(0.65));
     }
 
     public isSoundPlaying(sound: Sound): boolean {
@@ -775,7 +782,7 @@ export class Main extends BasicGame {
             return this.playSound__overload0(arg0);
         }
         if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
-            return this.playSound__overload1(arg0, arg1);
+            return this.playSound__overload1(arg0, javaFloat(arg1));
         }
         throw new Error(`No Java method overload matched playSound: ${argCount}`);
     }
@@ -788,7 +795,7 @@ export class Main extends BasicGame {
         let now = System.currentTimeMillis();
         if (time == null || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play();
-            this.lastPlayTime.put(sound, now);
+            this.lastPlayTime.put(sound, System.currentTimeMillis());
         }
     }
 
@@ -807,7 +814,7 @@ export class Main extends BasicGame {
         let now = System.currentTimeMillis();
         if (time == null || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play(1, volume);
-            this.lastPlayTime.put(sound, now);
+            this.lastPlayTime.put(sound, System.currentTimeMillis());
         }
     }
 
@@ -817,7 +824,7 @@ export class Main extends BasicGame {
             return this.playSoundIfNotPlaying__overload0(arg0);
         }
         if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
-            return this.playSoundIfNotPlaying__overload1(arg0, arg1);
+            return this.playSoundIfNotPlaying__overload1(arg0, javaFloat(arg1));
         }
         throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${argCount}`);
     }
@@ -1492,7 +1499,7 @@ export class Main extends BasicGame {
     private loadFont(): void {
         let pack = new XMLPackedSheet("images/font.png", "images/font.xml");
         for (let i = 0; i < 4; i++) {
-            let color: string = null!;
+            let color = null;
             switch (i) {
                 case 0:
                     color = "black";
@@ -1518,7 +1525,7 @@ export class Main extends BasicGame {
     private loadTiles(index: number, stage: Stage): void {
         let pack = new XMLPackedSheet(JavaString.format("images/tiles-%d.png", index), JavaString.format("images/tiles-%d.xml", index));
         let size = Main.TILES[index];
-        stage.tiles = javaArray<Image>(size, null!);
+        stage.tiles = javaArray(size, null!);
         for (let i = 0; i < size; i++) {
             if (i == 225) {
                 if (index == 5) {
@@ -1637,7 +1644,7 @@ export class Main extends BasicGame {
         this.swampMissiles[4] = pack2.getSprite("missile-splash-2.png")!;
 
         for (let i = 0; i < 4; i++) {
-            let color: string = null!;
+            let color = null;
             switch (i) {
                 case 0:
                     color = "green";
@@ -1900,13 +1907,13 @@ export class Main extends BasicGame {
         let pack8 = new XMLPackedSheet("images/sprites-8.png", "images/sprites-8.xml");
 
         let sun = pack8.getSprite("sun.png")!;
-        this.suns = javaArray<Image>(sun.getHeight(), null!);
+        this.suns = javaArray(sun.getHeight(), null!);
         for (let i = this.suns.length - 1; i >= 0; i--) {
             this.suns[i] = sun.getSubImage(0, i, sun.getWidth(), 1);
         }
 
         let wave = pack8.getSprite("waves-0.png")!;
-        this.waves = javaArray<Image>(wave.getHeight(), null!);
+        this.waves = javaArray(wave.getHeight(), null!);
         for (let i = this.waves.length - 1; i >= 0; i--) {
             this.waves[i] = wave.getSubImage(0, i, wave.getWidth(), 1);
         }
@@ -1919,7 +1926,7 @@ export class Main extends BasicGame {
     private loadExtraLargeImage(name: string, ...packNames: string[]): ExtraLargeImage {
         let packs = javaArray<XMLPackedSheet>(packNames.length, null!);
         for (let i = 0; i < packNames.length; i++) {
-            packs[i] = new XMLPackedSheet("images/" + packNames[i] + ".png", "images/" + packNames[i] + ".xml");
+            packs[i] = new XMLPackedSheet("images/" + packNames[i] + ".png", "images/" + packNames[i] + ".xml")!;
         }
 
         let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
@@ -1942,10 +1949,10 @@ export class Main extends BasicGame {
         }
         Arrays.sort(mapLocal, (cell1: number[], cell2: number[]) => cell1[0] - cell2[0]);
 
-        let tiles = javaArray<Image | null>(tileCount, null);
+        let tiles = javaArray<Image>(tileCount, null!);
         for (let i = 0, j = 0; i < tileCount; i++) {
             while (true) {
-                tiles[i] = packs[j].getSprite(JavaString.format("%s-%03d.png", name, i));
+                tiles[i] = packs[j]!.getSprite(JavaString.format("%s-%03d.png", name, i))!;
                 if (tiles[i] == null) {
                     j++;
                 } else {
@@ -1954,7 +1961,7 @@ export class Main extends BasicGame {
             }
         }
 
-        return new ExtraLargeImage(this, tiles as Image[], mapLocal);
+        return new ExtraLargeImage(this, tiles!, mapLocal);
     }
 
     private loadLargeImage(name: string, packName: string): LargeImage {
@@ -1979,7 +1986,7 @@ export class Main extends BasicGame {
             tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i))!;
         }
 
-        return new LargeImage(this, tiles, mapLocal, width, height);
+        return new LargeImage(this, tiles!, mapLocal, width, height);
     }
 
     private loadTriggerMap(arg0?: number, arg1?: number[][], arg2?: number, arg3?: Stage, arg4?: boolean): void {
@@ -2026,14 +2033,14 @@ export class Main extends BasicGame {
         dis.close();
 
         let triggerMap = javaArray<number[][]>(height, null!);
-        stage.triggerMap[hard ? 1 : 0] = triggerMap;
+        stage.triggerMap[hard ? 1 : 0] = triggerMap!;
         for (let i = 0; i < height; i++) {
             let list = lists[i];
-            triggerMap[i] = java2DArray(list.size(), 3, 0);
+            triggerMap[i] = java2DArray(list.size(), 3, 0)!;
             for (let j = 0; j < list.size(); j++) {
                 let element = list.get(j);
                 for (let k = 0; k < 3; k++) {
-                    triggerMap[i][j][k] = element[k];
+                    triggerMap[i]![j][k] = element[k];
                 }
             }
         }
@@ -2078,7 +2085,7 @@ export class Main extends BasicGame {
             }
         }
         let groupCount = dis.readShort();
-        stage.groups = javaArray<number[][]>(groupCount, null!);
+        stage.groups = javaArray(groupCount, null!);
         for (let i = 0; i < groupCount; i++) {
             let groupSize = dis.readShort();
             stage.groups[i] = java2DArray(groupSize, 4, 0);
@@ -2300,7 +2307,7 @@ export class Main extends BasicGame {
                 break;
         }
 
-        return ++this.loadIndex / 42;
+        return javaFloat(++this.loadIndex / 42);
     }
 
     public completeLoadingImmediately(gc: GameContainer): void {
@@ -2315,7 +2322,7 @@ export class Main extends BasicGame {
     }
 
     public isStateSaveReady(): boolean {
-        return this.loadIndex >= 42 && this.mode != null && this.gc != null!;
+        return this.loadIndex >= 42 && this.mode != null && this.gc != null;
     }
 
     public isStateSaveInvalidatingMenuActive(): boolean {
@@ -2425,7 +2432,7 @@ export class Main extends BasicGame {
     public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
         let cos = javaFloat(Math.cos(angle));
         let sin = javaFloat(Math.sin(angle));
-        return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
+        return new Point2D.Float(javaFloat(javaFloat(x * cos) - javaFloat(y * sin)), javaFloat(javaFloat(x * sin) + javaFloat(y * cos)));
     }
 
     public static javaMain(args: string[]): void {

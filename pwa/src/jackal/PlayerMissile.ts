@@ -1,9 +1,11 @@
-import type { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Explosion } from "./Explosion.js";
 import { GameElement } from "./GameElement.js";
 import { TravelingExplosion } from "./TravelingExplosion.js";
 import type { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class PlayerMissile extends GameElement {
     declare public vx: number;
     declare public vy: number;
@@ -30,22 +32,22 @@ export class PlayerMissile extends GameElement {
 
     private __construct_PlayerMissile(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: number): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let angleLocal = arg2;
             let powerLocal = arg3;
             this.x = xLocal;
             this.y = yLocal;
-            this.angle = angleLocal;
+            this.angle = javaFloat(angleLocal);
             this.power = powerLocal;
 
             let unit = this.main.createUnitVector(angleLocal);
             if (this.gameMode.player.longRange) {
-                this.vx = unit[0] * PlayerMissile.VELOCITY2;
-                this.vy = unit[1] * PlayerMissile.VELOCITY2;
+                this.vx = javaFloat(unit[0] * PlayerMissile.VELOCITY2);
+                this.vy = javaFloat(unit[1] * PlayerMissile.VELOCITY2);
             } else {
-                this.vx = unit[0] * PlayerMissile.VELOCITY;
-                this.vy = unit[1] * PlayerMissile.VELOCITY;
+                this.vx = javaFloat(unit[0] * PlayerMissile.VELOCITY);
+                this.vy = javaFloat(unit[1] * PlayerMissile.VELOCITY);
             }
 
             this.enemies = this.gameMode.enemies;
@@ -59,8 +61,8 @@ export class PlayerMissile extends GameElement {
     public static readonly DISTANCE: number = 360;
     public static readonly DISTANCE2: number = 500;
     public static readonly TRAVEL_TIME: number = 32;
-    public static readonly VELOCITY: number = PlayerMissile.DISTANCE / PlayerMissile.TRAVEL_TIME;
-    public static readonly VELOCITY2: number = PlayerMissile.DISTANCE2 / PlayerMissile.TRAVEL_TIME;
+    public static readonly VELOCITY: number = javaFloat(PlayerMissile.DISTANCE / PlayerMissile.TRAVEL_TIME);
+    public static readonly VELOCITY2: number = javaFloat(PlayerMissile.DISTANCE2 / PlayerMissile.TRAVEL_TIME);
     public static readonly MARGIN: number = 21;
 
     public init(): void {
@@ -68,13 +70,13 @@ export class PlayerMissile extends GameElement {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
 
-        let x1 = this.x - PlayerMissile.MARGIN;
-        let y1 = this.y - PlayerMissile.MARGIN;
-        let x2 = this.x + PlayerMissile.MARGIN;
-        let y2 = this.y + PlayerMissile.MARGIN;
+        let x1 = javaFloat(this.x - PlayerMissile.MARGIN);
+        let y1 = javaFloat(this.y - PlayerMissile.MARGIN);
+        let x2 = javaFloat(this.x + PlayerMissile.MARGIN);
+        let y2 = javaFloat(this.y + PlayerMissile.MARGIN);
         let hit = false;
 
         if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {

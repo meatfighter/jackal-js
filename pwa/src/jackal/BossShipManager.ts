@@ -1,4 +1,4 @@
-import { ArrayList } from "../java/JavaRuntime.js";
+import { javaFloat, ArrayList } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { BossShipGun } from "./BossShipGun.js";
 import { BrownTank } from "./BrownTank.js";
@@ -28,12 +28,12 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
 
     private __construct_BossShipManager(argCount: number): void {
         if (argCount === 0) {
-            this.shipGuns.add(new BossShipGun(36 << 5, 8 << 5, this));
-            this.shipGuns.add(new BossShipGun(28 << 5, 10 << 5, this));
-            this.shipGuns.add(new BossShipGun(28 << 5, 6 << 5, this));
-            this.shipGuns.add(new BossShipGun(22 << 5, 10 << 5, this));
-            this.shipGuns.add(new BossShipGun(22 << 5, 6 << 5, this));
-            this.shipGuns.add(new BossShipGun(13 << 5, 8 << 5, this));
+            this.shipGuns.add(new BossShipGun(javaFloat(36 << 5), javaFloat(8 << 5), this));
+            this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(10 << 5), this));
+            this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(6 << 5), this));
+            this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(10 << 5), this));
+            this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(6 << 5), this));
+            this.shipGuns.add(new BossShipGun(javaFloat(13 << 5), javaFloat(8 << 5), this));
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -78,13 +78,13 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
                 this.brownTankDelay = 91;
             } else {
                 this.brownTankDelay = 10 * 91;
-                let xLocal = this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH);
+                let xLocal = javaFloat(this.gameMode.cameraX + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH));
                 if (xLocal < 320) {
                     xLocal = 320;
                 } else if (xLocal > 1472) {
                     xLocal = 1472;
                 }
-                new BrownTank(xLocal, MainConstants.DISPLAY_HEIGHT + 48, this);
+                new BrownTank(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
             }
         }
     }

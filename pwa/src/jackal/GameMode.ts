@@ -68,7 +68,7 @@ export class GameMode implements IMode, IFadeListener {
     public static readonly REMOVE_BOUND: number = 1536;
     public static readonly BOSS_PAN_CAMERA_SPEED: number = 4;
     public static readonly ENDING_PAN_CAMERA_SPEED: number = 2;
-    public static readonly CONVEYOR_SPEED: number = Player.SPEED / 3;
+    public static readonly CONVEYOR_SPEED: number = javaFloat(Player.SPEED / 3);
     public static readonly STAGE_COMPLETED_DELAY: number = 228;
 
     public static readonly TYPE_SOLID: number = 0;
@@ -104,7 +104,7 @@ export class GameMode implements IMode, IFadeListener {
     public static readonly WATER_ALPHAS: number[] = javaArray(GameMode.WATER_ALPHAS_PERIOD, 0);
     static {
         for (let i = 0; i < GameMode.WATER_ALPHAS_PERIOD; i++) {
-            GameMode.WATER_ALPHAS[i] = 0.5 + 0.5 * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(GameMode.WATER_ALPHAS_PERIOD)));
+            GameMode.WATER_ALPHAS[i] = javaFloat(0.5 + javaFloat(0.5 * javaFloat(Math.sin((2.0 * Math.PI * i) / javaDouble(GameMode.WATER_ALPHAS_PERIOD)))));
         }
     }
 
@@ -170,13 +170,13 @@ export class GameMode implements IMode, IFadeListener {
         }
 
         this.triggerY = this.mapHeight;
-        this.maxCameraX = (this.mapWidth - 32) * 32;
-        this.maxCameraY = (this.mapHeight - 31) * 32;
+        this.maxCameraX = javaFloat((this.mapWidth - 32) * 32);
+        this.maxCameraY = javaFloat((this.mapHeight - 31) * 32);
         this.cameraX = 0;
         this.cameraY = this.maxCameraY;
 
         this.player = new Player();
-        this.player.y = this.cameraY + 2 * MainConstants.DISPLAY_HEIGHT;
+        this.player.y = javaFloat(this.cameraY + 2 * MainConstants.DISPLAY_HEIGHT);
     }
 
     public setStage(stageIndex: number, stage: Stage, hard: boolean): void {
@@ -225,8 +225,8 @@ export class GameMode implements IMode, IFadeListener {
         let x = v[0];
         let y = v[1];
 
-        v[0] = x * cos - y * sin;
-        v[1] = x * sin + y * cos;
+        v[0] = javaFloat(javaFloat(x * cos) - javaFloat(y * sin));
+        v[1] = javaFloat(javaFloat(x * sin) + javaFloat(y * cos));
     }
 
     public triggerGroup(groupIndex: number): void {
@@ -249,7 +249,7 @@ export class GameMode implements IMode, IFadeListener {
     public suggestDirection(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number | boolean, arg5?: boolean): number[] {
         const argCount = arguments.length;
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.suggestDirection__overload0(arg0, arg1);
+            return this.suggestDirection__overload0(javaFloat(arg0), javaFloat(arg1));
         }
         if (
             argCount === 6 &&
@@ -260,7 +260,7 @@ export class GameMode implements IMode, IFadeListener {
             typeof arg4 === "number" &&
             typeof arg5 === "boolean"
         ) {
-            return this.suggestDirection__overload1(arg0, arg1, arg2, arg3, arg4, arg5);
+            return this.suggestDirection__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3), arg4, arg5);
         }
         if (
             argCount === 5 &&
@@ -270,7 +270,7 @@ export class GameMode implements IMode, IFadeListener {
             typeof arg3 === "number" &&
             typeof arg4 === "boolean"
         ) {
-            return this.suggestDirection__overload2(arg0, arg1, arg2, arg3, arg4);
+            return this.suggestDirection__overload2(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3), arg4);
         }
         throw new Error(`No Java method overload matched suggestDirection: ${argCount}`);
     }
@@ -300,7 +300,7 @@ export class GameMode implements IMode, IFadeListener {
             }
         }
 
-        let angle = 1.571 + 0.4 * this.main.random.nextFloat();
+        let angle = javaFloat(javaFloat(1.571) + javaFloat(javaFloat(0.4) * this.main.random.nextFloat()));
         let v = this.main.unitVector;
         v[0] = vx;
         v[1] = vy;
@@ -314,14 +314,14 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     public straightDirection(x1: number, y1: number, x2: number, y2: number): number[] {
-        let angle = javaFloat((Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI);
+        let angle = javaFloat((Math.atan2(javaFloat(y2 - y1), javaFloat(x2 - x1)) * 180) / Math.PI);
         if (angle < 0) {
-            angle += 360;
+            angle = javaFloat(angle + 360);
         }
 
-        let ang = 45 * javaRoundFloat(angle / 45);
+        let ang = 45 * javaRoundFloat(javaFloat(angle / 45));
         let v = this.main.createUnitVector(ang);
-        v[2] = ang;
+        v[2] = javaFloat(ang);
 
         return v;
     }
@@ -357,7 +357,7 @@ export class GameMode implements IMode, IFadeListener {
         let direction = this.directionsDecoded[i];
 
         if (addRandomness) {
-            let angle = GameMode.DIRECTION_RADIANS[direction] + (this.main.random.nextFloat() - 0.5) * 0.7854;
+            let angle = javaFloat(GameMode.DIRECTION_RADIANS[direction] + javaFloat(javaFloat(this.main.random.nextFloat() - 0.5) * javaFloat(0.7854)));
 
             v = this.main.createUnitVector2(angle);
             v[2] = angle;
@@ -383,7 +383,7 @@ export class GameMode implements IMode, IFadeListener {
             }
 
             v = this.main.createUnitVector(currentAngle);
-            v[2] = currentAngle;
+            v[2] = javaFloat(currentAngle);
         }
 
         return v;
@@ -420,45 +420,45 @@ export class GameMode implements IMode, IFadeListener {
         let direction = this.directionsDecoded[i];
 
         if (addRandomness) {
-            let angle = GameMode.DIRECTION_RADIANS[direction] + (this.main.random.nextFloat() - 0.5) * 0.7854;
+            let angle = javaFloat(GameMode.DIRECTION_RADIANS[direction] + javaFloat(javaFloat(this.main.random.nextFloat() - 0.5) * javaFloat(0.7854)));
 
             v = this.main.createUnitVector2(angle);
             v[2] = angle;
         } else {
             let angle = GameMode.DIRECTION_DEGREES[direction];
             v = this.main.createUnitVector(angle);
-            v[2] = GameMode.DIRECTION_DEGREES[direction];
+            v[2] = javaFloat(GameMode.DIRECTION_DEGREES[direction]);
         }
 
         return v;
     }
 
     private cameraTrackPlayer(): void {
-        if (this.player.x - this.cameraX < GameMode.CAMERA_MARGIN_SIDES) {
-            this.cameraX = this.player.x - GameMode.CAMERA_MARGIN_SIDES;
+        if (javaFloat(this.player.x - this.cameraX) < GameMode.CAMERA_MARGIN_SIDES) {
+            this.cameraX = javaFloat(this.player.x - GameMode.CAMERA_MARGIN_SIDES);
             if (this.cameraX < 0) {
                 this.cameraX = 0;
             }
-        } else if (this.cameraX - this.player.x < GameMode.CAMERA_MARGIN_SIDES - MainConstants.DISPLAY_WIDTH) {
-            this.cameraX = this.player.x + GameMode.CAMERA_MARGIN_SIDES - MainConstants.DISPLAY_WIDTH;
+        } else if (javaFloat(this.cameraX - this.player.x) < javaFloat(GameMode.CAMERA_MARGIN_SIDES - MainConstants.DISPLAY_WIDTH)) {
+            this.cameraX = javaFloat(javaFloat(this.player.x + GameMode.CAMERA_MARGIN_SIDES) - MainConstants.DISPLAY_WIDTH);
             if (this.cameraX > this.maxCameraX) {
                 this.cameraX = this.maxCameraX;
             }
         }
 
-        if (this.player.y - this.cameraY < GameMode.CAMERA_MARGIN_NORTH) {
-            this.cameraY = this.player.y - GameMode.CAMERA_MARGIN_NORTH;
+        if (javaFloat(this.player.y - this.cameraY) < GameMode.CAMERA_MARGIN_NORTH) {
+            this.cameraY = javaFloat(this.player.y - GameMode.CAMERA_MARGIN_NORTH);
             if (this.cameraY < 0) {
                 this.cameraY = 0;
             }
-        } else if (this.cameraY - this.player.y < GameMode.CAMERA_MARGIN_SOUTH - MainConstants.DISPLAY_HEIGHT) {
-            this.cameraY = this.player.y + GameMode.CAMERA_MARGIN_SOUTH - MainConstants.DISPLAY_HEIGHT;
+        } else if (javaFloat(this.cameraY - this.player.y) < javaFloat(GameMode.CAMERA_MARGIN_SOUTH - MainConstants.DISPLAY_HEIGHT)) {
+            this.cameraY = javaFloat(javaFloat(this.player.y + GameMode.CAMERA_MARGIN_SOUTH) - MainConstants.DISPLAY_HEIGHT);
             if (this.cameraY > this.maxCameraY) {
                 this.cameraY = this.maxCameraY;
             }
         }
 
-        let maxY = this.cameraY + GameMode.CAMERA_BOUND;
+        let maxY = javaFloat(this.cameraY + GameMode.CAMERA_BOUND);
         if (maxY < this.maxCameraY) {
             this.maxCameraY = maxY;
         }
@@ -480,115 +480,120 @@ export class GameMode implements IMode, IFadeListener {
     private processTrigger(index: number, x: number, y: number): void {
         switch (index) {
             case Triggers.GRAY_GUN:
-                new RotatingGun(x + 64, y + 64, true);
+                new RotatingGun(javaFloat(x + 64), javaFloat(y + 64), true);
                 break;
             case Triggers.SOLDIER_WALKER:
-                new EnemySoldier(x + 32, y + 74, EnemySoldierType.WALKER);
+                new EnemySoldier(javaFloat(x + 32), javaFloat(y + 74), EnemySoldierType.WALKER);
                 break;
             case Triggers.SOLDIER_STATIONARY:
-                new EnemySoldier(x + 32, y + 74, EnemySoldierType.STATIONARY);
+                new EnemySoldier(javaFloat(x + 32), javaFloat(y + 74), EnemySoldierType.STATIONARY);
                 break;
             case Triggers.GREEN_BOAT:
-                new GreenBoat(x + 72, y + 56);
+                new GreenBoat(javaFloat(x + 72), javaFloat(y + 56));
                 break;
             case Triggers.BROWN_TANK:
-                new BrownTank(x + 32, y + 48);
+                new BrownTank(javaFloat(x + 32), javaFloat(y + 48));
                 break;
             case Triggers.FRIENDLY_HELICOPTER_LANDING:
-                new FriendlyHelicopter(this.cameraX + MainConstants.DISPLAY_WIDTH / 2, this.cameraY + MainConstants.DISPLAY_HEIGHT + 128, true, false);
+                new FriendlyHelicopter(
+                    javaFloat(this.cameraX + MainConstants.DISPLAY_WIDTH / 2),
+                    javaFloat(javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT) + 128),
+                    true,
+                    false
+                );
                 break;
             case Triggers.YELLOW_GUN:
-                new RotatingGun(x + 64, y + 64, false);
+                new RotatingGun(javaFloat(x + 64), javaFloat(y + 64), false);
                 break;
             case Triggers.STAR_BROWN:
-                new InvisibleStar(x + 32, y + 32, Star.TYPE_BROWN);
+                new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.TYPE_BROWN);
                 break;
             case Triggers.GRAY_TANK:
-                new GrayTank(x + 64, y + 64);
+                new GrayTank(javaFloat(x + 64), javaFloat(y + 64));
                 break;
             case Triggers.STAR_FLASHING:
-                new InvisibleStar(x + 32, y + 32, Star.TYPE_FLASHING);
+                new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.TYPE_FLASHING);
                 break;
             case Triggers.AIRPLANE:
-                new Airplane(x + 60, y + 62);
+                new Airplane(javaFloat(x + 60), javaFloat(y + 62));
                 break;
             case Triggers.GRAY_JEEP:
-                new GrayJeep(x + 32, y + 46);
+                new GrayJeep(javaFloat(x + 32), javaFloat(y + 46));
                 break;
             case Triggers.PARKED_GRAY_JEEP:
-                new ParkedGrayJeep(x + 32, y + 46);
+                new ParkedGrayJeep(javaFloat(x + 32), javaFloat(y + 46));
                 break;
             case Triggers.GRAY_BOAT:
-                new GrayBoat(x, y);
+                new GrayBoat(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.APPEARING_SOLDIER:
-                new AppearingSoldier(x + 32, y + 74);
+                new AppearingSoldier(javaFloat(x + 32), javaFloat(y + 74));
                 break;
             case Triggers.APPEARING_BROWN_TANK:
-                new AppearingBrownTank(x + 8, y + 12);
+                new AppearingBrownTank(javaFloat(x + 8), javaFloat(y + 12));
                 break;
             case Triggers.SUBMARINE:
-                new Submarine(x + 32, y + 128);
+                new Submarine(javaFloat(x + 32), javaFloat(y + 128));
                 break;
             case Triggers.TROOPS_TRUCK:
-                new TroopsTruck(x, y + 8);
+                new TroopsTruck(javaFloat(x), javaFloat(y + 8));
                 break;
             case Triggers.FLOOR_GUN:
-                new FloorGun(x, y + 28);
+                new FloorGun(javaFloat(x), javaFloat(y + 28));
                 break;
             case Triggers.SWAMP_MISSILE_LAUNCHER:
-                new SwampMissileLauncher(x, y);
+                new SwampMissileLauncher(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.ROCK:
-                new Rock(x + 32, y + 32);
+                new Rock(javaFloat(x + 32), javaFloat(y + 32));
                 break;
             case Triggers.CANNON_TRUCK_RIGHT:
-                new CannonTruck(x + 16, y, true);
+                new CannonTruck(javaFloat(x + 16), javaFloat(y), true);
                 break;
             case Triggers.MINE:
-                new Mine(x + 16, y);
+                new Mine(javaFloat(x + 16), javaFloat(y));
                 break;
             case Triggers.CLIFF_MISSILE_LAUNCHER:
-                new CliffMissileLauncher(x + 16, y + 20);
+                new CliffMissileLauncher(javaFloat(x + 16), javaFloat(y + 20));
                 break;
             case Triggers.TRAIN:
-                new TrainManager(x + 4, y);
+                new TrainManager(javaFloat(x + 4), javaFloat(y));
                 break;
             case Triggers.CANNON_TRUCK_LEFT:
-                new CannonTruck(x + 16, y, false);
+                new CannonTruck(javaFloat(x + 16), javaFloat(y), false);
                 break;
             case Triggers.HOUSE_LEFT:
-                new House(x, y, true);
+                new House(javaFloat(x), javaFloat(y), true);
                 break;
             case Triggers.HOUSE_RIGHT:
-                new House(x, y, false);
+                new House(javaFloat(x), javaFloat(y), false);
                 break;
             case Triggers.HUT:
-                new Hut(x, y, false, false);
+                new Hut(javaFloat(x), javaFloat(y), false, false);
                 break;
             case Triggers.SHACK:
-                new Hut(x, y, true, false);
+                new Hut(javaFloat(x), javaFloat(y), true, false);
                 break;
             case Triggers.GATE:
-                new Gate(x, y);
+                new Gate(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.TANK_SHACK:
-                new Hut(x, y, true, true);
+                new Hut(javaFloat(x), javaFloat(y), true, true);
                 break;
             case Triggers.CLIFF_GUN:
-                new CliffGun(x, y);
+                new CliffGun(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.FIRE_TANK:
-                new FireTank(x + 64, y + 64);
+                new FireTank(javaFloat(x + 64), javaFloat(y + 64));
                 break;
             case Triggers.SOLDIER_FIRE:
-                new EnemySoldier(x + 32, y + 74, EnemySoldierType.FIRE);
+                new EnemySoldier(javaFloat(x + 32), javaFloat(y + 74), EnemySoldierType.FIRE);
                 break;
             case Triggers.PARKED_BROWN_TANK:
-                new ParkedBrownTank(x + 32, y + 40);
+                new ParkedBrownTank(javaFloat(x + 32), javaFloat(y + 40));
                 break;
             case Triggers.PLAYER:
-                this.createPlayer(x + 48, y + 48);
+                this.createPlayer(javaFloat(x + 48), javaFloat(y + 48));
                 this.main.startFade(false, null!);
                 switch (this.main.stageIndex) {
                     case 3:
@@ -605,49 +610,49 @@ export class GameMode implements IMode, IFadeListener {
                 }
                 break;
             case Triggers.GREEN_GUN:
-                new RotatingGun(x + 48, y + 44, RotatingGun.TYPE_GREEN);
+                new RotatingGun(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_GREEN);
                 break;
             case Triggers.APPEARING_PLANE:
-                new AppearingPlane(x + 60, y + 62);
+                new AppearingPlane(javaFloat(x + 60), javaFloat(y + 62));
                 break;
             case Triggers.ENEMY_HELICOPTER:
                 new EnemyHelicopter(true);
                 break;
             case Triggers.FLOOR_GUN_PLAIN:
-                new FloorGun(x, y + 28, true);
+                new FloorGun(javaFloat(x), javaFloat(y + 28), true);
                 break;
             case Triggers.BROWN_GUN:
-                new RotatingGun(x + 48, y + 44, RotatingGun.TYPE_BROWN);
+                new RotatingGun(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_BROWN);
                 break;
             case Triggers.APPEARING_ENEMY_HELICOPTER:
-                new AppearingEnemyHelicopter(y);
+                new AppearingEnemyHelicopter(javaFloat(y));
                 break;
             case Triggers.APPEARING_GRAY_JEEP:
-                new AppearingGrayJeep(x + 32, y + 46);
+                new AppearingGrayJeep(javaFloat(x + 32), javaFloat(y + 46));
                 break;
             case Triggers.FLOOR_MISSILE_LAUNCHER:
-                new FloorMissileLauncher(x + 16, y + 8);
+                new FloorMissileLauncher(javaFloat(x + 16), javaFloat(y + 8));
                 break;
             case Triggers.STATUE_NONE:
-                new Statue(x, y, Statue.TYPE_NONE);
+                new Statue(javaFloat(x), javaFloat(y), Statue.TYPE_NONE);
                 break;
             case Triggers.STATUE_LEFT:
-                new Statue(x, y, Statue.TYPE_LEFT);
+                new Statue(javaFloat(x), javaFloat(y), Statue.TYPE_LEFT);
                 break;
             case Triggers.STATUE_RIGHT:
-                new Statue(x, y, Statue.TYPE_RIGHT);
+                new Statue(javaFloat(x), javaFloat(y), Statue.TYPE_RIGHT);
                 break;
             case Triggers.COLUMN:
-                new Column(x, y);
+                new Column(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.LANDING_PORT_LEFT:
-                new LandingPort(x, y, LandingPort.TYPE_LEFT);
+                new LandingPort(javaFloat(x), javaFloat(y), LandingPort.TYPE_LEFT);
                 break;
             case Triggers.LANDING_PORT_RIGHT:
-                new LandingPort(x, y, LandingPort.TYPE_RIGHT);
+                new LandingPort(javaFloat(x), javaFloat(y), LandingPort.TYPE_RIGHT);
                 break;
             case Triggers.LANDING_PORT_CIRCLE:
-                new LandingPort(x, y, LandingPort.TYPE_CIRCLE);
+                new LandingPort(javaFloat(x), javaFloat(y), LandingPort.TYPE_CIRCLE);
                 break;
             case Triggers.BOSS_BLUE_TANKS:
                 new BossBlueTanksManager();
@@ -658,7 +663,7 @@ export class GameMode implements IMode, IFadeListener {
                 this.main.requestSong(this.main.bossSong);
                 break;
             case Triggers.LASER:
-                new LasersManager(x, y);
+                new LasersManager(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.BOSS_SHIP:
                 new BossShipManager();
@@ -669,7 +674,7 @@ export class GameMode implements IMode, IFadeListener {
                 this.main.requestSong(this.main.bossSong);
                 break;
             case Triggers.STAR_GREEN:
-                new InvisibleStar(x + 32, y + 32, Star.SPRITE_GREEN);
+                new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.SPRITE_GREEN);
                 break;
             case Triggers.BOSS_GARAGE:
                 new BossGarageManager();
@@ -690,7 +695,7 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     private createPlayer(x: number, y: number): void {
-        this.cameraX = x - GameMode.CAMERA_MARGIN_NORTH - 48;
+        this.cameraX = javaFloat(javaFloat(x - GameMode.CAMERA_MARGIN_NORTH) - 48);
         if (this.cameraX < 0) {
             this.cameraX = 0;
         }
@@ -707,10 +712,10 @@ export class GameMode implements IMode, IFadeListener {
     public isDriveable(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isDriveable__overload0(arg0, arg1, arg2, arg3);
+            return this.isDriveable__overload0(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isDriveable__overload1(arg0, arg1);
+            return this.isDriveable__overload1(javaFloat(arg0), javaFloat(arg1));
         }
         throw new Error(`No Java method overload matched isDriveable: ${argCount}`);
     }
@@ -760,46 +765,56 @@ export class GameMode implements IMode, IFadeListener {
     public isOutsideOfFrame(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
         const argCount = arguments.length;
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isOutsideOfFrame__overload0(arg0, arg1);
+            return this.isOutsideOfFrame__overload0(javaFloat(arg0), javaFloat(arg1));
         }
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isOutsideOfFrame__overload1(arg0, arg1, arg2, arg3);
+            return this.isOutsideOfFrame__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
         }
         throw new Error(`No Java method overload matched isOutsideOfFrame: ${argCount}`);
     }
 
     public isOutsideOfFrame__overload0(x: number, y: number): boolean {
-        return y > this.cameraY + MainConstants.DISPLAY_HEIGHT || x < this.cameraX || y < this.cameraY || x > this.cameraX + MainConstants.DISPLAY_WIDTH;
+        return (
+            y > javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT) ||
+            x < this.cameraX ||
+            y < this.cameraY ||
+            x > javaFloat(this.cameraX + MainConstants.DISPLAY_WIDTH)
+        );
     }
 
     public isOutsideOfFrame__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
-        return y1 > this.cameraY + MainConstants.DISPLAY_HEIGHT || x2 < this.cameraX || y2 < this.cameraY || x1 > this.cameraX + MainConstants.DISPLAY_WIDTH;
+        return (
+            y1 > javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT) ||
+            x2 < this.cameraX ||
+            y2 < this.cameraY ||
+            x1 > javaFloat(this.cameraX + MainConstants.DISPLAY_WIDTH)
+        );
     }
 
     public distanceOutsideOfFrame(x: number, y: number): number {
         if (y < this.cameraY) {
-            return this.cameraY - y;
+            return javaFloat(this.cameraY - y);
         }
-        if (y > this.cameraY + MainConstants.DISPLAY_HEIGHT) {
-            return y - (this.cameraY + MainConstants.DISPLAY_HEIGHT);
+        if (y > javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT)) {
+            return javaFloat(y - javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT));
         }
         if (x < this.cameraX) {
-            return this.cameraX - x;
+            return javaFloat(this.cameraX - x);
         }
-        if (x > this.cameraX + MainConstants.DISPLAY_WIDTH) {
-            return x - (this.cameraX + MainConstants.DISPLAY_WIDTH);
+        if (x > javaFloat(this.cameraX + MainConstants.DISPLAY_WIDTH)) {
+            return javaFloat(x - javaFloat(this.cameraX + MainConstants.DISPLAY_WIDTH));
         }
         return 0;
     }
 
     public audioVolume(x: number, y: number): number {
-        let d = this.distanceOutsideOfFrame(x, y);
+        let d = javaFloat(this.distanceOutsideOfFrame(x, y));
         if (d == 0) {
             return 1;
         } else if (d >= 256) {
             return 0;
         } else {
-            return 1 - d / 256;
+            return javaFloat(1 - javaFloat(d / 256));
         }
     }
 
@@ -851,7 +866,14 @@ export class GameMode implements IMode, IFadeListener {
     public destroyAllWithinFrame(): void {
         for (let i = this.enemies.size() - 1; i >= 0; i--) {
             let enemy = this.enemies.get(i);
-            if (!this.isOutsideOfFrame(enemy.x + enemy.hitX1, enemy.y + enemy.hitY1, enemy.x + enemy.hitX2, enemy.y + enemy.hitY2)) {
+            if (
+                !this.isOutsideOfFrame(
+                    javaFloat(enemy.x + enemy.hitX1),
+                    javaFloat(enemy.y + enemy.hitY1),
+                    javaFloat(enemy.x + enemy.hitX2),
+                    javaFloat(enemy.y + enemy.hitY2)
+                )
+            ) {
                 enemy.explode();
             }
         }
@@ -945,21 +967,21 @@ export class GameMode implements IMode, IFadeListener {
         }
 
         if (this.stageIndex == 5) {
-            this.conveyorOffset += GameMode.CONVEYOR_SPEED;
+            this.conveyorOffset = javaFloat(this.conveyorOffset + GameMode.CONVEYOR_SPEED);
             if (this.conveyorOffset >= 16) {
-                this.conveyorOffset -= 16;
+                this.conveyorOffset = javaFloat(this.conveyorOffset - 16);
             }
             let conveyorIndex = javaInt(this.conveyorOffset);
-            this.conveyorDelta = conveyorIndex - this.conveyorLastIndex;
+            this.conveyorDelta = javaFloat(conveyorIndex - this.conveyorLastIndex);
             if (this.conveyorDelta < 0) {
-                this.conveyorDelta += 16;
+                this.conveyorDelta = javaFloat(this.conveyorDelta + 16);
             }
             this.tiles[0] = this.main.conveyors[conveyorIndex];
             this.conveyorLastIndex = conveyorIndex;
         }
 
         if (this.bossCameraPan && this.cameraY != 0) {
-            this.cameraY -= GameMode.BOSS_PAN_CAMERA_SPEED;
+            this.cameraY = javaFloat(this.cameraY - GameMode.BOSS_PAN_CAMERA_SPEED);
             if (this.cameraY <= 0) {
                 this.maxCameraY = this.cameraY = 0;
                 this.bossCameraPan = false;
@@ -971,7 +993,7 @@ export class GameMode implements IMode, IFadeListener {
 
         if (this.endingCameraPan) {
             if (this.cameraX > 512) {
-                this.cameraX -= GameMode.ENDING_PAN_CAMERA_SPEED;
+                this.cameraX = javaFloat(this.cameraX - GameMode.ENDING_PAN_CAMERA_SPEED);
                 if (this.cameraX <= 512) {
                     this.cameraX = 512;
                     this.endingCameraPan = false;
@@ -980,7 +1002,7 @@ export class GameMode implements IMode, IFadeListener {
                     return;
                 }
             } else {
-                this.cameraX += GameMode.ENDING_PAN_CAMERA_SPEED;
+                this.cameraX = javaFloat(this.cameraX + GameMode.ENDING_PAN_CAMERA_SPEED);
                 if (this.cameraX >= 512) {
                     this.cameraX = 512;
                     this.endingCameraPan = false;
@@ -993,7 +1015,7 @@ export class GameMode implements IMode, IFadeListener {
 
         this.processTriggers();
 
-        let maxBoundY = this.maxCameraY + GameMode.REMOVE_BOUND;
+        let maxBoundY = javaFloat(this.maxCameraY + GameMode.REMOVE_BOUND);
 
         for (let i = 7; i >= 0; i--) {
             let list = this.elements[i];

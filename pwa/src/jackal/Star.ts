@@ -1,4 +1,6 @@
 import { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Star extends Enemy {
     declare public type: number;
     declare public flashingIndex: number;
@@ -17,8 +19,8 @@ export class Star extends Enemy {
 
     private __construct_Star(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;

@@ -1,6 +1,8 @@
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { GameElement } from "./GameElement.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Help extends GameElement {
     declare public left: boolean;
 
@@ -20,8 +22,8 @@ export class Help extends GameElement {
 
     private __construct_Help(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let leftLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -45,8 +47,8 @@ export class Help extends GameElement {
                 if (++this.blinks == 4) {
                     this.removeFlag = true;
                     new FriendlySoldier(
-                        this.x + (this.left ? -24 : 24),
-                        this.y + 28,
+                        javaFloat(this.x + (this.left ? -24 : 24)),
+                        javaFloat(this.y + 28),
                         this.left ? FriendlySoldierType.HOUSE_LEFT_WALKING : FriendlySoldierType.HOUSE_RIGHT_WALKING,
                         2 + this.main.random.nextInt(3),
                         false

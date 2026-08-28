@@ -1,6 +1,8 @@
 import { MainConstants } from "../java/MainConstants.js";
 import { Bomb } from "./Bomb.js";
 import { Enemy } from "./Enemy.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Airplane extends Enemy {
     declare public bombDelay: number;
     declare public up: boolean;
@@ -25,26 +27,26 @@ export class Airplane extends Enemy {
     private __construct_Airplane(argCount: number, arg0?: boolean | number, arg1?: number, arg2?: boolean): void {
         if (argCount === 1 && typeof arg0 === "boolean") {
             let leftLandingPort = arg0;
-            this.x = this.gameMode.player.x + (leftLandingPort ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
+            this.x = javaFloat(this.gameMode.player.x + (leftLandingPort ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE));
 
-            this.y = this.gameMode.cameraY - 124;
+            this.y = javaFloat(this.gameMode.cameraY - 124);
             return;
         } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let upLocal = arg2;
             this.__construct_Airplane(2, xLocal2, yLocal2);
             this.up = upLocal;
             this.orientationIndex = 1;
             return;
         } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
-            this.x = this.gameMode.player.x + (this.main.random.nextBoolean() ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE);
-            if (this.x - 96 < this.gameMode.cameraX) {
-                this.x = this.gameMode.player.x + Airplane.APPEAR_DISTANCE;
-            } else if (this.x + 96 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
-                this.x = this.gameMode.player.x - Airplane.APPEAR_DISTANCE;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
+            this.x = javaFloat(this.gameMode.player.x + (this.main.random.nextBoolean() ? -Airplane.APPEAR_DISTANCE : Airplane.APPEAR_DISTANCE));
+            if (javaFloat(this.x - 96) < this.gameMode.cameraX) {
+                this.x = javaFloat(this.gameMode.player.x + Airplane.APPEAR_DISTANCE);
+            } else if (javaFloat(this.x + 96) > javaFloat(this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH)) {
+                this.x = javaFloat(this.gameMode.player.x - Airplane.APPEAR_DISTANCE);
             }
 
             this.y = yLocal;
@@ -82,13 +84,13 @@ export class Airplane extends Enemy {
         this.main.playSoundIfNotPlaying(this.main.planeSound);
 
         if (this.up) {
-            this.y -= Airplane.SPEED;
-            if (this.y < this.gameMode.cameraY - 384) {
+            this.y = javaFloat(this.y - Airplane.SPEED);
+            if (this.y < javaFloat(this.gameMode.cameraY - 384)) {
                 this.playSoundOnRemove = false;
                 this.remove();
             }
         } else {
-            this.y += Airplane.SPEED;
+            this.y = javaFloat(this.y + Airplane.SPEED);
         }
 
         if (--this.bombDelay < 0) {

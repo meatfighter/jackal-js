@@ -2,6 +2,8 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { IInput } from "./IInput.js";
 import type { IMenuListener } from "./IMenuListener.js";
 import type { Main } from "./Main.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Menu {
     public constructor(
         arg0?: number,
@@ -31,8 +33,8 @@ export class Menu {
         arg8?: string
     ): void {
         if (argCount >= 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let mainLocal = arg2;
             let selectedIndexLocal = arg3;
             let iconLocal = arg4;
@@ -47,7 +49,7 @@ export class Menu {
             this.options = optionsLocal as string[];
 
             this.input = mainLocal!.input;
-            this.iconY = 16 + (selectedIndexLocal << 6);
+            this.iconY = javaFloat(16 + (selectedIndexLocal << 6));
 
             this.input.clearKeyPressedRecord();
             return;
@@ -68,7 +70,7 @@ export class Menu {
 
     private static readonly SELECT_TIME: number = 8;
 
-    private static readonly I_SELECT_TIME2: number = 1 / (Menu.SELECT_TIME * Menu.SELECT_TIME);
+    private static readonly I_SELECT_TIME2: number = javaFloat(1 / (Menu.SELECT_TIME * Menu.SELECT_TIME));
 
     public main: Main = null!;
     public options: string[] = null!;
@@ -102,10 +104,10 @@ export class Menu {
             this.menuListener.selectionChanged(this.selectedIndex);
         }
         this.selectState = Menu.SELECT_STATE_ACCELERATING;
-        this.targetY = 16 + (this.selectedIndex << 6);
-        this.iconMidY = 0.5 * (this.iconY + this.targetY);
+        this.targetY = javaFloat(16 + (this.selectedIndex << 6));
+        this.iconMidY = javaFloat(0.5 * javaFloat(this.iconY + this.targetY));
         this.iconVy = 0;
-        this.iconA = 2 * (this.targetY - this.iconY) * Menu.I_SELECT_TIME2;
+        this.iconA = javaFloat(javaFloat(2 * javaFloat(this.targetY - this.iconY)) * Menu.I_SELECT_TIME2);
     }
 
     public update(): void {
@@ -153,8 +155,8 @@ export class Menu {
 
         switch (this.selectState) {
             case Menu.SELECT_STATE_ACCELERATING:
-                this.iconVy += this.iconA;
-                this.iconY += this.iconVy;
+                this.iconVy = javaFloat(this.iconVy + this.iconA);
+                this.iconY = javaFloat(this.iconY + this.iconVy);
                 if (this.iconA > 0) {
                     if (this.iconY >= this.iconMidY) {
                         this.selectState = Menu.SELECT_STATE_DECELERATING;
@@ -166,8 +168,8 @@ export class Menu {
                 }
                 break;
             case Menu.SELECT_STATE_DECELERATING:
-                this.iconVy -= this.iconA;
-                this.iconY += this.iconVy;
+                this.iconVy = javaFloat(this.iconVy - this.iconA);
+                this.iconY = javaFloat(this.iconY + this.iconVy);
                 if (this.iconA > 0) {
                     if (this.iconY >= this.targetY || this.iconVy <= 0) {
                         this.selectState = Menu.SELECT_STATE_STATIONARY;

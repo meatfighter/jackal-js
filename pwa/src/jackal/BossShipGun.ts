@@ -38,8 +38,8 @@ export class BossShipGun extends Enemy {
 
     private __construct_BossShipGun(argCount: number, arg0?: number, arg1?: number, arg2?: BossShipManager): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let bossShipManagerLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -63,7 +63,7 @@ export class BossShipGun extends Enemy {
 
     public static readonly SHOOT_SPREAD_ANGLE: number = javaFloat((20 * Math.PI) / 180);
 
-    public static readonly OPEN_SPEED: number = 32 / BossShipGun.OPEN_DELAY;
+    public static readonly OPEN_SPEED: number = javaFloat(32 / BossShipGun.OPEN_DELAY);
 
     public static readonly BULLET_SPEED: number = 1.625;
     public static readonly BULLET_TRAVEL_TIME: number = 2 * 91;
@@ -117,7 +117,7 @@ export class BossShipGun extends Enemy {
                 }
                 break;
             case BossShipGun.STATE_OPENING:
-                this.openY += BossShipGun.OPEN_SPEED;
+                this.openY = javaFloat(this.openY + BossShipGun.OPEN_SPEED);
                 if (this.openY > 32) {
                     this.openY = 32;
                 }
@@ -126,19 +126,19 @@ export class BossShipGun extends Enemy {
                     this.angle = 90;
                     this.delay = BossShipGun.AIMING_DELAY;
 
-                    let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
-                    let deltaAngle = (targetAngle + 90) % 360;
+                    let targetAngle = javaFloat((Math.atan2(javaFloat(this.player!.y - this.y), javaFloat(this.player!.x - this.x)) * 180) / Math.PI);
+                    let deltaAngle = javaFloat(javaFloat(targetAngle + 90) % 360);
                     if (deltaAngle < 0) {
-                        deltaAngle += 180;
+                        deltaAngle = javaFloat(deltaAngle + 180);
                     } else {
-                        deltaAngle -= 180;
+                        deltaAngle = javaFloat(deltaAngle - 180);
                     }
 
-                    this.aimingSpeed = deltaAngle / BossShipGun.AIMING_DELAY;
+                    this.aimingSpeed = javaFloat(deltaAngle / BossShipGun.AIMING_DELAY);
                 }
                 break;
             case BossShipGun.STATE_AIMING:
-                this.angle += this.aimingSpeed;
+                this.angle = javaFloat(this.angle + this.aimingSpeed);
                 if (--this.delay == 0) {
                     this.state = BossShipGun.STATE_SHOOTING;
                     this.delay = BossShipGun.SHOOT_DELAY;
@@ -150,17 +150,19 @@ export class BossShipGun extends Enemy {
                     this.delay = BossShipGun.OPEN_DELAY;
                     this.openY = 32;
 
-                    let shootAngle = javaFloat(Math.atan2(this.player!.y - (this.y + 32), this.player!.x - (this.x + 32)));
-                    shootAngle -= 2 * BossShipGun.SHOOT_SPREAD_ANGLE;
+                    let shootAngle = javaFloat(
+                        Math.atan2(javaFloat(this.player!.y - javaFloat(this.y + 32)), javaFloat(this.player!.x - javaFloat(this.x + 32)))
+                    );
+                    shootAngle = javaFloat(shootAngle - javaFloat(2 * BossShipGun.SHOOT_SPREAD_ANGLE));
 
-                    for (let i = 0; i < 5; i++, shootAngle += BossShipGun.SHOOT_SPREAD_ANGLE) {
+                    for (let i = 0; i < 5; i++, shootAngle = javaFloat(shootAngle + BossShipGun.SHOOT_SPREAD_ANGLE)) {
                         let cos = javaFloat(Math.cos(shootAngle));
                         let sin = javaFloat(Math.sin(shootAngle));
                         new EnemyBullet(
-                            this.x + 32 + 13 * cos,
-                            this.y + 32 + 13 * sin,
-                            BossShipGun.BULLET_SPEED * cos,
-                            BossShipGun.BULLET_SPEED * sin,
+                            javaFloat(javaFloat(this.x + 32) + javaFloat(13 * cos)),
+                            javaFloat(javaFloat(this.y + 32) + javaFloat(13 * sin)),
+                            javaFloat(BossShipGun.BULLET_SPEED * cos),
+                            javaFloat(BossShipGun.BULLET_SPEED * sin),
                             BossShipGun.BULLET_TRAVEL_TIME,
                             false
                         );
@@ -168,7 +170,7 @@ export class BossShipGun extends Enemy {
                 }
                 break;
             case BossShipGun.STATE_CLOSING:
-                this.openY -= BossShipGun.OPEN_SPEED;
+                this.openY = javaFloat(this.openY - BossShipGun.OPEN_SPEED);
                 if (this.openY < 0) {
                     this.openY = 0;
                 }
@@ -191,7 +193,9 @@ export class BossShipGun extends Enemy {
     }
 
     public isOpenable(): boolean {
-        return !(this.removeFlag || this.gameMode.isOutsideOfFrame(this.x + 8, this.y + 8, this.x + 56, this.y + 56));
+        return !(
+            this.removeFlag || this.gameMode.isOutsideOfFrame(javaFloat(this.x + 8), javaFloat(this.y + 8), javaFloat(this.x + 56), javaFloat(this.y + 56))
+        );
     }
 
     // returns true if player bumped into the enemy
@@ -202,7 +206,7 @@ export class BossShipGun extends Enemy {
         }
         if (this.isMine(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -225,7 +229,7 @@ export class BossShipGun extends Enemy {
         }
         if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             this.wasHit = true;
-            new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             if (--this.hits == 0) {
                 this.remove();
             } else {
@@ -248,7 +252,7 @@ export class BossShipGun extends Enemy {
         if (this.hit(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);
             }

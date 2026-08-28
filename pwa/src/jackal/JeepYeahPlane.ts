@@ -2,6 +2,8 @@ import type { Graphics } from "slick2d-ts";
 
 import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "./Main.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class JeepYeahPlane {
     public constructor(arg0?: boolean) {
         const argCount = arguments.length;
@@ -28,12 +30,12 @@ export class JeepYeahPlane {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public static readonly CENTER_X: number = MainConstants.DISPLAY_WIDTH / 2;
-    public static readonly CENTER_Y: number = MainConstants.DISPLAY_HEIGHT / 2;
+    public static readonly CENTER_X: number = javaFloat(MainConstants.DISPLAY_WIDTH / 2);
+    public static readonly CENTER_Y: number = javaFloat(MainConstants.DISPLAY_HEIGHT / 2);
 
     public static readonly Z1: number = 2;
     public static readonly K1: number = 2;
-    public static readonly Z0: number = (JeepYeahPlane.K1 * JeepYeahPlane.Z1) / (JeepYeahPlane.K1 - 1);
+    public static readonly Z0: number = javaFloat(javaFloat(JeepYeahPlane.K1 * JeepYeahPlane.Z1) / javaFloat(JeepYeahPlane.K1 - 1));
 
     public x: number = 0;
     public y: number = 0;
@@ -42,11 +44,11 @@ export class JeepYeahPlane {
     public angle: number = 0;
 
     public update(): void {
-        this.z += 0.02;
+        this.z = javaFloat(this.z + javaFloat(0.02));
         if (this.left) {
-            this.angle -= 0.1;
+            this.angle = javaFloat(this.angle - javaFloat(0.1));
         } else {
-            this.angle += 0.1;
+            this.angle = javaFloat(this.angle + javaFloat(0.1));
         }
     }
 

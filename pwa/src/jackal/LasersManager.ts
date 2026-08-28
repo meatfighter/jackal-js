@@ -1,4 +1,4 @@
-import { javaArray } from "../java/JavaRuntime.js";
+import { javaFloat, javaArray } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { GameElement } from "./GameElement.js";
 import { Laser } from "./Laser.js";
@@ -26,8 +26,8 @@ export class LasersManager extends GameElement {
 
     private __construct_LasersManager(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -40,8 +40,8 @@ export class LasersManager extends GameElement {
     public static readonly STATE_WARMING_UP: number = 2;
     public static readonly STATE_LASERING: number = 3;
 
-    public static readonly BEAM_SPACING: number = 8 * 32;
-    public static readonly VERTICAL_SPACE: number = 16 * 32;
+    public static readonly BEAM_SPACING: number = javaFloat(8 * 32);
+    public static readonly VERTICAL_SPACE: number = javaFloat(16 * 32);
 
     public static readonly OUTER_FLASH_TIME: number = 16;
     public static readonly INNER_FLASH_TIME: number = 16;
@@ -59,7 +59,7 @@ export class LasersManager extends GameElement {
 
     private advanceBeamIndex(): void {
         for (let i = 0; i < 3; i++) {
-            this.visibles[i] = this.beamVisible(this.x + 64 + i * LasersManager.BEAM_SPACING);
+            this.visibles[i] = this.beamVisible(javaFloat(javaFloat(this.x + 64) + javaFloat(i * LasersManager.BEAM_SPACING)));
         }
         let nextIndex = this.beamIndex + 1;
         if (nextIndex == 3) {
@@ -79,7 +79,7 @@ export class LasersManager extends GameElement {
     }
 
     private beamVisible(beamX: number): boolean {
-        return !(beamX + 8 < this.gameMode.cameraX || beamX - 8 > this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH);
+        return !(javaFloat(beamX + 8) < this.gameMode.cameraX || javaFloat(beamX - 8) > javaFloat(this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH));
     }
 
     public update(): void {
@@ -98,7 +98,7 @@ export class LasersManager extends GameElement {
                 case LasersManager.STATE_WARMING_UP:
                     this.state = LasersManager.STATE_LASERING;
                     this.delay = LasersManager.LASER_TIME;
-                    this.laser = new Laser(64 + this.x + LasersManager.BEAM_SPACING * this.beamIndex, this.y - 828);
+                    this.laser = new Laser(javaFloat(javaFloat(64 + this.x) + javaFloat(LasersManager.BEAM_SPACING * this.beamIndex)), javaFloat(this.y - 828));
                     break;
                 case LasersManager.STATE_LASERING:
                     this.state = LasersManager.STATE_OUTER_FLASHING;
@@ -111,7 +111,7 @@ export class LasersManager extends GameElement {
     }
 
     public override checkBounds(maxY: number): void {
-        if (this.y - 512 > maxY) {
+        if (javaFloat(this.y - 512) > maxY) {
             this.remove();
         }
     }

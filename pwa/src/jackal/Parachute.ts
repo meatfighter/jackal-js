@@ -31,8 +31,8 @@ export class Parachute extends GameElement {
 
     private __construct_Parachute(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean, arg4?: BossHelicopter): void {
         if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let distance = arg2;
             let leftLocal = arg3;
             let bossHelicopterLocal = arg4;
@@ -40,7 +40,7 @@ export class Parachute extends GameElement {
             this.y = yLocal;
             this.bossHelicopter = bossHelicopterLocal!;
 
-            this.delay = javaInt(distance / Parachute.SPEED);
+            this.delay = javaInt(javaFloat(distance / Parachute.SPEED));
             this.vx = leftLocal ? -Parachute.SPEED : Parachute.SPEED;
             this.left = leftLocal;
             return;
@@ -60,12 +60,12 @@ export class Parachute extends GameElement {
     public static readonly INFLATE_INDEX: number[] = [0, 1, 1, 2, 2, 3];
 
     public static readonly INFLATES: number[][] = [
-        [28 / 28, 38 / 28 - 28 / 28], //0: 28 -- 38
-        [38 / 48, 48 / 48 - 38 / 48], //1: 38 -- 48
-        [48 / 48, 56 / 48 - 48 / 48], //1: 48 -- 56
-        [56 / 64, 64 / 64 - 56 / 64], //2: 56 -- 64
-        [64 / 64, 62 / 64 - 64 / 64], //2: 64 -- 62
-        [62 / 60, 60 / 60 - 62 / 60] //3: 62 -- 60
+        [javaFloat(28 / 28), javaFloat(javaFloat(38 / 28) - javaFloat(28 / 28))], //0: 28 -- 38
+        [javaFloat(38 / 48), javaFloat(javaFloat(48 / 48) - javaFloat(38 / 48))], //1: 38 -- 48
+        [javaFloat(48 / 48), javaFloat(javaFloat(56 / 48) - javaFloat(48 / 48))], //1: 48 -- 56
+        [javaFloat(56 / 64), javaFloat(javaFloat(64 / 64) - javaFloat(56 / 64))], //2: 56 -- 64
+        [javaFloat(64 / 64), javaFloat(javaFloat(62 / 64) - javaFloat(64 / 64))], //2: 64 -- 62
+        [javaFloat(62 / 60), javaFloat(javaFloat(60 / 60) - javaFloat(62 / 60))] //3: 62 -- 60
     ];
 
     public state: number = Parachute.STATE_LAUNCH;
@@ -84,25 +84,25 @@ export class Parachute extends GameElement {
 
         switch (this.state) {
             case Parachute.STATE_LAUNCH:
-                this.x += this.vx;
+                this.x = javaFloat(this.x + this.vx);
                 if (--this.delay == 0) {
                     this.state = Parachute.STATE_DRIFT;
                     this.delay = 0;
-                    this.vx = Parachute.MAX_HORIZONTAL_DRIFT_SPEED + Parachute.MAX_HORIZONTAL_DRIFT_SPEED * this.main.random.nextFloat();
+                    this.vx = javaFloat(Parachute.MAX_HORIZONTAL_DRIFT_SPEED + javaFloat(Parachute.MAX_HORIZONTAL_DRIFT_SPEED * this.main.random.nextFloat()));
                     if (this.left) {
                         this.vx = -this.vx;
                     }
                 }
                 break;
             case Parachute.STATE_DRIFT:
-                this.y += Parachute.DRIFT_SPEED;
-                this.x += this.vx;
+                this.y = javaFloat(this.y + Parachute.DRIFT_SPEED);
+                this.x = javaFloat(this.x + this.vx);
                 this.inflate2++;
                 if (++this.delay == Parachute.INFLATE_TIME) {
                     this.delay = 0;
                     this.inflate++;
                     if (this.inflate > 5) {
-                        let enemySoldier = new EnemySoldier(this.x, this.y + 16, EnemySoldierType.WALKER);
+                        let enemySoldier = new EnemySoldier(this.x, javaFloat(this.y + 16), EnemySoldierType.WALKER);
                         enemySoldier.setBossHelicopter(this.bossHelicopter!);
                         this.remove();
                     }

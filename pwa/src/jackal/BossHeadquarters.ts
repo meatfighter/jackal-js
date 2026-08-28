@@ -5,6 +5,8 @@ import { Explosion } from "./Explosion.js";
 import { TileDebris } from "./TileDebris.js";
 import type { BossHeadquartersManager } from "./BossHeadquartersManager.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class BossHeadquarters extends Enemy {
     declare public flashing: boolean;
     declare public hits: number;
@@ -87,7 +89,7 @@ export class BossHeadquarters extends Enemy {
     private startDebris(): void {
         this.state = BossHeadquarters.STATE_DEBRIS;
         this.main.requestSong(this.main.superTankSong);
-        new BossSuperTank(this.gameMode.player.x - 210, 32);
+        new BossSuperTank(javaFloat(this.gameMode.player.x - 210), 32);
         let group = this.gameMode.groups[0];
         for (let i = group.length - 1; i >= 0; i--) {
             let g = group[i];
@@ -100,9 +102,12 @@ export class BossHeadquarters extends Enemy {
             if (--this.explodeDelay == 0) {
                 this.explodeDelay = BossHeadquarters.EXPLODE_DELAY;
                 for (let i = 0; i < 2; i++) {
-                    new Explosion(this.gameMode.cameraX + this.main.random.nextInt(1280) - 128, 224 + this.main.random.nextInt(224)).setDamagesEnemies(false);
+                    new Explosion(
+                        javaFloat(javaFloat(this.gameMode.cameraX + this.main.random.nextInt(1280)) - 128),
+                        javaFloat(224 + this.main.random.nextInt(224))
+                    ).setDamagesEnemies(false);
                 }
-                new Explosion(896 + this.main.random.nextInt(256), 96 + this.main.random.nextInt(416)).setDamagesEnemies(false);
+                new Explosion(javaFloat(896 + this.main.random.nextInt(256)), javaFloat(96 + this.main.random.nextInt(416))).setDamagesEnemies(false);
             }
             if (--this.explodeTime == 0) {
                 this.startDebris();
@@ -125,12 +130,18 @@ export class BossHeadquarters extends Enemy {
             } else {
                 this.main.playHitExplodeSound();
                 for (let i = 0; i < 7; i++) {
-                    let Y = this.y + 160 - (i << 5);
+                    let Y = javaFloat(javaFloat(this.y + 160) - (i << 5));
                     for (let j = 0; j < 4; j++) {
                         if ((j == 0 || j == 3) && (i == 0 || i == 6)) {
                             continue;
                         }
-                        new Explosion(this.x + (j << 6) + 12 + this.main.random.nextInt(32), Y + this.main.random.nextInt(8), true, (i + 1) * 4, 0.5);
+                        new Explosion(
+                            javaFloat(javaFloat(javaFloat(this.x + (j << 6)) + 12) + this.main.random.nextInt(32)),
+                            javaFloat(Y + this.main.random.nextInt(8)),
+                            true,
+                            (i + 1) * 4,
+                            0.5
+                        );
                     }
                 }
             }

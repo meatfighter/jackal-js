@@ -32,13 +32,13 @@ export class ElephantMissile extends GameElement {
 
     private __construct_ElephantMissile(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let angleLocal = arg2;
             let left = arg3;
             this.x = xLocal;
             this.y = yLocal;
-            this.angle = angleLocal;
+            this.angle = javaFloat(angleLocal);
 
             switch (angleLocal) {
                 case 45:
@@ -87,18 +87,18 @@ export class ElephantMissile extends GameElement {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
         if (this.y >= this.maxY) {
             this.remove();
             let X = javaInt(this.x) >> 5;
             let Y = javaInt(this.y) >> 5;
             let groupIndex = this.gameMode.groupsMap[Y][X];
             this.gameMode.triggerGroup(groupIndex);
-            new Explosion((X << 5) + this.explosionOffset, (Y << 5) + 32).setDamagesEnemies(false);
-        } else if (this.player!.attack(this.x + this.tipX, this.y + this.tipY)) {
+            new Explosion(javaFloat((X << 5) + this.explosionOffset), javaFloat((Y << 5) + 32)).setDamagesEnemies(false);
+        } else if (this.player!.attack(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY))) {
             this.remove();
-            new Explosion(this.x + this.tipX, this.y + this.tipY);
+            new Explosion(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY));
         }
     }
 

@@ -30,8 +30,8 @@ export class Bomb extends Enemy {
 
     private __construct_Bomb(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: number, arg4?: number): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal2 = arg0;
-            let yLocal2 = arg1;
+            let xLocal2 = javaFloat(arg0);
+            let yLocal2 = javaFloat(arg1);
             let airplaneLocal2 = arg2;
             this.__construct_Bomb(5, xLocal2, yLocal2, airplaneLocal2, 0, 0);
             return;
@@ -43,25 +43,28 @@ export class Bomb extends Enemy {
             typeof arg3 === "number" &&
             typeof arg4 === "number"
         ) {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let airplaneLocal = arg2;
-            let vxLocal = arg3;
-            let vyLocal = arg4;
+            let vxLocal = javaFloat(arg3);
+            let vyLocal = javaFloat(arg4);
             this.x = xLocal;
             this.y = yLocal;
             this.airplane = airplaneLocal;
 
-            this.vx = this.gameMode.player.x + this.main.random.nextFloat() * Bomb.ERROR - Bomb.ERROR - xLocal;
-            this.vy = this.gameMode.player.y + this.main.random.nextFloat() * Bomb.ERROR - Bomb.ERROR - yLocal;
-            let imag = (airplaneLocal ? Bomb.VELOCITY : 0.75 * Bomb.VELOCITY) / javaFloat(Math.sqrt(this.vx * this.vx + this.vy * this.vy));
-            this.vx *= imag;
-            this.vy *= imag;
+            this.vx = javaFloat(javaFloat(javaFloat(this.gameMode.player.x + javaFloat(this.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - xLocal);
+            this.vy = javaFloat(javaFloat(javaFloat(this.gameMode.player.y + javaFloat(this.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - yLocal);
+            let imag = javaFloat(
+                (airplaneLocal ? Bomb.VELOCITY : javaFloat(0.75 * Bomb.VELOCITY)) /
+                    javaFloat(Math.sqrt(javaFloat(javaFloat(this.vx * this.vx) + javaFloat(this.vy * this.vy))))
+            );
+            this.vx = javaFloat(this.vx * imag);
+            this.vy = javaFloat(this.vy * imag);
 
-            this.vx += vxLocal;
-            this.vy += vyLocal;
+            this.vx = javaFloat(this.vx + vxLocal);
+            this.vy = javaFloat(this.vy + vyLocal);
 
-            this.angle = this.main.random.nextInt(4) * 90;
+            this.angle = javaFloat(this.main.random.nextInt(4) * 90);
 
             if (airplaneLocal || this.isCloseToFrame()) {
                 this.main.playSound(this.main.throwSound);
@@ -73,25 +76,25 @@ export class Bomb extends Enemy {
 
     public static readonly CLOSE_MARGIN: number = 128;
     public static readonly DISTANCE: number = 160;
-    public static readonly MIN_SCALE: number = 32 / 44;
+    public static readonly MIN_SCALE: number = javaFloat(32 / 44);
     public static readonly TRAVEL_TIME: number = 114;
     public static readonly HALF_TIME: number = javaIntDiv(Bomb.TRAVEL_TIME, 2);
-    public static readonly GRAVITY: number = (-2 * (1 - Bomb.MIN_SCALE)) / (Bomb.HALF_TIME * Bomb.HALF_TIME);
-    public static readonly HALF_GRAVITY2: number = (Bomb.MIN_SCALE - 1) / (Bomb.TRAVEL_TIME * Bomb.TRAVEL_TIME);
-    public static readonly VELOCITY: number = Bomb.DISTANCE / Bomb.TRAVEL_TIME;
-    public static readonly HALF_GRAVITY: number = Bomb.GRAVITY / 2;
-    public static readonly V0: number = -Bomb.GRAVITY * Bomb.HALF_TIME;
+    public static readonly GRAVITY: number = javaFloat(javaFloat(-2 * javaFloat(1 - Bomb.MIN_SCALE)) / (Bomb.HALF_TIME * Bomb.HALF_TIME));
+    public static readonly HALF_GRAVITY2: number = javaFloat(javaFloat(Bomb.MIN_SCALE - 1) / (Bomb.TRAVEL_TIME * Bomb.TRAVEL_TIME));
+    public static readonly VELOCITY: number = javaFloat(Bomb.DISTANCE / Bomb.TRAVEL_TIME);
+    public static readonly HALF_GRAVITY: number = javaFloat(Bomb.GRAVITY / 2);
+    public static readonly V0: number = javaFloat(-Bomb.GRAVITY * Bomb.HALF_TIME);
     public static readonly ANGULAR_VELOCITY: number = 5;
     public static readonly ERROR: number = 64;
 
     private isCloseToFrame(): boolean {
-        let X = this.x - this.gameMode.cameraX;
-        let Y = this.y - this.gameMode.cameraY;
+        let X = javaFloat(this.x - this.gameMode.cameraX);
+        let Y = javaFloat(this.y - this.gameMode.cameraY);
         return (
             X >= -Bomb.CLOSE_MARGIN &&
-            X <= MainConstants.DISPLAY_WIDTH + Bomb.CLOSE_MARGIN &&
+            X <= javaFloat(MainConstants.DISPLAY_WIDTH + Bomb.CLOSE_MARGIN) &&
             Y >= -Bomb.CLOSE_MARGIN &&
-            Y <= MainConstants.DISPLAY_HEIGHT + Bomb.CLOSE_MARGIN
+            Y <= javaFloat(MainConstants.DISPLAY_HEIGHT + Bomb.CLOSE_MARGIN)
         );
     }
 
@@ -120,14 +123,14 @@ export class Bomb extends Enemy {
     }
 
     public update(): void {
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x = javaFloat(this.x + this.vx);
+        this.y = javaFloat(this.y + this.vy);
         if (this.airplane) {
-            this.scale = 1 + Bomb.HALF_GRAVITY2 * this.t * this.t;
+            this.scale = javaFloat(1 + javaFloat(javaFloat(Bomb.HALF_GRAVITY2 * this.t) * this.t));
         } else {
-            this.scale = Bomb.MIN_SCALE + this.t * (Bomb.V0 + Bomb.HALF_GRAVITY * this.t);
+            this.scale = javaFloat(Bomb.MIN_SCALE + javaFloat(this.t * javaFloat(Bomb.V0 + javaFloat(Bomb.HALF_GRAVITY * this.t))));
         }
-        this.angle += Bomb.ANGULAR_VELOCITY;
+        this.angle = javaFloat(this.angle + Bomb.ANGULAR_VELOCITY);
 
         if (++this.t > Bomb.TRAVEL_TIME) {
             this.remove();

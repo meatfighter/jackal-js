@@ -1,7 +1,9 @@
-import type { ArrayList } from "../java/JavaRuntime.js";
+import { ArrayList } from "../java/JavaRuntime.js";
 import { Enemy } from "./Enemy.js";
 import { EnemyBullet } from "./EnemyBullet.js";
 import type { Player } from "./Player.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class Train extends Enemy {
     declare public mines: ArrayList<Enemy> | null;
     declare public player: Player | null;
@@ -27,8 +29,8 @@ export class Train extends Enemy {
 
     private __construct_Train(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let locomotive = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -85,7 +87,7 @@ export class Train extends Enemy {
     public override flatten(): void {}
 
     public update(): void {
-        this.y -= Train.SPEED;
+        this.y = javaFloat(this.y - Train.SPEED);
         if (this.y < 3104) {
             this.playSoundOnRemove = false;
             this.remove();
@@ -93,8 +95,8 @@ export class Train extends Enemy {
             if (this.y > 3296 && --this.shootDelay <= 0) {
                 this.shootDelay = Train.SHOOT_DELAY;
                 new EnemyBullet(
-                    this.x + this.shootX,
-                    this.y + this.shootY,
+                    javaFloat(this.x + this.shootX),
+                    javaFloat(this.y + this.shootY),
                     this.player!.x > this.x ? Train.BULLET_SPEED : -Train.BULLET_SPEED,
                     0,
                     Train.BULLET_TRAVEL_TIME,
@@ -103,7 +105,15 @@ export class Train extends Enemy {
             }
             for (let i = this.mines!.size() - 1; i >= 0; i--) {
                 let mineLocal = this.mines!.get(i);
-                if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
+                if (
+                    mineLocal != this &&
+                    mineLocal.isMine(
+                        javaFloat(this.x + this.mineX1),
+                        javaFloat(this.y + this.mineY1),
+                        javaFloat(this.x + this.mineX2),
+                        javaFloat(this.y + this.mineY2)
+                    )
+                ) {
                     mineLocal.flatten();
                 }
             }

@@ -2,6 +2,8 @@ import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { SwampMissile } from "./SwampMissile.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class FloorMissileLauncher extends Enemy {
     declare public ready: boolean;
     declare public panelOffset: number;
@@ -22,8 +24,8 @@ export class FloorMissileLauncher extends Enemy {
 
     private __construct_FloorMissileLauncher(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -64,18 +66,18 @@ export class FloorMissileLauncher extends Enemy {
                 if (this.delay > 0) {
                     this.delay--;
                 }
-                if (this.delay == 0 && !this.gameMode.isOutsideOfFrame(this.x + 48, this.y + 42)) {
+                if (this.delay == 0 && !this.gameMode.isOutsideOfFrame(javaFloat(this.x + 48), javaFloat(this.y + 42))) {
                     this.state = FloorMissileLauncher.STATE_OPENING;
                     this.panelOffset = 0;
                 }
                 break;
             case FloorMissileLauncher.STATE_OPENING:
-                this.panelOffset += FloorMissileLauncher.PANEL_SPEED;
+                this.panelOffset = javaFloat(this.panelOffset + FloorMissileLauncher.PANEL_SPEED);
                 if (this.panelOffset >= 20) {
                     this.state = FloorMissileLauncher.STATE_OPEN;
                     this.panelOffset = 20;
                     this.delay = FloorMissileLauncher.OPEN_DELAY;
-                    new SwampMissile(this.x + 48, this.y + 42);
+                    new SwampMissile(javaFloat(this.x + 48), javaFloat(this.y + 42));
                 }
                 break;
             case FloorMissileLauncher.STATE_OPEN:
@@ -84,7 +86,7 @@ export class FloorMissileLauncher extends Enemy {
                 }
                 break;
             case FloorMissileLauncher.STATE_CLOSING:
-                this.panelOffset -= FloorMissileLauncher.PANEL_SPEED;
+                this.panelOffset = javaFloat(this.panelOffset - FloorMissileLauncher.PANEL_SPEED);
                 if (this.panelOffset <= 0) {
                     this.state = FloorMissileLauncher.STATE_CLOSED;
                     this.panelOffset = 0;
@@ -100,7 +102,7 @@ export class FloorMissileLauncher extends Enemy {
         if (this.state != FloorMissileLauncher.STATE_CLOSED) {
             if ((attackSource == AttackSource.PLAYER_WEAPON || attackSource == AttackSource.TRAVELING_EXPLOSION) && this.hit(x1, y1, x2, y2)) {
                 this.remove();
-                new Explosion(this.x + this.explosionX, this.y + this.explosionY);
+                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
                 return true;
             } else {

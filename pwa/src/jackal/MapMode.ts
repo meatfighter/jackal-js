@@ -5,6 +5,8 @@ import type { IFadeListener } from "./IFadeListener.js";
 import type { IMode } from "./IMode.js";
 import { Modes } from "./Modes.js";
 import type { Main } from "./Main.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class MapMode implements IMode, IFadeListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_PAUSED: number = 1;
@@ -33,7 +35,7 @@ export class MapMode implements IMode, IFadeListener {
         this.main = main;
         this.gc = gc;
 
-        this.targetJeepY = MapMode.JEEP_YS[main.stageIndex];
+        this.targetJeepY = javaFloat(MapMode.JEEP_YS[main.stageIndex]);
 
         main.startFade(false, this);
     }
@@ -61,7 +63,7 @@ export class MapMode implements IMode, IFadeListener {
                     this.main.friendlySoldiersPickedUp--;
                     this.main.addPoints(2000);
                 }
-                this.jeepY -= MapMode.JEEP_SPEED;
+                this.jeepY = javaFloat(this.jeepY - MapMode.JEEP_SPEED);
                 if (this.jeepY <= this.targetJeepY) {
                     this.jeepY = this.targetJeepY;
                     if (this.main.friendlySoldiersPickedUp == 0) {

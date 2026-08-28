@@ -1,4 +1,4 @@
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -26,8 +26,8 @@ export class Hut extends Enemy {
 
     private __construct_Hut(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean): void {
         if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let shackLocal = arg2;
             let tankLocal = arg3;
             this.x = xLocal;
@@ -71,13 +71,19 @@ export class Hut extends Enemy {
             this.playSoundOnRemove = false;
             this.main.playSound(this.main.hutSound);
             this.remove();
-            new Explosion(this.x + (this.shack ? 96 : 80), this.y + 96);
+            new Explosion(javaFloat(this.x + (this.shack ? 96 : 80)), javaFloat(this.y + 96));
             this.gameMode.triggerGroup(this.groupIndex);
             if (this.tank) {
-                new GrayTank(this.x + 86, this.y + 96, true);
+                new GrayTank(javaFloat(this.x + 86), javaFloat(this.y + 96), true);
                 this.main.addPoints(500);
             } else {
-                new FriendlySoldier(this.x + 96, this.y + 48 + (this.shack ? 64 : 0), FriendlySoldierType.WEAPON_CARRIER, 0, this.shack);
+                new FriendlySoldier(
+                    javaFloat(this.x + 96),
+                    javaFloat(javaFloat(this.y + 48) + (this.shack ? 64 : 0)),
+                    FriendlySoldierType.WEAPON_CARRIER,
+                    0,
+                    this.shack
+                );
                 this.main.addPoints(300);
             }
             return true;

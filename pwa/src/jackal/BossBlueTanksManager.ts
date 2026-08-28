@@ -1,6 +1,8 @@
 import { BossBlueTank } from "./BossBlueTank.js";
 import { GameElement } from "./GameElement.js";
 import type { ICameraPanListener } from "./ICameraPanListener.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class BossBlueTanksManager extends GameElement implements ICameraPanListener {
     declare public ready: boolean;
     declare public spawned: number;
@@ -50,7 +52,7 @@ export class BossBlueTanksManager extends GameElement implements ICameraPanListe
             this.spawnDelay = BossBlueTanksManager.SPAWN_DELAY;
             let xLocal = this.main.random.nextBoolean() ? 640 : 1408;
             let yLocal = this.main.random.nextBoolean() ? -52 : 1012;
-            new BossBlueTank(xLocal, yLocal, this);
+            new BossBlueTank(javaFloat(xLocal), javaFloat(yLocal), this);
         }
     }
 

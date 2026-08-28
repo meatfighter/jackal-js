@@ -8,6 +8,8 @@ import { Menu } from "./Menu.js";
 import { Modes } from "./Modes.js";
 import type { IInput } from "./IInput.js";
 import type { Main } from "./Main.js";
+import { javaFloat } from "../java/JavaRuntime.js";
+
 export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_EXPLOSION: number = 1;
@@ -51,10 +53,10 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     ];
 
     public static readonly FULL_SCREEN_TEXT: string = "SPACE - FULL-SCREEN MODE";
-    public static readonly FULL_SCREEN_TEXT_X: number = (MainConstants.DISPLAY_WIDTH - (IntroMode.FULL_SCREEN_TEXT.length << 5)) / 2;
+    public static readonly FULL_SCREEN_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.FULL_SCREEN_TEXT.length << 5)) / 2);
     public static readonly FULL_SCREEN_TEXT_Y: number = 800;
     public static readonly COPYRIGHT_TEXT: string = "© 2013, 2026 MEATFIGHTER.COM";
-    public static readonly COPYRIGHT_TEXT_X: number = (MainConstants.DISPLAY_WIDTH - (IntroMode.COPYRIGHT_TEXT.length << 5)) / 2;
+    public static readonly COPYRIGHT_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.COPYRIGHT_TEXT.length << 5)) / 2);
     public static readonly COPYRIGHT_TEXT_Y: number = 860;
 
     public static readonly UPPER_SOLDIER_Y: number = 96;
@@ -74,8 +76,8 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly NAMES_DELAY: number = 100;
     public static readonly EXPLOSION_DELAY: number = 100;
 
-    public static readonly I_SCROLL_DELAY: number = 1 / IntroMode.SCROLL_DELAY;
-    public static readonly I_ENTER_DELAY: number = 1 / IntroMode.ENTER_DELAY;
+    public static readonly I_SCROLL_DELAY: number = javaFloat(1 / IntroMode.SCROLL_DELAY);
+    public static readonly I_ENTER_DELAY: number = javaFloat(1 / IntroMode.ENTER_DELAY);
 
     public main: Main = null!;
     public gc: GameContainer = null!;
@@ -125,11 +127,11 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     private updateStoryScroll(): void {
-        this.scrollOffsetX = MainConstants.DISPLAY_WIDTH * (this.delay * IntroMode.I_SCROLL_DELAY - 1);
+        this.scrollOffsetX = javaFloat(MainConstants.DISPLAY_WIDTH * javaFloat(javaFloat(this.delay * IntroMode.I_SCROLL_DELAY) - 1));
 
         if (--this.delay == 0) {
             this.state = IntroMode.STATE_STORY;
-            this.scrollOffsetX = -MainConstants.DISPLAY_WIDTH;
+            this.scrollOffsetX = javaFloat(-MainConstants.DISPLAY_WIDTH);
             this.delay = IntroMode.STORY_DELAY;
         }
     }
@@ -151,9 +153,9 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     private updateSoldiersEnter(): void {
-        let t = 1 - this.delay * IntroMode.I_ENTER_DELAY;
-        this.upperSolderX = IntroMode.UPPER_SOLDIER_X0 + (IntroMode.UPPER_SOLDIER_X1 - IntroMode.UPPER_SOLDIER_X0) * t;
-        this.lowerSolderX = IntroMode.LOWER_SOLDIER_X0 + (IntroMode.LOWER_SOLDIER_X1 - IntroMode.LOWER_SOLDIER_X0) * t;
+        let t = javaFloat(1 - javaFloat(this.delay * IntroMode.I_ENTER_DELAY));
+        this.upperSolderX = javaFloat(IntroMode.UPPER_SOLDIER_X0 + javaFloat(javaFloat(IntroMode.UPPER_SOLDIER_X1 - IntroMode.UPPER_SOLDIER_X0) * t));
+        this.lowerSolderX = javaFloat(IntroMode.LOWER_SOLDIER_X0 + javaFloat(javaFloat(IntroMode.LOWER_SOLDIER_X1 - IntroMode.LOWER_SOLDIER_X0) * t));
 
         if (--this.delay == 0) {
             this.main.playSoundAlways(this.main.introChingSound);

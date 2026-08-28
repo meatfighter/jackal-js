@@ -1,4 +1,4 @@
-import { javaInt } from "../java/JavaRuntime.js";
+import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
@@ -25,8 +25,8 @@ export class Statue extends Enemy {
 
     private __construct_Statue(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
         if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
@@ -76,7 +76,7 @@ export class Statue extends Enemy {
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
         if ((attackSource == AttackSource.PLAYER_WEAPON || attackSource == AttackSource.TRAVELING_EXPLOSION) && this.hit(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x + 48, this.y + 64);
+            new Explosion(javaFloat(this.x + 48), javaFloat(this.y + 64));
             this.gameMode.triggerGroup(this.groupIndex);
             this.main.addPoints(800);
             return true;

@@ -19,8 +19,8 @@ export class Flame extends GameElement {
 
     private __construct_Flame(argCount: number, arg0?: number, arg1?: number): void {
         if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
+            let xLocal = javaFloat(arg0);
+            let yLocal = javaFloat(arg1);
             this.x = xLocal;
             this.y = yLocal;
             return;
@@ -34,7 +34,7 @@ export class Flame extends GameElement {
 
     static {
         for (let i = 0; i < Flame.TIME_TO_LIVE; i++) {
-            Flame.ALPHAS[i] = javaFloat(Math.sqrt(i / javaFloat(Flame.TIME_TO_LIVE)));
+            Flame.ALPHAS[i] = javaFloat(Math.sqrt(javaFloat(i / javaFloat(Flame.TIME_TO_LIVE))));
         }
     }
 
