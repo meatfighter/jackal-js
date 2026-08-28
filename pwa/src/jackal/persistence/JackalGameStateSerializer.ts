@@ -767,7 +767,7 @@ export class JackalGameStateSerializer {
 
     private restoreStandaloneModeSnapshot(main: Main, gc: GameContainer, snapshot: JackalStandaloneModeStateSnapshot): void {
         Main.mainInstance = main;
-        Main.gameMode = null;
+        Main.gameMode = null!;
         MainRuntimeState.mainInstance = main;
         MainRuntimeState.gameMode = null;
 
@@ -812,7 +812,7 @@ export class JackalGameStateSerializer {
 
     private restoreKonamiCode(main: Main, snapshot: JackalGameStateSnapshot, context: RestoreContext): void {
         if (snapshot.konamiCodeFields === null) {
-            main.konamiCode = null;
+            main.konamiCode = null!;
             return;
         }
         main.konamiCode = Object.create(KonamiCode.prototype);
@@ -825,7 +825,7 @@ export class JackalGameStateSerializer {
         if (main.fading && typeof (mode as { fadeCompleted?: unknown }).fadeCompleted === "function") {
             main.fadeListener = mode as IFadeListener;
         } else {
-            main.fadeListener = null;
+            main.fadeListener = null!;
         }
     }
 
@@ -1022,15 +1022,15 @@ export class JackalGameStateSerializer {
         if (mutableMode.menu === null) {
             mutableMode.menu = Object.create(Menu.prototype);
         }
-        this.decodeFieldsInto(mutableMode.menu, snapshot.fields, context);
-        this.restoreMenuRuntimePointers(mutableMode.menu, context.main, mode);
+        this.decodeFieldsInto(mutableMode.menu!, snapshot.fields, context);
+        this.restoreMenuRuntimePointers(mutableMode.menu!, context.main, mode);
     }
 
     private restoreInputModeExtraSnapshot(mode: InputMode, snapshot: InputModeExtraSnapshot, context: RestoreContext): void {
         const mutableMode = mode;
         this.restoreModeMenu(mode, snapshot.menu, context);
         if (snapshot.draftButtonMapping === null) {
-            mutableMode.draftButtonMapping = null;
+            mutableMode.draftButtonMapping = null!;
         } else {
             mutableMode.draftButtonMapping = new ButtonMapping();
             this.decodeFieldsInto(mutableMode.draftButtonMapping, snapshot.draftButtonMapping.fields, context);
@@ -1052,11 +1052,11 @@ export class JackalGameStateSerializer {
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
         const mutableMode = mode;
-        mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context);
-        mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context);
-        mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context);
-        mutableMode.fireLeft = this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context);
-        mutableMode.fireRight = this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context);
+        mutableMode.explosion = this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context)!;
+        mutableMode.leftPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context)!;
+        mutableMode.rightPlane = this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context)!;
+        mutableMode.fireLeft = this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context)!;
+        mutableMode.fireRight = this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context)!;
         mutableMode.bullets = new ArrayList<JeepYeahBullet>(snapshot.bullets.length);
         for (const bulletSnapshot of snapshot.bullets) {
             const bullet = Object.create(JeepYeahBullet.prototype) as JeepYeahBullet;
@@ -1225,7 +1225,7 @@ export class JackalGameStateSerializer {
         } else if (entity instanceof FloorGun) {
             fields[RUNTIME_FLOOR_GUN_PLAIN_FIELD] = this.floorGunUsesPlainSprites(mutableEntity as unknown as FloorGun, context.main);
         } else if (entity instanceof TileDebris) {
-            fields[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD] = this.indexOfReference(context.gameMode.tiles, mutableEntity.sprite, "TileDebris sprite");
+            fields[RUNTIME_TILE_DEBRIS_SPRITE_TILE_FIELD] = this.indexOfReference(context.gameMode!.tiles, mutableEntity.sprite, "TileDebris sprite");
         }
     }
 
@@ -1487,7 +1487,7 @@ export class JackalGameStateSerializer {
             return null;
         }
 
-        const songValue = song;
+        const songValue = song!;
         return {
             id,
             playing: Boolean(songValue.playing),
@@ -1536,16 +1536,16 @@ export class JackalGameStateSerializer {
     private restoreSongPlayback(context: RestoreContext, snapshot: JackalGameStateSnapshot): void {
         const currentSongState = snapshot.currentSongState;
         if (typeof currentSongState === "undefined") {
-            context.main.currentSong = null;
-            context.main.requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
+            context.main.currentSong = null!;
+            context.main.requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId)!;
             this.restoreAudioEnabledForSnapshot(context);
             return;
         }
 
         const currentSong = currentSongState === null ? null : this.songById(context.main, currentSongState.id);
         const requestedSong = this.songById(context.main, snapshot.requestedSongId ?? snapshot.currentSongId);
-        context.main.currentSong = currentSong;
-        context.main.requestedSong = requestedSong;
+        context.main.currentSong = currentSong!;
+        context.main.requestedSong = requestedSong!;
         if (currentSongState === null || currentSong === null || currentSong !== requestedSong) {
             this.restoreAudioEnabledForSnapshot(context);
             return;

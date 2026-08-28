@@ -113,7 +113,7 @@ export class FriendlyHelicopter extends GameElement {
 
     private static readonly HEIGHTS: number[] = javaArray(91, 0);
     // Assigned once in the static block, matching Java static-final initialization.
-    private static TURNS: number[][] = null;
+    private static TURNS: number[][] = null!;
 
     static {
         for (let i = 0; i < 91; i++) {
@@ -184,10 +184,10 @@ export class FriendlyHelicopter extends GameElement {
 
         switch (this.state) {
             case FriendlyHelicopter.STATE_PICK_UP: {
-                if (this.player.pows > 0) {
-                    let dx = this.player.x - this.x;
+                if (this.player!.pows > 0) {
+                    let dx = this.player!.x - this.x;
 
-                    if (Math.abs(this.player.y - this.y) <= 128) {
+                    if (Math.abs(this.player!.y - this.y) <= 128) {
                         if (--this.planeSpawnDelay == 0) {
                             this.planeSpawnDelay = FriendlyHelicopter.PLANE_SPAWN_DELAY;
                             if (this.gameMode.stageIndex == 5) {
@@ -204,24 +204,24 @@ export class FriendlyHelicopter extends GameElement {
                     }
 
                     if (
-                        this.player.y > this.y - 66 &&
-                        this.player.y < this.y + 49 &&
+                        this.player!.y > this.y - 66 &&
+                        this.player!.y < this.y + 49 &&
                         ((!this.leftStop && dx > 0 && dx < 320) || (this.leftStop && dx < 0 && dx > -320))
                     ) {
                         if (this.dropOffDelay > 0) {
                             this.dropOffDelay--;
                         } else {
                             this.dropOffDelay = FriendlyHelicopter.DROP_OFF_DELAY;
-                            new FriendlySoldier(this.player.x, this.player.y + 28, this, this.player.pows == 1);
-                            this.player.dropOffPOW();
+                            new FriendlySoldier(this.player!.x, this.player!.y + 28, this, this.player!.pows == 1);
+                            this.player!.dropOffPOW();
                             this.walkingSoldiers++;
                         }
                     }
                 }
                 if (
                     this.walkingSoldiers == 0 &&
-                    this.player.y < this.y + 80 &&
-                    ((FriendlySoldier.count == 0 && this.player.pows == 0) || this.player.y < this.y - 512)
+                    this.player!.y < this.y + 80 &&
+                    ((FriendlySoldier.count == 0 && this.player!.pows == 0) || this.player!.y < this.y - 512)
                 ) {
                     if (this.preparingToTakeOff > 0) {
                         this.preparingToTakeOff--;

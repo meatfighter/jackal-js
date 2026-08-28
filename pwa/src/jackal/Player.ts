@@ -19,8 +19,8 @@ export class Player {
 
     private __construct_Player(argCount: number): void {
         if (argCount === 0) {
-            this.main = MainRuntimeState.mainInstance;
-            this.gameMode = MainRuntimeState.gameMode;
+            this.main = MainRuntimeState.mainInstance!;
+            this.gameMode = MainRuntimeState.gameMode!;
             this.input = this.main.input;
             this.mines = this.gameMode.mines;
             return;
@@ -69,10 +69,10 @@ export class Player {
         Player.SENSOR_D_Y2 = javaInt(p2.y);
     }
 
-    private main: Main = null;
-    private gameMode: GameMode = null;
-    private input: IInput = null;
-    public mines: ArrayList<Enemy> = null;
+    private main: Main = null!;
+    private gameMode: GameMode = null!;
+    private input: IInput = null!;
+    public mines: ArrayList<Enemy> = null!;
 
     public x: number = 512;
     public y: number = 480;

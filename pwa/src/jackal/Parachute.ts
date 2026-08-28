@@ -38,7 +38,7 @@ export class Parachute extends GameElement {
             let bossHelicopterLocal = arg4;
             this.x = xLocal;
             this.y = yLocal;
-            this.bossHelicopter = bossHelicopterLocal;
+            this.bossHelicopter = bossHelicopterLocal!;
 
             this.delay = javaInt(distance / Parachute.SPEED);
             this.vx = leftLocal ? -Parachute.SPEED : Parachute.SPEED;
@@ -75,7 +75,7 @@ export class Parachute extends GameElement {
     }
 
     public update(): void {
-        if (this.bossHelicopter.removeFlag) {
+        if (this.bossHelicopter!.removeFlag) {
             this.state = Parachute.STATE_DEAD;
             new Explosion(this.x, this.y);
             this.remove();
@@ -103,7 +103,7 @@ export class Parachute extends GameElement {
                     this.inflate++;
                     if (this.inflate > 5) {
                         let enemySoldier = new EnemySoldier(this.x, this.y + 16, EnemySoldierType.WALKER);
-                        enemySoldier.setBossHelicopter(this.bossHelicopter);
+                        enemySoldier.setBossHelicopter(this.bossHelicopter!);
                         this.remove();
                     }
                 }

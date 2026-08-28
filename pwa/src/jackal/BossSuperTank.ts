@@ -131,7 +131,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     private chooseTarget(): void {
         this.state = BossSuperTank.STATE_ACCELERATING;
         if (this.main.random.nextFloat() <= BossSuperTank.TARGET_PLAYER_PROBABILITY * this.colorIndex) {
-            this.targetX = this.player.x;
+            this.targetX = this.player!.x;
         } else {
             this.targetX = this.gameMode.cameraX + 48 + this.main.random.nextInt(MainConstants.DISPLAY_WIDTH - 96);
         }

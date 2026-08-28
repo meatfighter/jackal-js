@@ -40,13 +40,13 @@ export class Menu {
             let optionsLocal = [arg6, arg7, arg8].slice(0, Math.max(0, argCount - 6));
             this.x = xLocal;
             this.y = yLocal;
-            this.main = mainLocal;
+            this.main = mainLocal!;
             this.selectedIndex = selectedIndexLocal;
             this.icon = iconLocal;
-            this.menuListener = menuListenerLocal;
-            this.options = optionsLocal;
+            this.menuListener = menuListenerLocal!;
+            this.options = optionsLocal as string[];
 
-            this.input = mainLocal.input;
+            this.input = mainLocal!.input;
             this.iconY = 16 + (selectedIndexLocal << 6);
 
             this.input.clearKeyPressedRecord();
@@ -70,14 +70,14 @@ export class Menu {
 
     private static readonly I_SELECT_TIME2: number = 1 / (Menu.SELECT_TIME * Menu.SELECT_TIME);
 
-    public main: Main = null;
-    public options: string[] = null;
-    public input: IInput = null;
+    public main: Main = null!;
+    public options: string[] = null!;
+    public input: IInput = null!;
     public x: number = 0;
     public y: number = 0;
     public iconY: number = 0;
     public selectedIndex: number = 0;
-    public menuListener: IMenuListener = null;
+    public menuListener: IMenuListener = null!;
     public icon: number = 0;
     public buttonReleased: boolean = false;
     public selectState: number = Menu.SELECT_STATE_STATIONARY;

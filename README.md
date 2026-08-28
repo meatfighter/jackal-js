@@ -630,7 +630,7 @@ npm run check:explicit-any
 
 Both budgets are zero.
 
-The compiler is also configured with stricter non-null-safe checks such as `noImplicitAny`, `strictFunctionTypes`, `strictBindCallApply`, `noImplicitThis`, `useUnknownInCatchVariables`, `alwaysStrict`, `noImplicitReturns`, `isolatedModules`, `noFallthroughCasesInSwitch`, `noImplicitOverride`, and `verbatimModuleSyntax`. `strictNullChecks` remains off because the Java-shaped port still deliberately uses nullable fields during translated initialization.
+The compiler runs with TypeScript `strict` mode enabled, including `strictNullChecks`. `strictPropertyInitialization` remains disabled because the Java-shaped port still deliberately uses translated initialization hooks and lifecycle-populated fields. Where Java fields are temporarily null during setup or restore, the TypeScript source uses erased non-null assertions such as `null!` so the emitted JavaScript keeps the translated runtime behavior.
 
 Most gameplay classes were mechanically adapted from Java, so the TypeScript is still shaped like the source port. In particular, `GameElement` calls translated initialization hooks during construction to reproduce Java object initialization order.
 

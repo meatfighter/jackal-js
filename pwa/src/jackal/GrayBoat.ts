@@ -78,14 +78,14 @@ export class GrayBoat extends Enemy {
         }
         if (--this.updateGun < 0) {
             this.updateGun = GrayBoat.UPDATE_GUN_FRAMES;
-            this.gunAngle = GrayBoat.TO_DEGREES * javaFloat(Math.atan2(this.player.y - (this.y + 131), this.player.x - (this.x + 32)));
+            this.gunAngle = GrayBoat.TO_DEGREES * javaFloat(Math.atan2(this.player!.y - (this.y + 131), this.player!.x - (this.x + 32)));
         }
         if (--this.bulletDelay < 0) {
             this.bulletDelay = GrayBoat.BULLET_DELAY;
             let X = this.x + 32;
             let Y = this.y + 131;
-            let dx = this.player.x - X;
-            let dy = this.player.y - Y;
+            let dx = this.player!.x - X;
+            let dy = this.player!.y - Y;
             let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
             dx *= imag;
             dy *= imag;

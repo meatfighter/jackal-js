@@ -12,7 +12,7 @@ export class LasersManager extends GameElement {
         this.state = 0;
         this.delay = 0;
         this.beamIndex = 0;
-        this.visibles = null;
+        this.visibles = null!;
         this.flash = false;
         this.colorIndex = 0;
         this.laser = null;
@@ -103,7 +103,7 @@ export class LasersManager extends GameElement {
                 case LasersManager.STATE_LASERING:
                     this.state = LasersManager.STATE_OUTER_FLASHING;
                     this.delay = LasersManager.OUTER_FLASH_TIME;
-                    this.laser.remove();
+                    this.laser!.remove();
                     this.advanceBeamIndex();
                     break;
             }

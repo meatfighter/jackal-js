@@ -19,8 +19,8 @@ export class JeepHereMode implements IMode, IFadeListener {
 
     public static readonly SLIDE_SPEED: number = (MainConstants.DISPLAY_WIDTH - 224) / javaFloat(JeepHereMode.SLIDE_TIME);
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public state: number = JeepHereMode.STATE_FADE_IN;
     public jeepHereX: number = MainConstants.DISPLAY_WIDTH;
     public delay: number = JeepHereMode.HERE_DELAY;

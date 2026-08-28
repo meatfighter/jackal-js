@@ -20,7 +20,7 @@ export class RotatingGun extends Enemy {
 
     protected override __initializeJavaSubclassDefaults(): void {
         super.__initializeJavaSubclassDefaults();
-        this.state = null;
+        this.state = null!;
         this.angle = 0;
         this.recoil = 0;
         this.pause = 0;
@@ -240,6 +240,6 @@ export class RotatingGun extends Enemy {
     }
 
     public render(): void {
-        this.main.drawRotated(this.sprites[this.recoil == 0 ? 0 : 1], this.x, this.y, -28, this.recoil - 60, this.angle + 90);
+        this.main.drawRotated(this.sprites![this.recoil == 0 ? 0 : 1], this.x, this.y, -28, this.recoil - 60, this.angle + 90);
     }
 }

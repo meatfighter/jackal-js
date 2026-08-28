@@ -17,8 +17,8 @@ export class KonamiCode {
     private __construct_KonamiCode(argCount: number, arg0?: Main): void {
         if (argCount === 1) {
             let mainLocal = arg0;
-            this.main = mainLocal;
-            this.input = mainLocal.input;
+            this.main = mainLocal!;
+            this.input = mainLocal!.input;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -41,8 +41,8 @@ export class KonamiCode {
 
     public enabled: boolean = false;
     public keyReleased: boolean = false;
-    public main: Main = null;
-    public input: IInput = null;
+    public main: Main = null!;
+    public input: IInput = null!;
     public sequenceIndex: number = 0;
 
     public gettingClose(): boolean {

@@ -82,7 +82,7 @@ export class TroopsTruck extends Enemy {
     public update(): void {
         switch (this.state) {
             case TroopsTruck.STATE_PAUSED:
-                if (this.player.y - this.y <= TroopsTruck.PLAYER_DISTANCE) {
+                if (this.player!.y - this.y <= TroopsTruck.PLAYER_DISTANCE) {
                     this.state = TroopsTruck.STATE_MOVING;
                 }
                 break;

@@ -73,8 +73,8 @@ export class GreenBoat extends Enemy {
             this.bulletDelay = GreenBoat.BULLET_DELAY;
             let X = this.x - 16;
             let Y = this.y + 16;
-            let dx = this.player.x - X;
-            let dy = this.player.y - Y;
+            let dx = this.player!.x - X;
+            let dy = this.player!.y - Y;
             let imag = 1 / javaFloat(Math.sqrt(dx * dx + dy * dy));
 
             new EnemyBullet(X, Y, dx * imag, dy * imag, GreenBoat.BULLET_TRAVEL_TIME, true);

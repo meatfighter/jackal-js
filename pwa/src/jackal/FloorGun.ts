@@ -138,7 +138,7 @@ export class FloorGun extends Enemy {
                     this.angle = 90;
                     this.delay = FloorGun.AIMING_DELAY;
 
-                    let targetAngle = javaFloat((Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180) / Math.PI);
+                    let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
                     let deltaAngle = (targetAngle + 90) % 360;
                     if (deltaAngle < 0) {
                         deltaAngle += 180;
@@ -162,7 +162,7 @@ export class FloorGun extends Enemy {
                     this.delay = FloorGun.OPEN_DELAY;
                     this.openY = 32;
 
-                    let shootAngle = javaFloat(Math.atan2(this.player.y - (this.y + 32), this.player.x - (this.x + 32)));
+                    let shootAngle = javaFloat(Math.atan2(this.player!.y - (this.y + 32), this.player!.x - (this.x + 32)));
                     shootAngle -= 2 * FloorGun.SHOOT_SPREAD_ANGLE;
 
                     for (let i = 0; i < 5; i++, shootAngle += FloorGun.SHOOT_SPREAD_ANGLE) {
@@ -244,22 +244,22 @@ export class FloorGun extends Enemy {
     public render(): void {
         switch (this.state) {
             case FloorGun.STATE_CLOSED:
-                this.main.draw(this.panel, this.x, this.y);
-                this.main.draw(this.panel, this.x, this.y + 32);
-                this.main.draw(this.mask, this.x, this.y);
+                this.main.draw(this.panel!, this.x, this.y);
+                this.main.draw(this.panel!, this.x, this.y + 32);
+                this.main.draw(this.mask!, this.x, this.y);
                 break;
             case FloorGun.STATE_OPENING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
                 this.main.draw(this.main.floorGuns[4], this.x, this.y);
                 this.main.draw(this.main.floorGuns[0], this.x + 3, this.y + 51 - this.openY * 1.5);
-                this.main.draw(this.panel, this.x, this.y - this.openY);
-                this.main.draw(this.panel, this.x, this.y + 32 + this.openY);
-                this.main.draw(this.mask, this.x, this.y);
+                this.main.draw(this.panel!, this.x, this.y - this.openY);
+                this.main.draw(this.panel!, this.x, this.y + 32 + this.openY);
+                this.main.draw(this.mask!, this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
             case FloorGun.STATE_AIMING:
                 this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.draw(this.mask, this.x, this.y);
+                this.main.draw(this.mask!, this.x, this.y);
                 this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case FloorGun.STATE_SHOOTING:
@@ -267,16 +267,16 @@ export class FloorGun extends Enemy {
                     this.colorIndex = 0;
                 }
                 this.main.draw(this.main.floorGuns[this.colorIndex == 1 ? 5 : 4], this.x, this.y);
-                this.main.draw(this.mask, this.x, this.y);
+                this.main.draw(this.mask!, this.x, this.y);
                 this.main.drawRotated(this.main.floorGuns[this.colorIndex], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case FloorGun.STATE_CLOSING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
                 this.main.draw(this.main.floorGuns[4], this.x, this.y);
                 this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32 + 48 - this.openY * 1.5, -29, -29, this.angle - 90);
-                this.main.draw(this.panel, this.x, this.y - this.openY);
-                this.main.draw(this.panel, this.x, this.y + 32 + this.openY);
-                this.main.draw(this.mask, this.x, this.y);
+                this.main.draw(this.panel!, this.x, this.y - this.openY);
+                this.main.draw(this.panel!, this.x, this.y + 32 + this.openY);
+                this.main.draw(this.mask!, this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
         }

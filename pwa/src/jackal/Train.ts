@@ -95,14 +95,14 @@ export class Train extends Enemy {
                 new EnemyBullet(
                     this.x + this.shootX,
                     this.y + this.shootY,
-                    this.player.x > this.x ? Train.BULLET_SPEED : -Train.BULLET_SPEED,
+                    this.player!.x > this.x ? Train.BULLET_SPEED : -Train.BULLET_SPEED,
                     0,
                     Train.BULLET_TRAVEL_TIME,
                     false
                 );
             }
-            for (let i = this.mines.size() - 1; i >= 0; i--) {
-                let mineLocal = this.mines.get(i);
+            for (let i = this.mines!.size() - 1; i >= 0; i--) {
+                let mineLocal = this.mines!.get(i);
                 if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
                     mineLocal.flatten();
                 }

@@ -137,13 +137,13 @@ export class EnemyBullet extends GameElement {
             this.gameMode.isOutsideOfFrame(this.x - EnemyBullet.MARGIN, this.y - EnemyBullet.MARGIN, this.x + EnemyBullet.MARGIN, this.y + EnemyBullet.MARGIN)
         ) {
             this.remove();
-        } else if (--this.travelTime < 0 || this.gameMode.isSolid(this.x, this.y) || this.player.attack(this.x, this.y)) {
+        } else if (--this.travelTime < 0 || this.gameMode.isSolid(this.x, this.y) || this.player!.attack(this.x, this.y)) {
             this.remove();
             new BulletHit(this.x, this.y);
         }
     }
 
     public render(): void {
-        this.main.drawCentered(this.sprite, this.x, this.y);
+        this.main.drawCentered(this.sprite!, this.x, this.y);
     }
 }

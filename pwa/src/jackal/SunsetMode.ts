@@ -80,8 +80,8 @@ export class SunsetMode implements IMode, IFadeListener {
         ["final score: ", "", "  press start for", "  hard mode..."]
     ];
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public sunOffset: number = 0;
     public sunOffsetCounter: number = 0;
     public rotorAngle: number = 0;
@@ -95,7 +95,7 @@ export class SunsetMode implements IMode, IFadeListener {
     public creditsIndex: number = 0;
     public lineIndex: number = 0;
     public lineLength: number = 0;
-    public input: IInput = null;
+    public input: IInput = null!;
 
     public init(main: Main, gc: GameContainer): void {
         this.main = main;

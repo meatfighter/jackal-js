@@ -107,7 +107,7 @@ export class BossGarageManager extends GameElement implements ICameraPanListener
         if (--this.openDelay == 0) {
             let bossGarage = null;
             while (true) {
-                let b = this.garages.get(this.garageIndex++);
+                let b = this.garages!.get(this.garageIndex++);
                 if (!b.removeFlag && b.x + 128 > this.gameMode.cameraX && b.x < this.gameMode.cameraX + MainConstants.DISPLAY_WIDTH) {
                     bossGarage = b;
                     break;

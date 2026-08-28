@@ -23,7 +23,7 @@ export class ElephantGun extends Enemy {
         this.state = 0;
         this.delay = 0;
         this.targetDirection = 0;
-        this.asters = null;
+        this.asters = null!;
         this.fireballX = 0;
         this.fireballY = 0;
         this.fireballVx = 0;

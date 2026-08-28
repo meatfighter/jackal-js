@@ -136,7 +136,7 @@ export class Main extends BasicGame {
 
     public static readonly TILES: number[] = [218, 235, 273, 233, 328, 330];
 
-    public static readonly FADES: Color[] = javaArray(23, null);
+    public static readonly FADES: Color[] = javaArray<Color>(23, null!);
 
     static {
         for (let i = 0; i < Main.FADES.length; i++) {
@@ -144,28 +144,28 @@ export class Main extends BasicGame {
         }
     }
 
-    public static mainInstance: Main = null;
-    public static gameMode: GameMode = null;
+    public static mainInstance: Main = null!;
+    public static gameMode: GameMode = null!;
 
     public random: Random = new Random();
     public buttonMapping: ButtonMapping = new ButtonMapping();
     public nextFrameTime: number = 0;
-    public mode: IMode = null;
-    public input: IInput = null;
-    public nativeCursor: Cursor = null;
-    public currentSong: Song = null;
-    public requestedSong: Song = null;
+    public mode: IMode = null!;
+    public input: IInput = null!;
+    public nativeCursor: Cursor | null = null;
+    public currentSong: Song = null!;
+    public requestedSong: Song = null!;
     public loadIndex: number = 0;
 
-    public fadeListener: IFadeListener = null;
+    public fadeListener: IFadeListener = null!;
     public fading: boolean = false;
     public fadeIndex: number = 0;
     public fadeOut: boolean = false;
 
     public extraLives: number = 0;
-    public extraLivesStr: string = null;
+    public extraLivesStr: string = null!;
     public score: number = 0;
-    public scoreStr: string = null;
+    public scoreStr: string = null!;
     public stageIndex: number = 0;
     public hasMissiles: boolean = false;
     public missilePower: number = 0;
@@ -176,144 +176,144 @@ export class Main extends BasicGame {
     public controllerGrenadePressed: boolean = false;
     public controllerGunPressed: boolean = false;
 
-    public stages: Stage[] = javaArray(6, null);
+    public stages: Stage[] = javaArray<Stage>(6, null!);
 
-    public players: Image[][] = java2DArray(4, 5, null);
-    public explosions: Image[] = javaArray(4, null);
-    public grenade: Image = null;
-    public playerMissile: Image = null;
-    public yellowBullet: Image = null;
-    public whiteBullet: Image = null;
-    public bulletHit: Image = null;
-    public grayGuns: Image[] = javaArray(2, null);
-    public enemySoldiers: Image[][] = java2DArray(2, 8, null);
-    public swampSoldiers: Image[][] = java2DArray(2, 8, null);
-    public deadEnemySoldier: Image = null;
-    public brownTanks: Image[] = javaArray(5, null);
-    public friendlySoldiers: Image[][] = java2DArray(4, 12, null);
-    public help: Image = null;
-    public greenBoats: Image[] = javaArray(2, null);
-    public stars: Image[] = javaArray(4, null);
-    public friendlyHelicopters: Image[] = javaArray(4, null);
-    public lamps: Image[] = javaArray(4, null);
-    public bossBlueTanks: Image[][] = java2DArray(4, 5, null);
-    public fonts: Image[][] = java2DArray(4, 256, null);
-    public statueBlueEyes: Image = null;
-    public statueBlueMouth: Image = null;
-    public statueWhiteEyes: Image = null;
-    public statueWhiteMouth: Image = null;
-    public statueMissiles: Image[] = javaArray(2, null);
-    public airplanes: Image[][] = java2DArray(2, 2, null);
-    public bomb: Image = null;
-    public grayJeeps: Image[] = javaArray(5, null);
-    public grayTanks: Image[] = javaArray(5, null);
-    public cannonball: Image = null;
-    public columns: Image[] = javaArray(2, null);
-    public parkedGrayJeep: Image = null;
-    public grayBoats: Image[] = javaArray(3, null);
-    public submarines: Image[] = javaArray(4, null);
-    public lasers: Image[] = javaArray(6, null);
-    public troopsTruck: Image = null;
-    public floorGuns: Image[] = javaArray(8, null);
-    public shipGuns: Image[] = javaArray(3, null);
-    public plainFloorGuns: Image[] = javaArray(2, null);
-    public playerWakes: Image[] = javaArray(6, null);
-    public swampMissiles: Image[] = javaArray(5, null);
-    public mines: Image[] = javaArray(4, null);
-    public rock: Image = null;
-    public cannonTruck: Image[][] = java2DArray(2, 2, null);
-    public cliffMissileLauncher: Image = null;
-    public trains: Image[] = javaArray(3, null);
-    public bossHelicopters: Image[] = javaArray(6, null);
-    public parachutes: Image[] = javaArray(5, null);
-    public tankShack: Image = null;
-    public cliffGuns: Image[] = javaArray(5, null);
-    public fires: Image[][] = java2DArray(2, 3, null);
-    public fireTanks: Image[] = javaArray(5, null);
-    public garages: Image[] = javaArray(5, null);
-    public sparks: Image[][] = java2DArray(2, 7, null);
-    public conveyors: Image[] = javaArray(16, null);
-    public greenGuns: Image[] = javaArray(2, null);
-    public brownGuns: Image[] = javaArray(2, null);
-    public parkedBrownTank: Image = null;
-    public floorMissileLauncher: Image[] = javaArray(4, null);
-    public enemyHelicopters: Image[] = javaArray(3, null);
-    public headquartersLights: Image[] = javaArray(2, null);
-    public elephantGuns: Image[] = javaArray(9, null);
-    public superTanks: Image[][] = java2DArray(4, 5, null);
-    public superFires: Image[][] = java2DArray(2, 3, null);
-    public superGuns: Image[] = javaArray(2, null);
-    public chinooks: Image[] = javaArray(4, null);
-    public heres: Image[] = javaArray(2, null);
-    public smoke: Image = null;
-    public blackPlane: Image = null;
-    public gunFires: Image[] = javaArray(2, null);
-    public jeepYeahBullet: Image = null;
-    public yeahs: Image[] = javaArray(4, null);
-    public suns: Image[] = null;
-    public waves: Image[] = null;
-    public rescueHelicopters: Image[] = javaArray(3, null);
+    public players: Image[][] = java2DArray<Image>(4, 5, null!);
+    public explosions: Image[] = javaArray<Image>(4, null!);
+    public grenade: Image = null!;
+    public playerMissile: Image = null!;
+    public yellowBullet: Image = null!;
+    public whiteBullet: Image = null!;
+    public bulletHit: Image = null!;
+    public grayGuns: Image[] = javaArray<Image>(2, null!);
+    public enemySoldiers: Image[][] = java2DArray<Image>(2, 8, null!);
+    public swampSoldiers: Image[][] = java2DArray<Image>(2, 8, null!);
+    public deadEnemySoldier: Image = null!;
+    public brownTanks: Image[] = javaArray<Image>(5, null!);
+    public friendlySoldiers: Image[][] = java2DArray<Image>(4, 12, null!);
+    public help: Image = null!;
+    public greenBoats: Image[] = javaArray<Image>(2, null!);
+    public stars: Image[] = javaArray<Image>(4, null!);
+    public friendlyHelicopters: Image[] = javaArray<Image>(4, null!);
+    public lamps: Image[] = javaArray<Image>(4, null!);
+    public bossBlueTanks: Image[][] = java2DArray<Image>(4, 5, null!);
+    public fonts: Image[][] = java2DArray<Image>(4, 256, null!);
+    public statueBlueEyes: Image = null!;
+    public statueBlueMouth: Image = null!;
+    public statueWhiteEyes: Image = null!;
+    public statueWhiteMouth: Image = null!;
+    public statueMissiles: Image[] = javaArray<Image>(2, null!);
+    public airplanes: Image[][] = java2DArray<Image>(2, 2, null!);
+    public bomb: Image = null!;
+    public grayJeeps: Image[] = javaArray<Image>(5, null!);
+    public grayTanks: Image[] = javaArray<Image>(5, null!);
+    public cannonball: Image = null!;
+    public columns: Image[] = javaArray<Image>(2, null!);
+    public parkedGrayJeep: Image = null!;
+    public grayBoats: Image[] = javaArray<Image>(3, null!);
+    public submarines: Image[] = javaArray<Image>(4, null!);
+    public lasers: Image[] = javaArray<Image>(6, null!);
+    public troopsTruck: Image = null!;
+    public floorGuns: Image[] = javaArray<Image>(8, null!);
+    public shipGuns: Image[] = javaArray<Image>(3, null!);
+    public plainFloorGuns: Image[] = javaArray<Image>(2, null!);
+    public playerWakes: Image[] = javaArray<Image>(6, null!);
+    public swampMissiles: Image[] = javaArray<Image>(5, null!);
+    public mines: Image[] = javaArray<Image>(4, null!);
+    public rock: Image = null!;
+    public cannonTruck: Image[][] = java2DArray<Image>(2, 2, null!);
+    public cliffMissileLauncher: Image = null!;
+    public trains: Image[] = javaArray<Image>(3, null!);
+    public bossHelicopters: Image[] = javaArray<Image>(6, null!);
+    public parachutes: Image[] = javaArray<Image>(5, null!);
+    public tankShack: Image = null!;
+    public cliffGuns: Image[] = javaArray<Image>(5, null!);
+    public fires: Image[][] = java2DArray<Image>(2, 3, null!);
+    public fireTanks: Image[] = javaArray<Image>(5, null!);
+    public garages: Image[] = javaArray<Image>(5, null!);
+    public sparks: Image[][] = java2DArray<Image>(2, 7, null!);
+    public conveyors: Image[] = javaArray<Image>(16, null!);
+    public greenGuns: Image[] = javaArray<Image>(2, null!);
+    public brownGuns: Image[] = javaArray<Image>(2, null!);
+    public parkedBrownTank: Image = null!;
+    public floorMissileLauncher: Image[] = javaArray<Image>(4, null!);
+    public enemyHelicopters: Image[] = javaArray<Image>(3, null!);
+    public headquartersLights: Image[] = javaArray<Image>(2, null!);
+    public elephantGuns: Image[] = javaArray<Image>(9, null!);
+    public superTanks: Image[][] = java2DArray<Image>(4, 5, null!);
+    public superFires: Image[][] = java2DArray<Image>(2, 3, null!);
+    public superGuns: Image[] = javaArray<Image>(2, null!);
+    public chinooks: Image[] = javaArray<Image>(4, null!);
+    public heres: Image[] = javaArray<Image>(2, null!);
+    public smoke: Image = null!;
+    public blackPlane: Image = null!;
+    public gunFires: Image[] = javaArray<Image>(2, null!);
+    public jeepYeahBullet: Image = null!;
+    public yeahs: Image[] = javaArray<Image>(4, null!);
+    public suns: Image[] = null!;
+    public waves: Image[] = null!;
+    public rescueHelicopters: Image[] = javaArray<Image>(3, null!);
 
-    public jeepHere: LargeImage = null;
-    public titleImage: LargeImage = null;
-    public map: LargeImage = null;
-    public soldiers: LargeImage[] = javaArray(4, null);
-    public sunset: ExtraLargeImage = null;
-    public jeepYeah: ExtraLargeImage = null;
+    public jeepHere: LargeImage = null!;
+    public titleImage: LargeImage = null!;
+    public map: LargeImage = null!;
+    public soldiers: LargeImage[] = javaArray<LargeImage>(4, null!);
+    public sunset: ExtraLargeImage = null!;
+    public jeepYeah: ExtraLargeImage = null!;
 
-    public bossIntro: Music = null;
-    public bossRepeat: Music = null;
-    public superTankIntro: Music = null;
-    public stage0Intro: Music = null;
-    public stage0Repeat: Music = null;
-    public start: Music = null;
+    public bossIntro: Music = null!;
+    public bossRepeat: Music = null!;
+    public superTankIntro: Music = null!;
+    public stage0Intro: Music = null!;
+    public stage0Repeat: Music = null!;
+    public start: Music = null!;
 
-    public bossSong: Song = null;
-    public continueSong: Song = null;
-    public cutsceneSong: Song = null;
-    public endingSong: Song = null;
-    public introSong: Song = null;
-    public stageSong0: Song = null;
-    public stageSong1: Song = null;
-    public stageSong2: Song = null;
-    public superTankSong: Song = null;
-    public titleSong: Song = null;
+    public bossSong: Song = null!;
+    public continueSong: Song = null!;
+    public cutsceneSong: Song = null!;
+    public endingSong: Song = null!;
+    public introSong: Song = null!;
+    public stageSong0: Song = null!;
+    public stageSong1: Song = null!;
+    public stageSong2: Song = null!;
+    public superTankSong: Song = null!;
+    public titleSong: Song = null!;
 
-    public bulletHitSound: Sound = null;
-    public enemyHitSound: Sound = null;
-    public explodeSound: Sound = null;
-    public explodeSound2: Sound = null;
-    public explodeSound3: Sound = null;
-    public extraLifeSound: Sound = null;
-    public fireSound: Sound = null;
-    public helicopterSound: Sound = null;
-    public helicopterSound2: Sound = null;
-    public helicopterPickupSound: Sound = null;
-    public headquartersExplodesSound: Sound = null;
-    public hutSound: Sound = null;
-    public introChingSound: Sound = null;
-    public introTypeSound: Sound = null;
-    public laserSound: Sound = null;
-    public machineGunSound: Sound = null;
-    public missileSound: Sound = null;
-    public pauseSound: Sound = null;
-    public pickupSound: Sound = null;
-    public playerExplodeSound: Sound = null;
-    public planeSound: Sound = null;
-    public soldierKilledSound: Sound = null;
-    public throwSound: Sound = null;
-    public weaponUpgradeSound: Sound = null;
-    public wellDoneSound: Sound = null;
+    public bulletHitSound: Sound = null!;
+    public enemyHitSound: Sound = null!;
+    public explodeSound: Sound = null!;
+    public explodeSound2: Sound = null!;
+    public explodeSound3: Sound = null!;
+    public extraLifeSound: Sound = null!;
+    public fireSound: Sound = null!;
+    public helicopterSound: Sound = null!;
+    public helicopterSound2: Sound = null!;
+    public helicopterPickupSound: Sound = null!;
+    public headquartersExplodesSound: Sound = null!;
+    public hutSound: Sound = null!;
+    public introChingSound: Sound = null!;
+    public introTypeSound: Sound = null!;
+    public laserSound: Sound = null!;
+    public machineGunSound: Sound = null!;
+    public missileSound: Sound = null!;
+    public pauseSound: Sound = null!;
+    public pickupSound: Sound = null!;
+    public playerExplodeSound: Sound = null!;
+    public planeSound: Sound = null!;
+    public soldierKilledSound: Sound = null!;
+    public throwSound: Sound = null!;
+    public weaponUpgradeSound: Sound = null!;
+    public wellDoneSound: Sound = null!;
 
-    public triggerSizes: number[][] = null;
+    public triggerSizes: number[][] = null!;
     public unitVector: number[] = javaArray(3, 0);
     public lastPlayTime: HashMap<Sound, number> = Collections.synchronizedMap(new HashMap<Sound, number>());
-    public konamiCode: KonamiCode = null;
+    public konamiCode: KonamiCode = null!;
 
-    public gc: GameContainer = null;
-    public appGameContainer: AppGameContainer = null;
-    public scalableGame: ScalableGame = null;
-    public hiddenCursor: Cursor = null;
+    public gc: GameContainer = null!;
+    public appGameContainer: AppGameContainer = null!;
+    public scalableGame: ScalableGame = null!;
+    public hiddenCursor: Cursor | null = null;
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
     public stateSaveInvalidatedHandler: (() => void) | null = null;
@@ -655,7 +655,7 @@ export class Main extends BasicGame {
     }
 
     public removeFadeListener(): void {
-        this.fadeListener = null;
+        this.fadeListener = null!;
     }
 
     public drawString(arg0?: string, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
@@ -1373,8 +1373,8 @@ export class Main extends BasicGame {
         if (this.currentSong != null) {
             this.currentSong.stop();
         }
-        this.requestedSong = null;
-        this.currentSong = null;
+        this.requestedSong = null!;
+        this.currentSong = null!;
     }
 
     public stopAllSound(): void {
@@ -1473,7 +1473,7 @@ export class Main extends BasicGame {
     private loadFont(): void {
         let pack = new XMLPackedSheet("images/font.png", "images/font.xml");
         for (let i = 0; i < 4; i++) {
-            let color = null;
+            let color: string = null!;
             switch (i) {
                 case 0:
                     color = "black";
@@ -1491,7 +1491,7 @@ export class Main extends BasicGame {
             for (let j = 0; j < Main.CHARS.length; j++) {
                 (this.fonts[i] as unknown as Record<string, Image>)[Character.toLowerCase(Main.CHARS.charAt(j))] = (
                     this.fonts[i] as unknown as Record<string, Image>
-                )[Main.CHARS.charAt(j)] = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(Main.CHARS.charAt(j))));
+                )[Main.CHARS.charAt(j)] = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(Main.CHARS.charAt(j))))!;
             }
         }
     }
@@ -1499,7 +1499,7 @@ export class Main extends BasicGame {
     private loadTiles(index: number, stage: Stage): void {
         let pack = new XMLPackedSheet(JavaString.format("images/tiles-%d.png", index), JavaString.format("images/tiles-%d.xml", index));
         let size = Main.TILES[index];
-        stage.tiles = javaArray(size, null);
+        stage.tiles = javaArray<Image>(size, null!);
         for (let i = 0; i < size; i++) {
             if (i == 225) {
                 if (index == 5) {
@@ -1508,7 +1508,7 @@ export class Main extends BasicGame {
                     pack = new XMLPackedSheet("images/tiles-6.png", "images/tiles-6.xml");
                 }
             }
-            stage.tiles[i] = pack.getSprite(JavaString.format("tile-%d-%03d.png", index, i));
+            stage.tiles[i] = pack.getSprite(JavaString.format("tile-%d-%03d.png", index, i))!;
         }
         if (index == 5) {
             for (let i = 0; i < 16; i++) {
@@ -1535,90 +1535,90 @@ export class Main extends BasicGame {
         for (let i = 0; i < 4; i++) {
             let COLORS = ["green", "yellow", "brown", "gray"];
             for (let j = 0; j < 3; j++) {
-                this.players[i][j] = pack1.getSprite(JavaString.format("player-%s-%d.png", COLORS[i], j));
+                this.players[i][j] = pack1.getSprite(JavaString.format("player-%s-%d.png", COLORS[i], j))!;
             }
             this.players[i][3] = this.players[i][0].getFlippedCopy(true, false);
             this.players[i][4] = this.players[i][1].getFlippedCopy(true, false);
         }
         for (let i = 0; i < 4; i++) {
-            this.explosions[i] = pack1.getSprite(JavaString.format("explosion-%d.png", i));
+            this.explosions[i] = pack1.getSprite(JavaString.format("explosion-%d.png", i))!;
         }
-        this.grenade = pack1.getSprite("grenade-large.png");
-        this.playerMissile = pack1.getSprite("player-missile-1.png");
-        this.whiteBullet = pack1.getSprite("white-bullet.png");
-        this.yellowBullet = pack1.getSprite("yellow-bullet.png");
-        this.bulletHit = pack1.getSprite("bullet-hit.png");
+        this.grenade = pack1.getSprite("grenade-large.png")!;
+        this.playerMissile = pack1.getSprite("player-missile-1.png")!;
+        this.whiteBullet = pack1.getSprite("white-bullet.png")!;
+        this.yellowBullet = pack1.getSprite("yellow-bullet.png")!;
+        this.bulletHit = pack1.getSprite("bullet-hit.png")!;
 
-        this.grayGuns[0] = pack1.getSprite("gray-gun-4.png");
-        this.grayGuns[1] = pack1.getSprite("gray-gun-5.png");
+        this.grayGuns[0] = pack1.getSprite("gray-gun-4.png")!;
+        this.grayGuns[1] = pack1.getSprite("gray-gun-5.png")!;
 
         for (let i = 0; i < 2; i++) {
             let color = i == 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
-                    this.enemySoldiers[i][j] = pack1.getSprite(JavaString.format("enemy-soldier-%s-%d.png", color, j));
+                    this.enemySoldiers[i][j] = pack1.getSprite(JavaString.format("enemy-soldier-%s-%d.png", color, j))!;
                 } else {
                     this.enemySoldiers[i][j] = this.enemySoldiers[i][j - 4].getFlippedCopy(true, false);
                 }
             }
         }
-        this.deadEnemySoldier = pack1.getSprite("enemy-soldier-dead.png");
+        this.deadEnemySoldier = pack1.getSprite("enemy-soldier-dead.png")!;
 
         for (let i = 0; i < 3; i++) {
-            this.brownTanks[i] = pack1.getSprite(JavaString.format("brown-tank-%d.png", i));
+            this.brownTanks[i] = pack1.getSprite(JavaString.format("brown-tank-%d.png", i))!;
         }
         this.brownTanks[3] = this.brownTanks[0].getFlippedCopy(true, false);
         this.brownTanks[4] = this.brownTanks[1].getFlippedCopy(true, false);
 
         for (let i = 0; i < 3; i++) {
-            this.grayJeeps[i] = pack1.getSprite(JavaString.format("gray-jeep-%d.png", i));
+            this.grayJeeps[i] = pack1.getSprite(JavaString.format("gray-jeep-%d.png", i))!;
         }
         this.grayJeeps[3] = this.grayJeeps[0].getFlippedCopy(true, false);
         this.grayJeeps[4] = this.grayJeeps[1].getFlippedCopy(true, false);
 
-        this.cannonball = pack1.getSprite("cannonball.png");
+        this.cannonball = pack1.getSprite("cannonball.png")!;
 
-        this.parkedGrayJeep = pack1.getSprite("gray-parked.png");
+        this.parkedGrayJeep = pack1.getSprite("gray-parked.png")!;
 
-        this.mines[0] = pack1.getSprite("mine-green.png");
-        this.mines[1] = pack1.getSprite("mine-brown.png");
-        this.mines[2] = pack1.getSprite("mine-gray.png");
-        this.mines[3] = pack1.getSprite("mine-yellow.png");
+        this.mines[0] = pack1.getSprite("mine-green.png")!;
+        this.mines[1] = pack1.getSprite("mine-brown.png")!;
+        this.mines[2] = pack1.getSprite("mine-gray.png")!;
+        this.mines[3] = pack1.getSprite("mine-yellow.png")!;
 
-        this.lamps[0] = pack1.getSprite("lamp-blue-bright.png");
-        this.lamps[1] = pack1.getSprite("lamp-blue-dark.png");
-        this.lamps[2] = pack1.getSprite("lamp-red-bright.png");
-        this.lamps[3] = pack1.getSprite("lamp-red-dark.png");
+        this.lamps[0] = pack1.getSprite("lamp-blue-bright.png")!;
+        this.lamps[1] = pack1.getSprite("lamp-blue-dark.png")!;
+        this.lamps[2] = pack1.getSprite("lamp-red-bright.png")!;
+        this.lamps[3] = pack1.getSprite("lamp-red-dark.png")!;
 
-        this.bomb = pack1.getSprite("bomb-large.png");
+        this.bomb = pack1.getSprite("bomb-large.png")!;
 
-        this.statueBlueEyes = pack1.getSprite("blue-eyes.png");
-        this.statueBlueMouth = pack1.getSprite("blue-mouth.png");
-        this.statueWhiteEyes = pack1.getSprite("white-eyes.png");
-        this.statueWhiteMouth = pack1.getSprite("white-mouth.png");
-        this.statueMissiles[0] = pack1.getSprite("statue-missile.png");
+        this.statueBlueEyes = pack1.getSprite("blue-eyes.png")!;
+        this.statueBlueMouth = pack1.getSprite("blue-mouth.png")!;
+        this.statueWhiteEyes = pack1.getSprite("white-eyes.png")!;
+        this.statueWhiteMouth = pack1.getSprite("white-mouth.png")!;
+        this.statueMissiles[0] = pack1.getSprite("statue-missile.png")!;
         this.statueMissiles[1] = this.statueMissiles[0].getFlippedCopy(true, false);
 
-        this.lasers[0] = pack1.getSprite("laser-green.png");
-        this.lasers[1] = pack1.getSprite("laser-brown.png");
-        this.lasers[2] = pack1.getSprite("laser-gray.png");
-        this.lasers[3] = pack1.getSprite("laser-yellow.png");
-        this.lasers[4] = pack1.getSprite("laser-flash-0.png");
-        this.lasers[5] = pack1.getSprite("laser-flash-1.png");
+        this.lasers[0] = pack1.getSprite("laser-green.png")!;
+        this.lasers[1] = pack1.getSprite("laser-brown.png")!;
+        this.lasers[2] = pack1.getSprite("laser-gray.png")!;
+        this.lasers[3] = pack1.getSprite("laser-yellow.png")!;
+        this.lasers[4] = pack1.getSprite("laser-flash-0.png")!;
+        this.lasers[5] = pack1.getSprite("laser-flash-1.png")!;
 
-        this.swampMissiles[0] = pack1.getSprite("swamp-missile-0.png");
+        this.swampMissiles[0] = pack1.getSprite("swamp-missile-0.png")!;
 
-        this.parkedBrownTank = pack1.getSprite("brown-parked.png");
+        this.parkedBrownTank = pack1.getSprite("brown-parked.png")!;
 
         let pack2 = new XMLPackedSheet("images/sprites-2.png", "images/sprites-2.xml");
 
-        this.swampMissiles[1] = pack2.getSprite("missile-splash-0.png");
+        this.swampMissiles[1] = pack2.getSprite("missile-splash-0.png")!;
         this.swampMissiles[2] = this.swampMissiles[1].getFlippedCopy(true, false);
-        this.swampMissiles[3] = pack2.getSprite("missile-splash-1.png");
-        this.swampMissiles[4] = pack2.getSprite("missile-splash-2.png");
+        this.swampMissiles[3] = pack2.getSprite("missile-splash-1.png")!;
+        this.swampMissiles[4] = pack2.getSprite("missile-splash-2.png")!;
 
         for (let i = 0; i < 4; i++) {
-            let color = null;
+            let color: string = null!;
             switch (i) {
                 case 0:
                     color = "green";
@@ -1633,68 +1633,68 @@ export class Main extends BasicGame {
                     color = "yellow";
                     break;
             }
-            this.friendlySoldiers[i][1] = pack2.getSprite(JavaString.format("friendly-soldier-%s-0.png", color));
+            this.friendlySoldiers[i][1] = pack2.getSprite(JavaString.format("friendly-soldier-%s-0.png", color))!;
             this.friendlySoldiers[i][0] = this.friendlySoldiers[i][1].getFlippedCopy(true, false);
-            this.friendlySoldiers[i][2] = pack2.getSprite(JavaString.format("friendly-soldier-%s-1.png", color));
-            this.friendlySoldiers[i][3] = pack2.getSprite(JavaString.format("friendly-soldier-%s-2.png", color));
-            this.friendlySoldiers[i][4] = pack2.getSprite(JavaString.format("friendly-soldier-%s-3.png", color));
+            this.friendlySoldiers[i][2] = pack2.getSprite(JavaString.format("friendly-soldier-%s-1.png", color))!;
+            this.friendlySoldiers[i][3] = pack2.getSprite(JavaString.format("friendly-soldier-%s-2.png", color))!;
+            this.friendlySoldiers[i][4] = pack2.getSprite(JavaString.format("friendly-soldier-%s-3.png", color))!;
             this.friendlySoldiers[i][5] = this.friendlySoldiers[i][4].getFlippedCopy(true, false);
             this.friendlySoldiers[i][6] = this.friendlySoldiers[i][2].getFlippedCopy(true, false);
             this.friendlySoldiers[i][7] = this.friendlySoldiers[i][3].getFlippedCopy(true, false);
-            this.friendlySoldiers[i][8] = pack2.getSprite(JavaString.format("friendly-soldier-%s-4.png", color));
-            this.friendlySoldiers[i][9] = pack2.getSprite(JavaString.format("friendly-soldier-%s-5.png", color));
+            this.friendlySoldiers[i][8] = pack2.getSprite(JavaString.format("friendly-soldier-%s-4.png", color))!;
+            this.friendlySoldiers[i][9] = pack2.getSprite(JavaString.format("friendly-soldier-%s-5.png", color))!;
             this.friendlySoldiers[i][10] = this.friendlySoldiers[i][8].getFlippedCopy(true, false);
             this.friendlySoldiers[i][11] = this.friendlySoldiers[i][9].getFlippedCopy(true, false);
         }
 
-        this.help = pack2.getSprite("help.png");
+        this.help = pack2.getSprite("help.png")!;
 
-        this.greenBoats[0] = pack2.getSprite("green-boat-0.png");
-        this.greenBoats[1] = pack2.getSprite("green-boat-1.png");
+        this.greenBoats[0] = pack2.getSprite("green-boat-0.png")!;
+        this.greenBoats[1] = pack2.getSprite("green-boat-1.png")!;
 
-        this.stars[0] = pack2.getSprite("star-brown.png");
-        this.stars[1] = pack2.getSprite("star-gray.png");
-        this.stars[2] = pack2.getSprite("star-green.png");
-        this.stars[3] = pack2.getSprite("star-yellow.png");
+        this.stars[0] = pack2.getSprite("star-brown.png")!;
+        this.stars[1] = pack2.getSprite("star-gray.png")!;
+        this.stars[2] = pack2.getSprite("star-green.png")!;
+        this.stars[3] = pack2.getSprite("star-yellow.png")!;
 
-        this.friendlyHelicopters[0] = pack2.getSprite("friendly-helicopter-large.png");
-        this.friendlyHelicopters[1] = pack2.getSprite("friendly-helicopter-shadow.png");
-        this.friendlyHelicopters[2] = pack2.getSprite("friendly-helicopter-wing-15.png");
-        this.friendlyHelicopters[3] = pack2.getSprite("friendly-helicopter-wing-30.png");
+        this.friendlyHelicopters[0] = pack2.getSprite("friendly-helicopter-large.png")!;
+        this.friendlyHelicopters[1] = pack2.getSprite("friendly-helicopter-shadow.png")!;
+        this.friendlyHelicopters[2] = pack2.getSprite("friendly-helicopter-wing-15.png")!;
+        this.friendlyHelicopters[3] = pack2.getSprite("friendly-helicopter-wing-30.png")!;
 
-        this.airplanes[0][0] = pack2.getSprite("airplane.png");
-        this.airplanes[0][1] = pack2.getSprite("airplane-shadow.png");
+        this.airplanes[0][0] = pack2.getSprite("airplane.png")!;
+        this.airplanes[0][1] = pack2.getSprite("airplane-shadow.png")!;
         this.airplanes[1][0] = this.airplanes[0][0].getFlippedCopy(false, true);
         this.airplanes[1][1] = this.airplanes[0][1].getFlippedCopy(false, true);
 
-        this.columns[0] = pack2.getSprite("column-0.png").getFlippedCopy(true, false);
-        this.columns[1] = pack2.getSprite("column-0.png").getFlippedCopy(false, true);
+        this.columns[0] = pack2.getSprite("column-0.png")!.getFlippedCopy(true, false);
+        this.columns[1] = pack2.getSprite("column-0.png")!.getFlippedCopy(false, true);
 
-        this.grayBoats[0] = pack2.getSprite("gray-boat-0.png");
-        this.grayBoats[1] = pack2.getSprite("gray-boat-1.png");
-        this.grayBoats[2] = pack2.getSprite("gray-boat-2.png");
+        this.grayBoats[0] = pack2.getSprite("gray-boat-0.png")!;
+        this.grayBoats[1] = pack2.getSprite("gray-boat-1.png")!;
+        this.grayBoats[2] = pack2.getSprite("gray-boat-2.png")!;
 
-        this.playerWakes[0] = pack2.getSprite("player-wake-0.png");
+        this.playerWakes[0] = pack2.getSprite("player-wake-0.png")!;
         this.playerWakes[1] = this.playerWakes[0].getFlippedCopy(true, false);
-        this.playerWakes[2] = pack2.getSprite("player-wake-2.png");
+        this.playerWakes[2] = pack2.getSprite("player-wake-2.png")!;
         this.playerWakes[3] = this.playerWakes[2].getFlippedCopy(false, true);
-        this.playerWakes[4] = pack2.getSprite("player-wake-1.png");
+        this.playerWakes[4] = pack2.getSprite("player-wake-1.png")!;
         this.playerWakes[5] = this.playerWakes[4].getFlippedCopy(true, false);
 
-        this.rock = pack2.getSprite("rock-large.png");
+        this.rock = pack2.getSprite("rock-large.png")!;
 
         for (let i = 0; i < 2; i++) {
             let color = i == 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
-                    this.swampSoldiers[i][j] = pack2.getSprite(JavaString.format("swamp-soldier-%s-%d.png", color, j));
+                    this.swampSoldiers[i][j] = pack2.getSprite(JavaString.format("swamp-soldier-%s-%d.png", color, j))!;
                 } else {
                     this.swampSoldiers[i][j] = this.swampSoldiers[i][j - 4].getFlippedCopy(true, false);
                 }
             }
         }
 
-        this.cliffMissileLauncher = pack2.getSprite("missile-launcher.png");
+        this.cliffMissileLauncher = pack2.getSprite("missile-launcher.png")!;
 
         let pack3 = new XMLPackedSheet("images/sprites-3.png", "images/sprites-3.xml");
 
@@ -1702,87 +1702,87 @@ export class Main extends BasicGame {
             let color = j == 0 ? "blue" : "brown";
             let k = j << 1;
             for (let i = 0; i < 3; i++) {
-                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, i << 1));
+                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, i << 1))!;
             }
             this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
             this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
 
             k++;
             for (let i = 0; i < 3; i++) {
-                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, (i << 1) + 1));
+                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, (i << 1) + 1))!;
             }
             this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
             this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
         }
 
         for (let i = 0; i < 3; i++) {
-            this.grayTanks[i] = pack3.getSprite(JavaString.format("gray-tank-%d.png", i));
+            this.grayTanks[i] = pack3.getSprite(JavaString.format("gray-tank-%d.png", i))!;
         }
         this.grayTanks[3] = this.grayTanks[0].getFlippedCopy(true, false);
         this.grayTanks[4] = this.grayTanks[1].getFlippedCopy(true, false);
 
-        this.troopsTruck = pack3.getSprite("troops-truck.png");
+        this.troopsTruck = pack3.getSprite("troops-truck.png")!;
 
-        this.cannonTruck[0][0] = pack3.getSprite("cannon-truck-0.png");
-        this.cannonTruck[0][1] = pack3.getSprite("cannon-truck-1.png");
+        this.cannonTruck[0][0] = pack3.getSprite("cannon-truck-0.png")!;
+        this.cannonTruck[0][1] = pack3.getSprite("cannon-truck-1.png")!;
         this.cannonTruck[1][0] = this.cannonTruck[0][0].getFlippedCopy(true, false);
         this.cannonTruck[1][1] = this.cannonTruck[0][1].getFlippedCopy(true, false);
 
-        this.tankShack = pack3.getSprite("gray-tank-shack.png");
+        this.tankShack = pack3.getSprite("gray-tank-shack.png")!;
 
         for (let i = 0; i < 7; i++) {
-            this.sparks[0][i] = pack3.getSprite(JavaString.format("spark-%d.png", i));
+            this.sparks[0][i] = pack3.getSprite(JavaString.format("spark-%d.png", i))!;
             this.sparks[1][i] = this.sparks[0][i].getFlippedCopy(true, false);
         }
 
-        this.greenGuns[0] = pack3.getSprite("green-gun-4.png");
-        this.greenGuns[1] = pack3.getSprite("green-gun-5.png");
-        this.brownGuns[0] = pack3.getSprite("brown-gun-4.png");
-        this.brownGuns[1] = pack3.getSprite("brown-gun-5.png");
+        this.greenGuns[0] = pack3.getSprite("green-gun-4.png")!;
+        this.greenGuns[1] = pack3.getSprite("green-gun-5.png")!;
+        this.brownGuns[0] = pack3.getSprite("brown-gun-4.png")!;
+        this.brownGuns[1] = pack3.getSprite("brown-gun-5.png")!;
 
         let pack4 = new XMLPackedSheet("images/sprites-4.png", "images/sprites-4.xml");
 
         for (let i = 0; i < 4; i++) {
-            this.submarines[i] = pack4.getSprite(JavaString.format("submarine-%d.png", i));
+            this.submarines[i] = pack4.getSprite(JavaString.format("submarine-%d.png", i))!;
         }
 
-        this.floorGuns[0] = pack4.getSprite("floor-gun-gray.png");
-        this.floorGuns[1] = pack4.getSprite("floor-gun-yellow.png");
-        this.floorGuns[2] = pack4.getSprite("floor-gun-brown.png");
-        this.floorGuns[3] = pack4.getSprite("floor-gun-green.png");
-        this.floorGuns[4] = pack4.getSprite("floor-gun-background-black.png");
-        this.floorGuns[5] = pack4.getSprite("floor-gun-background-red.png");
-        this.floorGuns[6] = pack4.getSprite("floor-gun-stripes-mask.png");
-        this.floorGuns[7] = pack4.getSprite("floor-gun-striped-panel.png");
+        this.floorGuns[0] = pack4.getSprite("floor-gun-gray.png")!;
+        this.floorGuns[1] = pack4.getSprite("floor-gun-yellow.png")!;
+        this.floorGuns[2] = pack4.getSprite("floor-gun-brown.png")!;
+        this.floorGuns[3] = pack4.getSprite("floor-gun-green.png")!;
+        this.floorGuns[4] = pack4.getSprite("floor-gun-background-black.png")!;
+        this.floorGuns[5] = pack4.getSprite("floor-gun-background-red.png")!;
+        this.floorGuns[6] = pack4.getSprite("floor-gun-stripes-mask.png")!;
+        this.floorGuns[7] = pack4.getSprite("floor-gun-striped-panel.png")!;
 
-        this.shipGuns[0] = pack4.getSprite("ship-gun-mask.png");
-        this.shipGuns[1] = pack4.getSprite("ship-gun-upper-panel.png");
-        this.shipGuns[2] = pack4.getSprite("ship-gun-lower-panel.png");
+        this.shipGuns[0] = pack4.getSprite("ship-gun-mask.png")!;
+        this.shipGuns[1] = pack4.getSprite("ship-gun-upper-panel.png")!;
+        this.shipGuns[2] = pack4.getSprite("ship-gun-lower-panel.png")!;
 
-        this.plainFloorGuns[0] = pack4.getSprite("floor-gun-plain-mask.png");
-        this.plainFloorGuns[1] = pack4.getSprite("floor-gun-plain-panel.png");
+        this.plainFloorGuns[0] = pack4.getSprite("floor-gun-plain-mask.png")!;
+        this.plainFloorGuns[1] = pack4.getSprite("floor-gun-plain-panel.png")!;
 
-        this.trains[0] = pack4.getSprite("train-0.png");
-        this.trains[1] = pack4.getSprite("train-1.png");
-        this.trains[2] = pack4.getSprite("tunnel.png");
+        this.trains[0] = pack4.getSprite("train-0.png")!;
+        this.trains[1] = pack4.getSprite("train-1.png")!;
+        this.trains[2] = pack4.getSprite("tunnel.png")!;
 
-        this.bossHelicopters[0] = pack4.getSprite("boss-helicopter-0.png");
+        this.bossHelicopters[0] = pack4.getSprite("boss-helicopter-0.png")!;
         this.bossHelicopters[1] = this.bossHelicopters[0].getFlippedCopy(true, false);
-        this.bossHelicopters[2] = pack4.getSprite("boss-helicopter-blade.png");
-        this.bossHelicopters[3] = pack4.getSprite("boss-helicopter-tail-0.png");
-        this.bossHelicopters[4] = pack4.getSprite("boss-helicopter-tail-1.png");
-        this.bossHelicopters[5] = pack4.getSprite("boss-helicopter-shadow.png");
+        this.bossHelicopters[2] = pack4.getSprite("boss-helicopter-blade.png")!;
+        this.bossHelicopters[3] = pack4.getSprite("boss-helicopter-tail-0.png")!;
+        this.bossHelicopters[4] = pack4.getSprite("boss-helicopter-tail-1.png")!;
+        this.bossHelicopters[5] = pack4.getSprite("boss-helicopter-shadow.png")!;
 
         for (let i = 0; i < 5; i++) {
-            this.parachutes[i] = pack4.getSprite(JavaString.format("parachute-%d.png", i));
+            this.parachutes[i] = pack4.getSprite(JavaString.format("parachute-%d.png", i))!;
         }
 
         for (let i = 0; i < 5; i++) {
-            this.cliffGuns[i] = pack4.getSprite(JavaString.format("cliff-gun-%d.png", i));
+            this.cliffGuns[i] = pack4.getSprite(JavaString.format("cliff-gun-%d.png", i))!;
         }
 
         for (let i = 0; i < 3; i++) {
-            this.fires[0][i] = pack4.getSprite(JavaString.format("fire-%d.png", i));
+            this.fires[0][i] = pack4.getSprite(JavaString.format("fire-%d.png", i))!;
             if (i == 2) {
                 this.fires[1][i] = this.fires[0][i].getFlippedCopy(true, false);
             } else {
@@ -1791,114 +1791,114 @@ export class Main extends BasicGame {
         }
 
         for (let i = 0; i < 3; i++) {
-            this.fireTanks[i] = pack4.getSprite(JavaString.format("fire-tank-%d.png", i));
+            this.fireTanks[i] = pack4.getSprite(JavaString.format("fire-tank-%d.png", i))!;
         }
         this.fireTanks[3] = this.fireTanks[0].getFlippedCopy(true, false);
         this.fireTanks[4] = this.fireTanks[1].getFlippedCopy(true, false);
 
         for (let i = 0; i < 5; i++) {
-            this.garages[i] = pack4.getSprite(JavaString.format("door-%d.png", i));
+            this.garages[i] = pack4.getSprite(JavaString.format("door-%d.png", i))!;
         }
 
         let pack5 = new XMLPackedSheet("images/sprites-5.png", "images/sprites-5.xml");
 
         for (let i = 0; i < 4; i++) {
-            this.floorMissileLauncher[i] = pack5.getSprite(JavaString.format("missile-launcher-floor-%d.png", i));
+            this.floorMissileLauncher[i] = pack5.getSprite(JavaString.format("missile-launcher-floor-%d.png", i))!;
         }
 
-        this.enemyHelicopters[0] = pack5.getSprite("enemy-helicopter-body.png");
-        this.enemyHelicopters[1] = pack5.getSprite("enemy-helicopter-blade.png");
-        this.enemyHelicopters[2] = pack5.getSprite("enemy-helicopter-shadow.png");
+        this.enemyHelicopters[0] = pack5.getSprite("enemy-helicopter-body.png")!;
+        this.enemyHelicopters[1] = pack5.getSprite("enemy-helicopter-blade.png")!;
+        this.enemyHelicopters[2] = pack5.getSprite("enemy-helicopter-shadow.png")!;
 
-        this.headquartersLights[0] = pack5.getSprite("headquarters-light-yellow.png");
-        this.headquartersLights[1] = pack5.getSprite("headquarters-light-brown.png");
+        this.headquartersLights[0] = pack5.getSprite("headquarters-light-yellow.png")!;
+        this.headquartersLights[1] = pack5.getSprite("headquarters-light-brown.png")!;
 
-        this.elephantGuns[1] = pack5.getSprite("elephant-gun-0.png");
-        this.elephantGuns[2] = pack5.getSprite("elephant-gun-1.png");
+        this.elephantGuns[1] = pack5.getSprite("elephant-gun-0.png")!;
+        this.elephantGuns[2] = pack5.getSprite("elephant-gun-1.png")!;
         this.elephantGuns[0] = this.elephantGuns[2].getFlippedCopy(true, false);
-        this.elephantGuns[3] = pack5.getSprite("elephant-gun-5.png");
-        this.elephantGuns[4] = pack5.getSprite("elephant-gun-2.png");
-        this.elephantGuns[5] = pack5.getSprite("elephant-gun-3.png");
-        this.elephantGuns[6] = pack5.getSprite("elephant-gun-4.png");
+        this.elephantGuns[3] = pack5.getSprite("elephant-gun-5.png")!;
+        this.elephantGuns[4] = pack5.getSprite("elephant-gun-2.png")!;
+        this.elephantGuns[5] = pack5.getSprite("elephant-gun-3.png")!;
+        this.elephantGuns[6] = pack5.getSprite("elephant-gun-4.png")!;
         this.elephantGuns[7] = this.elephantGuns[6].getFlippedCopy(true, false);
-        this.elephantGuns[8] = pack5.getSprite("elephant-missile.png");
+        this.elephantGuns[8] = pack5.getSprite("elephant-missile.png")!;
 
-        this.superTanks[0][0] = pack5.getSprite("super-tank-tread-yellow.png");
-        this.superTanks[0][1] = pack5.getSprite("super-tank-wheel-yellow.png");
-        this.superTanks[0][2] = pack5.getSprite("super-tank-top-yellow.png");
-        this.superTanks[0][3] = pack5.getSprite("super-tank-middle-yellow.png");
-        this.superTanks[0][4] = pack5.getSprite("super-tank-bottom-yellow.png");
+        this.superTanks[0][0] = pack5.getSprite("super-tank-tread-yellow.png")!;
+        this.superTanks[0][1] = pack5.getSprite("super-tank-wheel-yellow.png")!;
+        this.superTanks[0][2] = pack5.getSprite("super-tank-top-yellow.png")!;
+        this.superTanks[0][3] = pack5.getSprite("super-tank-middle-yellow.png")!;
+        this.superTanks[0][4] = pack5.getSprite("super-tank-bottom-yellow.png")!;
 
-        this.superFires[0][0] = pack5.getSprite("super-fire-0.png");
-        this.superFires[0][1] = pack5.getSprite("super-fire-1.png");
+        this.superFires[0][0] = pack5.getSprite("super-fire-0.png")!;
+        this.superFires[0][1] = pack5.getSprite("super-fire-1.png")!;
         this.superFires[0][2] = this.superFires[0][0].getFlippedCopy(false, true);
-        this.superFires[1][0] = pack5.getSprite("super-fire-2.png");
-        this.superFires[1][1] = pack5.getSprite("super-fire-3.png");
+        this.superFires[1][0] = pack5.getSprite("super-fire-2.png")!;
+        this.superFires[1][1] = pack5.getSprite("super-fire-3.png")!;
         this.superFires[1][2] = this.superFires[0][0].getFlippedCopy(false, true);
 
-        this.superGuns[0] = pack5.getSprite("super-tank-gun-green-0.png");
-        this.superGuns[1] = pack5.getSprite("super-tank-gun-brown-0.png");
+        this.superGuns[0] = pack5.getSprite("super-tank-gun-green-0.png")!;
+        this.superGuns[1] = pack5.getSprite("super-tank-gun-brown-0.png")!;
 
         let pack6 = new XMLPackedSheet("images/sprites-6.png", "images/sprites-6.xml");
 
-        this.superTanks[1][0] = pack6.getSprite("super-tank-tread-orange.png");
-        this.superTanks[1][1] = pack6.getSprite("super-tank-wheel-orange.png");
-        this.superTanks[1][2] = pack6.getSprite("super-tank-top-orange.png");
-        this.superTanks[1][3] = pack6.getSprite("super-tank-middle-orange.png");
-        this.superTanks[1][4] = pack6.getSprite("super-tank-bottom-orange.png");
+        this.superTanks[1][0] = pack6.getSprite("super-tank-tread-orange.png")!;
+        this.superTanks[1][1] = pack6.getSprite("super-tank-wheel-orange.png")!;
+        this.superTanks[1][2] = pack6.getSprite("super-tank-top-orange.png")!;
+        this.superTanks[1][3] = pack6.getSprite("super-tank-middle-orange.png")!;
+        this.superTanks[1][4] = pack6.getSprite("super-tank-bottom-orange.png")!;
 
-        this.superTanks[2][0] = pack6.getSprite("super-tank-tread-red.png");
-        this.superTanks[2][1] = pack6.getSprite("super-tank-wheel-red.png");
-        this.superTanks[2][2] = pack6.getSprite("super-tank-top-red.png");
-        this.superTanks[2][3] = pack6.getSprite("super-tank-middle-red.png");
-        this.superTanks[2][4] = pack6.getSprite("super-tank-bottom-red.png");
+        this.superTanks[2][0] = pack6.getSprite("super-tank-tread-red.png")!;
+        this.superTanks[2][1] = pack6.getSprite("super-tank-wheel-red.png")!;
+        this.superTanks[2][2] = pack6.getSprite("super-tank-top-red.png")!;
+        this.superTanks[2][3] = pack6.getSprite("super-tank-middle-red.png")!;
+        this.superTanks[2][4] = pack6.getSprite("super-tank-bottom-red.png")!;
 
         let pack7 = new XMLPackedSheet("images/sprites-7.png", "images/sprites-7.xml");
 
         this.superTanks[3][0] = this.superTanks[2][0];
         this.superTanks[3][1] = this.superTanks[2][1];
-        this.superTanks[3][2] = pack7.getSprite("super-tank-top-smashed.png");
-        this.superTanks[3][3] = pack7.getSprite("super-tank-middle-smashed.png");
-        this.superTanks[3][4] = pack7.getSprite("super-tank-bottom-smashed.png");
+        this.superTanks[3][2] = pack7.getSprite("super-tank-top-smashed.png")!;
+        this.superTanks[3][3] = pack7.getSprite("super-tank-middle-smashed.png")!;
+        this.superTanks[3][4] = pack7.getSprite("super-tank-bottom-smashed.png")!;
 
-        this.chinooks[0] = pack7.getSprite("chinook-body.png");
+        this.chinooks[0] = pack7.getSprite("chinook-body.png")!;
         this.chinooks[1] = this.chinooks[0].getFlippedCopy(false, true);
-        this.chinooks[2] = pack7.getSprite("chinook-blade.png");
-        this.chinooks[3] = pack7.getSprite("chinook-shadow.png");
+        this.chinooks[2] = pack7.getSprite("chinook-blade.png")!;
+        this.chinooks[3] = pack7.getSprite("chinook-shadow.png")!;
 
-        this.heres[0] = pack7.getSprite("here-0.png");
-        this.heres[1] = pack7.getSprite("here-1.png");
-        this.smoke = pack7.getSprite("smoke.png");
-        this.blackPlane = pack7.getSprite("jeep-yeah-plane.png");
-        this.gunFires[0] = pack7.getSprite("jeep-yeah-fire-0.png");
-        this.gunFires[1] = pack7.getSprite("jeep-yeah-fire-1.png");
-        this.jeepYeahBullet = pack7.getSprite("jeep-yeah-bullet.png");
-        this.yeahs[0] = pack7.getSprite("yeah-0.png");
-        this.yeahs[1] = pack7.getSprite("yeah-1.png");
-        this.yeahs[2] = pack7.getSprite("yeah-2.png");
-        this.yeahs[3] = pack7.getSprite("yeah-3.png");
+        this.heres[0] = pack7.getSprite("here-0.png")!;
+        this.heres[1] = pack7.getSprite("here-1.png")!;
+        this.smoke = pack7.getSprite("smoke.png")!;
+        this.blackPlane = pack7.getSprite("jeep-yeah-plane.png")!;
+        this.gunFires[0] = pack7.getSprite("jeep-yeah-fire-0.png")!;
+        this.gunFires[1] = pack7.getSprite("jeep-yeah-fire-1.png")!;
+        this.jeepYeahBullet = pack7.getSprite("jeep-yeah-bullet.png")!;
+        this.yeahs[0] = pack7.getSprite("yeah-0.png")!;
+        this.yeahs[1] = pack7.getSprite("yeah-1.png")!;
+        this.yeahs[2] = pack7.getSprite("yeah-2.png")!;
+        this.yeahs[3] = pack7.getSprite("yeah-3.png")!;
 
         let pack8 = new XMLPackedSheet("images/sprites-8.png", "images/sprites-8.xml");
 
-        let sun = pack8.getSprite("sun.png");
-        this.suns = javaArray(sun.getHeight(), null);
+        let sun = pack8.getSprite("sun.png")!;
+        this.suns = javaArray<Image>(sun.getHeight(), null!);
         for (let i = this.suns.length - 1; i >= 0; i--) {
             this.suns[i] = sun.getSubImage(0, i, sun.getWidth(), 1);
         }
 
-        let wave = pack8.getSprite("waves-0.png");
-        this.waves = javaArray(wave.getHeight(), null);
+        let wave = pack8.getSprite("waves-0.png")!;
+        this.waves = javaArray<Image>(wave.getHeight(), null!);
         for (let i = this.waves.length - 1; i >= 0; i--) {
             this.waves[i] = wave.getSubImage(0, i, wave.getWidth(), 1);
         }
 
-        this.rescueHelicopters[0] = pack8.getSprite("rescue-helicopter-body-0.png");
-        this.rescueHelicopters[1] = pack8.getSprite("rescue-helicopter-body-1.png");
-        this.rescueHelicopters[2] = pack8.getSprite("rescue-helicopter-blade.png");
+        this.rescueHelicopters[0] = pack8.getSprite("rescue-helicopter-body-0.png")!;
+        this.rescueHelicopters[1] = pack8.getSprite("rescue-helicopter-body-1.png")!;
+        this.rescueHelicopters[2] = pack8.getSprite("rescue-helicopter-blade.png")!;
     }
 
     private loadExtraLargeImage(name: string, ...packNames: string[]): ExtraLargeImage {
-        let packs = javaArray(packNames.length, null);
+        let packs = javaArray<XMLPackedSheet>(packNames.length, null!);
         for (let i = 0; i < packNames.length; i++) {
             packs[i] = new XMLPackedSheet("images/" + packNames[i] + ".png", "images/" + packNames[i] + ".xml");
         }
@@ -1923,7 +1923,7 @@ export class Main extends BasicGame {
         }
         Arrays.sort(mapLocal, (cell1: number[], cell2: number[]) => cell1[0] - cell2[0]);
 
-        let tiles = javaArray(tileCount, null);
+        let tiles = javaArray<Image | null>(tileCount, null);
         for (let i = 0, j = 0; i < tileCount; i++) {
             while (true) {
                 tiles[i] = packs[j].getSprite(JavaString.format("%s-%03d.png", name, i));
@@ -1935,7 +1935,7 @@ export class Main extends BasicGame {
             }
         }
 
-        return new ExtraLargeImage(this, tiles, mapLocal);
+        return new ExtraLargeImage(this, tiles as Image[], mapLocal);
     }
 
     private loadLargeImage(name: string, packName: string): LargeImage {
@@ -1955,9 +1955,9 @@ export class Main extends BasicGame {
 
         let pack = new XMLPackedSheet("images/" + packName + ".png", "images/" + packName + ".xml");
 
-        let tiles = javaArray(tileCount, null);
+        let tiles = javaArray<Image>(tileCount, null!);
         for (let i = 0; i < tileCount; i++) {
-            tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i));
+            tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i))!;
         }
 
         return new LargeImage(this, tiles, mapLocal, width, height);
@@ -1987,7 +1987,7 @@ export class Main extends BasicGame {
     }
 
     private loadTriggerMap__overload1(height: number, enemySizes: number[][], stageIndex: number, stage: Stage, hard: boolean): void {
-        let lists: ArrayList<number[]>[] = javaArray(height, null);
+        let lists: ArrayList<number[]>[] = javaArray<ArrayList<number[]>>(height, null!);
         for (let i = 0; i < height; i++) {
             lists[i] = new ArrayList<number[]>();
         }
@@ -2006,7 +2006,7 @@ export class Main extends BasicGame {
         }
         dis.close();
 
-        let triggerMap = javaArray(height, null);
+        let triggerMap = javaArray<number[][]>(height, null!);
         stage.triggerMap[hard ? 1 : 0] = triggerMap;
         for (let i = 0; i < height; i++) {
             let list = lists[i];
@@ -2059,7 +2059,7 @@ export class Main extends BasicGame {
             }
         }
         let groupCount = dis.readShort();
-        stage.groups = javaArray(groupCount, null);
+        stage.groups = javaArray<number[][]>(groupCount, null!);
         for (let i = 0; i < groupCount; i++) {
             let groupSize = dis.readShort();
             stage.groups[i] = java2DArray(groupSize, 4, 0);
@@ -2170,17 +2170,17 @@ export class Main extends BasicGame {
                 this.stageSong1 = new Song("music/stage1_intro.ogg", "music/stage1_repeat.ogg");
                 break;
             case 10:
-                this.stageSong2 = new Song(null, "music/stage2_repeat.ogg");
+                this.stageSong2 = new Song(null!, "music/stage2_repeat.ogg");
                 break;
             case 11:
                 this.superTankSong = new Song(this.superTankIntro, this.bossRepeat);
                 this.titleSong = new Song("music/title.ogg");
-                this.bossIntro = null;
-                this.bossRepeat = null;
-                this.superTankIntro = null;
-                this.stage0Intro = null;
-                this.stage0Repeat = null;
-                this.start = null;
+                this.bossIntro = null!;
+                this.bossRepeat = null!;
+                this.superTankIntro = null!;
+                this.stage0Intro = null!;
+                this.stage0Repeat = null!;
+                this.start = null!;
                 break;
             case 12:
                 this.bulletHitSound = new Sound("soundeffects/bullet_hit.ogg");
@@ -2296,7 +2296,7 @@ export class Main extends BasicGame {
     }
 
     public isStateSaveReady(): boolean {
-        return this.loadIndex >= 42 && this.mode != null && this.gc != null;
+        return this.loadIndex >= 42 && this.mode != null && this.gc != null!;
     }
 
     public isStateSaveInvalidatingMenuActive(): boolean {

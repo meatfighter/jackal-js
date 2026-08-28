@@ -78,8 +78,8 @@ export class PlayerMissile extends GameElement {
         let hit = false;
 
         if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
-            for (let i = this.enemies.size() - 1; i >= 0; i--) {
-                let enemyLocal = this.enemies.get(i);
+            for (let i = this.enemies!.size() - 1; i >= 0; i--) {
+                let enemyLocal = this.enemies!.get(i);
                 if (!enemyLocal.removeFlag && enemyLocal.attack(x1, y1, x2, y2, AttackSource.PLAYER_WEAPON)) {
                     hit = true;
                     break;

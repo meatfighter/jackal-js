@@ -35,7 +35,7 @@ export class SuperFire extends GameElement {
             let bossSuperTankLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
-            this.bossSuperTank = bossSuperTankLocal;
+            this.bossSuperTank = bossSuperTankLocal!;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -107,9 +107,9 @@ export class SuperFire extends GameElement {
                 break;
         }
         if (this.state != SuperFire.STATE_ASTER) {
-            this.player.attack(this.x - 40, this.y + 32, this.x + 40, this.y + this.length - 32);
+            this.player!.attack(this.x - 40, this.y + 32, this.x + 40, this.y + this.length - 32);
         }
-        if (this.bossSuperTank.removeFlag) {
+        if (this.bossSuperTank!.removeFlag) {
             this.remove();
         }
     }

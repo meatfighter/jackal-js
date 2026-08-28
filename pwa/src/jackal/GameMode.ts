@@ -108,33 +108,33 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    public main: Main = null;
-    public gc: GameContainer = null;
-    public input: IInput = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
+    public input: IInput = null!;
 
-    public stage: Stage = null;
+    public stage: Stage = null!;
 
-    public tileMap: number[][] = null; // mutable during gameplay
-    public typesMap: number[][] = null; // mutable during gameplay
-    public triggedGroups: boolean[] = null; // mutable during gameplay
+    public tileMap: number[][] = null!; // mutable during gameplay
+    public typesMap: number[][] = null!; // mutable during gameplay
+    public triggedGroups: boolean[] = null!; // mutable during gameplay
 
-    public tiles: Image[] = null;
-    public groups: number[][][] = null;
-    public triggerMap: number[][][] = null;
-    public groupsMap: number[][] = null;
+    public tiles: Image[] = null!;
+    public groups: number[][][] = null!;
+    public triggerMap: number[][][] = null!;
+    public groupsMap: number[][] = null!;
     public mapWidth: number = 0;
     public mapHeight: number = 0;
-    public directions: bigint[] = null;
-    public directionsDecoded: Uint8Array = null;
+    public directions: bigint[] = null!;
+    public directionsDecoded: Uint8Array = null!;
     public directionsWidth: number = 0;
     public directionsHeight: number = 0;
-    public g: Graphics = null;
+    public g: Graphics = null!;
     public waterAlphaIndex: number = 0;
     public conveyorOffset: number = 0;
     public conveyorLastIndex: number = 0;
     public conveyorDelta: number = 0;
 
-    public player: Player = null;
+    public player: Player = null!;
     public cameraX: number = 0;
     public cameraY: number = 0;
     public maxCameraX: number = 0;
@@ -144,14 +144,14 @@ export class GameMode implements IMode, IFadeListener {
     public bossCameraPan: boolean = false;
     public endingCameraPan: boolean = false;
     public playing: boolean = true;
-    public cameraPanListener: ICameraPanListener = null;
+    public cameraPanListener: ICameraPanListener = null!;
 
     public stageIndex: number = 0;
 
     public stageCompletedFlag: boolean = false;
     public stageCompletedDelay: number = GameMode.STAGE_COMPLETED_DELAY;
 
-    public elements: ArrayList<GameElement>[] = javaArray(8, null);
+    public elements: ArrayList<GameElement>[] = javaArray(8, null!);
 
     public enemies: ArrayList<Enemy> = new ArrayList<Enemy>(256);
     public solids: ArrayList<Enemy> = new ArrayList<Enemy>(256);
@@ -327,7 +327,7 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     public suggestDirection__overload1(x1: number, y1: number, x2: number, y2: number, currentAngle: number, addRandomness: boolean): number[] {
-        let v: number[] = null;
+        let v: number[] = null!;
 
         let X1 = javaInt(x1) >> 7;
         let Y1 = javaInt(y1) >> 7;
@@ -390,7 +390,7 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     public suggestDirection__overload2(x1: number, y1: number, x2: number, y2: number, addRandomness: boolean): number[] {
-        let v: number[] = null;
+        let v: number[] = null!;
 
         let X1 = javaInt(x1) >> 7;
         let Y1 = javaInt(y1) >> 7;
@@ -589,7 +589,7 @@ export class GameMode implements IMode, IFadeListener {
                 break;
             case Triggers.PLAYER:
                 this.createPlayer(x + 48, y + 48);
-                this.main.startFade(false, null);
+                this.main.startFade(false, null!);
                 switch (this.main.stageIndex) {
                     case 3:
                         this.main.requestSong(this.main.stageSong0);
@@ -684,7 +684,7 @@ export class GameMode implements IMode, IFadeListener {
                 if (this.main.continued) {
                     this.main.requestSong(this.main.stageSong0);
                 }
-                this.main.startFade(false, null);
+                this.main.startFade(false, null!);
                 break;
         }
     }

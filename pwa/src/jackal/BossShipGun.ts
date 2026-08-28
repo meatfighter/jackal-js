@@ -43,7 +43,7 @@ export class BossShipGun extends Enemy {
             let bossShipManagerLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
-            this.bossShipManager = bossShipManagerLocal;
+            this.bossShipManager = bossShipManagerLocal!;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -126,7 +126,7 @@ export class BossShipGun extends Enemy {
                     this.angle = 90;
                     this.delay = BossShipGun.AIMING_DELAY;
 
-                    let targetAngle = javaFloat((Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180) / Math.PI);
+                    let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
                     let deltaAngle = (targetAngle + 90) % 360;
                     if (deltaAngle < 0) {
                         deltaAngle += 180;
@@ -150,7 +150,7 @@ export class BossShipGun extends Enemy {
                     this.delay = BossShipGun.OPEN_DELAY;
                     this.openY = 32;
 
-                    let shootAngle = javaFloat(Math.atan2(this.player.y - (this.y + 32), this.player.x - (this.x + 32)));
+                    let shootAngle = javaFloat(Math.atan2(this.player!.y - (this.y + 32), this.player!.x - (this.x + 32)));
                     shootAngle -= 2 * BossShipGun.SHOOT_SPREAD_ANGLE;
 
                     for (let i = 0; i < 5; i++, shootAngle += BossShipGun.SHOOT_SPREAD_ANGLE) {
@@ -214,7 +214,7 @@ export class BossShipGun extends Enemy {
         this.removeFlag = true;
         this.main.addPoints(this.points);
         this.main.playHitExplodeSound();
-        this.bossShipManager.gunDestroyed(this);
+        this.bossShipManager!.gunDestroyed(this);
     }
 
     // returns true if attack successful

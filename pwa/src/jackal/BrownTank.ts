@@ -90,7 +90,7 @@ export class BrownTank extends Enemy {
             let firstMoveLocal = arg2;
             let tankTrackerLocal = arg3;
             this.__construct_BrownTank(3, xLocal, yLocal, firstMoveLocal);
-            this.tankTracker = tankTrackerLocal;
+            this.tankTracker = tankTrackerLocal!;
             if (tankTrackerLocal != null) {
                 tankTrackerLocal.tankCreated();
                 this.points = 0;
@@ -299,7 +299,7 @@ export class BrownTank extends Enemy {
         if (this.handlingLoop == 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
             this.loopTargetX = this.main.random.nextFloat() * 2048;
-            this.loopTargetY = this.main.random.nextFloat() * this.player.y;
+            this.loopTargetY = this.main.random.nextFloat() * this.player!.y;
         }
     }
 
@@ -347,7 +347,7 @@ export class BrownTank extends Enemy {
                     v =
                         this.handlingLoop > 0
                             ? this.gameMode.suggestDirection(this.x, this.y, this.loopTargetX + dx, this.loopTargetY + dy, false)
-                            : this.gameMode.suggestDirection(this.x, this.y, this.player.x + dx, this.player.y + dy, false);
+                            : this.gameMode.suggestDirection(this.x, this.y, this.player!.x + dx, this.player!.y + dy, false);
                 }
                 this.vx = v[0] * BrownTank.SPEED;
                 this.vy = v[1] * BrownTank.SPEED;
@@ -374,8 +374,8 @@ export class BrownTank extends Enemy {
 
             if (this.gameMode.isDriveableLand(nextX + this.sensorX, nextY + this.sensorY) || this.garage) {
                 // avoid bumping into other enemies
-                for (let i = this.solids.size() - 1; i >= 0; i--) {
-                    let solidLocal = this.solids.get(i);
+                for (let i = this.solids!.size() - 1; i >= 0; i--) {
+                    let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
                         solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
@@ -402,12 +402,13 @@ export class BrownTank extends Enemy {
                 this.driveAtRightAngleToBarrier();
             }
 
-            let dx = this.player.x - this.x;
-            let dy = this.player.y - this.y;
+            let dx = this.player!.x - this.x;
+            let dy = this.player!.y - this.y;
 
             if (
                 this.moveSteps == 1 &&
-                ((this.vy != 0 && javaInt(this.player.x) >> 7 == javaInt(this.x) >> 7) || (this.vx != 0 && javaInt(this.player.y) >> 7 == javaInt(this.y) >> 7))
+                ((this.vy != 0 && javaInt(this.player!.x) >> 7 == javaInt(this.x) >> 7) ||
+                    (this.vx != 0 && javaInt(this.player!.y) >> 7 == javaInt(this.y) >> 7))
             ) {
                 this.moveSteps = 2;
             }

@@ -79,7 +79,7 @@ export class EnemySoldier extends Enemy {
             let typeLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
-            this.type = typeLocal;
+            this.type = typeLocal!;
 
             switch (typeLocal) {
                 case EnemySoldierType.APPEARING:
@@ -212,7 +212,7 @@ export class EnemySoldier extends Enemy {
     }
 
     private targetPlayer(): void {
-        let direction = this.gameMode.suggestDirection(this.x, this.y, this.player.x, this.player.y, true);
+        let direction = this.gameMode.suggestDirection(this.x, this.y, this.player!.x, this.player!.y, true);
 
         this.directionX = direction[0];
         this.directionY = direction[1];
@@ -225,8 +225,8 @@ export class EnemySoldier extends Enemy {
     }
 
     private avoidGettingToCloseToPlayer(): void {
-        let dx = this.player.x - this.x;
-        let dy = this.player.y - this.y;
+        let dx = this.player!.x - this.x;
+        let dy = this.player!.y - this.y;
         let r2 = dx * dx + dy * dy;
         if (r2 < 16384 && dx * this.directionX + dy * this.directionY > 0) {
             let v = this.main.unitVector;
@@ -253,8 +253,8 @@ export class EnemySoldier extends Enemy {
     }
 
     private aim(): void {
-        this.directionX = this.player.x - this.x;
-        this.directionY = this.player.y - (this.y - 30);
+        this.directionX = this.player!.x - this.x;
+        this.directionY = this.player!.y - (this.y - 30);
         this.computeOrientation();
 
         if (this.aiming > EnemySoldier.AIM_BLINKING) {
@@ -347,8 +347,8 @@ export class EnemySoldier extends Enemy {
     private seek(): void {
         if (--this.walking <= 0) {
             if (--this.walkSteps <= 0) {
-                let dx = this.player.x - this.x;
-                let dy = this.player.y - this.y;
+                let dx = this.player!.x - this.x;
+                let dy = this.player!.y - this.y;
                 let r2 = dx * dx + dy * dy;
                 if (r2 > 9216) {
                     this.startAiming();
@@ -368,8 +368,8 @@ export class EnemySoldier extends Enemy {
         let walkable = true;
         if (this.gameMode.isDriveable(nextX - 16, nextY - 6, nextX + 16, nextY + 6)) {
             // avoid bumping into other enemies
-            for (let i = this.solids.size() - 1; i >= 0; i--) {
-                let solidLocal = this.solids.get(i);
+            for (let i = this.solids!.size() - 1; i >= 0; i--) {
+                let solidLocal = this.solids!.get(i);
                 if (
                     solidLocal != this &&
                     solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
@@ -407,8 +407,8 @@ export class EnemySoldier extends Enemy {
             let walkable = true;
             if (this.gameMode.isDriveable(this.x - 16, nextY - 6, this.x + 16, nextY + 6)) {
                 // avoid bumping into other enemies
-                for (let i = this.solids.size() - 1; i >= 0; i--) {
-                    let solidLocal = this.solids.get(i);
+                for (let i = this.solids!.size() - 1; i >= 0; i--) {
+                    let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
                         solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, this.x + this.solidX2, nextY + this.solidY2) &&

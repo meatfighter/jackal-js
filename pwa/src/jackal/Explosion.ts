@@ -59,9 +59,9 @@ export class Explosion extends GameElement {
             let alphaLocal2 = arg4;
             let enemyLocal = arg5;
             this.__construct_Explosion(5, xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
-            this.sourceEnemy = enemyLocal;
-            this.enemyX = enemyLocal.x;
-            this.enemyY = enemyLocal.y;
+            this.sourceEnemy = enemyLocal!;
+            this.enemyX = enemyLocal!.x;
+            this.enemyY = enemyLocal!.y;
             return;
         } else if (
             argCount === 5 &&
@@ -166,8 +166,8 @@ export class Explosion extends GameElement {
         let x2 = this.x + margin;
         let y2 = this.y + margin;
         if (this.damagesEnemies && !this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
-            for (let i = this.enemies.size() - 1; i >= 0; i--) {
-                let enemyLocal = this.enemies.get(i);
+            for (let i = this.enemies!.size() - 1; i >= 0; i--) {
+                let enemyLocal = this.enemies!.get(i);
                 if (!enemyLocal.removeFlag) {
                     enemyLocal.attack(x1, y1, x2, y2, this.type);
                 }

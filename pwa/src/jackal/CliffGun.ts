@@ -112,7 +112,7 @@ export class CliffGun extends Enemy {
                 break;
             case CliffGun.STATE_VISIBLE_1:
                 if (--this.delay == 0) {
-                    if (this.player.y - this.y < CliffGun.DEACTIVATE_DISTANCE) {
+                    if (this.player!.y - this.y < CliffGun.DEACTIVATE_DISTANCE) {
                         this.state = CliffGun.STATE_VISIBLE_2;
                         this.delay = CliffGun.DEACTIVE_TIME;
                     } else {
@@ -159,8 +159,8 @@ export class CliffGun extends Enemy {
         this.shots--;
         let X = this.x + 48;
         let Y = this.y + 36;
-        let dx = this.player.x - X;
-        let dy = this.player.y - Y;
+        let dx = this.player!.x - X;
+        let dy = this.player!.y - Y;
         let iMag = CliffGun.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
         dx *= iMag;
         dy *= iMag;

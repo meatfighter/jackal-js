@@ -27,7 +27,7 @@ export class Gate extends Enemy {
             let yLocal2 = arg1;
             let bossGarageManagerLocal = arg2;
             this.__construct_Gate(2, xLocal2, yLocal2);
-            this.bossGarageManager = bossGarageManagerLocal;
+            this.bossGarageManager = bossGarageManagerLocal!;
             return;
         } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
             let xLocal = arg0;

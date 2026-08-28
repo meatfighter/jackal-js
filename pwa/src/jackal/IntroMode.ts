@@ -77,9 +77,9 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public static readonly I_SCROLL_DELAY: number = 1 / IntroMode.SCROLL_DELAY;
     public static readonly I_ENTER_DELAY: number = 1 / IntroMode.ENTER_DELAY;
 
-    public main: Main = null;
-    public gc: GameContainer = null;
-    public input: IInput = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
+    public input: IInput = null!;
     public state: number = IntroMode.STATE_FADE_IN;
     public delay: number = IntroMode.TITLE_DELAY;
     public scrollOffsetX: number = 0;
@@ -88,7 +88,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public namesIndex: number = 0;
     public nameLength: number = 0;
     public soldierSet: number = 0;
-    public menu: Menu = null;
+    public menu: Menu = null!;
     public selectionMade: boolean = false;
     public selectedIndex: number = 0;
 

@@ -36,7 +36,7 @@ export class BossHeadquarters extends Enemy {
             let bossHeadquartersManagerLocal = arg0;
             this.x = 896;
             this.y = 96;
-            this.bossHeadquartersManager = bossHeadquartersManagerLocal;
+            this.bossHeadquartersManager = bossHeadquartersManagerLocal!;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -79,7 +79,7 @@ export class BossHeadquarters extends Enemy {
         this.state = BossHeadquarters.STATE_EXPLOSIONS;
         this.main.stopSong();
         this.explodeDelay = 1;
-        this.bossHeadquartersManager.remove();
+        this.bossHeadquartersManager!.remove();
         this.gameMode.destroyAll(this);
         this.main.playSoundAlways(this.main.headquartersExplodesSound);
     }

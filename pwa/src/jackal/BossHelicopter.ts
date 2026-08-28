@@ -158,7 +158,7 @@ export class BossHelicopter extends Enemy {
 
     private randomizeLocation(): void {
         this.y = BossHelicopter.MIN_Y;
-        this.x = this.player.x + this.main.random.nextInt(2 * BossHelicopter.MAX_APPEAR_DISTANCE) - BossHelicopter.MAX_APPEAR_DISTANCE;
+        this.x = this.player!.x + this.main.random.nextInt(2 * BossHelicopter.MAX_APPEAR_DISTANCE) - BossHelicopter.MAX_APPEAR_DISTANCE;
         if (this.x < 672) {
             this.x = 672;
         } else if (this.x > 1376) {
@@ -177,8 +177,8 @@ export class BossHelicopter extends Enemy {
 
         if (--this.bulletDelay < 0) {
             this.bulletDelay = BossHelicopter.BULLET_DELAY;
-            let dx = this.player.x - this.x;
-            let dy = this.player.y - this.y;
+            let dx = this.player!.x - this.x;
+            let dy = this.player!.y - this.y;
             let imag = BossHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
             dx *= imag;
             dy *= imag;

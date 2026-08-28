@@ -14,7 +14,7 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
         super.__initializeJavaSubclassDefaults();
         this.ready = false;
         this.brownTankDelay = 0;
-        this.shipGuns = null;
+        this.shipGuns = null!;
         this.gunIndex = 0;
         this.triggerDelay = 0;
         this.tanks = 0;

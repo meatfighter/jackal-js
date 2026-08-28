@@ -143,18 +143,18 @@ export class HardEndingMode implements IMode, IFadeListener {
 
     public static readonly CREDITS_SPEED: number = (MainConstants.DISPLAY_HEIGHT + HardEndingMode.CREDITS_HEIGHT) / javaFloat(HardEndingMode.CREDITS_TIME);
 
-    public finalScore: string = null;
+    public finalScore: string = null!;
     public finalScoreX: number = 0;
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public state: number = HardEndingMode.STATE_TYPING;
     public lineIndex: number = 0;
     public lineLength: number = 0;
     public cardIndex: number = 0;
     public delay: number = HardEndingMode.TYPE_DELAY;
     public creditsY: number = MainConstants.DISPLAY_HEIGHT;
-    public input: IInput = null;
+    public input: IInput = null!;
     public jeepX: number = -50;
     public rumble: number = 0;
 

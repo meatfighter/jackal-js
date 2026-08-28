@@ -36,7 +36,7 @@ export class BossStatue extends Enemy {
             let bossStatuesManagerLocal = arg3;
             this.x = xLocal;
             this.y = yLocal;
-            this.bossStatuesManager = bossStatuesManagerLocal;
+            this.bossStatuesManager = bossStatuesManagerLocal!;
 
             let X = javaInt(xLocal) >> 5;
             let Y = javaInt(yLocal) >> 5;
@@ -79,7 +79,7 @@ export class BossStatue extends Enemy {
         if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
             if (++this.hits == BossStatue.HITS) {
                 this.remove();
-                this.bossStatuesManager.statueDestroyed();
+                this.bossStatuesManager!.statueDestroyed();
                 new Explosion(this.x + 48, this.y + 64);
                 this.gameMode.triggerGroup(this.groupIndex);
                 this.main.addPoints(800);

@@ -96,7 +96,7 @@ export class ElephantMissile extends GameElement {
             let groupIndex = this.gameMode.groupsMap[Y][X];
             this.gameMode.triggerGroup(groupIndex);
             new Explosion((X << 5) + this.explosionOffset, (Y << 5) + 32).setDamagesEnemies(false);
-        } else if (this.player.attack(this.x + this.tipX, this.y + this.tipY)) {
+        } else if (this.player!.attack(this.x + this.tipX, this.y + this.tipY)) {
             this.remove();
             new Explosion(this.x + this.tipX, this.y + this.tipY);
         }

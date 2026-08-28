@@ -115,7 +115,8 @@ test("TypeScript policy strengthens checking without changing Java field semanti
     const options = tsconfig.compilerOptions;
 
     assert.equal(options.useDefineForClassFields, false);
-    assert.equal(options.strict, false);
+    assert.equal(options.strict, true);
+    assert.equal(options.strictPropertyInitialization, false);
     assert.equal(options.noImplicitAny, true);
     assert.equal(options.noImplicitOverride, true);
     assert.equal(options.verbatimModuleSyntax, true);

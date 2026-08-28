@@ -14,9 +14,9 @@ export class LargeImage {
             let mapLocal = arg2;
             let widthLocal = arg3;
             let heightLocal = arg4;
-            this.main = mainLocal;
-            this.tiles = tilesLocal;
-            this.map = mapLocal;
+            this.main = mainLocal!;
+            this.tiles = tilesLocal!;
+            this.map = mapLocal!;
             this.width = widthLocal;
             this.height = heightLocal;
             return;
@@ -24,9 +24,9 @@ export class LargeImage {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    private main: Main = null;
-    private tiles: Image[] = null;
-    private map: number[][] = null;
+    private main: Main = null!;
+    private tiles: Image[] = null!;
+    private map: number[][] = null!;
     private width: number = 0;
     private height: number = 0;
 

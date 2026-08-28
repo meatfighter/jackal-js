@@ -62,16 +62,16 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
-    public main: Main = null;
-    public gc: GameContainer = null;
-    public buttonMapping: ButtonMapping = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
+    public buttonMapping: ButtonMapping = null!;
     public state: number = InputMode.STATE_FADE_IN;
     public nameIndex: number = 0;
     public delay: number = 0;
-    public menu: Menu = null;
+    public menu: Menu = null!;
     public selectedIndex: number = 0;
     public listeningForInput: boolean = false;
-    public draftButtonMapping: ButtonMapping = null;
+    public draftButtonMapping: ButtonMapping = null!;
     public assignedKeys: Set<number> = new Set();
     public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
@@ -140,7 +140,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.state = InputMode.STATE_READING;
         this.nameIndex = 0;
         this.delay = 0;
-        this.menu = null;
+        this.menu = null!;
         this.draftButtonMapping = this.copyButtonMapping(this.buttonMapping);
         this.assignedKeys.clear();
         this.assignedControllerButtons.clear();
@@ -412,7 +412,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.buttonMapping.controllerGun = this.draftButtonMapping.controllerGun;
         this.buttonMapping.controllerStart = this.draftButtonMapping.controllerStart;
         this.buttonMapping.gunKeyMapped = this.draftButtonMapping.gunKeyMapped;
-        this.draftButtonMapping = null;
+        this.draftButtonMapping = null!;
         this.refreshInputMappingLines();
     }
 

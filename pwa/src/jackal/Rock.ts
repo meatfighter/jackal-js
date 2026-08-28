@@ -99,8 +99,8 @@ export class Rock extends Enemy {
     }
 
     private rollOverEnemies(): void {
-        for (let i = this.mines.size() - 1; i >= 0; i--) {
-            let mineLocal = this.mines.get(i);
+        for (let i = this.mines!.size() - 1; i >= 0; i--) {
+            let mineLocal = this.mines!.get(i);
             if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
                 mineLocal.flatten();
             }
@@ -117,8 +117,8 @@ export class Rock extends Enemy {
         switch (this.state) {
             case Rock.STATE_RESTING_HIGH:
                 if (
-                    this.player.y - this.y <= Rock.TRIGGER_DISTANCE &&
-                    ((this.rollsRight && this.player.x > 1024) || (!this.rollsRight && this.player.x < 1024))
+                    this.player!.y - this.y <= Rock.TRIGGER_DISTANCE &&
+                    ((this.rollsRight && this.player!.x > 1024) || (!this.rollsRight && this.player!.x < 1024))
                 ) {
                     this.state = Rock.STATE_ROLLING_FOWARD_HIGH;
                     this.delay = Rock.HIGH_TIME;

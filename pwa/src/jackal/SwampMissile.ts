@@ -85,7 +85,7 @@ export class SwampMissile extends Enemy {
             this.entryDelay--;
             this.y -= SwampMissile.SPEED;
         } else {
-            let targetAngle = javaFloat((Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180) / Math.PI);
+            let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
             let deltaAngle = (targetAngle - this.angle + 180) % 360;
             if (deltaAngle < 0) {
                 deltaAngle += 180;

@@ -12,17 +12,17 @@ export class ExtraLargeImage {
             let mainLocal = arg0;
             let tilesLocal = arg1;
             let mapLocal = arg2;
-            this.main = mainLocal;
-            this.tiles = tilesLocal;
-            this.map = mapLocal;
+            this.main = mainLocal!;
+            this.tiles = tilesLocal!;
+            this.map = mapLocal!;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    private main: Main = null;
-    private tiles: Image[] = null;
-    private map: number[][] = null;
+    private main: Main = null!;
+    private tiles: Image[] = null!;
+    private map: number[][] = null!;
 
     public draw(x: number, y: number): void {
         let main = this.main;

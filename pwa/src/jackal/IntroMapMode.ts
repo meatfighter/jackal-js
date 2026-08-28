@@ -13,8 +13,8 @@ export class IntroMapMode implements IMode, IFadeListener {
 
     public static readonly PAUSE_DELAY: number = 250;
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public delay: number = IntroMapMode.PAUSE_DELAY;
     public state: number = IntroMapMode.STATE_FADE_IN;
 

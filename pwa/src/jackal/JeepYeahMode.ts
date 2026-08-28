@@ -36,15 +36,15 @@ export class JeepYeahMode implements IMode, IFadeListener {
     public static readonly SMOKE_VX: number = 0.25;
     public static readonly SMOKE_VY: number = 0.5;
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public smokeX: number = 0;
     public smokeY: number = 0;
-    public explosion: JeepYeahExplosion = null;
-    public leftPlane: JeepYeahPlane = null;
-    public rightPlane: JeepYeahPlane = null;
-    public fireRight: JeepYeahFireRight = null;
-    public fireLeft: JeepYeahFireLeft = null;
+    public explosion: JeepYeahExplosion = null!;
+    public leftPlane: JeepYeahPlane = null!;
+    public rightPlane: JeepYeahPlane = null!;
+    public fireRight: JeepYeahFireRight = null!;
+    public fireLeft: JeepYeahFireLeft = null!;
     public bullets: ArrayList<JeepYeahBullet> = new ArrayList<JeepYeahBullet>();
     public bulletDelay: number = JeepYeahMode.BULLET_DELAY;
     public yeahVisible: number = JeepYeahMode.YEAH_DELAY;

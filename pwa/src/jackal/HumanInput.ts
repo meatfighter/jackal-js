@@ -12,8 +12,8 @@ export class HumanInput implements IInput {
         if (argCount === 2) {
             let buttonMappingLocal = arg0;
             let gc = arg1;
-            this.buttonMapping = buttonMappingLocal;
-            this.input = gc.getInput();
+            this.buttonMapping = buttonMappingLocal!;
+            this.input = gc!.getInput();
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -28,8 +28,8 @@ export class HumanInput implements IInput {
     private static readonly EXTRA_HORIZONTAL_AXES: number[] = [2, 6];
     private static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
 
-    private buttonMapping: ButtonMapping = null;
-    private input: Input = null;
+    private buttonMapping: ButtonMapping = null!;
+    private input: Input = null!;
     private extraAxisBaselines: number[] = javaArray(HumanInput.CONTROLLER_INDEX_LIMIT * HumanInput.GAMEPAD_AXIS_LIMIT, Number.NaN);
     private up: boolean = false;
     private down: boolean = false;

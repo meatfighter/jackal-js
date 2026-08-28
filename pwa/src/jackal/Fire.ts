@@ -62,7 +62,7 @@ export class Fire extends GameElement {
             this.vx = Fire.SPEED * vxLocal;
             this.vy = Fire.SPEED * vyLocal;
             this.angle = angleLocal;
-            this.sourceEnemy = enemyLocal;
+            this.sourceEnemy = enemyLocal!;
 
             this.enemyBullet = true;
             return;
@@ -91,13 +91,13 @@ export class Fire extends GameElement {
         switch (this.state) {
             case Fire.STATE_GROWING: {
                 this.length += Fire.SPEED;
-                if (this.length >= Fire.MAX_LENGTH || this.sourceEnemy.removeFlag) {
+                if (this.length >= Fire.MAX_LENGTH || this.sourceEnemy!.removeFlag) {
                     this.state = Fire.STATE_TRAVELING;
                     this.delay = Fire.TRAVEL_TIME;
                 }
                 for (let i = 0; i <= 5; i++) {
                     let mag = 0.2 * i * this.length;
-                    this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                    this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
                 }
                 break;
             }
@@ -112,7 +112,7 @@ export class Fire extends GameElement {
                 } else {
                     for (let i = 0; i <= 5; i++) {
                         let mag = 0.2 * i * this.length;
-                        this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                        this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
                     }
                 }
                 break;
@@ -124,7 +124,7 @@ export class Fire extends GameElement {
                 }
                 for (let i = 0; i <= 5; i++) {
                     let mag = -0.2 * i * this.length;
-                    this.player.attack(this.x + mag * this.dx, this.y + mag * this.dy);
+                    this.player!.attack(this.x + mag * this.dx, this.y + mag * this.dy);
                 }
                 break;
         }

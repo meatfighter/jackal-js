@@ -132,8 +132,8 @@ export class EnemyHelicopter extends Enemy {
 
         if (--this.shootDelay < 0) {
             this.shootDelay = EnemyHelicopter.SHOOT_DELAY;
-            let dx = this.player.x - this.x;
-            let dy = this.player.y - this.y;
+            let dx = this.player!.x - this.x;
+            let dy = this.player!.y - this.y;
             let imag = EnemyHelicopter.BULLET_SPEED / javaFloat(Math.sqrt(dx * dx + dy * dy));
             dx *= imag;
             dy *= imag;
@@ -167,7 +167,7 @@ export class EnemyHelicopter extends Enemy {
                         this.enteringAcceleration = -this.enteringAcceleration;
                     }
                     if (this.down) {
-                        if (this.x > this.player.x) {
+                        if (this.x > this.player!.x) {
                             this.targetAngle = 135;
                             this.targetHalfAngle = 112.5;
                             this.positiveAngle = true;
@@ -177,7 +177,7 @@ export class EnemyHelicopter extends Enemy {
                             this.positiveAngle = false;
                         }
                     } else {
-                        if (this.x > this.player.x) {
+                        if (this.x > this.player!.x) {
                             this.targetAngle = 225;
                             this.targetHalfAngle = 247.5;
                             this.positiveAngle = false;

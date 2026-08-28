@@ -15,8 +15,8 @@ export abstract class GameElement {
 
     private __construct_GameElement(argCount: number): void {
         if (argCount === 0) {
-            this.main = MainRuntimeState.mainInstance;
-            this.gameMode = MainRuntimeState.gameMode;
+            this.main = MainRuntimeState.mainInstance!;
+            this.gameMode = MainRuntimeState.gameMode!;
 
             this.__initializeJavaSubclassDefaults();
             this.init();
@@ -27,8 +27,8 @@ export abstract class GameElement {
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
-    public main: Main = null;
-    public gameMode: GameMode = null;
+    public main: Main = null!;
+    public gameMode: GameMode = null!;
 
     public removeFlag: boolean = false;
     public enemy: boolean = false;

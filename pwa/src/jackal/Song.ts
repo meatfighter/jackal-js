@@ -13,26 +13,26 @@ export class Song {
 
     private __construct_Song(argCount: number, arg0?: string | Music, arg1?: string | Music, arg2?: string | Music): void {
         if (argCount === 1 && (arg0 === null || typeof arg0 === "string")) {
-            let introLocal6 = arg0 as string | null;
+            let introLocal6 = arg0;
             this.intro = new Music(introLocal6, Song.STREAMING);
             return;
         } else if (argCount === 1) {
-            let introLocal5 = arg0 as Music;
-            this.intro = introLocal5;
+            let introLocal5 = arg0;
+            this.intro = introLocal5 as Music;
             return;
         } else if (argCount === 2 && (arg0 === null || typeof arg0 === "string") && (arg1 === null || typeof arg1 === "string")) {
-            let introLocal4 = arg0 as string | null;
-            let loopLocal4 = arg1 as string | null;
+            let introLocal4 = arg0;
+            let loopLocal4 = arg1;
             if (introLocal4 != null) {
                 this.intro = new Music(introLocal4, Song.STREAMING);
             }
             this.loop = new Music(loopLocal4, Song.STREAMING);
             return;
         } else if (argCount === 2) {
-            let introLocal3 = arg0 as Music;
-            let loopLocal3 = arg1 as Music;
-            this.intro = introLocal3;
-            this.loop = loopLocal3;
+            let introLocal3 = arg0;
+            let loopLocal3 = arg1;
+            this.intro = introLocal3 as Music;
+            this.loop = loopLocal3 as Music;
             return;
         } else if (
             argCount === 3 &&
@@ -40,9 +40,9 @@ export class Song {
             (arg1 === null || typeof arg1 === "string") &&
             (arg2 === null || typeof arg2 === "string")
         ) {
-            let introLocal2 = arg0 as string | null;
-            let intro2Local2 = arg1 as string | null;
-            let loopLocal2 = arg2 as string | null;
+            let introLocal2 = arg0;
+            let intro2Local2 = arg1;
+            let loopLocal2 = arg2;
             if (introLocal2 != null) {
                 this.intro = new Music(introLocal2, Song.STREAMING);
             }
@@ -52,12 +52,12 @@ export class Song {
             this.loop = new Music(loopLocal2, Song.STREAMING);
             return;
         } else if (argCount === 3) {
-            let introLocal = arg0 as Music;
-            let intro2Local = arg1 as Music;
-            let loopLocal = arg2 as Music;
-            this.intro = introLocal;
-            this.intro2 = intro2Local;
-            this.loop = loopLocal;
+            let introLocal = arg0;
+            let intro2Local = arg1;
+            let loopLocal = arg2;
+            this.intro = introLocal as Music;
+            this.intro2 = intro2Local as Music;
+            this.loop = loopLocal as Music;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -65,9 +65,9 @@ export class Song {
 
     public static readonly STREAMING: boolean = false;
 
-    public intro: Music = null;
-    public intro2: Music = null;
-    public loop: Music = null;
+    public intro: Music = null!;
+    public intro2: Music = null!;
+    public loop: Music = null!;
     public playing: boolean = false;
     public playedIntro2: boolean = false;
 

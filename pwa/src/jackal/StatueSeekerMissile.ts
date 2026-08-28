@@ -111,7 +111,7 @@ export class StatueSeekerMissile extends Enemy {
             this.entryDelay--;
             this.y += StatueSeekerMissile.SPEED;
         } else {
-            let targetAngle = javaFloat((Math.atan2(this.player.y - this.y, this.player.x - this.x) * 180) / Math.PI);
+            let targetAngle = javaFloat((Math.atan2(this.player!.y - this.y, this.player!.x - this.x) * 180) / Math.PI);
             let deltaAngle = (targetAngle - this.angle + 180) % 360;
             if (deltaAngle < 0) {
                 deltaAngle += 180;
@@ -148,10 +148,10 @@ export class StatueSeekerMissile extends Enemy {
     public render(): void {
         if (this.entryDelay > 0) {
             this.gameMode.g.setWorldClip(this.statueX + 24, this.statueY + 100, 48, 96);
-            this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+            this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
             this.gameMode.g.clearWorldClip();
         } else {
-            this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+            this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
         }
     }
 }

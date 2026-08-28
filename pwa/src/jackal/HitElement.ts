@@ -15,7 +15,7 @@ export abstract class HitElement extends GameElement {
         this.hitY1 = 0;
         this.hitX2 = 0;
         this.hitY2 = 0;
-        this.trail = null;
+        this.trail = null!;
         this.trailIndex = 0;
     }
 

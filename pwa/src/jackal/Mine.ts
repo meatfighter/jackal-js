@@ -62,8 +62,8 @@ export class Mine extends Enemy {
     }
 
     public update(): void {
-        let dx = this.player.x - (this.x + 16);
-        let dy = this.player.y - (this.y + 16);
+        let dx = this.player!.x - (this.x + 16);
+        let dy = this.player!.y - (this.y + 16);
         this.visible = dx * dx + dy * dy <= Mine.VISIBLE_DISTANCE2;
     }
 

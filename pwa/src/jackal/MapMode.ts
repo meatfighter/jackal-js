@@ -21,8 +21,8 @@ export class MapMode implements IMode, IFadeListener {
 
     public static readonly JEEP_YS: number[] = [759, 631, 503, 379, 259];
 
-    public main: Main = null;
-    public gc: GameContainer = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
     public state: number = MapMode.STATE_FADE_IN;
     public delay: number = MapMode.PAUSE_DELAY;
     public jeepY: number = 868;

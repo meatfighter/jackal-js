@@ -91,7 +91,7 @@ export class TileDebris extends GameElement {
 
     public render(): void {
         if (this.moving) {
-            this.main.drawCentered(this.sprite, this.x, this.y, this.scale);
+            this.main.drawCentered(this.sprite!, this.x, this.y, this.scale);
         }
     }
 }

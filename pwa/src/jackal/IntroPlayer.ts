@@ -25,7 +25,7 @@ export class IntroPlayer extends GameElement {
             let chinookLocal = arg2;
             this.x = xLocal;
             this.y = yLocal;
-            this.chinook = chinookLocal;
+            this.chinook = chinookLocal!;
             return;
         }
         throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
@@ -69,7 +69,7 @@ export class IntroPlayer extends GameElement {
                     this.state = IntroPlayer.STATE_PAUSED;
                     this.x = IntroPlayer.FINAL_X;
                     this.y = IntroPlayer.FINAL_Y;
-                    this.chinook.unloadCompleted();
+                    this.chinook!.unloadCompleted();
                 }
                 break;
         }

@@ -49,8 +49,8 @@ export class PlayerBullet extends GameElement {
         let y1 = this.y - PlayerBullet.MARGIN;
         let x2 = this.x + PlayerBullet.MARGIN;
         let y2 = this.y + PlayerBullet.MARGIN;
-        for (let i = this.enemies.size() - 1; i >= 0; i--) {
-            let enemyLocal = this.enemies.get(i);
+        for (let i = this.enemies!.size() - 1; i >= 0; i--) {
+            let enemyLocal = this.enemies!.get(i);
             if (!enemyLocal.removeFlag && enemyLocal.bulletAttack(x1, y1, x2, y2)) {
                 hit = true;
                 break;

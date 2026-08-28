@@ -99,18 +99,18 @@ export class StatueMissile extends Enemy {
     public render(): void {
         if (this.right) {
             if (this.x > this.clipX) {
-                this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+                this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
             } else {
                 this.gameMode.g.setWorldClip(this.statueX + 46, this.statueY, 52, 192);
-                this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+                this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
                 this.gameMode.g.clearWorldClip();
             }
         } else {
             if (this.x < this.clipX) {
-                this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+                this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
             } else {
                 this.gameMode.g.setWorldClip(this.statueX - 30, this.statueY, 80, 192);
-                this.main.drawRotated(this.sprite, this.x, this.y, this.angle);
+                this.main.drawRotated(this.sprite!, this.x, this.y, this.angle);
                 this.gameMode.g.clearWorldClip();
             }
         }

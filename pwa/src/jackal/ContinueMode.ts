@@ -14,11 +14,11 @@ export class ContinueMode implements IMode, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_OUT: number = 2;
     public static readonly STATE_DONE: number = 3;
 
-    public main: Main = null;
-    public gc: GameContainer = null;
-    public input: IInput = null;
+    public main: Main = null!;
+    public gc: GameContainer = null!;
+    public input: IInput = null!;
     public state: number = ContinueMode.STATE_FADE_IN;
-    public menu: Menu = null;
+    public menu: Menu = null!;
     public optionSelectedFlag: boolean = false;
     public selectedIndex: number = 0;
 

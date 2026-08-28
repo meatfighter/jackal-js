@@ -25,14 +25,14 @@ export class JeepYeahExplosion {
     public scale: number = 0;
     public grenadeExplosion: boolean = false;
     public damagesEnemies: boolean = true;
-    public enemies: ArrayList<Enemy> = null;
+    public enemies: ArrayList<Enemy> = null!;
     public type: number = 0;
     public tiny: boolean = false;
     public delay: number = 0;
     public alpha: number = 1;
     public enemyX: number = 0;
     public enemyY: number = 0;
-    public enemy: Enemy = null;
+    public enemy: Enemy = null!;
     public x: number = 0;
     public y: number = 0;
     public remove: boolean = false;

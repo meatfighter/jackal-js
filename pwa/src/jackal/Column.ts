@@ -124,8 +124,8 @@ export class Column extends Enemy {
     }
 
     private rollOverEnemies(): void {
-        for (let i = this.mines.size() - 1; i >= 0; i--) {
-            let mineLocal = this.mines.get(i);
+        for (let i = this.mines!.size() - 1; i >= 0; i--) {
+            let mineLocal = this.mines!.get(i);
             if (mineLocal != this && mineLocal.isMine(this.x + this.mineX1, this.y + this.mineY1, this.x + this.mineX2, this.y + this.mineY2)) {
                 mineLocal.flatten();
             }
@@ -194,19 +194,19 @@ export class Column extends Enemy {
     private startTipping(attacked: boolean): void {
         if (!attacked) {
             if (this.canDropLeft && this.canDropRight) {
-                if (this.player.x < this.x + 32) {
-                    if (!(this.player.targetAngle <= 90 || this.player.targetAngle >= 270)) {
+                if (this.player!.x < this.x + 32) {
+                    if (!(this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270)) {
                         return;
                     }
-                } else if (this.player.targetAngle <= 90 || this.player.targetAngle >= 270) {
+                } else if (this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270) {
                     return;
                 }
             } else if (this.canDropLeft) {
-                if (this.player.x < this.x + 32 || this.player.targetAngle <= 90 || this.player.targetAngle >= 270) {
+                if (this.player!.x < this.x + 32 || this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270) {
                     return;
                 }
             } else {
-                if (this.player.x > this.x + 32 || !(this.player.targetAngle <= 90 || this.player.targetAngle >= 270)) {
+                if (this.player!.x > this.x + 32 || !(this.player!.targetAngle <= 90 || this.player!.targetAngle >= 270)) {
                     return;
                 }
             }
@@ -224,9 +224,9 @@ export class Column extends Enemy {
             if (this.main.random.nextInt(7) == 3) {
                 this.left = this.main.random.nextBoolean();
             } else if (this.main.random.nextInt(3) == 1) {
-                this.left = this.player.x < this.x;
+                this.left = this.player!.x < this.x;
             } else {
-                this.left = this.player.x > this.x;
+                this.left = this.player!.x > this.x;
             }
         } else {
             this.left = this.canDropLeft;

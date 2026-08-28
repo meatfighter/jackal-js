@@ -409,9 +409,9 @@ export class FriendlySoldier extends Enemy {
         this.x += this.vx;
         this.updateLegs();
 
-        if ((this.vx < 0 && this.x <= this.helicopter.x) || (this.vx > 0 && this.x >= this.helicopter.x)) {
+        if ((this.vx < 0 && this.x <= this.helicopter!.x) || (this.vx > 0 && this.x >= this.helicopter!.x)) {
             this.remove();
-            this.helicopter.friendlySoldierPickedUp();
+            this.helicopter!.friendlySoldierPickedUp();
         }
     }
 
@@ -422,8 +422,8 @@ export class FriendlySoldier extends Enemy {
             let walkable = true;
             if (this.gameMode.isDriveable(this.x - 16, nextY - 6, this.x + 16, nextY + 6)) {
                 // avoid bumping into other enemies
-                for (let i = this.solids.size() - 1; i >= 0; i--) {
-                    let solidLocal = this.solids.get(i);
+                for (let i = this.solids!.size() - 1; i >= 0; i--) {
+                    let solidLocal = this.solids!.get(i);
                     if (
                         solidLocal != this &&
                         solidLocal.isSolid(this.x + this.solidX1, nextY + this.solidY1, this.x + this.solidX2, nextY + this.solidY2) &&
@@ -449,8 +449,8 @@ export class FriendlySoldier extends Enemy {
         let walkable = true;
         if (this.gameMode.isDriveable(nextX - 16, nextY - 6, nextX + 16, nextY + 6)) {
             // avoid bumping into other enemies
-            for (let i = this.solids.size() - 1; i >= 0; i--) {
-                let solidLocal = this.solids.get(i);
+            for (let i = this.solids!.size() - 1; i >= 0; i--) {
+                let solidLocal = this.solids!.get(i);
                 if (
                     solidLocal != this &&
                     solidLocal.isSolid(nextX + this.solidX1, nextY + this.solidY1, nextX + this.solidX2, nextY + this.solidY2) &&
