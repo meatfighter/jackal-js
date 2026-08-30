@@ -253,10 +253,20 @@ button {
     padding: 0;
     border: 0;
     background: transparent;
-    color: var(--muted);
+    color: var(--text);
     font-size: inherit;
-    line-height: 1.65;
+    line-height: inherit;
     text-align: center;
+}
+
+.toc a,
+.toc a:visited {
+    color: var(--link);
+}
+
+.toc a:hover,
+.toc a:focus-visible {
+    color: var(--link-hover);
 }
 
 .toc h2 {

@@ -26,6 +26,7 @@
         "run:desktop": "node scripts/run-desktop.mjs",
         "preview": "npm run preview:pwa",
         "preview:pwa": "vite preview --config pwa/vite.config.ts --host 127.0.0.1",
+        "preview:about": "vite preview --host 127.0.0.1 --outDir .release-components/web",
         "preview:dist": "vite preview --host 127.0.0.1 --outDir dist",
         "test": "node --test scripts/test-*.mjs",
         "test:parity": "node --test scripts/test-java-*.mjs scripts/test-direction-cache-parity.mjs scripts/test-persistence-parity-coverage.mjs scripts/test-fixed-update-fade-timing.mjs",

@@ -712,6 +712,20 @@ npm run build:about
 
 This stamps the public project page into the managed web component location used by the component workflow.
 
+Preview that output with:
+
+```sh
+npm run preview:about
+```
+
+Open the preview root, not `/about/`:
+
+```text
+http://127.0.0.1:4173/
+```
+
+The generated page is intended for `https://meatfighter.com/jackal/`, so its relative stylesheet and asset URLs assume the page is served from the release root.
+
 ### Desktop build
 
 ```sh
@@ -756,6 +770,7 @@ Do not replace it with ad-hoc component builds and manual copies into `dist/`.
 | Run normal source gate                 | `npm run verify`              | checks only                |
 | Build PWA component                    | `npm run build:pwa`           | `.release-components/pwa/` |
 | Build complete web component           | `npm run build:web`           | `.release-components/web/` |
+| Preview about/web component output     | `npm run preview:about`       | local web server           |
 | Build desktop package                  | `npm run build:desktop`       | `desktop/target/`          |
 | Verify desktop ZIP                     | `npm run verify:desktop`      | validation only            |
 | Stage standalone desktop ZIP           | `npm run release:desktop`     | `releases/`                |
@@ -1211,6 +1226,7 @@ Then launch the **generated ZIP** on every OS/JVM combination you intend to adve
 | `npm run verify:pwa-precache`     | Verify PWA precache/relocation behavior.                                                        |
 | `npm run benchmark:float-parity`  | Run an informational Java-float parity microbenchmark.                                          |
 | `npm run preview:pwa`             | Preview PWA build configuration.                                                                |
+| `npm run preview:about`           | Serve `.release-components/web/` locally for fast about-page review.                            |
 | `npm run preview:dist`            | Serve promoted `dist/` locally.                                                                 |
 | `npm run stamp`                   | Intentionally update tracked `version.json` build stamp.                                        |
 

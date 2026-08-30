@@ -93,6 +93,9 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(indexTemplate, /<a href="https:\/\/meatfighter\.com\/">Home<\/a>/);
     assert.match(styles, /\.toc \{\s+margin: 0 0 2rem;/);
     assert.match(styles, /\.toc li:not\(:last-child\)::after \{\s+content: " \| ";/);
+    assert.match(styles, /\.toc a,\s+\.toc a:visited \{\s+color: var\(--link\);\s+\}/);
+    assert.match(styles, /\.toc a:hover,\s+\.toc a:focus-visible \{\s+color: var\(--link-hover\);\s+\}/);
+    assert.match(styles, /\.toc \{[\s\S]*font-size: inherit;\s+line-height: inherit;/);
     assert.doesNotMatch(styles, /\.toc \.toc-level-2 a\s*\{/);
     assert.match(styles, /\.license-wrap/);
     assert.match(styles, /\.license-icons/);
