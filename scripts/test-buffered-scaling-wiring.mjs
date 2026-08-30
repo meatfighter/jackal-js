@@ -28,8 +28,8 @@ test("Jackal PWA keeps scaling mode out of the user-facing menu", () => {
 });
 
 test("Jackal requires a slick2d-ts release with buffered scaling support", () => {
-    assert.equal(packageJson.dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.3.0");
-    assert.equal(packageLock.packages[""].dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.3.0");
-    assert.equal(packageLock.packages["node_modules/slick2d-ts"].version, "1.3.0");
+    assert.equal(packageJson.dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.3.1");
+    assert.equal(packageLock.packages[""].dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.3.1");
+    assert.equal(packageLock.packages["node_modules/slick2d-ts"].version, "1.3.1");
     assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#/);
 });
