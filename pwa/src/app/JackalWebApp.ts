@@ -1,4 +1,5 @@
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
+import type { BufferedScalableGame, BufferedScalingMode } from "slick2d-ts";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import type { Main } from "../jackal/Main.js";
@@ -13,14 +14,25 @@ const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
 const DEFAULT_VOLUME = 0.1;
+const SCALING_STORAGE_KEY = "jackal-scaling";
+const SCALING_MODE_DEFINITIONS = [
+    { value: "smooth", label: "Smooth" },
+    { value: "crisp", label: "Crisp" },
+    { value: "pixel-perfect", label: "Pixel Perfect" }
+] as const;
+const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";
+const PWA_RESET_STORAGE_KEYS = [GAME_STATE_STORAGE_KEY, VOLUME_STORAGE_KEY, SCALING_STORAGE_KEY] as const;
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 2;
 const RESOURCE_CACHE_RETRY_COUNT = 5;
 const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
+const PICKER_BREATHING_ROOM_PX = 10;
 
 type SlickRuntimeModule = typeof import("slick2d-ts");
 type MainConstructor = typeof import("../jackal/Main.js").Main;
 type JackalGameStateStoreConstructor = typeof import("../jackal/persistence/JackalGameStateStore.js").JackalGameStateStore;
+type ScalingModeDefinition = (typeof SCALING_MODE_DEFINITIONS)[number];
+type JackalScalingPreference = ScalingModeDefinition["value"];
 
 interface ResourceLoadProgress {
     readonly loaded: number;
@@ -55,7 +67,9 @@ export class JackalWebApp {
     private liveMenuOpen = false;
     private suspendedByFocusLoss = false;
     private suspendedByVisibilityLoss = false;
+    private bufferedGame: BufferedScalableGame | null = null;
     private volume = safeReadVolume();
+    private scalingPreference = safeReadScalingPreference();
 
     public constructor(root: HTMLElement) {
         this.root = root;
@@ -72,6 +86,7 @@ export class JackalWebApp {
     private renderMenu(parent: HTMLElement, canContinue: boolean, errorMessage: string | null, overlay: boolean): HTMLElement {
         const menu = document.createElement("main");
         menu.className = overlay ? "menu-screen menu-overlay" : "menu-screen";
+        menu.style.visibility = "hidden";
         if (overlay) {
             menu.dataset.liveMenu = "true";
         }
@@ -82,10 +97,15 @@ export class JackalWebApp {
                     <input id="volume-input" type="range" min="0" max="100" step="1" value="${Math.round(this.volume * 100)}" aria-label="Volume">
                     <span id="volume-value" class="volume-value">${Math.round(this.volume * 100)}</span>
                 </label>
+                <div class="setting-scaling-row" role="group" aria-label="Scaling">
+                    <span>Scaling</span>
+                    ${this.scalingPickerHtml()}
+                </div>
                 <div class="menu-buttons">
                     <button id="new-game-button" class="start-button" type="button">New Game</button>
                     <button id="continue-button" class="start-button" type="button"${canContinue ? "" : " disabled"}>Continue</button>
                 </div>
+                <button id="reset-button" class="reset-button" type="button">Reset</button>
                 ${errorMessage ? `<p class="error-message">${escapeHtml(errorMessage)}</p>` : ""}
             </section>
         `;
@@ -94,6 +114,7 @@ export class JackalWebApp {
         }
         parent.appendChild(menu);
         this.bindMenuControls(menu);
+        menu.style.visibility = "";
         return menu;
     }
 
@@ -115,6 +136,7 @@ export class JackalWebApp {
             updateVolumeUi();
         });
         updateVolumeUi();
+        this.bindScalingPicker(menu);
 
         menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
             this.clearStoredGameState();
@@ -129,6 +151,164 @@ export class JackalWebApp {
             }
             void this.startGame(true);
         });
+        menu.querySelector<HTMLButtonElement>("#reset-button")?.addEventListener("click", () => this.resetPwaState());
+    }
+
+    private scalingPickerHtml(): string {
+        const selectedDefinition = getScalingDefinition(this.scalingPreference);
+        return `
+            <div id="scaling-picker" class="theme-picker scaling-picker" data-open="false">
+                <button id="scaling-button" class="theme-picker-button scaling-picker-button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="scaling-list">
+                    <span class="theme-picker-label scaling-picker-label">${escapeHtml(selectedDefinition.label)}</span>
+                    <span class="picker-caret" aria-hidden="true"></span>
+                </button>
+                <div id="scaling-popup" class="theme-picker-popup scaling-picker-popup" hidden>
+                    <div id="scaling-list" class="theme-picker-list scaling-picker-list" role="listbox" aria-label="Scaling">
+                        ${SCALING_MODE_DEFINITIONS.map((definition) => this.scalingOptionHtml(definition)).join("")}
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    private scalingOptionHtml(definition: ScalingModeDefinition): string {
+        return `
+            <button class="theme-picker-option scaling-picker-option" type="button" role="option" aria-selected="${definition.value === this.scalingPreference}" data-scaling-mode="${definition.value}">
+                <span>${escapeHtml(definition.label)}</span>
+                <span class="picker-caret-placeholder" aria-hidden="true"></span>
+            </button>`;
+    }
+
+    private bindScalingPicker(menu: HTMLElement): void {
+        const scalingPicker = menu.querySelector<HTMLElement>("#scaling-picker");
+        const scalingButton = menu.querySelector<HTMLButtonElement>("#scaling-button");
+        const scalingPopup = menu.querySelector<HTMLElement>("#scaling-popup");
+        const scalingList = menu.querySelector<HTMLElement>("#scaling-list");
+        if (scalingPicker === null || scalingButton === null || scalingPopup === null || scalingList === null) {
+            return;
+        }
+
+        const scalingOptions = Array.from(menu.querySelectorAll<HTMLButtonElement>("[data-scaling-mode]"));
+        measureScalingPickerWidth(scalingPicker, scalingButton, scalingPopup, scalingList);
+        this.updateScalingUi(scalingPicker);
+
+        const handleScalingChange = (value: string): void => {
+            if (!isScalingPreference(value)) {
+                this.updateScalingUi(scalingPicker);
+                return;
+            }
+            this.setScalingPreference(value);
+            this.updateScalingUi(scalingPicker);
+            setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, false);
+            scalingButton.focus();
+        };
+
+        scalingButton.addEventListener("click", () => {
+            setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, !isScalingPickerOpen(scalingPicker), true);
+        });
+        scalingButton.addEventListener("keydown", (event) => {
+            if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, true, true);
+            }
+        });
+        scalingList.addEventListener("keydown", (event) => {
+            const currentIndex = Math.max(
+                0,
+                scalingOptions.findIndex((option) => option === document.activeElement)
+            );
+            if (event.key === "Escape") {
+                event.preventDefault();
+                setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, false);
+                scalingButton.focus();
+            } else if (event.key === "ArrowDown") {
+                event.preventDefault();
+                scalingOptions[(currentIndex + 1) % scalingOptions.length]?.focus();
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                scalingOptions[(currentIndex + scalingOptions.length - 1) % scalingOptions.length]?.focus();
+            } else if (event.key === "Home") {
+                event.preventDefault();
+                scalingOptions[0]?.focus();
+            } else if (event.key === "End") {
+                event.preventDefault();
+                scalingOptions[scalingOptions.length - 1]?.focus();
+            } else if (event.key === " " || event.key === "Enter") {
+                event.preventDefault();
+                const target = document.activeElement;
+                if (target instanceof HTMLElement) {
+                    handleScalingChange(target.dataset.scalingMode ?? "");
+                }
+            }
+        });
+        for (const option of scalingOptions) {
+            option.addEventListener("click", () => handleScalingChange(option.dataset.scalingMode ?? ""));
+        }
+        menu.addEventListener("click", (event) => {
+            if (event.target instanceof Node && !scalingPicker.contains(event.target)) {
+                setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, false);
+            }
+        });
+        scalingPicker.addEventListener("focusout", () => {
+            window.setTimeout(() => {
+                if (!scalingPicker.contains(document.activeElement)) {
+                    setScalingPickerOpen(scalingPicker, scalingButton, scalingPopup, false);
+                }
+            }, 0);
+        });
+    }
+
+    private updateScalingUi(scalingPicker: HTMLElement): void {
+        const selectedDefinition = getScalingDefinition(this.scalingPreference);
+        const selectedLabel = scalingPicker.querySelector<HTMLElement>(".scaling-picker-label");
+        if (selectedLabel !== null) {
+            selectedLabel.textContent = selectedDefinition.label;
+        }
+        for (const option of scalingPicker.querySelectorAll<HTMLElement>("[data-scaling-mode]")) {
+            option.setAttribute("aria-selected", String(option.dataset.scalingMode === this.scalingPreference));
+        }
+    }
+
+    private setScalingPreference(value: JackalScalingPreference): void {
+        this.scalingPreference = value;
+        writeScalingPreference(value);
+        if (this.preparedRuntime !== null) {
+            this.bufferedGame?.setScalingMode(this.getBufferedScalingMode(this.preparedRuntime.slick));
+        }
+    }
+
+    private getBufferedScalingMode(slick: SlickRuntimeModule): BufferedScalingMode {
+        switch (this.scalingPreference) {
+            case "crisp":
+                return slick.BufferedScalingMode.Nearest;
+            case "pixel-perfect":
+                return slick.BufferedScalingMode.Integer;
+            case "smooth":
+            default:
+                return slick.BufferedScalingMode.Linear;
+        }
+    }
+
+    private resetPwaState(): void {
+        this.destroyGame();
+        this.clearPwaStorage();
+        this.volume = DEFAULT_VOLUME;
+        this.scalingPreference = DEFAULT_SCALING_PREFERENCE;
+        this.applyAudioVolume(this.volume);
+        this.renderMenu(this.root, false, null, false);
+        this.scheduleBackgroundPreparation();
+    }
+
+    private clearPwaStorage(): void {
+        for (const key of PWA_RESET_STORAGE_KEYS) {
+            try {
+                localStorage.removeItem(getDeploymentStorageKey(key));
+            } catch {
+                // Storage can be disabled in hardened/private browser contexts.
+            }
+        }
+        this.inputMappingStore.clear();
+        this.gameStateStore?.clear();
+        this.gameStateStore = null;
     }
 
     private hasLiveSuspendedGame(): boolean {
@@ -232,7 +412,7 @@ export class JackalWebApp {
 
         const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
             maintainAspect: true,
-            scalingMode: runtime.slick.BufferedScalingMode.Linear
+            scalingMode: this.getBufferedScalingMode(runtime.slick)
         });
         const displayMode = this.getResponsiveWindowedDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
@@ -242,6 +422,7 @@ export class JackalWebApp {
         appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
         this.container = appContainer;
         this.game = mainGame;
+        this.bufferedGame = bufferedGame;
         mainGame.appGameContainer = appContainer;
         mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
         mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
@@ -400,6 +581,7 @@ export class JackalWebApp {
             SoundStore.get().stopAllPlayback();
         }
         this.game = null;
+        this.bufferedGame = null;
         this.activeGameShell = null;
         this.activeGameHost = null;
         this.preparedRuntime?.slick.Display.setParent(null);
@@ -844,11 +1026,16 @@ export class JackalWebApp {
     private setAudioVolume(value: number): void {
         this.volume = clampVolume(value, this.volume);
         writeVolume(this.volume);
-        const soundVolume = Math.sqrt(this.volume);
+        this.applyAudioVolume(this.volume);
+    }
+
+    private applyAudioVolume(value: number): void {
+        const clampedValue = clampVolume(value, this.volume);
+        const soundVolume = Math.sqrt(clampedValue);
         SoundStore.get().setSoundVolume(soundVolume);
-        SoundStore.get().setMusicVolume(this.volume);
+        SoundStore.get().setMusicVolume(clampedValue);
         this.container?.setSoundVolume(soundVolume);
-        this.container?.setMusicVolume(this.volume);
+        this.container?.setMusicVolume(clampedValue);
     }
 }
 
@@ -1069,6 +1256,159 @@ function writeVolume(value: number): void {
     } catch {
         // Storage can be disabled in hardened/private browser contexts.
     }
+}
+
+function safeReadScalingPreference(): JackalScalingPreference {
+    try {
+        const value = localStorage.getItem(getDeploymentStorageKey(SCALING_STORAGE_KEY));
+        if (isScalingPreference(value)) {
+            return value;
+        }
+        if (value !== null) {
+            writeScalingPreference(DEFAULT_SCALING_PREFERENCE);
+        }
+        return DEFAULT_SCALING_PREFERENCE;
+    } catch {
+        return DEFAULT_SCALING_PREFERENCE;
+    }
+}
+
+function writeScalingPreference(value: JackalScalingPreference): void {
+    try {
+        localStorage.setItem(getDeploymentStorageKey(SCALING_STORAGE_KEY), value);
+    } catch {
+        // Storage can be disabled in hardened/private browser contexts.
+    }
+}
+
+function isScalingPreference(value: unknown): value is JackalScalingPreference {
+    return typeof value === "string" && SCALING_MODE_DEFINITIONS.some((definition) => definition.value === value);
+}
+
+function getScalingDefinition(value: JackalScalingPreference): ScalingModeDefinition {
+    return SCALING_MODE_DEFINITIONS.find((definition) => definition.value === value) ?? SCALING_MODE_DEFINITIONS[0];
+}
+
+function measureScalingPickerWidth(scalingPicker: HTMLElement, scalingButton: HTMLButtonElement, scalingPopup: HTMLElement, scalingList: HTMLElement): void {
+    measurePickerWidth(
+        scalingPicker,
+        scalingButton,
+        scalingPopup,
+        scalingList,
+        SCALING_MODE_DEFINITIONS.map((definition) => definition.label),
+        [".picker-caret"],
+        [".picker-caret-placeholder"]
+    );
+}
+
+function measurePickerWidth(
+    picker: HTMLElement,
+    button: HTMLButtonElement,
+    popup: HTMLElement,
+    list: HTMLElement,
+    labels: readonly string[],
+    buttonAccessorySelectors: readonly string[],
+    optionAccessorySelectors: readonly string[]
+): void {
+    const wasPopupHidden = popup.hidden;
+    popup.hidden = false;
+    const buttonStyle = window.getComputedStyle(button);
+    const option = list.querySelector<HTMLElement>(".theme-picker-option");
+    const optionStyle = option === null ? null : window.getComputedStyle(option);
+    const popupStyle = window.getComputedStyle(popup);
+    const listStyle = window.getComputedStyle(list);
+    const buttonAccessoryWidth = getElementsOuterWidth(button, buttonAccessorySelectors);
+    const optionAccessoryWidth = option === null ? 0 : getElementsOuterWidth(option, optionAccessorySelectors);
+    const maxLabelWidth = measureWidestPickerLabel(picker, optionStyle ?? buttonStyle, labels);
+    const scrollbarWidth = getElementVerticalScrollbarWidth(list, listStyle);
+    const buttonWidth =
+        maxLabelWidth +
+        parseCssPixels(buttonStyle.columnGap) * buttonAccessorySelectors.length +
+        buttonAccessoryWidth +
+        horizontalSpacing(buttonStyle, true) +
+        4;
+    const optionWidth =
+        optionStyle === null
+            ? 0
+            : maxLabelWidth +
+              parseCssPixels(optionStyle.columnGap) * optionAccessorySelectors.length +
+              optionAccessoryWidth +
+              horizontalSpacing(optionStyle, false) +
+              horizontalSpacing(popupStyle, true) +
+              horizontalSpacing(listStyle, true) +
+              scrollbarWidth +
+              4;
+    picker.style.setProperty("--theme-picker-width", `${Math.ceil(Math.max(buttonWidth, optionWidth) + PICKER_BREATHING_ROOM_PX)}px`);
+    popup.hidden = wasPopupHidden;
+}
+
+function measureWidestPickerLabel(parent: HTMLElement, style: CSSStyleDeclaration, labels: readonly string[]): number {
+    const probe = document.createElement("span");
+    probe.style.position = "absolute";
+    probe.style.left = "-10000px";
+    probe.style.top = "0";
+    probe.style.visibility = "hidden";
+    probe.style.whiteSpace = "nowrap";
+    probe.style.fontFamily = style.fontFamily;
+    probe.style.fontSize = style.fontSize;
+    probe.style.fontWeight = style.fontWeight;
+    probe.style.fontStyle = style.fontStyle;
+    probe.style.letterSpacing = style.letterSpacing;
+    parent.appendChild(probe);
+    let maxLabelWidth = 0;
+    for (const label of labels) {
+        probe.textContent = label;
+        maxLabelWidth = Math.max(maxLabelWidth, probe.getBoundingClientRect().width);
+    }
+    probe.remove();
+    return maxLabelWidth;
+}
+
+function getElementsOuterWidth(parent: HTMLElement, selectors: readonly string[]): number {
+    return selectors.reduce((width, selector) => width + getElementOuterWidth(parent.querySelector<HTMLElement>(selector)), 0);
+}
+
+function getElementOuterWidth(element: HTMLElement | null): number {
+    return element?.getBoundingClientRect().width ?? 0;
+}
+
+function getElementVerticalScrollbarWidth(element: HTMLElement, style: CSSStyleDeclaration): number {
+    const borderWidth = parseCssPixels(style.borderLeftWidth) + parseCssPixels(style.borderRightWidth);
+    return Math.max(0, element.offsetWidth - element.clientWidth - borderWidth);
+}
+
+function horizontalSpacing(style: CSSStyleDeclaration, includeBorder: boolean): number {
+    const borderWidth = includeBorder ? parseCssPixels(style.borderLeftWidth) + parseCssPixels(style.borderRightWidth) : 0;
+    return parseCssPixels(style.paddingLeft) + parseCssPixels(style.paddingRight) + borderWidth;
+}
+
+function parseCssPixels(value: string): number {
+    const pixels = Number.parseFloat(value);
+    return Number.isFinite(pixels) ? pixels : 0;
+}
+
+function isScalingPickerOpen(scalingPicker: HTMLElement): boolean {
+    return scalingPicker.dataset.open === "true";
+}
+
+function setScalingPickerOpen(
+    scalingPicker: HTMLElement,
+    scalingButton: HTMLButtonElement,
+    scalingPopup: HTMLElement,
+    open: boolean,
+    focusSelected = false
+): void {
+    scalingPicker.dataset.open = String(open);
+    scalingButton.setAttribute("aria-expanded", String(open));
+    scalingPopup.hidden = !open;
+    if (!open || !focusSelected) {
+        return;
+    }
+
+    const scalingList = scalingPopup.querySelector<HTMLElement>("#scaling-list");
+    const selectedOption =
+        scalingList?.querySelector<HTMLElement>("[data-scaling-mode][aria-selected='true']") ?? scalingList?.querySelector<HTMLElement>("[data-scaling-mode]");
+    selectedOption?.focus();
 }
 
 function clampVolume(value: number, fallback: number): number {
