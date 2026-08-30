@@ -30,7 +30,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
     font: inherit;
 }
 
@@ -215,6 +216,57 @@ button {
     font-variant-numeric: tabular-nums;
     min-width: 24px;
     text-align: left;
+}
+
+.scaling-row {
+    align-items: center;
+    color: var(--plain-white);
+    column-gap: 16px;
+    display: grid;
+    font-size: 16px;
+    font-weight: 700;
+    grid-template-columns: max-content minmax(0, 1fr);
+    width: min(360px, 100%);
+}
+
+.scaling-select-shell {
+    display: block;
+    min-width: 0;
+    position: relative;
+}
+
+.scaling-select-shell::after {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--title-cream);
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-35%);
+}
+
+#scaling-input {
+    appearance: none;
+    background: #050505;
+    border: 2px solid var(--title-mountain-brown);
+    border-radius: 8px;
+    color: var(--title-cream);
+    cursor: pointer;
+    min-height: 42px;
+    padding: 7px 38px 7px 14px;
+    width: 100%;
+}
+
+#scaling-input:focus-visible {
+    border-color: var(--title-cream);
+    outline: none;
+}
+
+#scaling-input option {
+    background: #050505;
+    color: var(--title-cream);
 }
 
 .menu-buttons {

@@ -119,3 +119,31 @@ test("web app volume storage is isolated by deployment path", async () => {
     setLocation(productionHref);
     assert.equal(new JackalWebApp({}).volume, 0.72);
 });
+
+test("web app scaling preference storage is isolated by deployment path", async () => {
+    storage.clear();
+    const { JackalWebApp } = await loadWebApp();
+    const stagingHref = "https://example.test/stage/pwa/?v=old";
+    const stagingUpdatedHref = "https://example.test/stage/pwa/?v=new";
+    const productionHref = "https://example.test/production/pwa/?v=old";
+    const stagingKey = storageKey("jackal-scaling", stagingHref);
+    const productionKey = storageKey("jackal-scaling", productionHref);
+
+    storage.set(productionKey, "crisp");
+    setLocation(stagingHref);
+    const stagingApp = new JackalWebApp({});
+
+    assert.equal(stagingApp.scalingPreference, "smooth");
+    stagingApp.setScalingPreference("pixel-perfect");
+    assert.equal(storage.get(stagingKey), "pixel-perfect");
+    assert.equal(storage.get(productionKey), "crisp");
+
+    setLocation(stagingUpdatedHref);
+    assert.equal(new JackalWebApp({}).scalingPreference, "pixel-perfect");
+
+    setLocation(productionHref);
+    assert.equal(new JackalWebApp({}).scalingPreference, "crisp");
+
+    storage.set(productionKey, "unsupported");
+    assert.equal(new JackalWebApp({}).scalingPreference, "smooth");
+});
