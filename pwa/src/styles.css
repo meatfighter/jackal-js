@@ -242,7 +242,7 @@ button {
     background: #050505;
     border: 2px solid var(--title-mountain-brown);
     border-radius: 8px;
-    color: var(--title-cream);
+    color: var(--plain-white);
     cursor: pointer;
     display: grid;
     font: inherit;
@@ -299,7 +299,7 @@ button {
     background: #050505;
     border: 0;
     border-radius: 4px;
-    color: var(--title-cream);
+    color: var(--plain-white);
     cursor: pointer;
     display: grid;
     font: inherit;
@@ -320,7 +320,7 @@ button {
 
 .theme-picker-option[aria-selected="true"] {
     background: #261606;
-    color: var(--title-cream);
+    color: var(--plain-white);
 }
 
 .theme-picker-option:hover,
@@ -392,7 +392,7 @@ button {
 .reset-button {
     background: transparent;
     border: 0;
-    color: var(--title-shadow-gray);
+    color: #888888;
     cursor: pointer;
     font: inherit;
     font-size: 15px;
@@ -404,7 +404,7 @@ button {
 
 .reset-button:hover,
 .reset-button:focus-visible {
-    color: var(--title-cream);
+    color: var(--plain-white);
     outline: none;
 }
 
