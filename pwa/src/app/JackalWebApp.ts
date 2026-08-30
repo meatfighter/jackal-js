@@ -1,5 +1,4 @@
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
-import type { BufferedScalableGame, BufferedScalingMode } from "slick2d-ts";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import type { Main } from "../jackal/Main.js";
@@ -14,9 +13,6 @@ const GAME_DISPLAY_HEIGHT = 960;
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
 const VOLUME_STORAGE_KEY = "jackal-volume";
 const DEFAULT_VOLUME = 0.1;
-const SCALING_STORAGE_KEY = "jackal-scaling";
-const SCALING_PREFERENCES = ["smooth", "crisp", "pixel-perfect"] as const;
-const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 2;
 const RESOURCE_CACHE_RETRY_COUNT = 5;
@@ -25,7 +21,6 @@ const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
 type SlickRuntimeModule = typeof import("slick2d-ts");
 type MainConstructor = typeof import("../jackal/Main.js").Main;
 type JackalGameStateStoreConstructor = typeof import("../jackal/persistence/JackalGameStateStore.js").JackalGameStateStore;
-type JackalScalingPreference = (typeof SCALING_PREFERENCES)[number];
 
 interface ResourceLoadProgress {
     readonly loaded: number;
@@ -60,9 +55,7 @@ export class JackalWebApp {
     private liveMenuOpen = false;
     private suspendedByFocusLoss = false;
     private suspendedByVisibilityLoss = false;
-    private bufferedGame: BufferedScalableGame | null = null;
     private volume = safeReadVolume();
-    private scalingPreference = safeReadScalingPreference();
 
     public constructor(root: HTMLElement) {
         this.root = root;
@@ -88,16 +81,6 @@ export class JackalWebApp {
                     <span id="volume-icon" class="volume-icon" aria-hidden="true">${volumeIconSvg(this.volume)}</span>
                     <input id="volume-input" type="range" min="0" max="100" step="1" value="${Math.round(this.volume * 100)}" aria-label="Volume">
                     <span id="volume-value" class="volume-value">${Math.round(this.volume * 100)}</span>
-                </label>
-                <label class="scaling-row">
-                    <span class="scaling-label">Scaling</span>
-                    <span class="scaling-select-shell">
-                        <select id="scaling-input" aria-label="Scaling">
-                            <option value="smooth"${this.scalingPreference === "smooth" ? " selected" : ""}>Smooth</option>
-                            <option value="crisp"${this.scalingPreference === "crisp" ? " selected" : ""}>Crisp</option>
-                            <option value="pixel-perfect"${this.scalingPreference === "pixel-perfect" ? " selected" : ""}>Pixel-Perfect</option>
-                        </select>
-                    </span>
                 </label>
                 <div class="menu-buttons">
                     <button id="new-game-button" class="start-button" type="button">New Game</button>
@@ -132,10 +115,6 @@ export class JackalWebApp {
             updateVolumeUi();
         });
         updateVolumeUi();
-
-        menu.querySelector<HTMLSelectElement>("#scaling-input")?.addEventListener("change", (event) => {
-            this.setScalingPreference(readScalingPreference((event.currentTarget as HTMLSelectElement).value, this.scalingPreference));
-        });
 
         menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
             this.clearStoredGameState();
@@ -253,7 +232,7 @@ export class JackalWebApp {
 
         const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
             maintainAspect: true,
-            scalingMode: this.getBufferedScalingMode(runtime.slick)
+            scalingMode: runtime.slick.BufferedScalingMode.Linear
         });
         const displayMode = this.getResponsiveWindowedDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
@@ -263,7 +242,6 @@ export class JackalWebApp {
         appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
         this.container = appContainer;
         this.game = mainGame;
-        this.bufferedGame = bufferedGame;
         mainGame.appGameContainer = appContainer;
         mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
         mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
@@ -422,7 +400,6 @@ export class JackalWebApp {
             SoundStore.get().stopAllPlayback();
         }
         this.game = null;
-        this.bufferedGame = null;
         this.activeGameShell = null;
         this.activeGameHost = null;
         this.preparedRuntime?.slick.Display.setParent(null);
@@ -873,25 +850,6 @@ export class JackalWebApp {
         this.container?.setSoundVolume(soundVolume);
         this.container?.setMusicVolume(this.volume);
     }
-
-    private setScalingPreference(value: JackalScalingPreference): void {
-        this.scalingPreference = value;
-        writeScalingPreference(value);
-        if (this.preparedRuntime !== null) {
-            this.bufferedGame?.setScalingMode(this.getBufferedScalingMode(this.preparedRuntime.slick));
-        }
-    }
-
-    private getBufferedScalingMode(slick: SlickRuntimeModule): BufferedScalingMode {
-        switch (this.scalingPreference) {
-            case "smooth":
-                return slick.BufferedScalingMode.Linear;
-            case "crisp":
-                return slick.BufferedScalingMode.Nearest;
-            case "pixel-perfect":
-                return slick.BufferedScalingMode.Integer;
-        }
-    }
 }
 
 function getAspectFitDisplayMode(width: number, height: number): { width: number; height: number } {
@@ -1111,30 +1069,6 @@ function writeVolume(value: number): void {
     } catch {
         // Storage can be disabled in hardened/private browser contexts.
     }
-}
-
-function safeReadScalingPreference(): JackalScalingPreference {
-    try {
-        return readScalingPreference(localStorage.getItem(getDeploymentStorageKey(SCALING_STORAGE_KEY)), DEFAULT_SCALING_PREFERENCE);
-    } catch {
-        return DEFAULT_SCALING_PREFERENCE;
-    }
-}
-
-function writeScalingPreference(value: JackalScalingPreference): void {
-    try {
-        localStorage.setItem(getDeploymentStorageKey(SCALING_STORAGE_KEY), value);
-    } catch {
-        // Storage can be disabled in hardened/private browser contexts.
-    }
-}
-
-function readScalingPreference(value: string | null, fallback: JackalScalingPreference): JackalScalingPreference {
-    return isScalingPreference(value) ? value : fallback;
-}
-
-function isScalingPreference(value: unknown): value is JackalScalingPreference {
-    return typeof value === "string" && (SCALING_PREFERENCES as readonly string[]).includes(value);
 }
 
 function clampVolume(value: number, fallback: number): number {

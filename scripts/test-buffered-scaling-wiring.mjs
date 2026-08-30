@@ -8,26 +8,23 @@ const webAppSource = readFileSync(join(rootDir, "pwa", "src", "app", "JackalWebA
 const packageJson = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
 const packageLock = JSON.parse(readFileSync(join(rootDir, "package-lock.json"), "utf8"));
 
-test("Jackal PWA renders through the configurable native buffered scaler", () => {
+test("Jackal PWA renders through the native buffered scaler with linear presentation filtering", () => {
     assert.match(
         webAppSource,
-        /new runtime\.slick\.BufferedScalableGame\(\s*mainGame,\s*GAME_DISPLAY_WIDTH,\s*GAME_DISPLAY_HEIGHT,\s*\{\s*maintainAspect:\s*true,\s*scalingMode:\s*this\.getBufferedScalingMode\(runtime\.slick\)\s*\}\s*\)/
+        /new runtime\.slick\.BufferedScalableGame\(\s*mainGame,\s*GAME_DISPLAY_WIDTH,\s*GAME_DISPLAY_HEIGHT,\s*\{\s*maintainAspect:\s*true,\s*scalingMode:\s*runtime\.slick\.BufferedScalingMode\.Linear\s*\}\s*\)/
     );
-    assert.match(webAppSource, /private bufferedGame: BufferedScalableGame \| null = null;/);
-    assert.match(webAppSource, /this\.bufferedGame\?\.setScalingMode\(this\.getBufferedScalingMode\(this\.preparedRuntime\.slick\)\)/);
     assert.doesNotMatch(webAppSource, /new runtime\.slick\.ScalableGame\(\s*mainGame/);
     assert.doesNotMatch(webAppSource, /mainGame\.scalableGame\s*=/);
 });
 
-test("Jackal PWA exposes persisted buffered scaling preferences", () => {
-    assert.match(webAppSource, /const SCALING_STORAGE_KEY = "jackal-scaling";/);
-    assert.match(webAppSource, /const SCALING_PREFERENCES = \["smooth", "crisp", "pixel-perfect"\] as const;/);
-    assert.match(webAppSource, /const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";/);
-    assert.match(webAppSource, /<select id="scaling-input" aria-label="Scaling">/);
-    assert.match(webAppSource, /getDeploymentStorageKey\(SCALING_STORAGE_KEY\)/);
-    assert.match(webAppSource, /slick\.BufferedScalingMode\.Linear/);
-    assert.match(webAppSource, /slick\.BufferedScalingMode\.Nearest/);
-    assert.match(webAppSource, /slick\.BufferedScalingMode\.Integer/);
+test("Jackal PWA keeps scaling mode out of the user-facing menu", () => {
+    assert.doesNotMatch(webAppSource, /scaling-input/);
+    assert.doesNotMatch(webAppSource, /SCALING_STORAGE_KEY/);
+    assert.doesNotMatch(webAppSource, /jackal-scaling/);
+    assert.doesNotMatch(webAppSource, /setScalingPreference/);
+    assert.doesNotMatch(webAppSource, /setScalingMode\(/);
+    assert.doesNotMatch(webAppSource, /BufferedScalingMode\.Nearest/);
+    assert.doesNotMatch(webAppSource, /BufferedScalingMode\.Integer/);
 });
 
 test("Jackal requires a slick2d-ts release with buffered scaling support", () => {
