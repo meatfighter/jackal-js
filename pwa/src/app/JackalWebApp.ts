@@ -92,15 +92,15 @@ export class JackalWebApp {
         }
         menu.innerHTML = `
             <section class="menu-panel" aria-label="Jackal menu">
+                <div class="setting-scaling-row" role="group" aria-label="Scaling">
+                    <span>Scaling</span>
+                    ${this.scalingPickerHtml()}
+                </div>
                 <label class="volume-row">
                     <span id="volume-icon" class="volume-icon" aria-hidden="true">${volumeIconSvg(this.volume)}</span>
                     <input id="volume-input" type="range" min="0" max="100" step="1" value="${Math.round(this.volume * 100)}" aria-label="Volume">
                     <span id="volume-value" class="volume-value">${Math.round(this.volume * 100)}</span>
                 </label>
-                <div class="setting-scaling-row" role="group" aria-label="Scaling">
-                    <span>Scaling</span>
-                    ${this.scalingPickerHtml()}
-                </div>
                 <div class="menu-buttons">
                     <button id="new-game-button" class="start-button" type="button">New Game</button>
                     <button id="continue-button" class="start-button" type="button"${canContinue ? "" : " disabled"}>Continue</button>

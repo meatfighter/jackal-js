@@ -131,6 +131,7 @@ button {
     font-weight: 700;
     column-gap: 10px;
     grid-template-columns: 30px minmax(0, 1fr) max-content;
+    justify-content: center;
     width: min(360px, 100%);
 }
 
@@ -225,8 +226,10 @@ button {
     font-weight: 700;
     gap: 10px;
     grid-template-columns: max-content auto;
+    justify-content: center;
     position: relative;
-    width: min(360px, 100%);
+    max-width: 100%;
+    width: fit-content;
 }
 
 .theme-picker {
@@ -352,6 +355,7 @@ button {
     flex-wrap: wrap;
     gap: 12px;
     justify-content: center;
+    margin-top: 8px;
 }
 
 .start-button,
