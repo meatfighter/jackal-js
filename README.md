@@ -452,6 +452,10 @@ npm run run:desktop
 
 The PWA uses `slick2d-ts`, a TypeScript/browser adaptation of the Slick2D APIs used by the Java game.
 
+The browser entry point wraps Jackal in `BufferedScalableGame` rather than the Java-shaped `ScalableGame`. Jackal renders each frame into a fixed `1024x960` offscreen framebuffer first, then the completed frame is presented to the browser canvas. That keeps sprite transforms, rotations, clips, fades, and HUD rendering stable when the page is displayed at fractional responsive sizes or high-DPI backing-store sizes.
+
+Keep that buffering decision in `pwa/src/app/JackalWebApp.ts`. The translated `Main.ts` class intentionally remains close to the Java source, including its legacy `ScalableGame` field and `javaMain()` shape.
+
 ### Game timing
 
 The TypeScript port preserves the original fixed-step gameplay model rather than tying simulation speed directly to browser render frequency.

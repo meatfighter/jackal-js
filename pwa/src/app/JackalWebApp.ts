@@ -230,9 +230,9 @@ export class JackalWebApp {
         const mainGame = new runtime.Main();
         this.inputMappingStore.restore(mainGame.buttonMapping);
 
-        const scalableGame = new runtime.slick.ScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
+        const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, true);
         const displayMode = this.getResponsiveWindowedDisplayMode();
-        const appContainer = new runtime.slick.AppGameContainer(scalableGame, displayMode.width, displayMode.height, false);
+        const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
         appContainer.setPreserveAudioCacheOnDestroy(true);
         appContainer.setLoopSuspended(true);
         appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
@@ -240,7 +240,6 @@ export class JackalWebApp {
         this.container = appContainer;
         this.game = mainGame;
         mainGame.appGameContainer = appContainer;
-        mainGame.scalableGame = scalableGame;
         mainGame.stateSaveInvalidatedHandler = () => this.clearStoredGameState();
         mainGame.inputMappingChangedHandler = () => this.saveCurrentInputMapping();
         mainGame.windowedDisplayModeProvider = () => this.getResponsiveWindowedDisplayMode();
