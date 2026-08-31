@@ -1,5 +1,6 @@
 import { javaFloat } from "../../java/JavaRuntime.js";
-import type { GameElementTypeId } from "./GameElementTypeRegistry.js";
+import type { GameElementTypeId } from "./GameElementTypeIds.js";
+import type { StandaloneModeId } from "./GameStateFields.js";
 
 /**
  * Java rounds every assignment to a float field or float-array element to IEEE-754 binary32.
@@ -1273,7 +1274,7 @@ export const GAME_ELEMENT_JAVA_FLOAT_FIELDS: Readonly<Record<GameElementTypeId, 
     ]
 };
 
-export const STANDALONE_MODE_JAVA_FLOAT_FIELDS: Readonly<Record<string, JavaFloatStateSpec>> = {
+export const STANDALONE_MODE_JAVA_FLOAT_FIELDS: Readonly<Record<StandaloneModeId, JavaFloatStateSpec>> = {
     INTRO: INTRO_MODE_JAVA_FLOAT_FIELDS,
     HERE: JEEP_HERE_MODE_JAVA_FLOAT_FIELDS,
     YEAH: JEEP_YEAH_MODE_JAVA_FLOAT_FIELDS,
@@ -1289,12 +1290,11 @@ export const STANDALONE_MODE_JAVA_FLOAT_FIELDS: Readonly<Record<string, JavaFloa
 };
 
 export function normalizeJavaFloatFields(target: object, fields: JavaFloatStateSpec): void {
-    const record = target as Record<string, unknown>;
     for (const [name, arrayDepth] of fields) {
-        if (!Object.prototype.hasOwnProperty.call(record, name)) {
+        if (!Object.hasOwn(target, name)) {
             continue;
         }
-        record[name] = normalizeJavaFloatValue(record[name], arrayDepth);
+        Reflect.set(target, name, normalizeJavaFloatValue(Reflect.get(target, name), arrayDepth));
     }
 }
 

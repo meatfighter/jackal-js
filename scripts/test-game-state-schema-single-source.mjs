@@ -8,7 +8,10 @@ const storeSource = readFileSync(new URL("../pwa/src/jackal/persistence/JackalGa
 const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", import.meta.url), "utf8");
 
 test("game-state schema constants have one runtime source", () => {
-    assert.match(schemaSource, /export const GAME_STATE_VERSION = 4;/);
+    assert.match(schemaSource, /export const GAME_STATE_VERSION = 5 as const;/);
+    assert.match(schemaSource, /export const MIN_SUPPORTED_GAME_STATE_VERSION = 4 as const;/);
+    assert.match(schemaSource, /export function isSupportedGameStateVersion/);
+    assert.match(schemaSource, /export function isFutureGameStateSnapshot/);
     assert.match(schemaSource, /export const GAME_STATE_STORAGE_KEY = "jackal\.game-state";/);
     assert.match(snapshotSource, /export \{ GAME_STATE_VERSION \} from "\.\/GameStateSchema\.js";/);
     assert.doesNotMatch(snapshotSource, /export const GAME_STATE_VERSION =/);
@@ -16,6 +19,7 @@ test("game-state schema constants have one runtime source", () => {
 
 test("PWA shell and store use shared game-state schema constants", () => {
     assert.match(webAppSource, /from "\.\.\/jackal\/persistence\/GameStateSchema\.js";/);
+    assert.match(webAppSource, /from "\.\.\/jackal\/persistence\/GameStateSnapshotValidator\.js";/);
     assert.match(storeSource, /from "\.\/GameStateSchema\.js";/);
     assert.match(webAppSource, /getDeploymentStorageKey\(GAME_STATE_STORAGE_KEY\)/);
     assert.match(webAppSource, /getDeploymentStorageKey\(VOLUME_STORAGE_KEY\)/);

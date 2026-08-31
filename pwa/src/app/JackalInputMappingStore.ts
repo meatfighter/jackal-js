@@ -104,7 +104,7 @@ export class JackalInputMappingStore {
             return null;
         }
 
-        const snapshot = JSON.parse(text) as JackalInputMappingSnapshot;
+        const snapshot: unknown = JSON.parse(text);
         if (!this.isSupportedSnapshot(snapshot)) {
             this.clear();
             return null;
@@ -113,10 +113,9 @@ export class JackalInputMappingStore {
         return snapshot;
     }
 
-    private isSupportedSnapshot(snapshot: JackalInputMappingSnapshot): boolean {
+    private isSupportedSnapshot(snapshot: unknown): snapshot is JackalInputMappingSnapshot {
         return (
-            snapshot !== null &&
-            typeof snapshot === "object" &&
+            this.isRecord(snapshot) &&
             snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
             this.isBinding(snapshot.keyUp) &&
             this.isBinding(snapshot.keyDown) &&
@@ -136,6 +135,10 @@ export class JackalInputMappingStore {
             this.isBinding(snapshot.controllerStart) &&
             typeof snapshot.gunKeyMapped === "boolean"
         );
+    }
+
+    private isRecord(value: unknown): value is Record<string, unknown> {
+        return value !== null && typeof value === "object" && !Array.isArray(value);
     }
 
     private isInteger(value: unknown): value is number {

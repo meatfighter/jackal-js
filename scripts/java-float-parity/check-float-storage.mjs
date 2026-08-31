@@ -12,7 +12,6 @@ const classMap = new Map(metadata.filter((entry) => entry.fullName === entry.nam
 
 const norm = (type) => String(type ?? "").replace(/\s+/g, "");
 const isFloatScalar = (type) => norm(type) === "float";
-const isFloatArray = (type) => /^float\[/.test(norm(type));
 const mappedFieldName = (className, javaName) => exceptions.fieldExceptions?.[`${className}.${javaName}`]?.target ?? javaName;
 
 const fieldCache = new Map();
@@ -116,7 +115,7 @@ function methodMeta(className, tsName) {
     return candidates.length === 1 ? candidates[0] : null;
 }
 function staticMeta(className, index) {
-    return methodsFor(className, "<static>").find((method) => method.overloadIndex === index) ?? null;
+    return methodsFor(className, "<static>").find((method) => method.staticBlockIndex === index) ?? null;
 }
 
 function skipBody(className, methodName) {
@@ -127,7 +126,7 @@ function skipBody(className, methodName) {
     return false;
 }
 
-function isJavaFloatCall(node, sf) {
+function isJavaFloatCall(node) {
     return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "javaFloat";
 }
 function numericLiteralValue(node) {
@@ -144,10 +143,6 @@ function numericLiteralValue(node) {
 function isExactFloatLiteral(node) {
     const value = numericLiteralValue(node);
     return value !== null && Math.fround(value) === value;
-}
-function lineIndent(source, position) {
-    const lineStart = source.lastIndexOf("\n", position - 1) + 1;
-    return /^[\t ]*/.exec(source.slice(lineStart, position))?.[0] ?? "";
 }
 function assignmentOperator(kind) {
     return (
@@ -279,7 +274,7 @@ for (const file of files) {
             return null;
         }
         function isKnownFloat(node) {
-            if (isJavaFloatCall(node, sf) || isExactFloatLiteral(node)) return true;
+            if (isJavaFloatCall(node) || isExactFloatLiteral(node)) return true;
             if (ts.isParenthesizedExpression(node) || ts.isNonNullExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node))
                 return isKnownFloat(node.expression);
             if (ts.isPrefixUnaryExpression(node) && (node.operator === ts.SyntaxKind.PlusToken || node.operator === ts.SyntaxKind.MinusToken))
@@ -386,7 +381,7 @@ for (const file of files) {
         for (const member of node.members) {
             if (ts.isPropertyDeclaration(member) && member.name && ts.isIdentifier(member.name) && member.initializer) {
                 const javaField = directFields.get(member.name.text);
-                if (javaField && isFloatScalar(javaField.type) && !isJavaFloatCall(member.initializer, sf) && !isExactFloatLiteral(member.initializer)) {
+                if (javaField && isFloatScalar(javaField.type) && !isJavaFloatCall(member.initializer) && !isExactFloatLiteral(member.initializer)) {
                     edits.push({
                         start: member.initializer.getStart(sf),
                         end: member.initializer.getEnd(),

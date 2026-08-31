@@ -7,7 +7,8 @@
     "typescriptOnlyFiles": {
         "MainRuntimeState": "Breaks ESM circular dependencies while preserving Java-style global runtime ownership.",
         "index": "Browser module export surface.",
-        "JackalMath": "Provides a cycle-safe, Java-float-compatible rotation helper shared by Main and Player."
+        "JackalMath": "Provides a cycle-safe, Java-float-compatible rotation helper shared by Main and Player.",
+        "JackalResources": "Provides the browser resource-loading boundary for Jackal packed data files."
     },
     "fieldExceptions": {
         "ButtonMapping.VERSION": {
@@ -102,6 +103,12 @@
         },
         "OptionsMode.optionSelected": {
             "target": "optionSelectedFlag"
+        },
+        "Main.appGameContainer": {
+            "reason": "The browser AppGameContainer is owned by JackalWebApp rather than duplicated on the gameplay object."
+        },
+        "Main.scalableGame": {
+            "reason": "Browser native-resolution buffering and scaling are owned by JackalWebApp."
         }
     },
     "methodExceptions": {
@@ -206,6 +213,9 @@
         },
         "OptionsMode.shouldRefreshControllers": {
             "reason": "Browser controller refresh is handled by the input runtime."
+        },
+        "Main.loadClasses": {
+            "reason": "ES module evaluation initializes imported class tables; the browser does not need Java Class.forName calls."
         }
     },
     "enumMemberExceptions": {

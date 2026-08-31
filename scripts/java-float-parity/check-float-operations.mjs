@@ -108,7 +108,7 @@ function callCandidates(owner, tsName, argumentCount) {
     return methodsFor(owner, tsName).filter((method) => (method.params ?? []).length === argumentCount);
 }
 function staticMeta(className, index) {
-    return methodsFor(className, "<static>").find((method) => method.overloadIndex === index) ?? null;
+    return methodsFor(className, "<static>").find((method) => method.staticBlockIndex === index) ?? null;
 }
 function skipBody(className, methodName) {
     if (/^(?:render|draw)/.test(methodName)) return true;
@@ -344,8 +344,7 @@ for (const file of files) {
                 const text = node.expression.getText(sf);
                 if (text === "javaFloat" || text.endsWith(".nextFloat")) return "float";
                 if (text === "javaDouble") return "double";
-                if (/^(?:javaInt|javaIntDiv|javaRoundFloat|javaByte|javaShort|javaChar)$/.test(text) || text.endsWith(".nextInt")) return "int";
-                if (text === "javaLong") return "long";
+                if (/^(?:javaInt|javaIntDiv|javaRoundFloat|javaByte)$/.test(text) || text.endsWith(".nextInt")) return "int";
                 if (text.startsWith("Math.")) {
                     const name = text.slice(5);
                     if (name === "abs" || name === "min" || name === "max") return node.arguments.reduce((type, arg) => promote(type, javaType(arg)), "int");

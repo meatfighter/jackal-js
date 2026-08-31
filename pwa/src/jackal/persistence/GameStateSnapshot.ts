@@ -1,4 +1,6 @@
-import type { GameElementTypeId } from "./GameElementTypeRegistry.js";
+import type { GameElementTypeId } from "./GameElementTypeIds.js";
+import type { MusicId, SongId, StandaloneModeId } from "./GameStateFields.js";
+import type { SupportedGameStateVersion } from "./GameStateSchema.js";
 export { GAME_STATE_VERSION } from "./GameStateSchema.js";
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -11,7 +13,7 @@ export type RandomSnapshot = {
 };
 
 export type MusicSnapshot = {
-    id: string;
+    id: MusicId;
     looped: boolean;
     paused: boolean;
     playing: boolean;
@@ -21,7 +23,7 @@ export type MusicSnapshot = {
 };
 
 export type SongSnapshot = {
-    id: string;
+    id: SongId;
     playing: boolean;
     playedIntro2: boolean;
     activeMusic: MusicSnapshot | null;
@@ -50,6 +52,8 @@ export type EntitySnapshot = {
     id: number;
     type: GameElementTypeId;
     fields: EncodedRecord;
+    /** Version 5+: transient asset/runtime descriptors kept separate from translated Java fields. */
+    runtimeFields?: EncodedRecord;
 };
 
 export type GameModeSnapshot = {
@@ -89,7 +93,7 @@ export type GenericModeExtraSnapshot = {
 };
 
 export type JackalBaseStateSnapshot = {
-    version: number;
+    version: SupportedGameStateVersion;
     appVersion: string;
     savedAt: string;
     kind: "game" | "mode";
@@ -97,8 +101,8 @@ export type JackalBaseStateSnapshot = {
     konamiCodeFields: EncodedRecord | null;
     random: RandomSnapshot;
     friendlySoldierCount: number;
-    currentSongId: string | null;
-    requestedSongId: string | null;
+    currentSongId: SongId | null;
+    requestedSongId: SongId | null;
     currentSongState: SongSnapshot | null;
     audioState: AudioStateSnapshot;
 };
@@ -111,7 +115,7 @@ export type JackalGameModeStateSnapshot = JackalBaseStateSnapshot & {
 
 export type JackalStandaloneModeStateSnapshot = JackalBaseStateSnapshot & {
     kind: "mode";
-    modeId: string;
+    modeId: StandaloneModeId;
     modeFields: EncodedRecord;
     modeExtra?: GenericModeExtraSnapshot;
 };

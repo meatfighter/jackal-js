@@ -97,7 +97,7 @@ test("predecoded directions exactly match Java packed-long extraction for every 
 test("the PWA decodes directions once and uses allocation-free byte lookups in the hot path", () => {
     const mainPath = join(rootDir, "pwa", "src", "jackal", "Main.ts");
     const gameModePath = join(rootDir, "pwa", "src", "jackal", "GameMode.ts");
-    const serializer = readFileSync(join(rootDir, "pwa", "src", "jackal", "persistence", "JackalGameStateSerializer.ts"), "utf8");
+    const gameStateFields = readFileSync(join(rootDir, "pwa", "src", "jackal", "persistence", "GameStateFields.ts"), "utf8");
 
     const loadDirections = readMethod(mainPath, "Main", "loadDirections");
     const loadText = loadDirections.method.getText(loadDirections.sourceFile);
@@ -146,5 +146,5 @@ test("the PWA decodes directions once and uses allocation-free byte lookups in t
         );
     }
 
-    assert.match(serializer, /"directionsDecoded"/, "The derived cache must remain excluded from save-state persistence.");
+    assert.match(gameStateFields, /"directionsDecoded"/, "The derived cache must remain excluded from save-state persistence.");
 });

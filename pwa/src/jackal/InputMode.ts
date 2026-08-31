@@ -153,6 +153,14 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.gc.getInput().clearControlPressedRecord();
     }
 
+    /** Makes the browser listener registration match the restored mode state. */
+    public syncInputListenerState(): void {
+        this.listeningForInput = false;
+        if (this.state === InputMode.STATE_READING || this.state === InputMode.STATE_READ_FADE) {
+            this.addInputListeners();
+        }
+    }
+
     private addInputListeners(): void {
         if (this.listeningForInput) {
             return;

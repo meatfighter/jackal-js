@@ -8,7 +8,16 @@ import { rootDir } from "./build-utils.mjs";
 const jackalRoot = join(rootDir, "pwa", "src", "jackal");
 const serializerPath = join(jackalRoot, "persistence", "JackalGameStateSerializer.ts");
 const serializerSource = readFileSync(serializerPath, "utf8");
-const serializerFile = ts.createSourceFile(serializerPath, serializerSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+const fieldsPath = join(jackalRoot, "persistence", "GameStateFields.ts");
+const fieldsSource = readFileSync(fieldsPath, "utf8");
+const fieldsFile = ts.createSourceFile(fieldsPath, fieldsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+const codecSource = readFileSync(join(jackalRoot, "persistence", "GameStateCodec.ts"), "utf8");
+const runtimePath = join(jackalRoot, "persistence", "EntityRuntimePersistence.ts");
+const runtimeSource = readFileSync(runtimePath, "utf8");
+const runtimeFile = ts.createSourceFile(runtimePath, runtimeSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+const typeIdsPath = join(jackalRoot, "persistence", "GameElementTypeIds.ts");
+const typeIdsSource = readFileSync(typeIdsPath, "utf8");
+const typeIdsFile = ts.createSourceFile(typeIdsPath, typeIdsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 
 function collectTypeScriptFiles(directory) {
     const result = [];
@@ -75,11 +84,20 @@ function fieldsForClass(model, className, seen = new Set()) {
     return fields;
 }
 
-function stringElements(initializer, label) {
+function stringElements(initializer, sourceFile, label) {
     let expression = initializer;
-    if (ts.isNewExpression(expression) && expression.expression.getText(serializerFile) === "Set") {
+    while (ts.isAsExpression(expression) || ts.isSatisfiesExpression(expression) || ts.isParenthesizedExpression(expression)) {
+        expression = expression.expression;
+    }
+    if (ts.isNewExpression(expression) && expression.expression.getText(sourceFile) === "Set") {
         assert.equal(expression.arguments?.length, 1, `${label} must initialize Set with one array.`);
         expression = expression.arguments[0];
+    }
+    if (ts.isCallExpression(expression)) {
+        return expression.arguments.map((element) => {
+            assert.ok(ts.isStringLiteral(element), `${label} must contain only string literals.`);
+            return element.text;
+        });
     }
     assert.ok(ts.isArrayLiteralExpression(expression), `${label} must be a literal string array.`);
     return expression.elements.map((element) => {
@@ -88,19 +106,50 @@ function stringElements(initializer, label) {
     });
 }
 
-function serializerConstant(name) {
-    for (const statement of serializerFile.statements) {
+function persistenceConstant(name) {
+    for (const statement of fieldsFile.statements) {
         if (!ts.isVariableStatement(statement)) {
             continue;
         }
         for (const declaration of statement.declarationList.declarations) {
             if (ts.isIdentifier(declaration.name) && declaration.name.text === name) {
                 assert.ok(declaration.initializer, `${name} must have an initializer.`);
-                return stringElements(declaration.initializer, name);
+                return stringElements(declaration.initializer, fieldsFile, name);
             }
         }
     }
-    throw new Error(`Missing serializer constant ${name}.`);
+    throw new Error(`Missing persistence constant ${name}.`);
+}
+
+function variableInitializer(sourceFile, name) {
+    for (const statement of sourceFile.statements) {
+        if (!ts.isVariableStatement(statement)) {
+            continue;
+        }
+        for (const declaration of statement.declarationList.declarations) {
+            if (ts.isIdentifier(declaration.name) && declaration.name.text === name) {
+                assert.ok(declaration.initializer, `${name} must have an initializer.`);
+                return declaration.initializer;
+            }
+        }
+    }
+    throw new Error(`Missing variable ${name}.`);
+}
+
+function runtimePointerMap() {
+    let initializer = variableInitializer(runtimeFile, "ENTITY_RUNTIME_POINTERS");
+    while (ts.isAsExpression(initializer) || ts.isSatisfiesExpression(initializer) || ts.isParenthesizedExpression(initializer)) {
+        initializer = initializer.expression;
+    }
+    assert.ok(ts.isObjectLiteralExpression(initializer), "ENTITY_RUNTIME_POINTERS must be an object literal.");
+
+    const result = new Map();
+    for (const property of initializer.properties) {
+        assert.ok(ts.isPropertyAssignment(property), "ENTITY_RUNTIME_POINTERS must use explicit property assignments.");
+        assert.ok(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name), "Runtime pointer keys must be stable entity IDs.");
+        result.set(property.name.text, new Set(stringElements(property.initializer, runtimeFile, `ENTITY_RUNTIME_POINTERS.${property.name.text}`)));
+    }
+    return result;
 }
 
 const fieldLists = new Map([
@@ -126,7 +175,7 @@ const fieldLists = new Map([
 test("named persistence fields are unique and correspond to declared runtime state", () => {
     const model = buildClassModel();
     for (const [constantName, classNames] of fieldLists) {
-        const names = serializerConstant(constantName);
+        const names = persistenceConstant(constantName);
         assert.equal(new Set(names).size, names.length, `${constantName} contains duplicate field names.`);
         for (const className of classNames) {
             const classFields = fieldsForClass(model, className);
@@ -138,7 +187,7 @@ test("named persistence fields are unique and correspond to declared runtime sta
 });
 
 test("generic object serialization explicitly excludes reconstructed and runtime-only state", () => {
-    const skipped = serializerConstant("SKIPPED_INSTANCE_FIELDS");
+    const skipped = persistenceConstant("SKIPPED_INSTANCE_FIELDS");
     assert.equal(new Set(skipped).size, skipped.length, "SKIPPED_INSTANCE_FIELDS contains duplicates.");
 
     for (const field of [
@@ -159,31 +208,58 @@ test("generic object serialization explicitly excludes reconstructed and runtime
         assert.ok(skipped.includes(field), `${field} must remain reconstructed or runtime-only rather than generically persisted.`);
     }
 
-    assert.match(serializerSource, /for\s*\(const key of Object\.keys\(source\)\)/);
-    assert.match(serializerSource, /SKIPPED_INSTANCE_FIELDS\.has\(key\)/);
-    assert.match(serializerSource, /typeof value === "function" \|\| typeof value === "undefined"/);
-    assert.match(serializerSource, /record\[key\] = this\.encodeValue\(value, context\)/);
+    assert.match(codecSource, /for\s*\(const key of Object\.keys\(source\)\)/);
+    assert.match(codecSource, /SKIPPED_INSTANCE_FIELDS\.has\(key\)/);
+    assert.match(codecSource, /typeof value === "function" \|\| typeof value === "undefined"/);
+    assert.match(codecSource, /record\[key\] = encodeValue\(value, context\)/);
 });
 
 test("legacy Fire, Explosion, and JeepYeah save migrations remain bidirectionally compatible", () => {
     const schema = readFileSync(join(jackalRoot, "persistence", "GameStateSchema.ts"), "utf8");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*4/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*5/);
+    assert.match(schema, /MIN_SUPPORTED_GAME_STATE_VERSION\s*=\s*4/);
 
     assert.match(serializerSource, /entity instanceof Fire \|\| entity instanceof Explosion/);
-    assert.match(serializerSource, /record\.enemy = this\.encodeValue\(entity\.sourceEnemy, context\)/);
+    assert.match(serializerSource, /record\.enemy = encodeValue\(entity\.sourceEnemy, context\)/);
     assert.match(serializerSource, /delete record\.sourceEnemy/);
-    assert.match(serializerSource, /mutableEntity\.sourceEnemy =/);
-    assert.match(serializerSource, /mutableEntity\.enemy = false/);
+    assert.match(serializerSource, /entity\.sourceEnemy =/);
+    assert.match(serializerSource, /entity\.enemy = false/);
 
-    assert.match(serializerSource, /value\.removeFlag === true/);
+    assert.match(serializerSource, /Reflect\.get\(value, "removeFlag"\) === true/);
     assert.match(serializerSource, /value\.remove = true/);
-    assert.match(serializerSource, /delete value\.removeFlag/);
-    assert.match(serializerSource, /record\.removeFlag = this\.encodeValue\(source\.remove, context\)/);
+    assert.match(serializerSource, /Reflect\.deleteProperty\(value, "removeFlag"\)/);
+    assert.match(serializerSource, /record\.removeFlag = encodeValue\(source\.remove, context\)/);
+});
+
+test("runtime-only entity descriptors are separated from translated Java fields with v4 migration support", () => {
+    assert.match(serializerSource, /captureEntityRuntimeFields\(entity, context\.main, context\.gameMode\)/);
+    assert.match(serializerSource, /runtimeFields === undefined \? \{\} : \{ runtimeFields \}/);
+    assert.match(runtimeSource, /LEGACY_ENEMY_BULLET_SPRITE_FIELD/);
+    assert.match(runtimeSource, /LEGACY_FLOOR_GUN_PLAIN_FIELD/);
+    assert.match(runtimeSource, /LEGACY_TILE_DEBRIS_SPRITE_TILE_FIELD/);
+    assert.match(runtimeSource, /clearLegacyRuntimeFields\(entity\)/);
+});
+
+test("every skipped entity collection/player pointer is reconstructed from GameMode", () => {
+    const model = buildClassModel();
+    const typeIds = stringElements(variableInitializer(typeIdsFile, "GAME_ELEMENT_TYPE_IDS"), typeIdsFile, "GAME_ELEMENT_TYPE_IDS");
+    const configured = runtimePointerMap();
+    const pointerNames = new Set(["solids", "enemies", "mines", "player"]);
+
+    for (const typeId of typeIds) {
+        const expected = new Set([...fieldsForClass(model, typeId)].filter((field) => pointerNames.has(field)));
+        const actual = configured.get(typeId) ?? new Set();
+        assert.deepEqual([...actual].sort(), [...expected].sort(), `${typeId} runtime pointers must exactly match skipped class fields.`);
+    }
+
+    for (const typeId of configured.keys()) {
+        assert.ok(typeIds.includes(typeId), `ENTITY_RUNTIME_POINTERS contains unregistered entity ID ${typeId}.`);
+    }
 });
 
 test("the optimized direction cache is derived from Stage and never persisted as authoritative state", () => {
-    const gameModeFields = serializerConstant("GAME_MODE_FIELD_NAMES");
-    const skipped = serializerConstant("SKIPPED_INSTANCE_FIELDS");
+    const gameModeFields = persistenceConstant("GAME_MODE_FIELD_NAMES");
+    const skipped = persistenceConstant("SKIPPED_INSTANCE_FIELDS");
     assert.ok(!gameModeFields.includes("directionsDecoded"));
     assert.ok(skipped.includes("directionsDecoded"));
     assert.match(serializerSource, /gameMode\.setStage\s*\(/);

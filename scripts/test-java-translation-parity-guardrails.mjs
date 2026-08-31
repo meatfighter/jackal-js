@@ -53,9 +53,9 @@ test("Java field hiding remains represented by separate JavaScript properties", 
     assert.match(baseSource, /public\s+enemy:\s*boolean\s*=\s*false/);
 
     const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
-    assert.match(serializer, /record\.enemy\s*=\s*this\.encodeValue\(entity\.sourceEnemy/);
-    assert.match(serializer, /mutableEntity\.sourceEnemy\s*=/);
-    assert.match(serializer, /mutableEntity\.enemy\s*=\s*false/);
+    assert.match(serializer, /record\.enemy\s*=\s*encodeValue\(entity\.sourceEnemy/);
+    assert.match(serializer, /entity\.sourceEnemy\s*=/);
+    assert.match(serializer, /entity\.enemy\s*=\s*false/);
 });
 
 test("JeepYeah removal state follows the original Java field", () => {
@@ -240,9 +240,13 @@ test("Java-shaped shared representations avoid JavaScript coercion and duplicate
     assert.match(main, /this\.fonts\[i\]\[character\.charCodeAt\(0\)\] = image;/);
     assert.doesNotMatch(main, /Record<string, Image>/);
 
-    assert.match(main, /return MainRuntimeState\.mainInstance!/);
+    assert.match(main, /const mainInstance = MainRuntimeState\.mainInstance;/);
+    assert.match(main, /if \(mainInstance === null\)/);
+    assert.match(main, /return mainInstance;/);
     assert.match(main, /MainRuntimeState\.mainInstance = mainInstance;/);
-    assert.match(main, /return MainRuntimeState\.gameMode!/);
+    assert.match(main, /const gameMode = MainRuntimeState\.gameMode;/);
+    assert.match(main, /if \(gameMode === null\)/);
+    assert.match(main, /return gameMode;/);
     assert.match(main, /MainRuntimeState\.gameMode = gameMode;/);
     assert.doesNotMatch(main, /public static (?:mainInstance|gameMode):/);
 
@@ -282,5 +286,6 @@ test("TypeScript policy strengthens checking without changing Java field semanti
     assert.equal(options.noFallthroughCasesInSwitch, true);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*4/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*5/);
+    assert.match(schema, /MIN_SUPPORTED_GAME_STATE_VERSION\s*=\s*4/);
 });

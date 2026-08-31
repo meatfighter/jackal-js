@@ -159,7 +159,7 @@ public final class FloatParityHarness {
     );
 
     const sources = [];
-    const collect = (dir) => {
+    const collect = () => {
         for (const name of ["Image.java", "Color.java", "Graphics.java"]) {
             const path = join(sourceRoot, "org", "newdawn", "slick", name);
             if (!sources.includes(path)) sources.push(path);
@@ -185,7 +185,7 @@ public final class FloatParityHarness {
             sources.push(join(sourceRoot, "jackal", `${name}.java`));
         }
     };
-    collect(sourceRoot);
+    collect();
     const compile = spawnSync("javac", ["-encoding", "UTF-8", "-d", classRoot, ...sources], { encoding: "utf8" });
     assert.equal(compile.status, 0, `javac failed:\n${compile.stdout}\n${compile.stderr}`);
     const run = spawnSync("java", ["-cp", classRoot, "jackal.FloatParityHarness"], { encoding: "utf8" });

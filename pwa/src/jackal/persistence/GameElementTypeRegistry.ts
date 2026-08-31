@@ -1,3 +1,4 @@
+import { GAME_ELEMENT_TYPE_IDS, type GameElementTypeId } from "./GameElementTypeIds.js";
 import { Airplane } from "../Airplane.js";
 import { AppearingBrownTank } from "../AppearingBrownTank.js";
 import { AppearingEnemyHelicopter } from "../AppearingEnemyHelicopter.js";
@@ -165,25 +166,19 @@ export const GAME_ELEMENT_TYPES = {
     TrainManager,
     TravelingExplosion,
     TroopsTruck
-} as const satisfies Record<string, GameElementConstructor>;
+} as const satisfies Record<GameElementTypeId, GameElementConstructor>;
 
-export type GameElementTypeId = keyof typeof GAME_ELEMENT_TYPES;
-
-const GAME_ELEMENT_TYPE_IDS = new Set<GameElementTypeId>(Object.keys(GAME_ELEMENT_TYPES) as GameElementTypeId[]);
-
-export const GAME_ELEMENT_TYPE_ID_BY_CONSTRUCTOR: ReadonlyMap<GameElementConstructor, GameElementTypeId> = new Map(
-    (Object.entries(GAME_ELEMENT_TYPES) as [GameElementTypeId, GameElementConstructor][]).map(([typeId, constructor]) => [constructor, typeId])
+const GAME_ELEMENT_TYPE_ID_BY_PROTOTYPE: ReadonlyMap<object, GameElementTypeId> = new Map(
+    GAME_ELEMENT_TYPE_IDS.map((typeId) => [GAME_ELEMENT_TYPES[typeId].prototype, typeId])
 );
 
-export function isGameElementTypeId(value: unknown): value is GameElementTypeId {
-    return typeof value === "string" && GAME_ELEMENT_TYPE_IDS.has(value as GameElementTypeId);
-}
-
 export function getGameElementTypeId(entity: GameElement): GameElementTypeId {
-    const constructor = entity.constructor as unknown as GameElementConstructor;
-    const typeId = GAME_ELEMENT_TYPE_ID_BY_CONSTRUCTOR.get(constructor);
+    const prototype: unknown = Object.getPrototypeOf(entity);
+    const typeId = prototype === null || typeof prototype !== "object" ? undefined : GAME_ELEMENT_TYPE_ID_BY_PROTOTYPE.get(prototype);
     if (typeId === undefined) {
-        throw new Error(`Unsupported Jackal entity type: ${constructor.name}`);
+        throw new Error(`Unsupported Jackal entity type: ${entity.constructor.name}`);
     }
     return typeId;
 }
+
+export type { GameElementTypeId } from "./GameElementTypeIds.js";

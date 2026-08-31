@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { format, resolveConfig } from "prettier";
 
 const scriptDir = fileURLToPath(new URL(".", import.meta.url));
 const rootDir = join(scriptDir, "..", "..");
@@ -48,6 +47,10 @@ function floatFieldsFor(className) {
 
 function renderSpec(fields, itemIndent = "    ", closingIndent = "") {
     if (fields.length === 0) return "[]";
+    if (fields.length === 1) {
+        const [name, depth] = fields[0];
+        return `[["${name}", ${depth}]]`;
+    }
     return `[\n${fields.map(([name, depth]) => `${itemIndent}["${name}", ${depth}]`).join(",\n")}\n${closingIndent}]`;
 }
 
@@ -93,7 +96,7 @@ const modes = [
 ];
 
 const sections = [
-    `import { javaFloat } from "../../java/JavaRuntime.js";\nimport type { GameElementTypeId } from "./GameElementTypeRegistry.js";\n\n/**\n * Java rounds every assignment to a float field or float-array element to IEEE-754 binary32.\n * Production updates already preserve those storage boundaries. These tables normalize snapshots\n * written by older PWA builds, whose Number values may still contain binary64-only state.\n *\n * This code runs only while restoring a save; it adds no work to the 100 TPS gameplay loop.\n */\nexport type JavaFloatStateField = readonly [name: string, arrayDepth: number];\nexport type JavaFloatStateSpec = readonly JavaFloatStateField[];\n`
+    `import { javaFloat } from "../../java/JavaRuntime.js";\nimport type { GameElementTypeId } from "./GameElementTypeIds.js";\nimport type { StandaloneModeId } from "./GameStateFields.js";\n\n/**\n * Java rounds every assignment to a float field or float-array element to IEEE-754 binary32.\n * Production updates already preserve those storage boundaries. These tables normalize snapshots\n * written by older PWA builds, whose Number values may still contain binary64-only state.\n *\n * This code runs only while restoring a save; it adds no work to the 100 TPS gameplay loop.\n */\nexport type JavaFloatStateField = readonly [name: string, arrayDepth: number];\nexport type JavaFloatStateSpec = readonly JavaFloatStateField[];\n`
 ];
 
 for (const className of standaloneClasses) {
@@ -104,27 +107,15 @@ sections.push("\nexport const GAME_ELEMENT_JAVA_FLOAT_FIELDS: Readonly<Record<Ga
 sections.push(entityNames.map((className) => `    ${className}: ${renderSpec(floatFieldsFor(className), "        ", "    ")}`).join(",\n"));
 sections.push("\n};\n");
 
-sections.push("\nexport const STANDALONE_MODE_JAVA_FLOAT_FIELDS: Readonly<Record<string, JavaFloatStateSpec>> = {\n");
+sections.push("\nexport const STANDALONE_MODE_JAVA_FLOAT_FIELDS: Readonly<Record<StandaloneModeId, JavaFloatStateSpec>> = {\n");
 sections.push(modes.map(([mode, spec]) => `    ${mode}: ${spec}`).join(",\n"));
 sections.push("\n};\n");
 
 sections.push(
-    `\nexport function normalizeJavaFloatFields(target: object, fields: JavaFloatStateSpec): void {\n    const record = target as Record<string, unknown>;\n    for (const [name, arrayDepth] of fields) {\n        if (!Object.prototype.hasOwnProperty.call(record, name)) {\n            continue;\n        }\n        record[name] = normalizeJavaFloatValue(record[name], arrayDepth);\n    }\n}\n\nfunction normalizeJavaFloatValue(value: unknown, arrayDepth: number): unknown {\n    if (arrayDepth === 0) {\n        return typeof value === "number" ? javaFloat(value) : value;\n    }\n    if (!Array.isArray(value)) {\n        return value;\n    }\n    for (let i = 0; i < value.length; i++) {\n        value[i] = normalizeJavaFloatValue(value[i], arrayDepth - 1);\n    }\n    return value;\n}\n`
+    `\nexport function normalizeJavaFloatFields(target: object, fields: JavaFloatStateSpec): void {\n    for (const [name, arrayDepth] of fields) {\n        if (!Object.hasOwn(target, name)) {\n            continue;\n        }\n        Reflect.set(target, name, normalizeJavaFloatValue(Reflect.get(target, name), arrayDepth));\n    }\n}\n\nfunction normalizeJavaFloatValue(value: unknown, arrayDepth: number): unknown {\n    if (arrayDepth === 0) {\n        return typeof value === "number" ? javaFloat(value) : value;\n    }\n    if (!Array.isArray(value)) {\n        return value;\n    }\n    for (let i = 0; i < value.length; i++) {\n        value[i] = normalizeJavaFloatValue(value[i], arrayDepth - 1);\n    }\n    return value;\n}\n`
 );
 
-const prettierConfig = (await resolveConfig(outputPath)) ?? {
-    tabWidth: 4,
-    useTabs: false,
-    semi: true,
-    singleQuote: false,
-    trailingComma: "none",
-    printWidth: 160,
-    endOfLine: "lf"
-};
-const generated = await format(sections.join(""), {
-    ...prettierConfig,
-    parser: "typescript"
-});
+const generated = sections.join("");
 if (checkOnly) {
     const committed = readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n");
     assert.equal(committed, generated, "Java float save-state metadata is stale. Run `npm run generate:java-float-state` and review the serializer coverage.");

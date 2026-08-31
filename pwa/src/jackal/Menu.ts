@@ -75,9 +75,12 @@ export class Menu {
 
     public update(): void {
         if (this.konamiCodeTest) {
-            this.main.konamiCode.update();
-            if (this.main.konamiCode.gettingClose() || (this.main.konamiCode.enabled && !this.main.konamiCode.keyReleased)) {
-                return;
+            const konamiCode = this.main.konamiCode;
+            if (konamiCode !== null) {
+                konamiCode.update();
+                if (konamiCode.gettingClose() || (konamiCode.enabled && !konamiCode.keyReleased)) {
+                    return;
+                }
             }
         }
 

@@ -6,5 +6,10 @@ declare global {
     }
 }
 
-new JackalWebApp(document.getElementById("app") as HTMLElement).showMenu();
+const root = document.getElementById("app");
+if (!(root instanceof HTMLElement)) {
+    throw new Error("Jackal application root is missing.");
+}
+
+new JackalWebApp(root).showMenu();
 window.__jackalBooted = true;

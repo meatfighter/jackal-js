@@ -90,6 +90,14 @@ export class Player {
     public releaseablePows: number = 0;
     public inSwamp: boolean = false;
 
+    /** Reconnects browser/runtime-only links after constructor-free save restoration. */
+    public restoreRuntimeReferences(main: Main, gameMode: GameMode): void {
+        this.main = main;
+        this.gameMode = gameMode;
+        this.input = main.input;
+        this.mines = gameMode.mines;
+    }
+
     public setWeaponArmed(weaponArmed: boolean): void {
         this.weaponArmed = weaponArmed;
     }
@@ -212,7 +220,9 @@ export class Player {
                     this.main.loseLife();
                     this.invincible = Player.INVINCIBLE_DELAY;
                 } else if (!this.gameMode.stageCompletedFlag) {
-                    this.main.konamiCode.enabled = false;
+                    if (this.main.konamiCode !== null) {
+                        this.main.konamiCode.enabled = false;
+                    }
                     this.main.requestMode(Modes.CONTINUE, this.gameMode.gc);
                 }
             } else {

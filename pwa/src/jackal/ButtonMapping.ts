@@ -1,5 +1,4 @@
 import { Input } from "slick2d-ts";
-import { Integer } from "../java/JavaRuntime.js";
 export class ButtonMapping {
     public static readonly NO_BINDING: number = -1;
     public static readonly ACTION_UP: number = 0;
@@ -263,6 +262,6 @@ export class ButtonMapping {
             case Input.KEY_Z:
                 return "Z";
         }
-        return Integer.toString(key);
+        return key.toString();
     }
 }

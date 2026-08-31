@@ -579,7 +579,7 @@ export class GameMode implements IMode, IFadeListener {
                 break;
             case Triggers.PLAYER:
                 this.createPlayer(javaFloat(x + 48), javaFloat(y + 48));
-                this.main.startFade(false, null!);
+                this.main.startFade(false, null);
                 switch (this.main.stageIndex) {
                     case 3:
                         this.main.requestSong(this.main.stageSong0);
@@ -674,7 +674,7 @@ export class GameMode implements IMode, IFadeListener {
                 if (this.main.continued) {
                     this.main.requestSong(this.main.stageSong0);
                 }
-                this.main.startFade(false, null!);
+                this.main.startFade(false, null);
                 break;
         }
     }

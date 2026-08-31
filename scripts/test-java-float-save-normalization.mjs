@@ -50,8 +50,9 @@ test("legacy binary64 save values are normalized at Java float storage boundarie
     assert.equal(plane.left, true);
 });
 
-test("serializer applies float normalization to every persisted mechanics family", () => {
-    const source = readFileSync(join(rootDir, "pwa", "src", "jackal", "persistence", "JackalGameStateSerializer.ts"), "utf8");
+test("persistence applies float normalization to every persisted mechanics family", () => {
+    const serializer = readFileSync(join(rootDir, "pwa", "src", "jackal", "persistence", "JackalGameStateSerializer.ts"), "utf8");
+    const codec = readFileSync(join(rootDir, "pwa", "src", "jackal", "persistence", "GameStateCodec.ts"), "utf8");
     for (const marker of [
         "MAIN_JAVA_FLOAT_FIELDS",
         "GAME_MODE_JAVA_FLOAT_FIELDS",
@@ -61,9 +62,9 @@ test("serializer applies float normalization to every persisted mechanics family
         "MENU_JAVA_FLOAT_FIELDS",
         "JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS",
         "JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS",
-        "JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS",
-        "normalizeJavaFloatFields(target, javaFloatFields)"
+        "JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS"
     ]) {
-        assert.ok(source.includes(marker), `Missing save normalization integration: ${marker}`);
+        assert.ok(serializer.includes(marker), `Missing save normalization integration: ${marker}`);
     }
+    assert.match(codec, /normalizeJavaFloatFields\(target, javaFloatFields\)/);
 });

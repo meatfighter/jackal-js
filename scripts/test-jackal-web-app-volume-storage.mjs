@@ -78,8 +78,12 @@ async function loadWebApp() {
             `const ResourceLoader = { clearFailures() {}, waitForAll: async () => {}, getResourceAsStream: async () => null };`
         )
         .replace(
-            `import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "../jackal/persistence/GameStateSchema.js";`,
-            `const GAME_STATE_STORAGE_KEY = "jackal.game-state"; const GAME_STATE_VERSION = 4;`
+            `import { GAME_STATE_STORAGE_KEY, isFutureGameStateSnapshot } from "../jackal/persistence/GameStateSchema.js";`,
+            `const GAME_STATE_STORAGE_KEY = "jackal.game-state"; const isFutureGameStateSnapshot = () => false;`
+        )
+        .replace(
+            `import { isSupportedGameStateSnapshot } from "../jackal/persistence/GameStateSnapshotValidator.js";`,
+            `const isSupportedGameStateSnapshot = () => false;`
         )
         .replace(`import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";`, `import { getDeploymentStorageKey } from "${helperModuleUrl}";`)
         .replace(

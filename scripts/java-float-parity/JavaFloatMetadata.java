@@ -37,13 +37,17 @@ public final class JavaFloatMetadata {
         Path root = Paths.get(args[0]).toAbsolutePath();
         List<File> files = new ArrayList<>();
         try (var stream = Files.walk(root)) {
-            stream.filter(path -> path.toString().endsWith(".java")).sorted().forEach(path -> files.add(path.toFile()));
+            stream.filter(path -> path.toString().endsWith(".java"))
+                .sorted(Comparator.comparing(path -> root.relativize(path).toString().replace(File.separatorChar,'/')))
+                .forEach(path -> files.add(path.toFile()));
         }
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fm = compiler.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8);
         JavacTask task = (JavacTask)compiler.getTask(null, fm, null, List.of("-proc:none"), null, fm.getJavaFileObjectsFromFiles(files));
         List<CompilationUnitTree> units = new ArrayList<>();
         task.parse().forEach(units::add);
+        units.sort(Comparator.comparing(unit ->
+            root.relativize(Paths.get(unit.getSourceFile().toUri()).toAbsolutePath()).toString().replace(File.separatorChar,'/')));
         Trees trees = Trees.instance(task);
         SourcePositions positions = trees.getSourcePositions();
 
@@ -57,7 +61,6 @@ public final class JavaFloatMetadata {
                     String full = parentName == null || parentName.isEmpty() ? simple : parentName + "$" + simple;
                     List<String> fields = new ArrayList<>();
                     List<String> methods = new ArrayList<>();
-                    Map<String,Integer> overloads = new HashMap<>();
                     int staticBlockIndex = 0;
                     for (Tree member : node.getMembers()) {
                         if (member instanceof VariableTree field) {
@@ -71,7 +74,7 @@ public final class JavaFloatMetadata {
                                             long start=positions.getStartPosition(unit,literal), end=positions.getEndPosition(unit,literal);
                                             String raw = start>=0 && end>=start && end<=source.length()?source.substring((int)start,(int)end):literal.toString();
                                             boolean floatLiteral=raw.matches("(?is).*?[f]\\s*$");
-                                            fieldLiterals.add("{"+"\"raw\":"+q(raw)+",\"float\":"+floatLiteral+",\"start\":"+start+"}");
+                                            fieldLiterals.add("{"+"\"raw\":"+q(raw)+",\"float\":"+floatLiteral+"}");
                                         }
                                         return super.visitLiteral(literal,unused);
                                     }
@@ -86,8 +89,7 @@ public final class JavaFloatMetadata {
                                 "}");
                         } else if (member instanceof MethodTree method) {
                             String logical = method.getReturnType()==null?"<init>":method.getName().toString();
-                            int overload = overloads.getOrDefault(logical,0); overloads.put(logical,overload+1);
-                            methods.add(methodRecord(method.getBody(), logical, overload,
+                            methods.add(methodRecord(method.getBody(), logical, null,
                                 method.getReturnType()==null?null:method.getReturnType().toString(), method.getParameters(), unit, positions, source));
                         } else if (member instanceof BlockTree block && block.isStatic()) {
                             methods.add(methodRecord(block, "<static>", staticBlockIndex++, null, List.of(), unit, positions, source));
@@ -105,7 +107,7 @@ public final class JavaFloatMetadata {
                     return super.visitClass(node,full);
                 }
 
-                private String methodRecord(Tree body, String name, int overload, String returnType,
+                private String methodRecord(Tree body, String name, Integer staticBlockIndex, String returnType,
                         List<? extends VariableTree> parameters, CompilationUnitTree unit,
                         SourcePositions positions, String source) {
                     List<String> params = new ArrayList<>();
@@ -121,8 +123,7 @@ public final class JavaFloatMetadata {
                             @Override public Void visitVariable(VariableTree v, Void unused) {
                                 String type=v.getType()==null?null:v.getType().toString();
                                 if (type != null) {
-                                    long start=positions.getStartPosition(unit,v);
-                                    locals.add("{"+"\"name\":"+q(v.getName().toString())+",\"type\":"+q(type)+",\"float\":"+isFloatType(type)+",\"start\":"+start+"}");
+                                    locals.add("{"+"\"name\":"+q(v.getName().toString())+",\"type\":"+q(type)+",\"float\":"+isFloatType(type)+"}");
                                 }
                                 return super.visitVariable(v,unused);
                             }
@@ -132,7 +133,7 @@ public final class JavaFloatMetadata {
                                     long start=positions.getStartPosition(unit,literal), end=positions.getEndPosition(unit,literal);
                                     String raw = start>=0 && end>=start && end<=source.length()?source.substring((int)start,(int)end):literal.toString();
                                     boolean floatLiteral=raw.matches("(?is).*?[f]\\s*$");
-                                    literals.add("{"+"\"raw\":"+q(raw)+",\"float\":"+floatLiteral+",\"start\":"+start+"}");
+                                    literals.add("{"+"\"raw\":"+q(raw)+",\"float\":"+floatLiteral+"}");
                                 }
                                 return super.visitLiteral(literal,unused);
                             }
@@ -140,7 +141,7 @@ public final class JavaFloatMetadata {
                     }
                     return "{"+
                         "\"name\":"+q(name)+","+
-                        "\"overloadIndex\":"+overload+","+
+                        (staticBlockIndex == null ? "" : "\"staticBlockIndex\":"+staticBlockIndex+",")+
                         "\"returnType\":"+q(returnType)+","+
                         "\"floatReturn\":"+isFloatType(returnType)+","+
                         "\"params\":"+array(params)+","+

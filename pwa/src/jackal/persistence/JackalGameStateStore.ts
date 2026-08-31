@@ -2,7 +2,7 @@ import type { GameContainer } from "slick2d-ts";
 import { getDeploymentStorageKey } from "../../app/DeploymentStorageKeys.js";
 import type { Main } from "../Main.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
-import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "./GameStateSchema.js";
+import { GAME_STATE_STORAGE_KEY, isFutureGameStateSnapshot } from "./GameStateSchema.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
 export class JackalGameStateStore {
     private readonly serializer = new JackalGameStateSerializer();
@@ -51,7 +51,9 @@ export class JackalGameStateStore {
     public clear(): void {
         try {
             localStorage.removeItem(this.getStorageKey());
-        } catch {}
+        } catch (error) {
+            console.warn("Unable to clear Jackal game state.", error);
+        }
     }
 
     private readSnapshot(): JackalGameStateSnapshot | null {
@@ -62,7 +64,7 @@ export class JackalGameStateStore {
 
         let snapshot: unknown;
         try {
-            snapshot = JSON.parse(text) as unknown;
+            snapshot = JSON.parse(text);
         } catch {
             this.clear();
             return null;
@@ -81,12 +83,4 @@ export class JackalGameStateStore {
     private getStorageKey(): string {
         return getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
     }
-}
-
-function isFutureGameStateSnapshot(snapshot: unknown): boolean {
-    return isRecord(snapshot) && Number.isInteger(snapshot.version) && (snapshot.version as number) > GAME_STATE_VERSION;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -119,7 +119,9 @@ test("screen fades are advanced by the existing fixed-step loop, not the browser
     assert.equal(callsNamed(update.body, "advanceFade").length, 1);
     assert.equal(callsNamed(loop.statement, "advanceFade").length, 1, "advanceFade() must be inside the fixed-step loop.");
     assert.ok(loopText.indexOf("this.advanceFade()") < loopText.indexOf("this.updateMusic()"));
-    assert.ok(loopText.indexOf("this.updateMusic()") < loopText.indexOf("this.mode.update(gc)"));
+    const modeUpdateIndex = loopText.indexOf("mode.update(gc)");
+    assert.ok(modeUpdateIndex >= 0, "The fixed-step loop must update the active mode.");
+    assert.ok(loopText.indexOf("this.updateMusic()") < modeUpdateIndex);
 
     const beforeLoop = updateText.slice(0, updateText.indexOf(loopText));
     assert.doesNotMatch(beforeLoop, /\+\+this\.fadeIndex|--this\.fadeIndex/);

@@ -16,7 +16,20 @@ class BinaryReader {
         this.stream = stream;
     }
 }
-class JavaRandom {}
+class JavaRandom {
+    constructor() {
+        this.seed0 = 0;
+        this.seed1 = 0;
+        this.seed2 = 0;
+    }
+    nextInt() {
+        const value = ((this.seed2 << 16) ^ this.seed1 ^ this.seed0) | 0;
+        this.seed0 = (this.seed0 + 0x1234) & 0xffff;
+        this.seed1 = (this.seed1 + 0x2345) & 0xffff;
+        this.seed2 = (this.seed2 + 0x3456) & 0xffff;
+        return value;
+    }
+}
 const ResourceLoader = {
     getResourceAsStream() {
         return null;
@@ -93,10 +106,7 @@ test("Java numeric helpers preserve the semantics Jackal relies on", async () =>
     assert.throws(() => runtime.javaIntDiv(1, 0), /by zero/);
 
     assert.equal(runtime.javaByte(255), -1);
-    assert.equal(runtime.javaShort(65535), -1);
-    assert.equal(runtime.javaChar(-1), 65535);
     assert.equal(runtime.javaFloat(1 / 3), Math.fround(1 / 3));
-    assert.equal(runtime.javaLong((1n << 63n) + 5n), -(1n << 63n) + 5n);
 });
 
 test("Java array helpers preserve the valid operations used by Jackal", async () => {
@@ -122,6 +132,16 @@ test("Java array helpers preserve the valid operations used by Jackal", async ()
     const target = [0, 0, 0, 0, 0];
     runtime.System.arraycopy(source, 1, target, 2, 2);
     assert.deepEqual(target, [0, 0, 11, 12, 0]);
+
+    const overlapRight = [0, 1, 2, 3, 4];
+    runtime.System.arraycopy(overlapRight, 0, overlapRight, 1, 4);
+    assert.deepEqual(overlapRight, [0, 0, 1, 2, 3]);
+
+    const overlapLeft = [0, 1, 2, 3, 4];
+    runtime.System.arraycopy(overlapLeft, 1, overlapLeft, 0, 4);
+    assert.deepEqual(overlapLeft, [1, 2, 3, 4, 4]);
+    assert.throws(() => runtime.System.arraycopy(source, -1, target, 0, 1), RangeError);
+    assert.throws(() => runtime.System.arraycopy(source, 0, target, 4, 2), RangeError);
 });
 
 test("Java collection helpers preserve the valid operations used by Jackal", async () => {
@@ -136,18 +156,22 @@ test("Java collection helpers preserve the valid operations used by Jackal", asy
     assert.equal(list.removeAt(0), "a");
     assert.equal(list.removeValue("c"), true);
     assert.throws(() => list.removeAt(99), RangeError);
-    assert.deepEqual(list.toArray(), ["B"]);
+    assert.deepEqual([...list], ["B"]);
 
-    const map = new runtime.HashMap();
-    assert.equal(map.put("sound", 10), undefined);
-    assert.equal(map.put("sound", 20), 10);
-    assert.equal(map.get("sound"), 20);
+    const state = { seed0: 11, seed1: 22, seed2: 33 };
+    const random = runtime.Random.fromState(state);
+    const control = runtime.Random.fromState(state);
+    assert.deepEqual(random.getState(), state);
+    assert.equal(random.nextInt(), control.nextInt(), "Restored random state must continue the same sequence.");
+    assert.deepEqual(random.getState(), control.getState());
+    assert.throws(() => runtime.Random.fromState({ seed0: -1, seed1: 0, seed2: 0 }), RangeError);
+    assert.throws(() => runtime.Random.fromState({ seed0: 0, seed1: 65536, seed2: 0 }), RangeError);
 });
 
 test("Jackal uses JavaRuntime only within the lightweight contracts tested above", () => {
     const arraycopyCalls = [];
     const sortCalls = [];
-    const putCalls = [];
+    const soundSets = [];
     const soundGets = [];
     const missingMapEntryChecks = [];
     const oneArgumentRemovals = [];
@@ -159,11 +183,11 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
             if (receiver === "System" && name === "arraycopy") {
                 arraycopyCalls.push({ node, sourceFile });
             }
-            if (receiver === "Arrays" && name === "sort") {
-                sortCalls.push({ node });
+            if (receiver === "mapLocal" && name === "sort") {
+                sortCalls.push({ node, sourceFile, path });
             }
-            if (name === "put") {
-                putCalls.push({ node, path });
+            if (receiver === "this.lastPlayTime" && name === "set") {
+                soundSets.push({ node, path });
             }
             if (receiver === "this.lastPlayTime" && name === "get" && node.arguments.length === 1 && node.arguments[0].getText(sourceFile) === "sound") {
                 soundGets.push({ node });
@@ -192,17 +216,23 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
         );
     }
 
-    assert.equal(sortCalls.length, 1, "Jackal should have exactly one Java Arrays.sort call.");
-    assert.equal(sortCalls[0].node.arguments.length, 2, "The Jackal sort must retain its explicit numeric comparator.");
+    assert.equal(sortCalls.length, 1, "Jackal should have exactly one audited native numeric sort.");
+    assert.equal(sortCalls[0].path, join(gameplayRoot, "Main.ts"));
+    assert.equal(sortCalls[0].node.arguments.length, 1, "The native sort must retain its explicit numeric comparator.");
 
-    assert.equal(putCalls.length, 2, "Jackal should use HashMap.put only for sound throttling.");
-    for (const { node, path } of putCalls) {
+    assert.equal(soundSets.length, 2, "Sound throttling should update its native Map in both volume variants.");
+    for (const { node, path } of soundSets) {
         assert.equal(path, join(gameplayRoot, "Main.ts"));
-        assert.ok(ts.isExpressionStatement(node.parent), "Jackal must not rely on HashMap.put's returned previous value.");
+        assert.ok(ts.isExpressionStatement(node.parent), "Sound-throttle Map updates must remain side-effect-only statements.");
     }
 
     assert.equal(soundGets.length, 2);
     assert.equal(missingMapEntryChecks.length, 2, "The two sound-throttle lookups explicitly recognize a missing JS Map entry.");
+
+    const runtimeSource = readFileSync(join(rootDir, "pwa", "src", "java", "JavaRuntime.ts"), "utf8");
+    assert.doesNotMatch(runtimeSource, /export class (HashMap|Collections|Arrays|BufferedInputStream|DataInputStream|Class|Integer|Character|JavaString)\b/);
+    assert.doesNotMatch(runtimeSource, /declare seed[012]/, "The adapter must not redeclare slick2d-ts private fields.");
+    assert.match(runtimeSource, /Reflect\.(?:get|set)\(random, (?:name|"seed[012]")/, "Random state access must stay isolated behind reflection.");
 
     assert.deepEqual(
         oneArgumentRemovals.sort(),

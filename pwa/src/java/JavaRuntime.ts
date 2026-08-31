@@ -1,8 +1,6 @@
-import { BinaryReader, JavaRandom, ResourceLoader } from "slick2d-ts";
+import { JavaRandom } from "slick2d-ts";
 const JAVA_INT_MIN = -2147483648;
 const JAVA_INT_MAX = 2147483647;
-const JAVA_LONG_MIN = -(1n << 63n);
-const JAVA_LONG_MAX = (1n << 63n) - 1n;
 const JAVA_FLOAT_HALF = Math.fround(0.5);
 
 export const JAVA_LONG_LOW_3_BITS = 7n;
@@ -82,16 +80,8 @@ export class ArrayList<T> {
         this.values.length = 0;
     }
 
-    public contains(value: T): boolean {
-        return this.values.includes(value);
-    }
-
     public isEmpty(): boolean {
         return this.values.length === 0;
-    }
-
-    public toArray(): T[] {
-        return this.values.slice();
     }
 
     public [Symbol.iterator](): IterableIterator<T> {
@@ -99,94 +89,69 @@ export class ArrayList<T> {
     }
 }
 
-export class HashMap<K, V> extends Map<K, V> {
-    public put(key: K, value: V): V | undefined {
-        const previous = this.get(key);
-        this.set(key, value);
-        return previous;
+export interface JavaRandomState {
+    seed0: number;
+    seed1: number;
+    seed2: number;
+}
+
+const JAVA_RANDOM_SEED_LIMB_MAX = 0xffff;
+
+export class Random extends JavaRandom {
+    public getState(): JavaRandomState {
+        return {
+            seed0: readJavaRandomSeedLimb(this, "seed0"),
+            seed1: readJavaRandomSeedLimb(this, "seed1"),
+            seed2: readJavaRandomSeedLimb(this, "seed2")
+        };
+    }
+
+    public static fromState(state: JavaRandomState): Random {
+        const random = Object.create(Random.prototype) as Random;
+        Reflect.set(random, "seed0", validateJavaRandomSeedLimb(state.seed0, "seed0"));
+        Reflect.set(random, "seed1", validateJavaRandomSeedLimb(state.seed1, "seed1"));
+        Reflect.set(random, "seed2", validateJavaRandomSeedLimb(state.seed2, "seed2"));
+        return random;
     }
 }
 
-export class Collections {
-    public static synchronizedMap<K, V>(map: HashMap<K, V>): HashMap<K, V> {
-        return map;
-    }
+function readJavaRandomSeedLimb(random: Random, name: keyof JavaRandomState): number {
+    return validateJavaRandomSeedLimb(Reflect.get(random, name), name);
 }
 
-export class Random extends JavaRandom {}
+function validateJavaRandomSeedLimb(value: unknown, name: keyof JavaRandomState): number {
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > JAVA_RANDOM_SEED_LIMB_MAX) {
+        throw new RangeError(`Invalid JavaRandom ${name}: ${String(value)}`);
+    }
+    return value;
+}
 
 export class System {
     public static arraycopy<T>(source: readonly T[], sourcePosition: number, target: T[], targetPosition: number, length: number): void {
+        if (
+            !Number.isInteger(sourcePosition) ||
+            !Number.isInteger(targetPosition) ||
+            !Number.isInteger(length) ||
+            sourcePosition < 0 ||
+            targetPosition < 0 ||
+            length < 0 ||
+            sourcePosition + length > source.length ||
+            targetPosition + length > target.length
+        ) {
+            throw new RangeError("Invalid System.arraycopy range.");
+        }
+
+        if (source === target && targetPosition > sourcePosition && targetPosition < sourcePosition + length) {
+            for (let i = length - 1; i >= 0; i--) {
+                target[targetPosition + i] = source[sourcePosition + i];
+            }
+            return;
+        }
+
         for (let i = 0; i < length; i++) {
             target[targetPosition + i] = source[sourcePosition + i];
         }
     }
-
-    public static currentTimeMillis(): number {
-        return Date.now();
-    }
-
-    public static exit(_code: number): void {
-        throw new Error("System.exit is not available in the browser port");
-    }
-}
-
-export class Integer {
-    public static toString(value: number): string {
-        return Math.trunc(value).toString();
-    }
-}
-
-export class Character {
-    public static toLowerCase(value: string): string {
-        return String(value).charAt(0).toLowerCase();
-    }
-}
-
-export class JavaString {
-    public static valueOf(value: unknown): string {
-        return String(value);
-    }
-
-    public static format(format: string, ...args: unknown[]): string {
-        let index = 0;
-        return format.replace(/%([0]?)(\d+)?([sd])/g, (_match, zero: string, width: string, type: string) => {
-            const value = args[index++];
-            let text = type === "d" ? Math.trunc(Number(value)).toString() : String(value);
-            if (width) {
-                text = text.padStart(Number(width), zero ? "0" : " ");
-            }
-            return text;
-        });
-    }
-}
-
-export class Arrays {
-    public static sort<T>(array: T[], comparator?: (a: T, b: T) => number): void {
-        array.sort(comparator);
-    }
-}
-
-export class BufferedInputStream {
-    public readonly stream: ArrayBuffer | Uint8Array | null;
-
-    public constructor(stream: ArrayBuffer | Uint8Array | null) {
-        this.stream = stream;
-    }
-}
-
-export class DataInputStream extends BinaryReader {
-    public constructor(stream: ArrayBuffer | Uint8Array | BufferedInputStream | null) {
-        const bytes = stream instanceof BufferedInputStream ? stream.stream : stream;
-        if (bytes === null) {
-            throw new Error("Missing binary resource stream");
-        }
-        super(bytes);
-    }
-}
-
-export class Class {
-    public static forName(_name: string): void {}
 }
 
 export class Point2D {
@@ -232,15 +197,6 @@ export function java3DArray<T>(a: number, b: number, c: number, value: T): T[][]
     return array;
 }
 
-export function java4DArray<T>(a: number, b: number, c: number, d: number, value: T): T[][][][] {
-    const size = Math.trunc(a);
-    const array = new Array<T[][][]>(size);
-    for (let i = 0; i < size; i++) {
-        array[i] = java3DArray(b, c, d, value);
-    }
-    return array;
-}
-
 export function javaInt(value: unknown): number {
     if (typeof value === "bigint") {
         return Number(BigInt.asIntN(32, value));
@@ -281,52 +237,10 @@ export function javaByte(value: unknown): number {
     return (javaInt(value) << 24) >> 24;
 }
 
-export function javaShort(value: unknown): number {
-    if (typeof value === "bigint") {
-        return Number(BigInt.asIntN(16, value));
-    }
-    return (javaInt(value) << 16) >> 16;
-}
-
-export function javaChar(value: unknown): number {
-    if (typeof value === "bigint") {
-        return Number(BigInt.asUintN(16, value));
-    }
-    return javaInt(value) & 0xffff;
-}
-
 export function javaFloat(value: unknown): number {
     return Math.fround(Number(value));
 }
 
 export function javaDouble(value: unknown): number {
     return Number(value);
-}
-
-export function javaLong(value: unknown): bigint {
-    if (typeof value === "bigint") {
-        return BigInt.asIntN(64, value);
-    }
-    const number = Number(value);
-    if (Number.isNaN(number)) {
-        return 0n;
-    }
-    if (number <= Number(JAVA_LONG_MIN)) {
-        return JAVA_LONG_MIN;
-    }
-    if (number >= Number(JAVA_LONG_MAX)) {
-        return JAVA_LONG_MAX;
-    }
-    return BigInt(number < 0 ? Math.ceil(number) : Math.floor(number));
-}
-
-export function resourceStream(ref: string): ArrayBuffer | null {
-    return ResourceLoader.getResourceAsStream(ref);
-}
-
-function cloneDefault<T>(value: T): T {
-    if (Array.isArray(value)) {
-        return value.slice() as T;
-    }
-    return value;
 }

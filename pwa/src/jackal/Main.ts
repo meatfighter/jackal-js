@@ -1,5 +1,4 @@
 import {
-    ApplicationGameContainer,
     BasicGame,
     BufferUtils,
     Color,
@@ -9,32 +8,19 @@ import {
     Log,
     Music,
     Mouse,
-    ResourceLoader,
-    ScalableGame,
     Sound,
     Sys,
     XMLPackedSheet,
-    type AppGameContainer,
     type Cursor,
     type GameContainer,
     type Graphics
 } from "slick2d-ts";
 import {
     ArrayList,
-    Arrays,
-    BufferedInputStream,
-    Character,
-    Class,
-    Collections,
-    DataInputStream,
-    HashMap,
-    Integer,
     JAVA_LONG_LOW_3_BITS,
     JAVA_LONG_PACKED_3BIT_SHIFTS,
-    JavaString,
     Point2D,
     Random,
-    System,
     java2DArray,
     javaArray,
     javaByte,
@@ -61,6 +47,7 @@ import { IntroMode } from "./IntroMode.js";
 import { JeepHereMode } from "./JeepHereMode.js";
 import { JeepYeahMode } from "./JeepYeahMode.js";
 import { rotatePointLikeJava } from "./JackalMath.js";
+import { openDataResource } from "./JackalResources.js";
 import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
 import { MapMode } from "./MapMode.js";
@@ -138,7 +125,11 @@ export class Main extends BasicGame {
     }
 
     public static get mainInstance(): Main {
-        return MainRuntimeState.mainInstance!;
+        const mainInstance = MainRuntimeState.mainInstance;
+        if (mainInstance === null) {
+            throw new Error("Jackal main instance is unavailable.");
+        }
+        return mainInstance;
     }
 
     public static set mainInstance(mainInstance: Main) {
@@ -146,24 +137,28 @@ export class Main extends BasicGame {
     }
 
     public static get gameMode(): GameMode {
-        return MainRuntimeState.gameMode!;
+        const gameMode = MainRuntimeState.gameMode;
+        if (gameMode === null) {
+            throw new Error("Jackal game mode is unavailable.");
+        }
+        return gameMode;
     }
 
-    public static set gameMode(gameMode: GameMode) {
+    public static set gameMode(gameMode: GameMode | null) {
         MainRuntimeState.gameMode = gameMode;
     }
 
     public random: Random = new Random();
     public buttonMapping: ButtonMapping = new ButtonMapping();
     public nextFrameTime: number = 0;
-    public mode: IMode = null!;
+    public mode: IMode | null = null;
     public input: IInput = null!;
     public nativeCursor: Cursor | null = null;
-    public currentSong: Song = null!;
-    public requestedSong: Song = null!;
+    public currentSong: Song | null = null;
+    public requestedSong: Song | null = null;
     public loadIndex: number = 0;
 
-    public fadeListener: IFadeListener = null!;
+    public fadeListener: IFadeListener | null = null;
     public fading: boolean = false;
     public fadeIndex: number = 0;
     public fadeOut: boolean = false;
@@ -313,16 +308,13 @@ export class Main extends BasicGame {
 
     public triggerSizes: number[][] = null!;
     public unitVector: number[] = javaArray(3, 0);
-    public lastPlayTime: HashMap<Sound, number> = Collections.synchronizedMap(new HashMap<Sound, number>());
-    public konamiCode: KonamiCode = null!;
+    public lastPlayTime: Map<Sound, number> = new Map<Sound, number>();
+    public konamiCode: KonamiCode | null = null;
 
     public gc: GameContainer = null!;
-    public appGameContainer: AppGameContainer = null!;
-    public scalableGame: ScalableGame = null!;
     public hiddenCursor: Cursor | null = null;
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
-    public stateSaveInvalidatedHandler: (() => void) | null = null;
     public inputMappingChangedHandler: (() => void) | null = null;
     public windowedDisplayModeProvider: (() => WindowedDisplayMode) | null = null;
     public browserFullscreenController: BrowserFullscreenController | null = null;
@@ -343,7 +335,6 @@ export class Main extends BasicGame {
 
         try {
             this.loadFont();
-            this.loadClasses();
         } catch (t) {
             Log.error("Loading error", t);
         }
@@ -380,7 +371,11 @@ export class Main extends BasicGame {
 
             this.fullScreenToggleCheck(gc);
             this.input.snap();
-            this.mode.update(gc);
+            const mode = this.mode;
+            if (mode === null) {
+                throw new Error("Jackal mode is unavailable during update.");
+            }
+            mode.update(gc);
             this.nextFrameTime += javaInt(javaFloat(javaFloat(Sys.getTimerResolution() * javaFloat(0.01)) + 0.5));
             if (++count === 8) {
                 this.resetNextFrameTime();
@@ -426,7 +421,9 @@ export class Main extends BasicGame {
             this.currentSong.stop();
         }
         this.currentSong = this.requestedSong;
-        this.currentSong.play();
+        if (this.currentSong !== null) {
+            this.currentSong.play();
+        }
     }
 
     public advancePlayerToHardMode(): void {
@@ -442,7 +439,7 @@ export class Main extends BasicGame {
     }
 
     public continuePlayer(): void {
-        if (this.konamiCode.enabled) {
+        if (this.konamiCode?.enabled) {
             this.extraLives = 30;
             this.extraLivesStr = "30";
         } else {
@@ -493,7 +490,11 @@ export class Main extends BasicGame {
     }
 
     public render(gc: GameContainer, g: Graphics): void {
-        this.mode.render(gc, g);
+        const mode = this.mode;
+        if (mode === null) {
+            throw new Error("Jackal mode is unavailable during render.");
+        }
+        mode.render(gc, g);
 
         if (this.fading) {
             g.setColor(Main.FADES[this.fadeIndex]);
@@ -507,7 +508,7 @@ export class Main extends BasicGame {
             Main.mainInstance.playSound(Main.mainInstance.weaponUpgradeSound);
             soundPlayed = true;
         }
-        if (this.konamiCode.enabled) {
+        if (this.konamiCode?.enabled) {
             if (!(this.hasMissiles && this.missilePower === 2)) {
                 this.hasMissiles = true;
                 this.missilePower = 2;
@@ -539,10 +540,6 @@ export class Main extends BasicGame {
     }
 
     public requestMode(mode: Modes, gc: GameContainer): void {
-        if (this.isModeStateSaveInvalidating(mode)) {
-            this.notifyStateSaveInvalidated();
-        }
-
         switch (mode) {
             case Modes.GAME:
                 Main.gameMode = new GameMode();
@@ -611,7 +608,7 @@ export class Main extends BasicGame {
     }
 
     private static formatScore(score: number): string {
-        let digits = Integer.toString(score);
+        let digits = score.toString();
         if (digits.length < 6) {
             digits = "000000".substring(0, 6 - digits.length) + digits;
         }
@@ -620,12 +617,12 @@ export class Main extends BasicGame {
 
     public loseLife(): void {
         this.extraLives--;
-        this.extraLivesStr = Integer.toString(this.extraLives);
+        this.extraLivesStr = this.extraLives.toString();
     }
 
     public gainExtraLife(): void {
         this.extraLives++;
-        this.extraLivesStr = Integer.toString(this.extraLives);
+        this.extraLivesStr = this.extraLives.toString();
         this.playSoundAlways(this.extraLifeSound);
     }
 
@@ -672,7 +669,7 @@ export class Main extends BasicGame {
         }
     }
 
-    public startFade(fadeOut: boolean, fadeListener: IFadeListener): void {
+    public startFade(fadeOut: boolean, fadeListener: IFadeListener | null): void {
         this.fading = true;
         this.fadeOut = fadeOut;
         this.fadeListener = fadeListener;
@@ -685,7 +682,7 @@ export class Main extends BasicGame {
     }
 
     public removeFadeListener(): void {
-        this.fadeListener = null!;
+        this.fadeListener = null;
     }
 
     public drawStringWithLength(string: string, length: number, x: number, y: number, color: number): void {
@@ -746,10 +743,10 @@ export class Main extends BasicGame {
             return;
         }
         let time = this.lastPlayTime.get(sound);
-        let now = System.currentTimeMillis();
+        let now = Date.now();
         if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play();
-            this.lastPlayTime.put(sound, System.currentTimeMillis());
+            this.lastPlayTime.set(sound, Date.now());
         }
     }
 
@@ -767,10 +764,10 @@ export class Main extends BasicGame {
             return;
         }
         let time = this.lastPlayTime.get(sound);
-        let now = System.currentTimeMillis();
+        let now = Date.now();
         if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play(1, volume);
-            this.lastPlayTime.put(sound, System.currentTimeMillis());
+            this.lastPlayTime.set(sound, Date.now());
         }
     }
 
@@ -1144,8 +1141,8 @@ export class Main extends BasicGame {
         if (this.currentSong !== null) {
             this.currentSong.stop();
         }
-        this.requestedSong = null!;
-        this.currentSong = null!;
+        this.requestedSong = null;
+        this.currentSong = null;
     }
 
     public stopAllSound(): void {
@@ -1237,7 +1234,7 @@ export class Main extends BasicGame {
             case '"':
                 return "right-quote";
             default:
-                return JavaString.valueOf(c);
+                return c;
         }
     }
 
@@ -1261,15 +1258,15 @@ export class Main extends BasicGame {
             }
             for (let j = 0; j < Main.CHARS.length; j++) {
                 const character = Main.CHARS.charAt(j);
-                const image = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(character)))!;
+                const image = pack.getSprite(`font-${color}-${this.getCharacterName(character)}.png`)!;
                 this.fonts[i][character.charCodeAt(0)] = image;
-                this.fonts[i][Character.toLowerCase(character).charCodeAt(0)] = image;
+                this.fonts[i][character.toLowerCase().charCodeAt(0)] = image;
             }
         }
     }
 
     private loadTiles(index: number, stage: Stage): void {
-        let pack = new XMLPackedSheet(JavaString.format("images/tiles-%d.png", index), JavaString.format("images/tiles-%d.xml", index));
+        let pack = new XMLPackedSheet(`images/tiles-${index}.png`, `images/tiles-${index}.xml`);
         let size = Main.TILES[index];
         stage.tiles = javaArray(size, null!);
         for (let i = 0; i < size; i++) {
@@ -1280,7 +1277,7 @@ export class Main extends BasicGame {
                     pack = new XMLPackedSheet("images/tiles-6.png", "images/tiles-6.xml");
                 }
             }
-            stage.tiles[i] = pack.getSprite(JavaString.format("tile-%d-%03d.png", index, i))!;
+            stage.tiles[i] = pack.getSprite(`tile-${index}-${i.toString().padStart(3, "0")}.png`)!;
         }
         if (index === 5) {
             for (let i = 0; i < 16; i++) {
@@ -1307,13 +1304,13 @@ export class Main extends BasicGame {
         for (let i = 0; i < 4; i++) {
             let COLORS = ["green", "yellow", "brown", "gray"];
             for (let j = 0; j < 3; j++) {
-                this.players[i][j] = pack1.getSprite(JavaString.format("player-%s-%d.png", COLORS[i], j))!;
+                this.players[i][j] = pack1.getSprite(`player-${COLORS[i]}-${j}.png`)!;
             }
             this.players[i][3] = this.players[i][0].getFlippedCopy(true, false);
             this.players[i][4] = this.players[i][1].getFlippedCopy(true, false);
         }
         for (let i = 0; i < 4; i++) {
-            this.explosions[i] = pack1.getSprite(JavaString.format("explosion-%d.png", i))!;
+            this.explosions[i] = pack1.getSprite(`explosion-${i}.png`)!;
         }
         this.grenade = pack1.getSprite("grenade-large.png")!;
         this.playerMissile = pack1.getSprite("player-missile-1.png")!;
@@ -1328,7 +1325,7 @@ export class Main extends BasicGame {
             let color = i === 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
-                    this.enemySoldiers[i][j] = pack1.getSprite(JavaString.format("enemy-soldier-%s-%d.png", color, j))!;
+                    this.enemySoldiers[i][j] = pack1.getSprite(`enemy-soldier-${color}-${j}.png`)!;
                 } else {
                     this.enemySoldiers[i][j] = this.enemySoldiers[i][j - 4].getFlippedCopy(true, false);
                 }
@@ -1337,13 +1334,13 @@ export class Main extends BasicGame {
         this.deadEnemySoldier = pack1.getSprite("enemy-soldier-dead.png")!;
 
         for (let i = 0; i < 3; i++) {
-            this.brownTanks[i] = pack1.getSprite(JavaString.format("brown-tank-%d.png", i))!;
+            this.brownTanks[i] = pack1.getSprite(`brown-tank-${i}.png`)!;
         }
         this.brownTanks[3] = this.brownTanks[0].getFlippedCopy(true, false);
         this.brownTanks[4] = this.brownTanks[1].getFlippedCopy(true, false);
 
         for (let i = 0; i < 3; i++) {
-            this.grayJeeps[i] = pack1.getSprite(JavaString.format("gray-jeep-%d.png", i))!;
+            this.grayJeeps[i] = pack1.getSprite(`gray-jeep-${i}.png`)!;
         }
         this.grayJeeps[3] = this.grayJeeps[0].getFlippedCopy(true, false);
         this.grayJeeps[4] = this.grayJeeps[1].getFlippedCopy(true, false);
@@ -1405,16 +1402,16 @@ export class Main extends BasicGame {
                     color = "yellow";
                     break;
             }
-            this.friendlySoldiers[i][1] = pack2.getSprite(JavaString.format("friendly-soldier-%s-0.png", color))!;
+            this.friendlySoldiers[i][1] = pack2.getSprite(`friendly-soldier-${color}-0.png`)!;
             this.friendlySoldiers[i][0] = this.friendlySoldiers[i][1].getFlippedCopy(true, false);
-            this.friendlySoldiers[i][2] = pack2.getSprite(JavaString.format("friendly-soldier-%s-1.png", color))!;
-            this.friendlySoldiers[i][3] = pack2.getSprite(JavaString.format("friendly-soldier-%s-2.png", color))!;
-            this.friendlySoldiers[i][4] = pack2.getSprite(JavaString.format("friendly-soldier-%s-3.png", color))!;
+            this.friendlySoldiers[i][2] = pack2.getSprite(`friendly-soldier-${color}-1.png`)!;
+            this.friendlySoldiers[i][3] = pack2.getSprite(`friendly-soldier-${color}-2.png`)!;
+            this.friendlySoldiers[i][4] = pack2.getSprite(`friendly-soldier-${color}-3.png`)!;
             this.friendlySoldiers[i][5] = this.friendlySoldiers[i][4].getFlippedCopy(true, false);
             this.friendlySoldiers[i][6] = this.friendlySoldiers[i][2].getFlippedCopy(true, false);
             this.friendlySoldiers[i][7] = this.friendlySoldiers[i][3].getFlippedCopy(true, false);
-            this.friendlySoldiers[i][8] = pack2.getSprite(JavaString.format("friendly-soldier-%s-4.png", color))!;
-            this.friendlySoldiers[i][9] = pack2.getSprite(JavaString.format("friendly-soldier-%s-5.png", color))!;
+            this.friendlySoldiers[i][8] = pack2.getSprite(`friendly-soldier-${color}-4.png`)!;
+            this.friendlySoldiers[i][9] = pack2.getSprite(`friendly-soldier-${color}-5.png`)!;
             this.friendlySoldiers[i][10] = this.friendlySoldiers[i][8].getFlippedCopy(true, false);
             this.friendlySoldiers[i][11] = this.friendlySoldiers[i][9].getFlippedCopy(true, false);
         }
@@ -1459,7 +1456,7 @@ export class Main extends BasicGame {
             let color = i === 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
-                    this.swampSoldiers[i][j] = pack2.getSprite(JavaString.format("swamp-soldier-%s-%d.png", color, j))!;
+                    this.swampSoldiers[i][j] = pack2.getSprite(`swamp-soldier-${color}-${j}.png`)!;
                 } else {
                     this.swampSoldiers[i][j] = this.swampSoldiers[i][j - 4].getFlippedCopy(true, false);
                 }
@@ -1474,21 +1471,21 @@ export class Main extends BasicGame {
             let color = j === 0 ? "blue" : "brown";
             let k = j << 1;
             for (let i = 0; i < 3; i++) {
-                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, i << 1))!;
+                this.bossBlueTanks[k][i] = pack3.getSprite(`boss-${color}-tank-${i << 1}.png`)!;
             }
             this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
             this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
 
             k++;
             for (let i = 0; i < 3; i++) {
-                this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, (i << 1) + 1))!;
+                this.bossBlueTanks[k][i] = pack3.getSprite(`boss-${color}-tank-${(i << 1) + 1}.png`)!;
             }
             this.bossBlueTanks[k][3] = this.bossBlueTanks[k][0].getFlippedCopy(true, false);
             this.bossBlueTanks[k][4] = this.bossBlueTanks[k][1].getFlippedCopy(true, false);
         }
 
         for (let i = 0; i < 3; i++) {
-            this.grayTanks[i] = pack3.getSprite(JavaString.format("gray-tank-%d.png", i))!;
+            this.grayTanks[i] = pack3.getSprite(`gray-tank-${i}.png`)!;
         }
         this.grayTanks[3] = this.grayTanks[0].getFlippedCopy(true, false);
         this.grayTanks[4] = this.grayTanks[1].getFlippedCopy(true, false);
@@ -1503,7 +1500,7 @@ export class Main extends BasicGame {
         this.tankShack = pack3.getSprite("gray-tank-shack.png")!;
 
         for (let i = 0; i < 7; i++) {
-            this.sparks[0][i] = pack3.getSprite(JavaString.format("spark-%d.png", i))!;
+            this.sparks[0][i] = pack3.getSprite(`spark-${i}.png`)!;
             this.sparks[1][i] = this.sparks[0][i].getFlippedCopy(true, false);
         }
 
@@ -1515,7 +1512,7 @@ export class Main extends BasicGame {
         let pack4 = new XMLPackedSheet("images/sprites-4.png", "images/sprites-4.xml");
 
         for (let i = 0; i < 4; i++) {
-            this.submarines[i] = pack4.getSprite(JavaString.format("submarine-%d.png", i))!;
+            this.submarines[i] = pack4.getSprite(`submarine-${i}.png`)!;
         }
 
         this.floorGuns[0] = pack4.getSprite("floor-gun-gray.png")!;
@@ -1546,15 +1543,15 @@ export class Main extends BasicGame {
         this.bossHelicopters[5] = pack4.getSprite("boss-helicopter-shadow.png")!;
 
         for (let i = 0; i < 5; i++) {
-            this.parachutes[i] = pack4.getSprite(JavaString.format("parachute-%d.png", i))!;
+            this.parachutes[i] = pack4.getSprite(`parachute-${i}.png`)!;
         }
 
         for (let i = 0; i < 5; i++) {
-            this.cliffGuns[i] = pack4.getSprite(JavaString.format("cliff-gun-%d.png", i))!;
+            this.cliffGuns[i] = pack4.getSprite(`cliff-gun-${i}.png`)!;
         }
 
         for (let i = 0; i < 3; i++) {
-            this.fires[0][i] = pack4.getSprite(JavaString.format("fire-%d.png", i))!;
+            this.fires[0][i] = pack4.getSprite(`fire-${i}.png`)!;
             if (i === 2) {
                 this.fires[1][i] = this.fires[0][i].getFlippedCopy(true, false);
             } else {
@@ -1563,19 +1560,19 @@ export class Main extends BasicGame {
         }
 
         for (let i = 0; i < 3; i++) {
-            this.fireTanks[i] = pack4.getSprite(JavaString.format("fire-tank-%d.png", i))!;
+            this.fireTanks[i] = pack4.getSprite(`fire-tank-${i}.png`)!;
         }
         this.fireTanks[3] = this.fireTanks[0].getFlippedCopy(true, false);
         this.fireTanks[4] = this.fireTanks[1].getFlippedCopy(true, false);
 
         for (let i = 0; i < 5; i++) {
-            this.garages[i] = pack4.getSprite(JavaString.format("door-%d.png", i))!;
+            this.garages[i] = pack4.getSprite(`door-${i}.png`)!;
         }
 
         let pack5 = new XMLPackedSheet("images/sprites-5.png", "images/sprites-5.xml");
 
         for (let i = 0; i < 4; i++) {
-            this.floorMissileLauncher[i] = pack5.getSprite(JavaString.format("missile-launcher-floor-%d.png", i))!;
+            this.floorMissileLauncher[i] = pack5.getSprite(`missile-launcher-floor-${i}.png`)!;
         }
 
         this.enemyHelicopters[0] = pack5.getSprite("enemy-helicopter-body.png")!;
@@ -1675,8 +1672,7 @@ export class Main extends BasicGame {
             packs[i] = new XMLPackedSheet("images/" + packNames[i] + ".png", "images/" + packNames[i] + ".xml")!;
         }
 
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("images/%s.dat", name))));
+        const dis = openDataResource(`images/${name}.dat`);
 
         let width = dis.readShort();
         let height = dis.readShort();
@@ -1693,12 +1689,12 @@ export class Main extends BasicGame {
                 cell[2] = y2;
             }
         }
-        Arrays.sort(mapLocal, (cell1: number[], cell2: number[]) => cell1[0] - cell2[0]);
+        mapLocal.sort((cell1: number[], cell2: number[]) => cell1[0] - cell2[0]);
 
         let tiles = javaArray<Image>(tileCount, null!);
         for (let i = 0, j = 0; i < tileCount; i++) {
             while (true) {
-                tiles[i] = packs[j]!.getSprite(JavaString.format("%s-%03d.png", name, i))!;
+                tiles[i] = packs[j]!.getSprite(`${name}-${i.toString().padStart(3, "0")}.png`)!;
                 if (tiles[i] === null) {
                     j++;
                 } else {
@@ -1711,8 +1707,7 @@ export class Main extends BasicGame {
     }
 
     private loadLargeImage(name: string, packName: string): LargeImage {
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("images/%s.dat", name))));
+        const dis = openDataResource(`images/${name}.dat`);
 
         let width = dis.readShort();
         let height = dis.readShort();
@@ -1729,7 +1724,7 @@ export class Main extends BasicGame {
 
         let tiles = javaArray<Image>(tileCount, null!);
         for (let i = 0; i < tileCount; i++) {
-            tiles[i] = pack.getSprite(JavaString.format("%s-%03d.png", name, i))!;
+            tiles[i] = pack.getSprite(`${name}-${i.toString().padStart(3, "0")}.png`)!;
         }
 
         return new LargeImage(this, tiles!, mapLocal, width, height);
@@ -1745,10 +1740,7 @@ export class Main extends BasicGame {
         for (let i = 0; i < height; i++) {
             lists[i] = new ArrayList<number[]>();
         }
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(
-            new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/enemies%s-%d.dat", hard ? "-hard" : "", stageIndex)))
-        );
+        const dis = openDataResource(`maps/enemies${hard ? "-hard" : ""}-${stageIndex}.dat`);
         let count = dis.readShort();
         for (let i = 0; i < count; i++) {
             let index = dis.readShort();
@@ -1775,8 +1767,7 @@ export class Main extends BasicGame {
     }
 
     private loadSizes(): void {
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream("maps/sizes.dat")));
+        const dis = openDataResource("maps/sizes.dat");
         let count = dis.readShort();
         this.triggerSizes = java2DArray(count, 2, 0);
         for (let i = 0; i < count; i++) {
@@ -1801,8 +1792,7 @@ export class Main extends BasicGame {
     }
 
     private loadMaps(index: number, stage: Stage): void {
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/map-%d.dat", index))));
+        const dis = openDataResource(`maps/map-${index}.dat`);
         stage.mapWidth = dis.readShort();
         stage.mapHeight = dis.readShort();
         stage.tileMap = java2DArray(stage.mapHeight + 1, stage.mapWidth, 0);
@@ -1828,8 +1818,7 @@ export class Main extends BasicGame {
     }
 
     private loadTypes(index: number, stage: Stage): void {
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/types-%d.dat", index))));
+        const dis = openDataResource(`maps/types-${index}.dat`);
         stage.mapWidth = dis.readShort();
         stage.mapHeight = dis.readShort();
         stage.typesMap = java2DArray(stage.mapHeight + 1, stage.mapWidth, 0);
@@ -1870,8 +1859,7 @@ export class Main extends BasicGame {
     }
 
     private loadDirections(index: number, stage: Stage): void {
-        let classLoader = { getResourceAsStream: (ref: string) => ResourceLoader.getResourceAsStream(ref) };
-        let dis = new DataInputStream(new BufferedInputStream(classLoader.getResourceAsStream(JavaString.format("maps/dirs-%d.dat", index))));
+        const dis = openDataResource(`maps/dirs-${index}.dat`);
         let size = dis.readInt();
         stage.directionsWidth = dis.readInt();
         stage.directionsHeight = dis.readInt();
@@ -2053,10 +2041,6 @@ export class Main extends BasicGame {
         return this.loadIndex >= 42 && this.mode !== null && this.gc !== null;
     }
 
-    public isStateSaveInvalidatingMenuActive(): boolean {
-        return this.mode === null || this.loadIndex < 42;
-    }
-
     public setBrowserSuspended(suspended: boolean): void {
         if (this.browserSuspended === suspended) {
             return;
@@ -2136,58 +2120,13 @@ export class Main extends BasicGame {
         }
     }
 
-    private notifyStateSaveInvalidated(): void {
-        if (this.stateSaveInvalidatedHandler !== null) {
-            this.stateSaveInvalidatedHandler();
-        }
-    }
-
     public notifyInputMappingChanged(): void {
         if (this.inputMappingChangedHandler !== null) {
             this.inputMappingChangedHandler();
         }
     }
 
-    private isModeStateSaveInvalidating(mode: Modes): boolean {
-        return false;
-    }
-
-    // some classes have static tables that need generating
-    private loadClasses(): void {
-        Class.forName("jackal.RotatingGun");
-        Class.forName("jackal.FriendlySoldier");
-        Class.forName("jackal.FriendlyHelicopter");
-        Class.forName("jackal.GrayJeep");
-        Class.forName("jackal.BossHelicopter");
-        Class.forName("jackal.CliffGun");
-        Class.forName("jackal.Flame");
-        Class.forName("jackal.SuperFire");
-        Class.forName("jackal.BossSuperTankGun");
-        Class.forName("jackal.SunsetMode");
-        Class.forName("jackal.HardEndingMode");
-    }
-
     public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
         return rotatePointLikeJava(x, y, angle);
-    }
-
-    public static javaMain(args: string[]): void {
-        // The browser port has no AWT toolkit initialization equivalent.
-
-        let mainLocal = new Main();
-
-        let appGameContainer = new ApplicationGameContainer(
-            new ScalableGame(mainLocal, Main.DISPLAY_WIDTH, Main.DISPLAY_HEIGHT, true),
-            Main.DISPLAY_WIDTH,
-            Main.DISPLAY_HEIGHT,
-            false
-        );
-        try {
-            appGameContainer.setIcon("icons/32x32.png");
-        } catch (t) {
-            Log.error("Icon error", t);
-        }
-        appGameContainer.setResizable(true);
-        appGameContainer.start();
     }
 }
