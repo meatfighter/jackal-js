@@ -12,23 +12,15 @@ export class InvisibleStar extends Enemy {
         this.type = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number) {
+    public constructor(x: number, y: number, type: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_InvisibleStar(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_InvisibleStar(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let typeLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = typeLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+
+        this.x = x;
+        this.y = y;
+        this.type = type;
     }
 
     public override init(): void {
@@ -45,9 +37,9 @@ export class InvisibleStar extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x, this.y);
+            Explosion.create(this.x, this.y);
             this.main.addPoints(5000);
             new Star(this.x, this.y, this.type);
             return true;

@@ -67,7 +67,7 @@ export class ButtonMapping {
     }
 
     public static isReservedKey(key: number): boolean {
-        return key == Input.KEY_SPACE || key == Input.KEY_ESCAPE;
+        return key === Input.KEY_SPACE || key === Input.KEY_ESCAPE;
     }
 
     public keyboardLabelFor(action: number): string {
@@ -115,7 +115,7 @@ export class ButtonMapping {
     }
 
     public static getKeyText(key: number): string {
-        if (key == ButtonMapping.NO_BINDING) {
+        if (key === ButtonMapping.NO_BINDING) {
             return "NONE";
         }
         switch (key) {
@@ -161,7 +161,7 @@ export class ButtonMapping {
     }
 
     public static getGamepadButtonText(button: number): string {
-        if (button == ButtonMapping.NO_BINDING) {
+        if (button === ButtonMapping.NO_BINDING) {
             return "GP-NONE";
         }
         switch (button) {

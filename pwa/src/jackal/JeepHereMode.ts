@@ -34,9 +34,9 @@ export class JeepHereMode implements IMode, IFadeListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == JeepHereMode.STATE_FADE_IN) {
+        if (this.state === JeepHereMode.STATE_FADE_IN) {
             this.state = JeepHereMode.STATE_SLIDE;
-        } else if (this.state == JeepHereMode.STATE_FADE_OUT) {
+        } else if (this.state === JeepHereMode.STATE_FADE_OUT) {
             this.state = JeepHereMode.STATE_DONE;
             this.main.requestMode(Modes.MAP, this.gc);
         }
@@ -52,7 +52,7 @@ export class JeepHereMode implements IMode, IFadeListener {
                 }
                 break;
             case JeepHereMode.STATE_HERE:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepHereMode.STATE_FADE_OUT;
                     this.main.startFade(true, this);
                 }
@@ -64,7 +64,7 @@ export class JeepHereMode implements IMode, IFadeListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == JeepHereMode.STATE_DONE) {
+        if (this.state === JeepHereMode.STATE_DONE) {
             return;
         }
 
@@ -78,8 +78,8 @@ export class JeepHereMode implements IMode, IFadeListener {
         this.main.jeepHere.draw(this.jeepHereX, 320);
 
         if (this.state >= JeepHereMode.STATE_HERE) {
-            this.main.draw(this.main.heres[0], 160, 320);
-            this.main.draw(this.main.heres[1], 287, 416);
+            this.main.drawImage(this.main.heres[0], 160, 320);
+            this.main.drawImage(this.main.heres[1], 287, 416);
         }
     }
 }

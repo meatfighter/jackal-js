@@ -20,58 +20,43 @@ export class Bomb extends Enemy {
         this.airplane = false;
     }
 
-    public constructor(x: number, y: number, airplane: boolean);
-    public constructor(x: number, y: number, airplane: boolean, vx: number, vy: number);
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean, arg3?: number, arg4?: number) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_Bomb(argCount, arg0, arg1, arg2, arg3, arg4);
     }
 
-    private __construct_Bomb(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: number, arg4?: number): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            let airplaneLocal2 = arg2;
-            this.__construct_Bomb(5, xLocal2, yLocal2, airplaneLocal2, 0, 0);
-            return;
-        } else if (
-            argCount === 5 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "boolean" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let airplaneLocal = arg2;
-            let vxLocal = javaFloat(arg3);
-            let vyLocal = javaFloat(arg4);
-            this.x = xLocal;
-            this.y = yLocal;
-            this.airplane = airplaneLocal;
+    public static create(x: number, y: number, airplane: boolean): Bomb {
+        return Bomb.withVelocity(x, y, airplane, 0, 0);
+    }
 
-            this.vx = javaFloat(javaFloat(javaFloat(this.gameMode.player.x + javaFloat(this.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - xLocal);
-            this.vy = javaFloat(javaFloat(javaFloat(this.gameMode.player.y + javaFloat(this.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - yLocal);
-            let imag = javaFloat(
-                (airplaneLocal ? Bomb.VELOCITY : javaFloat(0.75 * Bomb.VELOCITY)) /
-                    javaFloat(Math.sqrt(javaFloat(javaFloat(this.vx * this.vx) + javaFloat(this.vy * this.vy))))
-            );
-            this.vx = javaFloat(this.vx * imag);
-            this.vy = javaFloat(this.vy * imag);
+    public static withVelocity(x: number, y: number, airplane: boolean, vx: number, vy: number): Bomb {
+        const bomb = new Bomb();
+        x = javaFloat(x);
+        y = javaFloat(y);
+        vx = javaFloat(vx);
+        vy = javaFloat(vy);
 
-            this.vx = javaFloat(this.vx + vxLocal);
-            this.vy = javaFloat(this.vy + vyLocal);
+        bomb.x = x;
+        bomb.y = y;
+        bomb.airplane = airplane;
 
-            this.angle = javaFloat(this.main.random.nextInt(4) * 90);
+        bomb.vx = javaFloat(javaFloat(javaFloat(bomb.gameMode.player.x + javaFloat(bomb.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - x);
+        bomb.vy = javaFloat(javaFloat(javaFloat(bomb.gameMode.player.y + javaFloat(bomb.main.random.nextFloat() * Bomb.ERROR)) - Bomb.ERROR) - y);
+        const imag = javaFloat(
+            (airplane ? Bomb.VELOCITY : javaFloat(0.75 * Bomb.VELOCITY)) /
+                javaFloat(Math.sqrt(javaFloat(javaFloat(bomb.vx * bomb.vx) + javaFloat(bomb.vy * bomb.vy))))
+        );
+        bomb.vx = javaFloat(bomb.vx * imag);
+        bomb.vy = javaFloat(bomb.vy * imag);
 
-            if (airplaneLocal || this.isCloseToFrame()) {
-                this.main.playSound(this.main.throwSound);
-            }
-            return;
+        bomb.vx = javaFloat(bomb.vx + vx);
+        bomb.vy = javaFloat(bomb.vy + vy);
+
+        bomb.angle = javaFloat(bomb.main.random.nextInt(4) * 90);
+
+        if (airplane || bomb.isCloseToFrame()) {
+            bomb.main.playSound(bomb.main.throwSound);
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        return bomb;
     }
 
     public static readonly CLOSE_MARGIN: number = 128;
@@ -134,7 +119,7 @@ export class Bomb extends Enemy {
 
         if (++this.t > Bomb.TRAVEL_TIME) {
             this.remove();
-            new Explosion(this.x, this.y).setDamagesEnemies(false);
+            Explosion.create(this.x, this.y).setDamagesEnemies(false);
         }
     }
 
@@ -156,9 +141,9 @@ export class Bomb extends Enemy {
         if (this.t < Bomb.TRAVEL_TIME - 2 || invincible) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x, this.y);
+            Explosion.create(this.x, this.y);
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -167,6 +152,6 @@ export class Bomb extends Enemy {
     }
 
     public render(): void {
-        this.main.draw(this.main.bomb, this.x, this.y, this.angle, this.scale);
+        this.main.drawImageRotatedScaled(this.main.bomb, this.x, this.y, this.angle, this.scale);
     }
 }

@@ -6,21 +6,13 @@ export class ParkedGrayJeep extends Enemy {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_ParkedGrayJeep(argCount, arg0, arg1);
-    }
 
-    private __construct_ParkedGrayJeep(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public override init(): void {
@@ -53,6 +45,6 @@ export class ParkedGrayJeep extends Enemy {
     public update(): void {}
 
     public render(): void {
-        this.main.drawCentered(this.main.parkedGrayJeep, this.x, this.y);
+        this.main.drawCenteredAt(this.main.parkedGrayJeep, this.x, this.y);
     }
 }

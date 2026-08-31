@@ -29,36 +29,26 @@ export class FloorGun extends Enemy {
         this.panel = null;
     }
 
-    public constructor(x: number, y: number);
-    public constructor(x: number, y: number, plain: boolean);
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_FloorGun(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_FloorGun(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            this.__construct_FloorGun(3, xLocal2, yLocal2, false);
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let plain = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            if (plain) {
-                this.mask = this.main.plainFloorGuns[0];
-                this.panel = this.main.plainFloorGuns[1];
-            } else {
-                this.mask = this.main.floorGuns[6];
-                this.panel = this.main.floorGuns[7];
-            }
-            return;
+    public static create(x: number, y: number): FloorGun {
+        return FloorGun.withPlainStyle(x, y, false);
+    }
+
+    public static withPlainStyle(x: number, y: number, plain: boolean): FloorGun {
+        const floorGun = new FloorGun();
+        floorGun.x = javaFloat(x);
+        floorGun.y = javaFloat(y);
+        if (plain) {
+            floorGun.mask = floorGun.main.plainFloorGuns[0];
+            floorGun.panel = floorGun.main.plainFloorGuns[1];
+        } else {
+            floorGun.mask = floorGun.main.floorGuns[6];
+            floorGun.panel = floorGun.main.floorGuns[7];
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        return floorGun;
     }
 
     public static readonly STATE_CLOSED: number = 0;
@@ -125,7 +115,7 @@ export class FloorGun extends Enemy {
 
         switch (this.state) {
             case FloorGun.STATE_CLOSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FloorGun.STATE_OPENING;
                     this.openY = 0;
                     this.delay = FloorGun.OPEN_DELAY;
@@ -133,7 +123,7 @@ export class FloorGun extends Enemy {
                 break;
             case FloorGun.STATE_OPENING:
                 this.openY = javaFloat(this.openY + FloorGun.OPEN_SPEED);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FloorGun.STATE_AIMING;
                     this.angle = 90;
                     this.delay = FloorGun.AIMING_DELAY;
@@ -151,13 +141,13 @@ export class FloorGun extends Enemy {
                 break;
             case FloorGun.STATE_AIMING:
                 this.angle = javaFloat(this.angle + this.aimingSpeed);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FloorGun.STATE_SHOOTING;
                     this.delay = FloorGun.SHOOT_DELAY;
                 }
                 break;
             case FloorGun.STATE_SHOOTING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FloorGun.STATE_CLOSING;
                     this.delay = FloorGun.OPEN_DELAY;
                     this.openY = 32;
@@ -170,7 +160,7 @@ export class FloorGun extends Enemy {
                     for (let i = 0; i < 5; i++, shootAngle = javaFloat(shootAngle + FloorGun.SHOOT_SPREAD_ANGLE)) {
                         let cos = javaFloat(Math.cos(shootAngle));
                         let sin = javaFloat(Math.sin(shootAngle));
-                        new EnemyBullet(
+                        EnemyBullet.colored(
                             javaFloat(javaFloat(this.x + 32) + javaFloat(13 * cos)),
                             javaFloat(javaFloat(this.y + 32) + javaFloat(13 * sin)),
                             javaFloat(FloorGun.BULLET_SPEED * cos),
@@ -183,7 +173,7 @@ export class FloorGun extends Enemy {
                 break;
             case FloorGun.STATE_CLOSING:
                 this.openY = javaFloat(this.openY - FloorGun.OPEN_SPEED);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FloorGun.STATE_CLOSED;
                     this.delay = FloorGun.CLOSED_DELAY;
                 }
@@ -194,12 +184,12 @@ export class FloorGun extends Enemy {
     // returns true if player bumped into the enemy
 
     public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
-        if (invincible || this.state == FloorGun.STATE_CLOSED || this.openY < 16) {
+        if (invincible || this.state === FloorGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -210,12 +200,12 @@ export class FloorGun extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.state == FloorGun.STATE_CLOSED || this.openY < 16) {
+        if (this.state === FloorGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -226,13 +216,13 @@ export class FloorGun extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.state == FloorGun.STATE_CLOSED || this.openY < 16) {
+        if (this.state === FloorGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+                Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);
@@ -246,39 +236,39 @@ export class FloorGun extends Enemy {
     public render(): void {
         switch (this.state) {
             case FloorGun.STATE_CLOSED:
-                this.main.draw(this.panel!, this.x, this.y);
-                this.main.draw(this.panel!, this.x, this.y + 32);
-                this.main.draw(this.mask!, this.x, this.y);
+                this.main.drawImage(this.panel!, this.x, this.y);
+                this.main.drawImage(this.panel!, this.x, this.y + 32);
+                this.main.drawImage(this.mask!, this.x, this.y);
                 break;
             case FloorGun.STATE_OPENING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.draw(this.main.floorGuns[0], this.x + 3, this.y + 51 - this.openY * 1.5);
-                this.main.draw(this.panel!, this.x, this.y - this.openY);
-                this.main.draw(this.panel!, this.x, this.y + 32 + this.openY);
-                this.main.draw(this.mask!, this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[0], this.x + 3, this.y + 51 - this.openY * 1.5);
+                this.main.drawImage(this.panel!, this.x, this.y - this.openY);
+                this.main.drawImage(this.panel!, this.x, this.y + 32 + this.openY);
+                this.main.drawImage(this.mask!, this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
             case FloorGun.STATE_AIMING:
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.draw(this.mask!, this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawImage(this.mask!, this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case FloorGun.STATE_SHOOTING:
-                if (++this.colorIndex == 4) {
+                if (++this.colorIndex === 4) {
                     this.colorIndex = 0;
                 }
-                this.main.draw(this.main.floorGuns[this.colorIndex == 1 ? 5 : 4], this.x, this.y);
-                this.main.draw(this.mask!, this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[this.colorIndex], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
+                this.main.drawImage(this.main.floorGuns[this.colorIndex === 1 ? 5 : 4], this.x, this.y);
+                this.main.drawImage(this.mask!, this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[this.colorIndex], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case FloorGun.STATE_CLOSING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32 + 48 - this.openY * 1.5, -29, -29, this.angle - 90);
-                this.main.draw(this.panel!, this.x, this.y - this.openY);
-                this.main.draw(this.panel!, this.x, this.y + 32 + this.openY);
-                this.main.draw(this.mask!, this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[0], this.x + 32, this.y + 32 + 48 - this.openY * 1.5, -29, -29, this.angle - 90);
+                this.main.drawImage(this.panel!, this.x, this.y - this.openY);
+                this.main.drawImage(this.panel!, this.x, this.y + 32 + this.openY);
+                this.main.drawImage(this.mask!, this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
         }

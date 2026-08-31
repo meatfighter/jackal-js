@@ -17,27 +17,18 @@ export class CannonTruck extends Enemy {
         this.ready = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
+    public constructor(x: number, y: number, right: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_CannonTruck(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_CannonTruck(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let rightLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.right = rightLocal;
-            this.directionIndex = rightLocal ? 0 : 1;
+        x = javaFloat(x);
+        y = javaFloat(y);
 
-            this.explosionX = 48;
-            this.explosionY = 48;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.right = right;
+        this.directionIndex = right ? 0 : 1;
+        this.explosionX = 48;
+        this.explosionY = 48;
     }
 
     public static readonly STATE_SLEEPING: number = 0;
@@ -114,7 +105,7 @@ export class CannonTruck extends Enemy {
 
         switch (this.fires) {
             case 0:
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
                     javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
                     javaFloat(this.right ? CannonTruck.DIRS[0][0][0] : -CannonTruck.DIRS[0][0][0]),
@@ -123,14 +114,14 @@ export class CannonTruck extends Enemy {
                 );
                 break;
             case 1:
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
                     javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
                     javaFloat(this.right ? CannonTruck.DIRS[1][0][0] : -CannonTruck.DIRS[1][0][0]),
                     javaFloat(CannonTruck.DIRS[1][0][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
                     javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
                     javaFloat(this.right ? CannonTruck.DIRS[1][1][0] : -CannonTruck.DIRS[1][1][0]),
@@ -139,14 +130,14 @@ export class CannonTruck extends Enemy {
                 );
                 break;
             case 2:
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
                     javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
                     javaFloat(this.right ? CannonTruck.DIRS[2][0][0] : -CannonTruck.DIRS[2][0][0]),
                     javaFloat(CannonTruck.DIRS[2][0][1]),
                     CannonTruck.BULLET_TRAVEL_TIME
                 );
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + CannonTruck.BULLET_ORIGIN_X),
                     javaFloat(this.y + CannonTruck.BULLET_ORIGIN_Y),
                     javaFloat(this.right ? CannonTruck.DIRS[2][1][0] : -CannonTruck.DIRS[2][1][0]),
@@ -168,13 +159,13 @@ export class CannonTruck extends Enemy {
         }
         switch (this.state) {
             case CannonTruck.STATE_SLEEPING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.fire();
                 }
                 break;
             case CannonTruck.STATE_RECOILING:
-                if (--this.delay == 0) {
-                    if (this.fires == 3) {
+                if (--this.delay === 0) {
+                    if (this.fires === 3) {
                         this.state = CannonTruck.STATE_SLEEPING;
                         this.delay = CannonTruck.SHOOT_DELAY;
                         this.fires = 0;
@@ -187,10 +178,10 @@ export class CannonTruck extends Enemy {
     }
 
     public render(): void {
-        if (this.state == CannonTruck.STATE_RECOILING && this.delay > CannonTruck.RECOIL_HALF) {
-            this.main.draw(this.main.cannonTruck[this.directionIndex][1], this.x, this.y);
+        if (this.state === CannonTruck.STATE_RECOILING && this.delay > CannonTruck.RECOIL_HALF) {
+            this.main.drawImage(this.main.cannonTruck[this.directionIndex][1], this.x, this.y);
         } else {
-            this.main.draw(this.main.cannonTruck[this.directionIndex][0], this.x, this.y);
+            this.main.drawImage(this.main.cannonTruck[this.directionIndex][0], this.x, this.y);
         }
     }
 }

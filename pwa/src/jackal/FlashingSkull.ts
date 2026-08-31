@@ -95,14 +95,14 @@ export class FlashingSkull extends GameElement {
     public update(): void {
         switch (this.state) {
             case FlashingSkull.STATE_FLASHING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FlashingSkull.STATE_FADING;
                     this.delay = FlashingSkull.FADE_TIME;
                 }
                 break;
             case FlashingSkull.STATE_FADING:
                 this.alpha = javaFloat(1 - javaFloat(FlashingSkull.INV_FADE_TIME * this.delay));
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = FlashingSkull.STATE_PAUSED;
                 }
                 break;
@@ -118,27 +118,27 @@ export class FlashingSkull extends GameElement {
     public render(): void {
         switch (this.state) {
             case FlashingSkull.STATE_FLASHING:
-                if (--this.flashDelay == 0) {
+                if (--this.flashDelay === 0) {
                     this.visible = !this.visible;
                     this.flashDelay = FlashingSkull.FLASH_TIME;
                 }
                 if (this.visible) {
                     for (let i = FlashingSkull.TILES.length - 1; i >= 0; i--) {
                         let tile = FlashingSkull.TILES[i];
-                        this.main.draw(this.gameMode.tiles[tile[2]], tile[0], tile[1]);
+                        this.main.drawImage(this.gameMode.tiles[tile[2]], tile[0], tile[1]);
                     }
                 }
                 break;
             case FlashingSkull.STATE_FADING:
                 for (let i = FlashingSkull.TILES.length - 1; i >= 0; i--) {
                     let tile = FlashingSkull.TILES[i];
-                    this.main.draw(this.gameMode.tiles[tile[2] + 14], tile[0], tile[1], this.alpha);
+                    this.main.drawImageAlpha(this.gameMode.tiles[tile[2] + 14], tile[0], tile[1], this.alpha);
                 }
                 break;
             default:
                 for (let i = FlashingSkull.TILES.length - 1; i >= 0; i--) {
                     let tile = FlashingSkull.TILES[i];
-                    this.main.draw(this.gameMode.tiles[tile[2] + 14], tile[0], tile[1]);
+                    this.main.drawImage(this.gameMode.tiles[tile[2] + 14], tile[0], tile[1]);
                 }
                 break;
         }

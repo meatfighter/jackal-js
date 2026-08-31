@@ -55,36 +55,26 @@ export class BossBlueTank extends Enemy {
         this.bossBlueTanksManager = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: BossBlueTanksManager) {
+    public constructor(x: number, y: number, bossBlueTanksManager: BossBlueTanksManager) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossBlueTank(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_BossBlueTank(argCount: number, arg0?: number, arg1?: number, arg2?: BossBlueTanksManager): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let bossBlueTanksManagerLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.bossBlueTanksManager = bossBlueTanksManagerLocal!;
-            this.directionX = 0;
-            this.vx = 0;
-            if (yLocal < 0) {
-                this.displayAngle = javaFloat((this.targetAngle = 90));
-                this.directionY = 1;
-                this.vy = this.introVy = BossBlueTank.SPEED;
-                this.introDelay = 128;
-            } else {
-                this.displayAngle = javaFloat((this.targetAngle = 270));
-                this.directionY = -1;
-                this.vy = this.introVy = -BossBlueTank.SPEED;
-                this.introDelay = 42;
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.bossBlueTanksManager = bossBlueTanksManager;
+        this.directionX = 0;
+        this.vx = 0;
+        if (y < 0) {
+            this.displayAngle = javaFloat((this.targetAngle = 90));
+            this.directionY = 1;
+            this.vy = this.introVy = BossBlueTank.SPEED;
+            this.introDelay = 128;
+        } else {
+            this.displayAngle = javaFloat((this.targetAngle = 270));
+            this.directionY = -1;
+            this.vy = this.introVy = -BossBlueTank.SPEED;
+            this.introDelay = 42;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly SPEED: number = 2.5;
@@ -142,13 +132,13 @@ export class BossBlueTank extends Enemy {
         let Dx = this.directionX;
         let Dy = this.directionY;
 
-        if (this.main.random.nextInt(5) == 4) {
+        if (this.main.random.nextInt(5) === 4) {
             this.vx = -this.vx;
             this.vy = -this.vy;
             this.directionX = -this.directionX;
             this.directionY = -this.directionY;
             this.targetAngle += 180;
-        } else if (this.main.random.nextInt(3) == 2) {
+        } else if (this.main.random.nextInt(3) === 2) {
             this.vx = Vy;
             this.vy = -Vx;
             this.directionX = Dy;
@@ -169,7 +159,7 @@ export class BossBlueTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * BossBlueTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * BossBlueTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
@@ -177,12 +167,12 @@ export class BossBlueTank extends Enemy {
     private computeMoveSteps(): void {
         let v = 0;
 
-        if (this.directionX != 0) {
+        if (this.directionX !== 0) {
             v = this.directionX;
         } else {
             v = this.directionY;
         }
-        if (v == 0) {
+        if (v === 0) {
             return;
         }
 
@@ -272,13 +262,13 @@ export class BossBlueTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * BossBlueTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * BossBlueTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
 
     private handleLoop(): void {
-        if (this.handlingLoop == 0) {
+        if (this.handlingLoop === 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
             this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
             this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
@@ -293,14 +283,14 @@ export class BossBlueTank extends Enemy {
             for (let i = this.solids!.size() - 1; i >= 0; i--) {
                 let solidLocal2 = this.solids!.get(i);
                 if (
-                    solidLocal2 != this &&
-                    solidLocal2.isSolid(
+                    solidLocal2 !== this &&
+                    solidLocal2.isSolidBounds(
                         javaFloat(nextX + this.solidX1),
                         javaFloat(nextY + this.solidY1),
                         javaFloat(nextX + this.solidX2),
                         javaFloat(nextY + this.solidY2)
                     ) &&
-                    !solidLocal2.isSolid(
+                    !solidLocal2.isSolidBounds(
                         javaFloat(this.x + this.solidX1),
                         javaFloat(this.y + this.solidY1),
                         javaFloat(this.x + this.solidX2),
@@ -317,12 +307,12 @@ export class BossBlueTank extends Enemy {
         }
 
         if (this.recoilDelay > 0) {
-            if (--this.recoilDelay == 0) {
+            if (--this.recoilDelay === 0) {
                 this.recoilOffset = 0;
             }
         }
 
-        if (this.displayAngle != this.targetAngle) {
+        if (this.displayAngle !== this.targetAngle) {
             this.shootCount = BossBlueTank.SHOOT_COUNT;
             let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
@@ -347,13 +337,13 @@ export class BossBlueTank extends Enemy {
             if (--this.moveSteps <= 0) {
                 let dx = 0;
                 let dy = 0;
-                if (this.main.random.nextInt(5) == 4) {
+                if (this.main.random.nextInt(5) === 4) {
                     dx = this.main.random.nextInt(512) - 256;
                     dy = this.main.random.nextInt(512) - 256;
                 }
                 let v =
                     this.handlingLoop > 0
-                        ? this.gameMode.suggestDirection(
+                        ? this.gameMode.suggestDirectionWithCurrentAngle(
                               this.x,
                               this.y,
                               javaFloat(this.loopTargetX + dx),
@@ -361,7 +351,7 @@ export class BossBlueTank extends Enemy {
                               this.targetAngle,
                               false
                           )
-                        : this.gameMode.suggestDirection(
+                        : this.gameMode.suggestDirectionWithCurrentAngle(
                               this.x,
                               this.y,
                               javaFloat(this.player!.x + dx),
@@ -391,14 +381,14 @@ export class BossBlueTank extends Enemy {
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
-                        solidLocal != this &&
-                        solidLocal.isSolid(
+                        solidLocal !== this &&
+                        solidLocal.isSolidBounds(
                             javaFloat(nextX + this.solidX1),
                             javaFloat(nextY + this.solidY1),
                             javaFloat(nextX + this.solidX2),
                             javaFloat(nextY + this.solidY2)
                         ) &&
-                        !solidLocal.isSolid(
+                        !solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(this.y + this.solidY1),
                             javaFloat(this.x + this.solidX2),
@@ -428,13 +418,13 @@ export class BossBlueTank extends Enemy {
             let dy = javaFloat(this.player!.y - this.y);
 
             if (
-                this.moveSteps == 1 &&
-                ((this.vy != 0 && javaInt(this.player!.x) >> 7 == javaInt(this.x) >> 7) ||
-                    (this.vx != 0 && javaInt(this.player!.y) >> 7 == javaInt(this.y) >> 7))
+                this.moveSteps === 1 &&
+                ((this.vy !== 0 && javaInt(this.player!.x) >> 7 === javaInt(this.x) >> 7) ||
+                    (this.vx !== 0 && javaInt(this.player!.y) >> 7 === javaInt(this.y) >> 7))
             ) {
                 this.moveSteps = 2;
             }
-            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) !== 2) {
                 this.moveSteps = 0;
             }
 
@@ -485,7 +475,7 @@ export class BossBlueTank extends Enemy {
                         by = -50;
                         break;
                 }
-                new EnemyBullet(
+                EnemyBullet.colored(
                     javaFloat(this.x + bx),
                     javaFloat(this.y + by),
                     javaFloat(this.directionX * 2),
@@ -507,19 +497,19 @@ export class BossBlueTank extends Enemy {
 
     private attacked(): void {
         this.bulletHits = 5;
-        if (this.colorOffset == 0) {
+        if (this.colorOffset === 0) {
             this.colorOffset = 2;
         } else {
             this.main.addPoints(800);
-            new Explosion(this.x, this.y);
+            Explosion.create(this.x, this.y);
             this.remove();
         }
     }
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
-            if (this.colorOffset == 0) {
+        if (attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
+            if (this.colorOffset === 0) {
                 this.main.playHitExplodeSound();
             }
             this.attacked();
@@ -530,8 +520,8 @@ export class BossBlueTank extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
-            if (--this.bulletHits == 0) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
+            if (--this.bulletHits === 0) {
                 this.attacked();
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);
@@ -547,7 +537,7 @@ export class BossBlueTank extends Enemy {
         if (invincible) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;

@@ -3,20 +3,9 @@ import { javaArray } from "../java/JavaRuntime.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IInput } from "./IInput.js";
 export class HumanInput implements IInput {
-    public constructor(arg0?: ButtonMapping, arg1?: GameContainer) {
-        const argCount = arguments.length;
-        this.__construct_HumanInput(argCount, arg0, arg1);
-    }
-
-    private __construct_HumanInput(argCount: number, arg0?: ButtonMapping, arg1?: GameContainer): void {
-        if (argCount === 2) {
-            let buttonMappingLocal = arg0;
-            let gc = arg1;
-            this.buttonMapping = buttonMappingLocal!;
-            this.input = gc!.getInput();
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+    public constructor(buttonMapping: ButtonMapping, gc: GameContainer) {
+        this.buttonMapping = buttonMapping;
+        this.input = gc.getInput();
     }
 
     private static readonly CONTROLLER_INDEX_LIMIT: number = 16;
@@ -105,10 +94,10 @@ export class HumanInput implements IInput {
 
     private isMappedDirectionButton(button: number): boolean {
         return (
-            this.buttonMapping.controllerUp == button ||
-            this.buttonMapping.controllerDown == button ||
-            this.buttonMapping.controllerLeft == button ||
-            this.buttonMapping.controllerRight == button
+            this.buttonMapping.controllerUp === button ||
+            this.buttonMapping.controllerDown === button ||
+            this.buttonMapping.controllerLeft === button ||
+            this.buttonMapping.controllerRight === button
         );
     }
 

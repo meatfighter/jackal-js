@@ -26,19 +26,10 @@ export class BossSuperTankGun extends Enemy {
         this.bossSuperTank = null;
     }
 
-    public constructor(arg0?: BossSuperTank) {
+    public constructor(bossSuperTank: BossSuperTank) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossSuperTankGun(argCount, arg0);
-    }
 
-    private __construct_BossSuperTankGun(argCount: number, arg0?: BossSuperTank): void {
-        if (argCount === 1) {
-            let bossSuperTankLocal = arg0;
-            this.bossSuperTank = bossSuperTankLocal!;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.bossSuperTank = bossSuperTank;
     }
 
     public static readonly RECOIL_DURATION: number = 17;
@@ -83,7 +74,7 @@ export class BossSuperTankGun extends Enemy {
         switch (this.state) {
             case RotatingGunState.FIRING:
                 if (--this.recoilIndex < 0) {
-                    if (++this.group == this.groupSize) {
+                    if (++this.group === this.groupSize) {
                         this.recoil = 0;
                         this.state = RotatingGunState.TRACKING;
                         this.pause = BossSuperTankGun.PAUSE_BETWEEN_GROUPS;
@@ -125,7 +116,7 @@ export class BossSuperTankGun extends Enemy {
                 }
                 if (Math.abs(deltaAngle) < BossSuperTankGun.ROTATION_SPEED) {
                     this.angle = targetAngle;
-                    if (this.pause == 0) {
+                    if (this.pause === 0) {
                         this.fire();
                     }
                 } else {
@@ -150,7 +141,7 @@ export class BossSuperTankGun extends Enemy {
         let ang = javaFloat((this.angle * Math.PI) / 180);
         let cos = javaFloat(Math.cos(ang));
         let sin = javaFloat(Math.sin(ang));
-        new EnemyBullet(
+        EnemyBullet.coloredWithSpeedMode(
             javaFloat(javaFloat(this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET) + javaFloat(93 * cos)),
             javaFloat(javaFloat(this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET) + javaFloat(93 * sin)),
             javaFloat(javaFloat(BossSuperTankGun.YELLOW_BULLET_SPEED * cos) + this.bossSuperTank!.vx),
@@ -174,8 +165,8 @@ export class BossSuperTankGun extends Enemy {
     }
 
     public render(): void {
-        this.main.drawRotated(
-            this.main.superGuns[this.bossSuperTank!.colorIndex == 0 ? 0 : 1],
+        this.main.drawRotatedAtCenter(
+            this.main.superGuns[this.bossSuperTank!.colorIndex === 0 ? 0 : 1],
             this.bossSuperTank!.x + BossSuperTankGun.X_OFFSET,
             this.bossSuperTank!.y + BossSuperTankGun.Y_OFFSET,
             -this.recoil - 34,

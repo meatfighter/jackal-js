@@ -14,34 +14,21 @@ export class House extends Enemy {
         this.left = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
+    public constructor(x: number, y: number, left: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_House(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_House(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let leftLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.left = leftLocal;
-
-            let X = javaInt(xLocal) >> 5;
-            let Y = javaInt(yLocal) >> 5;
-
-            this.groupIndex = this.gameMode.groupsMap[Y + 2][X + (leftLocal ? 0 : 5)];
-
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
-                }
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.left = left;
+        let X = javaInt(x) >> 5;
+        let Y = javaInt(y) >> 5;
+        this.groupIndex = this.gameMode.groupsMap[Y + 2][X + (left ? 0 : 5)];
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 6; j++) {
+                this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
             }
-            return;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public override init(): void {
@@ -57,11 +44,11 @@ export class House extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource <= AttackSource.TRAVELING_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource <= AttackSource.TRAVELING_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.playSoundOnRemove = false;
             this.main.playSound(this.main.hutSound);
             this.remove();
-            new Explosion(javaFloat(this.x + 96), javaFloat(this.y + 96));
+            Explosion.create(javaFloat(this.x + 96), javaFloat(this.y + 96));
             this.gameMode.triggerGroup(this.groupIndex);
             new Help(javaFloat(this.x + 96), javaFloat(this.y + 84), this.left);
             this.main.addPoints(800);
@@ -73,7 +60,7 @@ export class House extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;

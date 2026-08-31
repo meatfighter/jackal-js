@@ -14,23 +14,15 @@ export class Help extends GameElement {
         this.blinks = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
+    public constructor(x: number, y: number, left: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Help(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_Help(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let leftLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.left = leftLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+
+        this.x = x;
+        this.y = y;
+        this.left = left;
     }
 
     public visible: boolean = false;
@@ -40,13 +32,13 @@ export class Help extends GameElement {
     public init(): void {}
 
     public update(): void {
-        if (--this.visibleCount == 0) {
+        if (--this.visibleCount === 0) {
             this.visibleCount = 12;
             this.visible = !this.visible;
-            if (this.visible == false) {
-                if (++this.blinks == 4) {
+            if (this.visible === false) {
+                if (++this.blinks === 4) {
                     this.removeFlag = true;
-                    new FriendlySoldier(
+                    FriendlySoldier.fromBuilding(
                         javaFloat(this.x + (this.left ? -24 : 24)),
                         javaFloat(this.y + 28),
                         this.left ? FriendlySoldierType.HOUSE_LEFT_WALKING : FriendlySoldierType.HOUSE_RIGHT_WALKING,
@@ -60,7 +52,7 @@ export class Help extends GameElement {
 
     public render(): void {
         if (this.visible) {
-            this.main.draw(this.main.help, this.x - 48, this.y - 32);
+            this.main.drawImage(this.main.help, this.x - 48, this.y - 32);
         }
     }
 }

@@ -1,4 +1,5 @@
-import { javaArray, javaFloat, javaInt, rotatePoint, type ArrayList } from "../java/JavaRuntime.js";
+import { javaArray, javaFloat, javaInt, type ArrayList } from "../java/JavaRuntime.js";
+import { rotatePointLikeJava } from "./JackalMath.js";
 import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
@@ -13,19 +14,10 @@ import type { IInput } from "./IInput.js";
 import type { Main } from "./Main.js";
 export class Player {
     public constructor() {
-        const argCount = arguments.length;
-        this.__construct_Player(argCount);
-    }
-
-    private __construct_Player(argCount: number): void {
-        if (argCount === 0) {
-            this.main = MainRuntimeState.mainInstance!;
-            this.gameMode = MainRuntimeState.gameMode!;
-            this.input = this.main.input;
-            this.mines = this.gameMode.mines;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.main = MainRuntimeState.mainInstance!;
+        this.gameMode = MainRuntimeState.gameMode!;
+        this.input = this.main.input;
+        this.mines = this.gameMode.mines;
     }
 
     public static readonly SPEED: number = 2.5;
@@ -57,9 +49,9 @@ export class Player {
             angle = javaFloat(angle + javaFloat(0.74));
         }
 
-        let p0 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), 0, javaFloat(Math.PI / 4));
-        let p1 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), Player.SENSOR_Y, javaFloat(Math.PI / 4));
-        let p2 = rotatePoint(javaFloat(Player.SENSOR_X + Player.SPEED), -Player.SENSOR_Y, javaFloat(Math.PI / 4));
+        let p0 = rotatePointLikeJava(javaFloat(Player.SENSOR_X + Player.SPEED), 0, javaFloat(Math.PI / 4));
+        let p1 = rotatePointLikeJava(javaFloat(Player.SENSOR_X + Player.SPEED), Player.SENSOR_Y, javaFloat(Math.PI / 4));
+        let p2 = rotatePointLikeJava(javaFloat(Player.SENSOR_X + Player.SPEED), -Player.SENSOR_Y, javaFloat(Math.PI / 4));
 
         Player.SENSOR_D_X0 = javaInt(p0.x);
         Player.SENSOR_D_Y0 = javaInt(p0.y);
@@ -126,13 +118,13 @@ export class Player {
         }
 
         this.main.playSound(this.main.playerExplodeSound);
-        if (this.main.extraLives == 0) {
-            this.main.stopSong();
+        if (this.main.extraLives === 0) {
+            this.main.stopAllSongs();
         }
-        new Explosion(this.x, this.y, true);
+        Explosion.withPlayerExplosion(this.x, this.y, true);
 
         if (this.releaseablePows > 1) {
-            let weaponCarrier = this.main.hasMissiles && this.main.random.nextInt(5) == 3;
+            let weaponCarrier = this.main.hasMissiles && this.main.random.nextInt(5) === 3;
             if (weaponCarrier) {
                 this.releaseablePows++;
             }
@@ -141,7 +133,11 @@ export class Player {
                 release = 3;
             }
             for (let i = release; i >= 0; i--) {
-                new FriendlySoldier(this.x, this.y, weaponCarrier && i == 0 ? FriendlySoldierType.WEAPON_CARRIER_WANDERER : FriendlySoldierType.WANDERER);
+                FriendlySoldier.wandering(
+                    this.x,
+                    this.y,
+                    weaponCarrier && i === 0 ? FriendlySoldierType.WEAPON_CARRIER_WANDERER : FriendlySoldierType.WANDERER
+                );
             }
         }
         this.pows = 0;
@@ -151,21 +147,15 @@ export class Player {
         this.respawning = Player.RESPAWN_DELAY;
     }
 
-    public attack(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.attack__overload0(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.attack__overload1(javaFloat(arg0), javaFloat(arg1));
-        }
-        throw new Error(`No Java method overload matched attack: ${argCount}`);
-    }
+    public attackBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
 
-    public attack__overload0(x1: number, y1: number, x2: number, y2: number): boolean {
         if (
-            this.respawning == 0 &&
-            this.invincible == 0 &&
+            this.respawning === 0 &&
+            this.invincible === 0 &&
             x1 <= javaFloat(this.x + 32) &&
             x2 >= javaFloat(this.x - 32) &&
             y1 <= javaFloat(this.y + 32) &&
@@ -178,10 +168,13 @@ export class Player {
         }
     }
 
-    public attack__overload1(x: number, y: number): boolean {
+    public attackAt(x: number, y: number): boolean {
+        x = javaFloat(x);
+        y = javaFloat(y);
+
         if (
-            this.respawning == 0 &&
-            this.invincible == 0 &&
+            this.respawning === 0 &&
+            this.invincible === 0 &&
             x >= javaFloat(this.x - 32) &&
             x <= javaFloat(this.x + 32) &&
             y >= javaFloat(this.y - 32) &&
@@ -210,11 +203,11 @@ export class Player {
 
     public update(): void {
         let tileType = this.gameMode.getTileType(this.x, this.y);
-        this.inSwamp = tileType == GameMode.TYPE_SWAMP;
+        this.inSwamp = tileType === GameMode.TYPE_SWAMP;
         let speed = javaFloat(this.getSpeed());
 
         if (this.respawning > 0) {
-            if (--this.respawning == 0) {
+            if (--this.respawning === 0) {
                 if (this.main.extraLives > 0) {
                     this.main.loseLife();
                     this.invincible = Player.INVINCIBLE_DELAY;
@@ -227,7 +220,7 @@ export class Player {
             }
         }
 
-        if (tileType == GameMode.TYPE_CONVEYOR) {
+        if (tileType === GameMode.TYPE_CONVEYOR) {
             let Y = javaFloat(javaFloat(this.y + Player.SENSOR_X) + Player.SPEED);
             if (
                 this.gameMode.isDriveable(this.x, Y) &&
@@ -298,7 +291,7 @@ export class Player {
         } else if (this.input.isRight()) {
             // 0
             this.fireAngle = 0;
-            if ((this.lastTargetAngle == 45 || this.lastTargetAngle == 315) && this.diagonalDelay > 0) {
+            if ((this.lastTargetAngle === 45 || this.lastTargetAngle === 315) && this.diagonalDelay > 0) {
                 this.diagonalDelay--;
             } else {
                 this.targetAngle = 0;
@@ -317,7 +310,7 @@ export class Player {
         } else if (this.input.isDown()) {
             // 90
             this.fireAngle = 90;
-            if ((this.lastTargetAngle == 45 || this.lastTargetAngle == 135) && this.diagonalDelay > 0) {
+            if ((this.lastTargetAngle === 45 || this.lastTargetAngle === 135) && this.diagonalDelay > 0) {
                 this.diagonalDelay--;
             } else {
                 this.targetAngle = 90;
@@ -336,7 +329,7 @@ export class Player {
         } else if (this.input.isLeft()) {
             // 180
             this.fireAngle = 180;
-            if ((this.lastTargetAngle == 135 || this.lastTargetAngle == 225) && this.diagonalDelay > 0) {
+            if ((this.lastTargetAngle === 135 || this.lastTargetAngle === 225) && this.diagonalDelay > 0) {
                 this.diagonalDelay--;
             } else {
                 this.targetAngle = 180;
@@ -355,7 +348,7 @@ export class Player {
         } else if (this.input.isUp()) {
             // 270
             this.fireAngle = 270;
-            if ((this.lastTargetAngle == 225 || this.lastTargetAngle == 315) && this.diagonalDelay > 0) {
+            if ((this.lastTargetAngle === 225 || this.lastTargetAngle === 315) && this.diagonalDelay > 0) {
                 this.diagonalDelay--;
             } else {
                 this.targetAngle = 270;
@@ -380,7 +373,7 @@ export class Player {
         }
 
         if (this.angleSteps > 0) {
-            if (--this.angleSteps == 0) {
+            if (--this.angleSteps === 0) {
                 this.angle = this.nextAngle;
                 this.displayAngle = javaFloat(this.nextAngle);
             } else {
@@ -388,12 +381,12 @@ export class Player {
             }
         }
 
-        if (this.angleSteps == 0 && this.targetAngle != -1 && this.targetAngle != this.angle) {
+        if (this.angleSteps === 0 && this.targetAngle !== -1 && this.targetAngle !== this.angle) {
             this.angleSteps = Player.ANGLE_STEPS;
-            if (this.targetAngle == 0) {
+            if (this.targetAngle === 0) {
                 if (this.angle >= 180) {
                     this.nextAngle = this.angle + 45;
-                    if (this.nextAngle == 360) {
+                    if (this.nextAngle === 360) {
                         this.nextAngle = 0;
                     }
                     this.angleVelocity = Player.ANGLE_VELOCITY;
@@ -401,11 +394,11 @@ export class Player {
                     this.nextAngle = this.angle - 45;
                     this.angleVelocity = -Player.ANGLE_VELOCITY;
                 }
-            } else if (this.targetAngle == 180) {
+            } else if (this.targetAngle === 180) {
                 if (this.angle > 180) {
                     this.nextAngle = this.angle - 45;
                     this.angleVelocity = -Player.ANGLE_VELOCITY;
-                } else if (this.angle == 0) {
+                } else if (this.angle === 0) {
                     this.nextAngle = 315;
                     this.angleVelocity = -Player.ANGLE_VELOCITY;
                 } else {
@@ -429,9 +422,9 @@ export class Player {
                     this.angleVelocity = Player.ANGLE_VELOCITY;
                 }
             }
-            if (this.nextAngle == -45) {
+            if (this.nextAngle === -45) {
                 this.nextAngle = 315;
-            } else if (this.nextAngle == 360) {
+            } else if (this.nextAngle === 360) {
                 this.nextAngle = 0;
             }
         }
@@ -444,7 +437,7 @@ export class Player {
             if (this.fireReleased && this.weaponArmed) {
                 this.fireReleased = false;
                 this.weaponArmed = false;
-                if (this.targetAngle == -1 && this.angleSteps == 0) {
+                if (this.targetAngle === -1 && this.angleSteps === 0) {
                     this.fireAngle = this.angle;
                 }
                 if (this.main.hasMissiles) {
@@ -461,7 +454,7 @@ export class Player {
             this.gunArmed--;
         }
         if (this.input.isShoot()) {
-            if (this.shootReleased || this.gunArmed == 0) {
+            if (this.shootReleased || this.gunArmed === 0) {
                 new PlayerBullet(this.x, this.y);
                 this.gunArmed = Player.GUN_ARMED_DELAY;
             }
@@ -474,9 +467,9 @@ export class Player {
         let invincibleLocal = this.invincible > 0;
         let xMargin = 32;
         let yMargin = 32;
-        if (this.angle == 0 || this.angle == 180) {
+        if (this.angle === 0 || this.angle === 180) {
             xMargin = 48;
-        } else if (this.angle == 90 || this.angle == 270) {
+        } else if (this.angle === 90 || this.angle === 270) {
             yMargin = 46;
         }
         for (let i = this.mines.size() - 1; i >= 0; i--) {
@@ -493,55 +486,55 @@ export class Player {
     }
 
     public render(): void {
-        if (this.respawning != 0) {
+        if (this.respawning !== 0) {
             return;
         }
 
         if (
-            this.targetAngle != -1 &&
+            this.targetAngle !== -1 &&
             !this.gameMode.bossCameraPan &&
             !this.gameMode.endingCameraPan &&
             this.gameMode.playing &&
             !this.gameMode.paused &&
-            ++this.rumble == 17
+            ++this.rumble === 17
         ) {
             this.rumble = 0;
         }
 
         if (this.invincible > 0) {
-            if (!this.gameMode.paused && ++this.invincibleColor == 4) {
+            if (!this.gameMode.paused && ++this.invincibleColor === 4) {
                 this.invincibleColor = 0;
             }
         } else {
             this.invincibleColor = 0;
         }
 
-        if (this.inSwamp && this.targetAngle != -1 && this.angleSteps == 0) {
+        if (this.inSwamp && this.targetAngle !== -1 && this.angleSteps === 0) {
             switch (this.nextAngle) {
                 case 0:
                 case 360:
-                    this.main.draw(this.main.playerWakes[0], this.x - 37, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[0], this.x - 37, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 45:
                     this.main.drawRotatedAlpha(this.main.playerWakes[4], this.x - 8, this.y - 2, 90, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 90:
-                    this.main.draw(this.main.playerWakes[3], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[3], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 135:
                     this.main.drawRotatedAlpha(this.main.playerWakes[5], this.x + 8, this.y + 2, -90, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 180:
-                    this.main.draw(this.main.playerWakes[1], this.x - 27, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[1], this.x - 27, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 225:
-                    this.main.draw(this.main.playerWakes[5], this.x - 42, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[5], this.x - 42, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 270:
-                    this.main.draw(this.main.playerWakes[2], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[2], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 315:
-                    this.main.draw(this.main.playerWakes[4], this.x - 49, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[4], this.x - 49, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
                     break;
             }
         }

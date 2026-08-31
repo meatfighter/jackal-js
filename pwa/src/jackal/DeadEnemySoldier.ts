@@ -7,21 +7,13 @@ export class DeadEnemySoldier extends GameElement {
         this.delay = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_DeadEnemySoldier(argCount, arg0, arg1);
-    }
 
-    private __construct_DeadEnemySoldier(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly PRE_FADE_DELAY: number = 91 * 2;
@@ -37,11 +29,11 @@ export class DeadEnemySoldier extends GameElement {
 
     public update(): void {
         if (this.fading) {
-            if (--this.delay == 0) {
+            if (--this.delay === 0) {
                 this.remove();
             }
         } else {
-            if (--this.delay == 0) {
+            if (--this.delay === 0) {
                 this.fading = true;
                 this.delay = DeadEnemySoldier.PRE_FADE_DELAY;
             }
@@ -50,9 +42,9 @@ export class DeadEnemySoldier extends GameElement {
 
     public render(): void {
         if (this.fading) {
-            this.main.draw(this.main.deadEnemySoldier, this.x - 20, this.y - 54, this.delay / javaFloat(DeadEnemySoldier.FADE_DELAY));
+            this.main.drawImageAlpha(this.main.deadEnemySoldier, this.x - 20, this.y - 54, this.delay / javaFloat(DeadEnemySoldier.FADE_DELAY));
         } else {
-            this.main.draw(this.main.deadEnemySoldier, this.x - 20, this.y - 54);
+            this.main.drawImage(this.main.deadEnemySoldier, this.x - 20, this.y - 54);
         }
     }
 }

@@ -18,34 +18,21 @@ export class SubmarineMissile extends Enemy {
         this.explodeDelay = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_SubmarineMissile(argCount, arg0, arg1);
-    }
-
-    private __construct_SubmarineMissile(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            yLocal = javaFloat(yLocal - 20);
-
-            let player = this.gameMode.player;
-            let ang = javaFloat(
-                180 + javaFloat(SubmarineMissile.TO_DEGREES * javaFloat(Math.atan2(javaFloat(yLocal - player.y), javaFloat(xLocal - player.x))))
-            );
-            this.angle = 45 * javaRoundFloat(ang / 45);
-            let v = this.main.createUnitVector(this.angle);
-            this.vx = javaFloat(SubmarineMissile.SPEED * v[0]);
-            this.vy = javaFloat(SubmarineMissile.SPEED * v[1]);
-            this.tx = javaFloat(18 * v[0]);
-            this.ty = javaFloat(18 * v[1]);
-
-            this.x = javaFloat(xLocal + v[0] * 24);
-            this.y = javaFloat(yLocal + v[1] * 24);
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        y = javaFloat(y - 20);
+        let player = this.gameMode.player;
+        let ang = javaFloat(180 + javaFloat(SubmarineMissile.TO_DEGREES * javaFloat(Math.atan2(javaFloat(y - player.y), javaFloat(x - player.x)))));
+        this.angle = 45 * javaRoundFloat(javaFloat(ang / 45));
+        let v = this.main.createUnitVector(this.angle);
+        this.vx = javaFloat(SubmarineMissile.SPEED * v[0]);
+        this.vy = javaFloat(SubmarineMissile.SPEED * v[1]);
+        this.tx = javaFloat(18 * v[0]);
+        this.ty = javaFloat(18 * v[1]);
+        this.x = javaFloat(x + javaFloat(v[0] * 24));
+        this.y = javaFloat(y + javaFloat(v[1] * 24));
     }
 
     public static readonly SPEED: number = 8;
@@ -75,7 +62,7 @@ export class SubmarineMissile extends Enemy {
         this.x = javaFloat(this.x + this.vx);
         this.y = javaFloat(this.y + this.vy);
 
-        if (this.gameMode.isOutsideOfFrame(javaFloat(this.x - 32), javaFloat(this.y - 32), javaFloat(this.x + 32), javaFloat(this.y + 32))) {
+        if (this.gameMode.isOutsideOfFrameBounds(javaFloat(this.x - 32), javaFloat(this.y - 32), javaFloat(this.x + 32), javaFloat(this.y + 32))) {
             this.playSoundOnRemove = false;
             this.remove();
         }

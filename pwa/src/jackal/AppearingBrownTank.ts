@@ -8,21 +8,13 @@ export class AppearingBrownTank extends GameElement {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_AppearingBrownTank(argCount, arg0, arg1);
-    }
 
-    private __construct_AppearingBrownTank(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public init(): void {
@@ -31,7 +23,7 @@ export class AppearingBrownTank extends GameElement {
 
     public update(): void {
         if (javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) < javaFloat(this.y - 48)) {
-            let brownTank = new BrownTank(this.x, this.y);
+            let brownTank = BrownTank.create(this.x, this.y);
             brownTank.targetAngle = 270;
             brownTank.displayAngle = 270;
             this.remove();

@@ -208,7 +208,7 @@ const runtime = {
 };
 class MainConstants { static DISPLAY_WIDTH=1024; static DISPLAY_HEIGHT=768; }
 class GameElement {
-  constructor(){ this.main=runtime.main; this.gameMode=runtime.gameMode; this.x=0; this.y=0; this.removeFlag=false; this.layer=0; this.__initializeJavaSubclassDefaults(); this.init(); this.gameMode.add(this); }
+  constructor(){ this.main=runtime.main; this.gameMode=runtime.gameMode; this.x=0; this.y=0; this.removeFlag=false; this.layer=0; this.__initializeJavaSubclassDefaults(); this.init(); this.gameMode.addGameElement(this); }
   __initializeJavaSubclassDefaults(){ this.x=0; this.y=0; }
   init(){} update(){} render(){} remove(){this.removeFlag=true;}
 }
@@ -216,8 +216,22 @@ class Enemy extends GameElement {
   __initializeJavaSubclassDefaults(){ super.__initializeJavaSubclassDefaults(); this.angle=0; this.playSoundOnRemove=true; this.explosionX=0; this.explosionY=0; }
   init(){} hit(){return false;} attack(){return false;} bulletAttack(){return false;} bump(){return false;} remove(){this.removeFlag=true;}
 }
-class EnemyBullet { static SPEED=2.5; static count=0; constructor(){EnemyBullet.count++;} }
-class Explosion { constructor(){} setTiny(){return this;} }
+class EnemyBullet {
+  static SPEED=2.5; static count=0;
+  constructor(){EnemyBullet.count++;}
+  static cannonball(){return new EnemyBullet();}
+  static colored(){return new EnemyBullet();}
+  static coloredWithSpeedMode(){return new EnemyBullet();}
+}
+class Explosion {
+  constructor(){}
+  static create(){return new Explosion();}
+  static withPlayerExplosion(){return new Explosion();}
+  static configured(){return new Explosion();}
+  static attachedToEnemy(){return new Explosion();}
+  setTiny(){return this;}
+  setDamagesEnemies(){return this;}
+}
 class AttackSource { static PLAYER_EXPLOSION=3; }
 class IntroPlayer { static FINAL_X=0; static FINAL_Y=0; constructor(){} remove(){} }
 `;
@@ -266,6 +280,7 @@ async function runTypeScript() {
         playHitExplodeSound() {},
         addPoints() {},
         playSoundIfNotPlaying() {},
+        playSoundIfNotPlayingAtVolume() {},
         drawRotated() {},
         drawRotatedScaled() {},
         drawOffset() {},
@@ -277,7 +292,7 @@ async function runTypeScript() {
         cameraX: 0,
         cameraY: 0,
         playing: true,
-        add() {},
+        addGameElement() {},
         isOutsideOfFrame() {
             return false;
         }
@@ -298,7 +313,7 @@ async function runTypeScript() {
             runtime.gameMode.player.x = targets[q][0];
             runtime.gameMode.player.y = targets[q][1];
             EnemyBullet.count = 0;
-            const gun = new RotatingGun(0, 0, true);
+            const gun = RotatingGun.withWhiteBullets(0, 0, true);
             gun.state = RotatingGunState.TRACKING;
             gun.angle = starts[s];
             gun.pause = 0;

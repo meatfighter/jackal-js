@@ -30,23 +30,15 @@ export class BossShipGun extends Enemy {
         this.triggered = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: BossShipManager) {
+    public constructor(x: number, y: number, bossShipManager: BossShipManager) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossShipGun(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_BossShipGun(argCount: number, arg0?: number, arg1?: number, arg2?: BossShipManager): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let bossShipManagerLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.bossShipManager = bossShipManagerLocal!;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+
+        this.x = x;
+        this.y = y;
+        this.bossShipManager = bossShipManager;
     }
 
     public static readonly STATE_CLOSED: number = 0;
@@ -108,7 +100,7 @@ export class BossShipGun extends Enemy {
     public update(): void {
         switch (this.state) {
             case BossShipGun.STATE_CLOSED:
-                if (this.triggered && --this.delay == 0) {
+                if (this.triggered && --this.delay === 0) {
                     this.triggered = false;
                     this.state = BossShipGun.STATE_OPENING;
                     this.openY = 0;
@@ -121,7 +113,7 @@ export class BossShipGun extends Enemy {
                 if (this.openY > 32) {
                     this.openY = 32;
                 }
-                if (--this.delay == 0 || this.openY >= 32) {
+                if (--this.delay === 0 || this.openY >= 32) {
                     this.state = BossShipGun.STATE_AIMING;
                     this.angle = 90;
                     this.delay = BossShipGun.AIMING_DELAY;
@@ -139,13 +131,13 @@ export class BossShipGun extends Enemy {
                 break;
             case BossShipGun.STATE_AIMING:
                 this.angle = javaFloat(this.angle + this.aimingSpeed);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = BossShipGun.STATE_SHOOTING;
                     this.delay = BossShipGun.SHOOT_DELAY;
                 }
                 break;
             case BossShipGun.STATE_SHOOTING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = BossShipGun.STATE_CLOSING;
                     this.delay = BossShipGun.OPEN_DELAY;
                     this.openY = 32;
@@ -158,7 +150,7 @@ export class BossShipGun extends Enemy {
                     for (let i = 0; i < 5; i++, shootAngle = javaFloat(shootAngle + BossShipGun.SHOOT_SPREAD_ANGLE)) {
                         let cos = javaFloat(Math.cos(shootAngle));
                         let sin = javaFloat(Math.sin(shootAngle));
-                        new EnemyBullet(
+                        EnemyBullet.colored(
                             javaFloat(javaFloat(this.x + 32) + javaFloat(13 * cos)),
                             javaFloat(javaFloat(this.y + 32) + javaFloat(13 * sin)),
                             javaFloat(BossShipGun.BULLET_SPEED * cos),
@@ -174,7 +166,7 @@ export class BossShipGun extends Enemy {
                 if (this.openY < 0) {
                     this.openY = 0;
                 }
-                if (--this.delay == 0 || this.openY <= 0) {
+                if (--this.delay === 0 || this.openY <= 0) {
                     this.state = BossShipGun.STATE_CLOSED;
                     this.delay = BossShipGun.MIN_CLOSED_DELAY + this.main.random.nextInt(BossShipGun.MAX_CLOSED_DELAY - BossShipGun.MIN_CLOSED_DELAY);
                 }
@@ -183,7 +175,7 @@ export class BossShipGun extends Enemy {
     }
 
     public open(delay: number): void {
-        if (this.state == BossShipGun.STATE_CLOSED) {
+        if (this.state === BossShipGun.STATE_CLOSED) {
             this.triggered = true;
             if (delay < 1) {
                 delay = 1;
@@ -194,19 +186,20 @@ export class BossShipGun extends Enemy {
 
     public isOpenable(): boolean {
         return !(
-            this.removeFlag || this.gameMode.isOutsideOfFrame(javaFloat(this.x + 8), javaFloat(this.y + 8), javaFloat(this.x + 56), javaFloat(this.y + 56))
+            this.removeFlag ||
+            this.gameMode.isOutsideOfFrameBounds(javaFloat(this.x + 8), javaFloat(this.y + 8), javaFloat(this.x + 56), javaFloat(this.y + 56))
         );
     }
 
     // returns true if player bumped into the enemy
 
     public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
-        if (invincible || this.state == BossShipGun.STATE_CLOSED || this.openY < 16) {
+        if (invincible || this.state === BossShipGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -224,13 +217,13 @@ export class BossShipGun extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.wasHit || this.state == BossShipGun.STATE_CLOSED || this.openY < 16) {
+        if (this.wasHit || this.state === BossShipGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
+        if (attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
             this.wasHit = true;
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
-            if (--this.hits == 0) {
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            if (--this.hits === 0) {
                 this.remove();
             } else {
                 this.state = BossShipGun.STATE_CLOSING;
@@ -246,13 +239,13 @@ export class BossShipGun extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.state == BossShipGun.STATE_CLOSED || this.openY < 16) {
+        if (this.state === BossShipGun.STATE_CLOSED || this.openY < 16) {
             return false;
         }
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+                Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);
             }
@@ -265,39 +258,39 @@ export class BossShipGun extends Enemy {
     public render(): void {
         switch (this.state) {
             case BossShipGun.STATE_CLOSED:
-                this.main.draw(this.main.shipGuns[1], this.x, this.y);
-                this.main.draw(this.main.shipGuns[2], this.x, this.y + 32);
-                this.main.draw(this.main.shipGuns[0], this.x, this.y);
+                this.main.drawImage(this.main.shipGuns[1], this.x, this.y);
+                this.main.drawImage(this.main.shipGuns[2], this.x, this.y + 32);
+                this.main.drawImage(this.main.shipGuns[0], this.x, this.y);
                 break;
             case BossShipGun.STATE_OPENING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.draw(this.main.floorGuns[0], this.x + 3, this.y + 51 - this.openY * 1.5);
-                this.main.draw(this.main.shipGuns[1], this.x, this.y - this.openY);
-                this.main.draw(this.main.shipGuns[2], this.x, this.y + 32 + this.openY);
-                this.main.draw(this.main.shipGuns[0], this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[0], this.x + 3, this.y + 51 - this.openY * 1.5);
+                this.main.drawImage(this.main.shipGuns[1], this.x, this.y - this.openY);
+                this.main.drawImage(this.main.shipGuns[2], this.x, this.y + 32 + this.openY);
+                this.main.drawImage(this.main.shipGuns[0], this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
             case BossShipGun.STATE_AIMING:
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.draw(this.main.shipGuns[0], this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawImage(this.main.shipGuns[0], this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case BossShipGun.STATE_SHOOTING:
-                if (++this.colorIndex == 4) {
+                if (++this.colorIndex === 4) {
                     this.colorIndex = 0;
                 }
-                this.main.draw(this.main.floorGuns[this.colorIndex == 1 ? 5 : 4], this.x, this.y);
-                this.main.draw(this.main.shipGuns[0], this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[this.colorIndex], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
+                this.main.drawImage(this.main.floorGuns[this.colorIndex === 1 ? 5 : 4], this.x, this.y);
+                this.main.drawImage(this.main.shipGuns[0], this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[this.colorIndex], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case BossShipGun.STATE_CLOSING:
                 this.gameMode.g.setWorldClip(this.x, this.y, 64, 64);
-                this.main.draw(this.main.floorGuns[4], this.x, this.y);
-                this.main.drawRotated(this.main.floorGuns[0], this.x + 32, this.y + 32 + 48 - this.openY * 1.5, -29, -29, this.angle - 90);
-                this.main.draw(this.main.shipGuns[1], this.x, this.y - this.openY);
-                this.main.draw(this.main.shipGuns[2], this.x, this.y + 32 + this.openY);
-                this.main.draw(this.main.shipGuns[0], this.x, this.y);
+                this.main.drawImage(this.main.floorGuns[4], this.x, this.y);
+                this.main.drawRotatedAtCenter(this.main.floorGuns[0], this.x + 32, this.y + 32 + 48 - this.openY * 1.5, -29, -29, this.angle - 90);
+                this.main.drawImage(this.main.shipGuns[1], this.x, this.y - this.openY);
+                this.main.drawImage(this.main.shipGuns[2], this.x, this.y + 32 + this.openY);
+                this.main.drawImage(this.main.shipGuns[0], this.x, this.y);
                 this.gameMode.g.clearWorldClip();
                 break;
         }

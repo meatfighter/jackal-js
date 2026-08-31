@@ -32,25 +32,16 @@ export class ElephantGun extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean) {
+    public constructor(x: number, y: number, left: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_ElephantGun(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_ElephantGun(argCount: number, arg0?: number, arg1?: number, arg2?: boolean): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let leftLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.left = leftLocal;
+        x = javaFloat(x);
+        y = javaFloat(y);
 
-            this.startAiming();
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.left = left;
+        this.startAiming();
     }
 
     public static readonly SPRITE_LEFT: number = 0;
@@ -144,7 +135,7 @@ export class ElephantGun extends Enemy {
 
         switch (this.state) {
             case ElephantGun.STATE_AIMING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     if (this.spriteIndex < this.targetDirection) {
                         this.spriteIndex++;
                         this.delay = ElephantGun.AIM_DELAY;
@@ -157,18 +148,18 @@ export class ElephantGun extends Enemy {
                 }
                 break;
             case ElephantGun.STATE_ASTERING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.startNosing();
                 }
                 break;
             case ElephantGun.STATE_NOSE:
                 this.fireballX = javaFloat(this.fireballX + this.fireballVx);
-                if (this.spriteIndex == 1) {
+                if (this.spriteIndex === 1) {
                     this.fireballY = javaFloat(javaFloat(this.fireballY + ElephantGun.FIREBALL_SPEED) + 2);
                 } else {
                     this.fireballY = javaFloat(this.fireballY + ElephantGun.FIREBALL_SPEED);
                 }
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.fire();
                     this.startAiming();
                 }
@@ -178,10 +169,10 @@ export class ElephantGun extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.state != ElephantGun.STATE_DESTROYED && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
+        if (this.state !== ElephantGun.STATE_DESTROYED && attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
             this.main.playHitExplodeSound();
-            if (++this.hits == ElephantGun.HITS) {
-                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            if (++this.hits === ElephantGun.HITS) {
+                Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
                 this.state = ElephantGun.STATE_DESTROYED;
                 this.spriteIndex = ElephantGun.SPRITE_DESTROYED;
@@ -189,7 +180,7 @@ export class ElephantGun extends Enemy {
                 for (let i = 0; i < 3; i++) {
                     let Y = javaFloat(javaFloat(this.y + 76) - (i << 5));
                     for (let j = 0; j < 3; j++) {
-                        new Explosion(
+                        Explosion.configured(
                             javaFloat(javaFloat(javaFloat(this.x + (j << 5)) + 12) + this.main.random.nextInt(8)),
                             javaFloat(Y + this.main.random.nextInt(8)),
                             true,
@@ -207,7 +198,7 @@ export class ElephantGun extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.state != ElephantGun.STATE_DESTROYED && this.hit(x1, y1, x2, y2)) {
+        if (this.state !== ElephantGun.STATE_DESTROYED && this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -216,17 +207,17 @@ export class ElephantGun extends Enemy {
 
     public render(): void {
         let yOffset = 0;
-        if (this.spriteIndex == 0 || this.spriteIndex == 2) {
+        if (this.spriteIndex === 0 || this.spriteIndex === 2) {
             yOffset = 4;
         }
-        this.main.draw(this.main.elephantGuns[this.spriteIndex], this.x, this.y - yOffset);
+        this.main.drawImage(this.main.elephantGuns[this.spriteIndex], this.x, this.y - yOffset);
         switch (this.state) {
             case ElephantGun.STATE_ASTERING: {
                 let mag = this.delay * ElephantGun.INVERSE_ASTER_DELAY;
                 let scale = 1 - mag;
                 mag *= ElephantGun.ASTER_RADIUS;
                 for (let i = 0; i < ElephantGun.ASTER_SPINES; i++) {
-                    this.main.drawCentered(
+                    this.main.drawCenteredScaledAlpha(
                         this.main.elephantGuns[4],
                         this.x + 48 + mag * this.asters[i][0],
                         this.y + 36 + mag * this.asters[i][1] - yOffset,
@@ -239,16 +230,16 @@ export class ElephantGun extends Enemy {
             case ElephantGun.STATE_NOSE:
                 switch (this.spriteIndex) {
                     case 0:
-                        this.main.draw(this.main.elephantGuns[7], this.x - 4, this.y + 48 - yOffset);
+                        this.main.drawImage(this.main.elephantGuns[7], this.x - 4, this.y + 48 - yOffset);
                         break;
                     case 1:
-                        this.main.draw(this.main.elephantGuns[5], this.x + 36, this.y + 60 - yOffset);
+                        this.main.drawImage(this.main.elephantGuns[5], this.x + 36, this.y + 60 - yOffset);
                         break;
                     case 2:
-                        this.main.draw(this.main.elephantGuns[6], this.x + 60, this.y + 48 - yOffset);
+                        this.main.drawImage(this.main.elephantGuns[6], this.x + 60, this.y + 48 - yOffset);
                         break;
                 }
-                this.main.drawCentered(this.main.elephantGuns[4], this.fireballX, this.fireballY - yOffset);
+                this.main.drawCenteredAt(this.main.elephantGuns[4], this.fireballX, this.fireballY - yOffset);
                 break;
         }
     }

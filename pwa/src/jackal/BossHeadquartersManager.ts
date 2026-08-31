@@ -23,15 +23,6 @@ export class BossHeadquartersManager extends GameElement implements ICameraPanLi
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossHeadquartersManager(argCount);
-    }
-
-    private __construct_BossHeadquartersManager(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly MAX_TANKS: number = 5;
@@ -69,12 +60,12 @@ export class BossHeadquartersManager extends GameElement implements ICameraPanLi
             new EnemyHelicopter(true);
         }
 
-        if (--this.tankSpawnDelay == 0) {
-            if (this.tanks == BossHeadquartersManager.MAX_TANKS) {
+        if (--this.tankSpawnDelay === 0) {
+            if (this.tanks === BossHeadquartersManager.MAX_TANKS) {
                 this.tankSpawnDelay = 45;
             } else {
                 this.tankSpawnDelay = BossHeadquartersManager.TANK_SPAWN_DELAY;
-                let brownTank = new BrownTank(
+                let brownTank = BrownTank.withTracker(
                     javaFloat(256 + this.main.random.nextInt(1536)),
                     javaFloat(javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) + 48),
                     this

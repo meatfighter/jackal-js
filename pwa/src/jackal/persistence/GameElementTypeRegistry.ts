@@ -79,7 +79,10 @@ import { TrainManager } from "../TrainManager.js";
 import { TravelingExplosion } from "../TravelingExplosion.js";
 import { TroopsTruck } from "../TroopsTruck.js";
 import type { GameElement } from "../GameElement.js";
-export type GameElementConstructor = new (...args: never[]) => GameElement;
+export interface GameElementConstructor {
+    readonly name: string;
+    readonly prototype: GameElement;
+}
 
 export const GAME_ELEMENT_TYPES = {
     Airplane,

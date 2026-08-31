@@ -23,21 +23,13 @@ export class GrayBoat extends Enemy {
         this.updateGun = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_GrayBoat(argCount, arg0, arg1);
-    }
 
-    private __construct_GrayBoat(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
@@ -93,16 +85,16 @@ export class GrayBoat extends Enemy {
             dx = javaFloat(dx * imag);
             dy = javaFloat(dy * imag);
 
-            new EnemyBullet(javaFloat(X + javaFloat(34 * dx)), javaFloat(Y + javaFloat(34 * dy)), dx, dy, GrayBoat.BULLET_TRAVEL_TIME, true);
+            EnemyBullet.colored(javaFloat(X + javaFloat(34 * dx)), javaFloat(Y + javaFloat(34 * dy)), dx, dy, GrayBoat.BULLET_TRAVEL_TIME, true);
         }
     }
 
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 96));
+            Explosion.create(javaFloat(this.x + 32), javaFloat(this.y + 96));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -113,10 +105,10 @@ export class GrayBoat extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 96));
+                Explosion.create(javaFloat(this.x + 32), javaFloat(this.y + 96));
                 this.main.addPoints(this.points);
             }
             return true;
@@ -126,7 +118,7 @@ export class GrayBoat extends Enemy {
     }
 
     public render(): void {
-        this.main.draw(this.main.grayBoats[this.spriteIndex], this.x, this.y);
-        this.main.drawRotated(this.main.grayBoats[2], this.x + 32, this.y + 131, -14, -13, this.gunAngle);
+        this.main.drawImage(this.main.grayBoats[this.spriteIndex], this.x, this.y);
+        this.main.drawRotatedAtCenter(this.main.grayBoats[2], this.x + 32, this.y + 131, -14, -13, this.gunAngle);
     }
 }

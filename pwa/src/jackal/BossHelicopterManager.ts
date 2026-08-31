@@ -16,15 +16,6 @@ export class BossHelicopterManager extends GameElement implements ICameraPanList
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossHelicopterManager(argCount);
-    }
-
-    private __construct_BossHelicopterManager(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public spawnDelay: number = 91;

@@ -3,17 +3,7 @@ import { ArrayList } from "../java/JavaRuntime.js";
 import { Main } from "./Main.js";
 import { Modes } from "./Modes.js";
 export class CutsceneSequence {
-    public constructor() {
-        const argCount = arguments.length;
-        this.__construct_CutsceneSequence(argCount);
-    }
-
-    private __construct_CutsceneSequence(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
-    }
+    public constructor() {}
 
     private static modes: ArrayList<Modes> = new ArrayList<Modes>();
 
@@ -27,6 +17,6 @@ export class CutsceneSequence {
         if (CutsceneSequence.modes.isEmpty()) {
             CutsceneSequence.fillList();
         }
-        Main.mainInstance.requestMode(CutsceneSequence.modes.remove(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size())), gc);
+        Main.mainInstance.requestMode(CutsceneSequence.modes.removeAt(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size())), gc);
     }
 }

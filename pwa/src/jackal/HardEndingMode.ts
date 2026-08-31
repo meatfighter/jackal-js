@@ -174,11 +174,11 @@ export class HardEndingMode implements IMode, IFadeListener {
     }
 
     private updateTyping(): void {
-        if (--this.delay == 0) {
-            if (this.lineIndex == HardEndingMode.CARDS[this.cardIndex].length) {
+        if (--this.delay === 0) {
+            if (this.lineIndex === HardEndingMode.CARDS[this.cardIndex].length) {
                 this.state = HardEndingMode.STATE_PAUSED;
                 this.delay = HardEndingMode.PAUSE_DELAY;
-            } else if (this.lineLength == HardEndingMode.CARDS[this.cardIndex][this.lineIndex].length) {
+            } else if (this.lineLength === HardEndingMode.CARDS[this.cardIndex][this.lineIndex].length) {
                 this.lineLength = 0;
                 this.lineIndex++;
                 this.delay = HardEndingMode.TYPE_DELAY;
@@ -190,7 +190,7 @@ export class HardEndingMode implements IMode, IFadeListener {
     }
 
     private updatePaused(): void {
-        if (--this.delay == 0) {
+        if (--this.delay === 0) {
             this.state = HardEndingMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
@@ -216,21 +216,21 @@ export class HardEndingMode implements IMode, IFadeListener {
     private updateFinalScore(): void {
         if (this.input.isFire() || this.input.isShoot() || this.input.isEnter()) {
             this.state = HardEndingMode.STATE_FINAL_SCORE_FADE_OUT;
-            this.main.stopSong();
+            this.main.stopAllSongs();
             this.main.startFade(true, this);
         }
     }
 
     public fadeCompleted(): void {
-        if (this.state == HardEndingMode.STATE_FINAL_SCORE_FADE_OUT) {
+        if (this.state === HardEndingMode.STATE_FINAL_SCORE_FADE_OUT) {
             this.state = HardEndingMode.STATE_DONE;
             this.main.requestMode(Modes.INTRO, this.gc);
-        } else if (this.state == HardEndingMode.STATE_FINAL_SCORE_FADE_IN) {
+        } else if (this.state === HardEndingMode.STATE_FINAL_SCORE_FADE_IN) {
             this.state = HardEndingMode.STATE_FINAL_SCORE_JEEP;
-        } else if (this.state == HardEndingMode.STATE_FADE_OUT) {
+        } else if (this.state === HardEndingMode.STATE_FADE_OUT) {
             this.lineIndex = 0;
             this.lineLength = 0;
-            if (++this.cardIndex == HardEndingMode.CARDS.length) {
+            if (++this.cardIndex === HardEndingMode.CARDS.length) {
                 this.state = HardEndingMode.STATE_CREDITS;
             } else {
                 this.state = HardEndingMode.STATE_FADE_IN;
@@ -266,28 +266,28 @@ export class HardEndingMode implements IMode, IFadeListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == HardEndingMode.STATE_DONE) {
+        if (this.state === HardEndingMode.STATE_DONE) {
             return;
         }
 
         if (this.state >= HardEndingMode.STATE_FINAL_SCORE_FADE_IN) {
             this.main.drawString("THE END", 400, 432, MainConstants.FONT_ORANGE_GRAY);
 
-            if (this.state == HardEndingMode.STATE_FINAL_SCORE) {
+            if (this.state === HardEndingMode.STATE_FINAL_SCORE) {
                 this.main.drawString(this.finalScore, this.finalScoreX, 496, MainConstants.FONT_GRAY);
-            } else if (this.state == HardEndingMode.STATE_FINAL_SCORE_JEEP) {
+            } else if (this.state === HardEndingMode.STATE_FINAL_SCORE_JEEP) {
                 if (this.jeepX > 0) {
                     g.setWorldClip(0, 494, this.jeepX, 38);
                     this.main.drawString(this.finalScore, this.finalScoreX, 496, MainConstants.FONT_GRAY);
                     g.clearWorldClip();
                 }
 
-                if (++this.rumble == 17) {
+                if (++this.rumble === 17) {
                     this.rumble = 0;
                 }
                 this.main.drawVehicle(this.main.players[0], this.jeepX, 512 + Player.RUMBLE[this.rumble], 0);
             }
-        } else if (this.state == HardEndingMode.STATE_CREDITS) {
+        } else if (this.state === HardEndingMode.STATE_CREDITS) {
             this.main.translateGraphics(0, this.creditsY);
             let indent = false;
             for (let i = 0, y = 0; i < HardEndingMode.CREDITS.length; i++, y += 32) {
@@ -301,12 +301,12 @@ export class HardEndingMode implements IMode, IFadeListener {
                 }
             }
             this.main.popGraphics();
-        } else if (this.cardIndex == 0) {
+        } else if (this.cardIndex === 0) {
             for (let i = 0; i < this.lineIndex; i++) {
                 this.main.drawString(HardEndingMode.CARDS[this.cardIndex][i], 96, HardEndingMode.CARD0_Y + (i << 6), MainConstants.FONT_GRAY);
             }
-            if (this.lineIndex != HardEndingMode.CARDS[this.cardIndex].length) {
-                this.main.drawString(
+            if (this.lineIndex !== HardEndingMode.CARDS[this.cardIndex].length) {
+                this.main.drawStringWithLength(
                     HardEndingMode.CARDS[this.cardIndex][this.lineIndex],
                     this.lineLength,
                     96,
@@ -321,8 +321,8 @@ export class HardEndingMode implements IMode, IFadeListener {
             for (let i = 0; i < this.lineIndex; i++) {
                 this.main.drawString(HardEndingMode.CARDS[this.cardIndex][i], 96, 480 + (i << 6), MainConstants.FONT_GRAY);
             }
-            if (this.lineIndex != HardEndingMode.CARDS[this.cardIndex].length) {
-                this.main.drawString(
+            if (this.lineIndex !== HardEndingMode.CARDS[this.cardIndex].length) {
+                this.main.drawStringWithLength(
                     HardEndingMode.CARDS[this.cardIndex][this.lineIndex],
                     this.lineLength,
                     96,

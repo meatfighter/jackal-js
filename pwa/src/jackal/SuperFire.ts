@@ -22,23 +22,15 @@ export class SuperFire extends GameElement {
         this.bossSuperTank = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: BossSuperTank) {
+    public constructor(x: number, y: number, bossSuperTank: BossSuperTank) {
         super();
-        const argCount = arguments.length;
-        this.__construct_SuperFire(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_SuperFire(argCount: number, arg0?: number, arg1?: number, arg2?: BossSuperTank): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let bossSuperTankLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.bossSuperTank = bossSuperTankLocal!;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+
+        this.x = x;
+        this.y = y;
+        this.bossSuperTank = bossSuperTank;
     }
 
     public static readonly STATE_ASTER: number = 0;
@@ -81,7 +73,7 @@ export class SuperFire extends GameElement {
     public update(): void {
         switch (this.state) {
             case SuperFire.STATE_ASTER:
-                if (++this.asterDelay == SuperFire.ASTER_DELAY) {
+                if (++this.asterDelay === SuperFire.ASTER_DELAY) {
                     this.state = SuperFire.STATE_DIAMOND;
                     this.main.playSound(this.main.fireSound);
                 }
@@ -106,8 +98,8 @@ export class SuperFire extends GameElement {
                 }
                 break;
         }
-        if (this.state != SuperFire.STATE_ASTER) {
-            this.player!.attack(javaFloat(this.x - 40), javaFloat(this.y + 32), javaFloat(this.x + 40), javaFloat(javaFloat(this.y + this.length) - 32));
+        if (this.state !== SuperFire.STATE_ASTER) {
+            this.player!.attackBounds(javaFloat(this.x - 40), javaFloat(this.y + 32), javaFloat(this.x + 40), javaFloat(javaFloat(this.y + this.length) - 32));
         }
         if (this.bossSuperTank!.removeFlag) {
             this.remove();
@@ -126,7 +118,7 @@ export class SuperFire extends GameElement {
         switch (this.state) {
             case SuperFire.STATE_ASTER:
                 for (let i = 0; i < SuperFire.ASTER_SPINES; i++) {
-                    this.main.drawCentered(
+                    this.main.drawCenteredScaledAlpha(
                         this.main.elephantGuns[4],
                         this.x + SuperFire.ASTERS_XYS[this.asterDelay][i][0],
                         this.y + SuperFire.ASTERS_XYS[this.asterDelay][i][1],
@@ -137,27 +129,27 @@ export class SuperFire extends GameElement {
                 break;
             case SuperFire.STATE_DIAMOND:
                 this.gameMode.g.setWorldClip(X - 1, this.y, 98, halfLength);
-                this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][0], X, this.y);
                 this.gameMode.g.setWorldClip(X - 1, this.y + halfLength, 98, halfLength);
-                this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
                 this.gameMode.g.clearWorldClip();
                 break;
             case SuperFire.STATE_GROWING:
-                this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][0], X, this.y);
                 this.gameMode.g.setWorldClip(X - 1, this.y + 64, 98, this.length);
                 for (let i = 1 + (javaInt(this.length - 128) >> 5); i >= 0; i--) {
-                    this.main.draw(this.main.superFires[this.flickerIndex][1], X, this.y + this.length - (i << 5) - 64);
+                    this.main.drawImage(this.main.superFires[this.flickerIndex][1], X, this.y + this.length - (i << 5) - 64);
                 }
                 this.gameMode.g.clearWorldClip();
-                this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][2], X, this.y + this.length - 64);
                 break;
             default:
             case SuperFire.STATE_MOVING:
-                this.main.draw(this.main.superFires[this.flickerIndex][0], X, this.y);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][0], X, this.y);
                 for (let i = 0; i < 12; i++) {
-                    this.main.draw(this.main.superFires[this.flickerIndex][1], X, this.y + 64 + (i << 5));
+                    this.main.drawImage(this.main.superFires[this.flickerIndex][1], X, this.y + 64 + (i << 5));
                 }
-                this.main.draw(this.main.superFires[this.flickerIndex][2], X, this.y + 448);
+                this.main.drawImage(this.main.superFires[this.flickerIndex][2], X, this.y + 448);
                 break;
         }
     }

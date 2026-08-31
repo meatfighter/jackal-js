@@ -27,21 +27,12 @@ export class BossHeadquarters extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: BossHeadquartersManager) {
+    public constructor(bossHeadquartersManager: BossHeadquartersManager) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossHeadquarters(argCount, arg0);
-    }
 
-    private __construct_BossHeadquarters(argCount: number, arg0?: BossHeadquartersManager): void {
-        if (argCount === 1) {
-            let bossHeadquartersManagerLocal = arg0;
-            this.x = 896;
-            this.y = 96;
-            this.bossHeadquartersManager = bossHeadquartersManagerLocal!;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = 896;
+        this.y = 96;
+        this.bossHeadquartersManager = bossHeadquartersManager;
     }
 
     public static readonly STATE_FLASHING: number = 0;
@@ -79,10 +70,10 @@ export class BossHeadquarters extends Enemy {
 
     private startExploding(): void {
         this.state = BossHeadquarters.STATE_EXPLOSIONS;
-        this.main.stopSong();
+        this.main.stopAllSongs();
         this.explodeDelay = 1;
         this.bossHeadquartersManager!.remove();
-        this.gameMode.destroyAll(this);
+        this.gameMode.destroyAllExcept(this);
         this.main.playSoundAlways(this.main.headquartersExplodesSound);
     }
 
@@ -98,18 +89,18 @@ export class BossHeadquarters extends Enemy {
     }
 
     public update(): void {
-        if (this.state == BossHeadquarters.STATE_EXPLOSIONS) {
-            if (--this.explodeDelay == 0) {
+        if (this.state === BossHeadquarters.STATE_EXPLOSIONS) {
+            if (--this.explodeDelay === 0) {
                 this.explodeDelay = BossHeadquarters.EXPLODE_DELAY;
                 for (let i = 0; i < 2; i++) {
-                    new Explosion(
+                    Explosion.create(
                         javaFloat(javaFloat(this.gameMode.cameraX + this.main.random.nextInt(1280)) - 128),
                         javaFloat(224 + this.main.random.nextInt(224))
                     ).setDamagesEnemies(false);
                 }
-                new Explosion(javaFloat(896 + this.main.random.nextInt(256)), javaFloat(96 + this.main.random.nextInt(416))).setDamagesEnemies(false);
+                Explosion.create(javaFloat(896 + this.main.random.nextInt(256)), javaFloat(96 + this.main.random.nextInt(416))).setDamagesEnemies(false);
             }
-            if (--this.explodeTime == 0) {
+            if (--this.explodeTime === 0) {
                 this.startDebris();
                 this.remove();
             }
@@ -124,18 +115,18 @@ export class BossHeadquarters extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.state == BossHeadquarters.STATE_FLASHING && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
-            if (++this.hits == BossHeadquarters.HITS) {
+        if (this.state === BossHeadquarters.STATE_FLASHING && attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
+            if (++this.hits === BossHeadquarters.HITS) {
                 this.startExploding();
             } else {
                 this.main.playHitExplodeSound();
                 for (let i = 0; i < 7; i++) {
                     let Y = javaFloat(javaFloat(this.y + 160) - (i << 5));
                     for (let j = 0; j < 4; j++) {
-                        if ((j == 0 || j == 3) && (i == 0 || i == 6)) {
+                        if ((j === 0 || j === 3) && (i === 0 || i === 6)) {
                             continue;
                         }
-                        new Explosion(
+                        Explosion.configured(
                             javaFloat(javaFloat(javaFloat(this.x + (j << 6)) + 12) + this.main.random.nextInt(32)),
                             javaFloat(Y + this.main.random.nextInt(8)),
                             true,
@@ -153,7 +144,7 @@ export class BossHeadquarters extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -163,7 +154,7 @@ export class BossHeadquarters extends Enemy {
     public render(): void {
         switch (this.state) {
             case BossHeadquarters.STATE_FLASHING:
-                if (--this.flashDelay == 0) {
+                if (--this.flashDelay === 0) {
                     if (this.flashing) {
                         this.flashing = false;
                         this.flashDelay = BossHeadquarters.FLASH_DELAY;
@@ -173,13 +164,13 @@ export class BossHeadquarters extends Enemy {
                     }
                 }
                 if (this.flashing) {
-                    if (++this.flashIndex == 2) {
+                    if (++this.flashIndex === 2) {
                         this.flashIndex = -1;
                     } else {
-                        this.main.draw(this.main.headquartersLights[this.flashIndex], 932, 188);
-                        this.main.draw(this.main.headquartersLights[this.flashIndex], 996, 220);
-                        this.main.draw(this.main.headquartersLights[this.flashIndex], 1028, 220);
-                        this.main.draw(this.main.headquartersLights[this.flashIndex], 1092, 188);
+                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 932, 188);
+                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 996, 220);
+                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1028, 220);
+                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1092, 188);
                     }
                 }
                 break;

@@ -246,36 +246,11 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     // rotates 90+ degrees, used after a collision
-    public suggestDirection(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number | boolean, arg5?: boolean): number[] {
-        const argCount = arguments.length;
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.suggestDirection__overload0(javaFloat(arg0), javaFloat(arg1));
-        }
-        if (
-            argCount === 6 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "boolean"
-        ) {
-            return this.suggestDirection__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3), arg4, arg5);
-        }
-        if (
-            argCount === 5 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "boolean"
-        ) {
-            return this.suggestDirection__overload2(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3), arg4);
-        }
-        throw new Error(`No Java method overload matched suggestDirection: ${argCount}`);
-    }
 
-    public suggestDirection__overload0(vx: number, vy: number): number[] {
+    public suggestDirectionFromVelocity(vx: number, vy: number): number[] {
+        vx = javaFloat(vx);
+        vy = javaFloat(vy);
+
         let clockwise = true;
 
         if (vy >= 0) {
@@ -326,7 +301,12 @@ export class GameMode implements IMode, IFadeListener {
         return v;
     }
 
-    public suggestDirection__overload1(x1: number, y1: number, x2: number, y2: number, currentAngle: number, addRandomness: boolean): number[] {
+    public suggestDirectionWithCurrentAngle(x1: number, y1: number, x2: number, y2: number, currentAngle: number, addRandomness: boolean): number[] {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         let v: number[] = null!;
 
         let X1 = javaInt(x1) >> 7;
@@ -369,7 +349,7 @@ export class GameMode implements IMode, IFadeListener {
             } else {
                 deltaAngle -= 180;
             }
-            if (deltaAngle != 0) {
+            if (deltaAngle !== 0) {
                 if (deltaAngle < 0) {
                     currentAngle -= 45;
                 } else {
@@ -389,7 +369,12 @@ export class GameMode implements IMode, IFadeListener {
         return v;
     }
 
-    public suggestDirection__overload2(x1: number, y1: number, x2: number, y2: number, addRandomness: boolean): number[] {
+    public suggestDirection(x1: number, y1: number, x2: number, y2: number, addRandomness: boolean): number[] {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         let v: number[] = null!;
 
         let X1 = javaInt(x1) >> 7;
@@ -480,7 +465,7 @@ export class GameMode implements IMode, IFadeListener {
     private processTrigger(index: number, x: number, y: number): void {
         switch (index) {
             case Triggers.GRAY_GUN:
-                new RotatingGun(javaFloat(x + 64), javaFloat(y + 64), true);
+                RotatingGun.withWhiteBullets(javaFloat(x + 64), javaFloat(y + 64), true);
                 break;
             case Triggers.SOLDIER_WALKER:
                 new EnemySoldier(javaFloat(x + 32), javaFloat(y + 74), EnemySoldierType.WALKER);
@@ -492,7 +477,7 @@ export class GameMode implements IMode, IFadeListener {
                 new GreenBoat(javaFloat(x + 72), javaFloat(y + 56));
                 break;
             case Triggers.BROWN_TANK:
-                new BrownTank(javaFloat(x + 32), javaFloat(y + 48));
+                BrownTank.create(javaFloat(x + 32), javaFloat(y + 48));
                 break;
             case Triggers.FRIENDLY_HELICOPTER_LANDING:
                 new FriendlyHelicopter(
@@ -503,19 +488,19 @@ export class GameMode implements IMode, IFadeListener {
                 );
                 break;
             case Triggers.YELLOW_GUN:
-                new RotatingGun(javaFloat(x + 64), javaFloat(y + 64), false);
+                RotatingGun.withWhiteBullets(javaFloat(x + 64), javaFloat(y + 64), false);
                 break;
             case Triggers.STAR_BROWN:
                 new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.TYPE_BROWN);
                 break;
             case Triggers.GRAY_TANK:
-                new GrayTank(javaFloat(x + 64), javaFloat(y + 64));
+                GrayTank.create(javaFloat(x + 64), javaFloat(y + 64));
                 break;
             case Triggers.STAR_FLASHING:
                 new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.TYPE_FLASHING);
                 break;
             case Triggers.AIRPLANE:
-                new Airplane(javaFloat(x + 60), javaFloat(y + 62));
+                Airplane.at(javaFloat(x + 60), javaFloat(y + 62));
                 break;
             case Triggers.GRAY_JEEP:
                 new GrayJeep(javaFloat(x + 32), javaFloat(y + 46));
@@ -539,7 +524,7 @@ export class GameMode implements IMode, IFadeListener {
                 new TroopsTruck(javaFloat(x), javaFloat(y + 8));
                 break;
             case Triggers.FLOOR_GUN:
-                new FloorGun(javaFloat(x), javaFloat(y + 28));
+                FloorGun.create(javaFloat(x), javaFloat(y + 28));
                 break;
             case Triggers.SWAMP_MISSILE_LAUNCHER:
                 new SwampMissileLauncher(javaFloat(x), javaFloat(y));
@@ -575,7 +560,7 @@ export class GameMode implements IMode, IFadeListener {
                 new Hut(javaFloat(x), javaFloat(y), true, false);
                 break;
             case Triggers.GATE:
-                new Gate(javaFloat(x), javaFloat(y));
+                Gate.create(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.TANK_SHACK:
                 new Hut(javaFloat(x), javaFloat(y), true, true);
@@ -610,7 +595,7 @@ export class GameMode implements IMode, IFadeListener {
                 }
                 break;
             case Triggers.GREEN_GUN:
-                new RotatingGun(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_GREEN);
+                RotatingGun.ofType(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_GREEN);
                 break;
             case Triggers.APPEARING_PLANE:
                 new AppearingPlane(javaFloat(x + 60), javaFloat(y + 62));
@@ -619,10 +604,10 @@ export class GameMode implements IMode, IFadeListener {
                 new EnemyHelicopter(true);
                 break;
             case Triggers.FLOOR_GUN_PLAIN:
-                new FloorGun(javaFloat(x), javaFloat(y + 28), true);
+                FloorGun.withPlainStyle(javaFloat(x), javaFloat(y + 28), true);
                 break;
             case Triggers.BROWN_GUN:
-                new RotatingGun(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_BROWN);
+                RotatingGun.ofType(javaFloat(x + 48), javaFloat(y + 44), RotatingGun.TYPE_BROWN);
                 break;
             case Triggers.APPEARING_ENEMY_HELICOPTER:
                 new AppearingEnemyHelicopter(javaFloat(y));
@@ -706,74 +691,63 @@ export class GameMode implements IMode, IFadeListener {
 
     public isMissileTarget(x: number, y: number): boolean {
         let type = this.getTileType(x, y);
-        return type == GameMode.TYPE_SOLID || type == GameMode.TYPE_SHIELD;
+        return type === GameMode.TYPE_SOLID || type === GameMode.TYPE_SHIELD;
     }
 
-    public isDriveable(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isDriveable__overload0(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isDriveable__overload1(javaFloat(arg0), javaFloat(arg1));
-        }
-        throw new Error(`No Java method overload matched isDriveable: ${argCount}`);
-    }
+    public isDriveableBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
 
-    public isDriveable__overload0(x1: number, y1: number, x2: number, y2: number): boolean {
         return this.isDriveable(x1, y1) && this.isDriveable(x2, y2) && this.isDriveable(x1, y2) && this.isDriveable(x2, y1);
     }
 
     public isSolidTile(x: number, y: number): boolean {
-        return this.typesMap[y][x] == GameMode.TYPE_SOLID;
+        return this.typesMap[y][x] === GameMode.TYPE_SOLID;
     }
 
-    public isDriveable__overload1(x: number, y: number): boolean {
+    public isDriveable(x: number, y: number): boolean {
+        x = javaFloat(x);
+        y = javaFloat(y);
+
         let type = this.getTileType(x, y);
-        return type == GameMode.TYPE_EMPTY || type == GameMode.TYPE_SWAMP || type == GameMode.TYPE_CONVEYOR;
+        return type === GameMode.TYPE_EMPTY || type === GameMode.TYPE_SWAMP || type === GameMode.TYPE_CONVEYOR;
     }
 
     public isDriveableLand(x: number, y: number): boolean {
         let type = this.getTileType(x, y);
-        return type == GameMode.TYPE_EMPTY || type == GameMode.TYPE_CONVEYOR;
+        return type === GameMode.TYPE_EMPTY || type === GameMode.TYPE_CONVEYOR;
     }
 
     public isSolid(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_SOLID;
+        return this.getTileType(x, y) === GameMode.TYPE_SOLID;
     }
 
     public isEmpty(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_EMPTY;
+        return this.getTileType(x, y) === GameMode.TYPE_EMPTY;
     }
 
     public isShield(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_SHIELD;
+        return this.getTileType(x, y) === GameMode.TYPE_SHIELD;
     }
 
     public isWater(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_WATER;
+        return this.getTileType(x, y) === GameMode.TYPE_WATER;
     }
 
     public isSwamp(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_SWAMP;
+        return this.getTileType(x, y) === GameMode.TYPE_SWAMP;
     }
 
     public isConveyor(x: number, y: number): boolean {
-        return this.getTileType(x, y) == GameMode.TYPE_CONVEYOR;
+        return this.getTileType(x, y) === GameMode.TYPE_CONVEYOR;
     }
 
-    public isOutsideOfFrame(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isOutsideOfFrame__overload0(javaFloat(arg0), javaFloat(arg1));
-        }
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isOutsideOfFrame__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        throw new Error(`No Java method overload matched isOutsideOfFrame: ${argCount}`);
-    }
+    public isOutsideOfFrame(x: number, y: number): boolean {
+        x = javaFloat(x);
+        y = javaFloat(y);
 
-    public isOutsideOfFrame__overload0(x: number, y: number): boolean {
         return (
             y > javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT) ||
             x < this.cameraX ||
@@ -782,7 +756,12 @@ export class GameMode implements IMode, IFadeListener {
         );
     }
 
-    public isOutsideOfFrame__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
+    public isOutsideOfFrameBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         return (
             y1 > javaFloat(this.cameraY + MainConstants.DISPLAY_HEIGHT) ||
             x2 < this.cameraX ||
@@ -809,7 +788,7 @@ export class GameMode implements IMode, IFadeListener {
 
     public audioVolume(x: number, y: number): number {
         let d = javaFloat(this.distanceOutsideOfFrame(x, y));
-        if (d == 0) {
+        if (d === 0) {
             return 1;
         } else if (d >= 256) {
             return 0;
@@ -818,21 +797,10 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    public destroyAll(arg0?: Enemy): void {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
-            return this.destroyAll__overload0(arg0);
-        }
-        if (argCount === 0) {
-            return this.destroyAll__overload1();
-        }
-        throw new Error(`No Java method overload matched destroyAll: ${argCount}`);
-    }
-
-    public destroyAll__overload0(exceptEnemy: Enemy): void {
+    public destroyAllExcept(exceptEnemy: Enemy): void {
         for (let i = this.enemies.size() - 1; i >= 0; i--) {
             let enemy = this.enemies.get(i);
-            if (enemy != exceptEnemy) {
+            if (enemy !== exceptEnemy) {
                 enemy.explode();
             }
         }
@@ -847,7 +815,7 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    public destroyAll__overload1(): void {
+    public destroyAll(): void {
         for (let i = this.enemies.size() - 1; i >= 0; i--) {
             let enemy = this.enemies.get(i);
             enemy.explode();
@@ -867,7 +835,7 @@ export class GameMode implements IMode, IFadeListener {
         for (let i = this.enemies.size() - 1; i >= 0; i--) {
             let enemy = this.enemies.get(i);
             if (
-                !this.isOutsideOfFrame(
+                !this.isOutsideOfFrameBounds(
                     javaFloat(enemy.x + enemy.hitX1),
                     javaFloat(enemy.y + enemy.hitY1),
                     javaFloat(enemy.x + enemy.hitX2),
@@ -905,18 +873,7 @@ export class GameMode implements IMode, IFadeListener {
         return this.typesMap[Y][X];
     }
 
-    public add(arg0?: Enemy | GameElement): void {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Enemy)) {
-            return this.add__overload0(arg0 as Enemy);
-        }
-        if (argCount === 1 && (arg0 === null || arg0 instanceof GameElement)) {
-            return this.add__overload1(arg0 as GameElement);
-        }
-        throw new Error(`No Java method overload matched add: ${argCount}`);
-    }
-
-    public add__overload0(enemy: Enemy): void {
+    public addEnemy(enemy: Enemy): void {
         this.elements[enemy.layer].add(enemy);
         this.enemies.add(enemy);
         if (enemy.solid) {
@@ -927,9 +884,9 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    public add__overload1(gameElement: GameElement): void {
+    public addGameElement(gameElement: GameElement): void {
         if (gameElement.enemy) {
-            this.add(gameElement);
+            this.addEnemy(gameElement as Enemy);
         } else {
             this.elements[gameElement.layer].add(gameElement);
         }
@@ -937,11 +894,11 @@ export class GameMode implements IMode, IFadeListener {
 
     public stageCompleted(): void {
         this.stageCompletedFlag = true;
-        this.main.stopSong();
+        this.main.stopAllSongs();
     }
 
     public fadeCompleted(): void {
-        if (this.stageIndex == 5) {
+        if (this.stageIndex === 5) {
             this.main.requestMode(Modes.SUNSET, this.gc);
         } else {
             CutsceneSequence.requestCutscene(this.gc);
@@ -962,11 +919,11 @@ export class GameMode implements IMode, IFadeListener {
             gc.setMusicOn(false);
         }
 
-        if (++this.waterAlphaIndex == GameMode.WATER_ALPHAS_PERIOD) {
+        if (++this.waterAlphaIndex === GameMode.WATER_ALPHAS_PERIOD) {
             this.waterAlphaIndex = 0;
         }
 
-        if (this.stageIndex == 5) {
+        if (this.stageIndex === 5) {
             this.conveyorOffset = javaFloat(this.conveyorOffset + GameMode.CONVEYOR_SPEED);
             if (this.conveyorOffset >= 16) {
                 this.conveyorOffset = javaFloat(this.conveyorOffset - 16);
@@ -980,7 +937,7 @@ export class GameMode implements IMode, IFadeListener {
             this.conveyorLastIndex = conveyorIndex;
         }
 
-        if (this.bossCameraPan && this.cameraY != 0) {
+        if (this.bossCameraPan && this.cameraY !== 0) {
             this.cameraY = javaFloat(this.cameraY - GameMode.BOSS_PAN_CAMERA_SPEED);
             if (this.cameraY <= 0) {
                 this.maxCameraY = this.cameraY = 0;
@@ -1027,24 +984,24 @@ export class GameMode implements IMode, IFadeListener {
                 if (!element.removeFlag) {
                     element.update();
                     if (element.changeLayerValue >= 0) {
-                        if (element.layer != element.changeLayerValue) {
+                        if (element.layer !== element.changeLayerValue) {
                             element.layer = element.changeLayerValue;
-                            list.remove(j);
+                            list.removeAt(j);
                             this.elements[element.layer].add(element);
                         }
                         element.changeLayerValue = -1;
                     }
                 }
                 if (element.removeFlag) {
-                    list.remove(j);
+                    list.removeAt(j);
                     if (element.enemy) {
                         let enemy = element as Enemy;
-                        this.enemies.remove(enemy);
+                        this.enemies.removeValue(enemy);
                         if (enemy.solid) {
-                            this.solids.remove(enemy);
+                            this.solids.removeValue(enemy);
                         }
                         if (enemy.mine) {
-                            this.mines.remove(enemy);
+                            this.mines.removeValue(enemy);
                         }
                     }
                 }
@@ -1056,7 +1013,7 @@ export class GameMode implements IMode, IFadeListener {
             this.cameraTrackPlayer();
         }
 
-        if (this.stageCompletedFlag && --this.stageCompletedDelay == 0) {
+        if (this.stageCompletedFlag && --this.stageCompletedDelay === 0) {
             this.main.startFade(true, this);
         }
     }
@@ -1066,13 +1023,13 @@ export class GameMode implements IMode, IFadeListener {
         let yOffset = this.cameraY % 32;
         let xTile = javaInt(this.cameraX / 32);
         let yTile = javaInt(this.cameraY / 32);
-        let xStart = 32 + xTile == this.mapWidth ? 31 : 32;
+        let xStart = 32 + xTile === this.mapWidth ? 31 : 32;
         let main = this.main;
         let tiles = this.tiles;
         let tileMap = this.tileMap;
 
         if (this.stageIndex > 0) {
-            if (this.stageIndex == 2) {
+            if (this.stageIndex === 2) {
                 for (let i = 0; i < 4; i++) {
                     tiles[i].setAlpha(GameMode.WATER_ALPHAS[this.waterAlphaIndex]);
                 }
@@ -1084,11 +1041,11 @@ export class GameMode implements IMode, IFadeListener {
                         let X = (x << 5) - xOffset;
                         if (tile < 32) {
                             let water = (((y + yTile) & 1) << 1) + ((x + xTile) & 1);
-                            main.draw__overload0(tiles[water + 4], X, Y);
-                            main.draw__overload0(tiles[water], X, Y);
+                            main.drawImage(tiles[water + 4], X, Y);
+                            main.drawImage(tiles[water], X, Y);
                         }
                         if (tile < 225) {
-                            main.draw__overload0(tiles[tile], X, Y);
+                            main.drawImage(tiles[tile], X, Y);
                         }
                     }
                 }
@@ -1099,7 +1056,7 @@ export class GameMode implements IMode, IFadeListener {
                     for (let x = xStart; x >= 0; x--) {
                         let tile = tileMap[y + yTile][x + xTile];
                         if (tile < 225) {
-                            main.draw__overload0(tiles[tile], (x << 5) - xOffset, Y);
+                            main.drawImage(tiles[tile], (x << 5) - xOffset, Y);
                         }
                     }
                 }
@@ -1111,7 +1068,7 @@ export class GameMode implements IMode, IFadeListener {
                 for (let x = xStart; x >= 0; x--) {
                     let tile = tileMap[y + yTile][x + xTile];
                     if (tile >= 225) {
-                        main.draw__overload0(tiles[tile], (x << 5) - xOffset, Y);
+                        main.drawImage(tiles[tile], (x << 5) - xOffset, Y);
                     }
                 }
             }
@@ -1119,7 +1076,7 @@ export class GameMode implements IMode, IFadeListener {
             // tile sheet [stage index]
             for (let y = 30; y >= 0; y--) {
                 for (let x = xStart; x >= 0; x--) {
-                    main.draw__overload0(tiles[tileMap[y + yTile][x + xTile]], (x << 5) - xOffset, (y << 5) - yOffset);
+                    main.drawImage(tiles[tileMap[y + yTile][x + xTile]], (x << 5) - xOffset, (y << 5) - yOffset);
                 }
             }
         }

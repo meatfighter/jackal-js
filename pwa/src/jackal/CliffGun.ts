@@ -18,21 +18,13 @@ export class CliffGun extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_CliffGun(argCount, arg0, arg1);
-    }
 
-    private __construct_CliffGun(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly STATE_HIDDEN: number = 0;
@@ -92,15 +84,15 @@ export class CliffGun extends Enemy {
 
         switch (this.state) {
             case CliffGun.STATE_HIDDEN:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = CliffGun.STATE_APPEARING;
                     this.spriteIndex = 1;
                     this.delay = CliffGun.APPEARING_TIME;
                 }
                 break;
             case CliffGun.STATE_APPEARING:
-                if (--this.delay == 0) {
-                    if (this.spriteIndex == 1) {
+                if (--this.delay === 0) {
+                    if (this.spriteIndex === 1) {
                         this.spriteIndex = 2;
                         this.delay = CliffGun.APPEARING_TIME;
                     } else {
@@ -111,7 +103,7 @@ export class CliffGun extends Enemy {
                 }
                 break;
             case CliffGun.STATE_VISIBLE_1:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     if (javaFloat(this.player!.y - this.y) < CliffGun.DEACTIVATE_DISTANCE) {
                         this.state = CliffGun.STATE_VISIBLE_2;
                         this.delay = CliffGun.DEACTIVE_TIME;
@@ -123,8 +115,8 @@ export class CliffGun extends Enemy {
                 }
                 break;
             case CliffGun.STATE_SHOOTING:
-                if (--this.delay == 0) {
-                    if (this.shots == 0) {
+                if (--this.delay === 0) {
+                    if (this.shots === 0) {
                         this.state = CliffGun.STATE_VISIBLE_2;
                         this.delay = CliffGun.VISIBLE_TIME;
                     } else {
@@ -133,15 +125,15 @@ export class CliffGun extends Enemy {
                 }
                 break;
             case CliffGun.STATE_VISIBLE_2:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = CliffGun.STATE_DISAPPEARING;
                     this.spriteIndex = 2;
                     this.delay = CliffGun.APPEARING_TIME;
                 }
                 break;
             case CliffGun.STATE_DISAPPEARING:
-                if (--this.delay == 0) {
-                    if (this.spriteIndex == 2) {
+                if (--this.delay === 0) {
+                    if (this.spriteIndex === 2) {
                         this.spriteIndex = 1;
                         this.delay = CliffGun.APPEARING_TIME;
                     } else {
@@ -164,7 +156,7 @@ export class CliffGun extends Enemy {
         let iMag = javaFloat(CliffGun.BULLET_SPEED / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
         dx = javaFloat(dx * iMag);
         dy = javaFloat(dy * iMag);
-        new EnemyBullet(X, Y, dx, dy, CliffGun.BULLET_TRAVEL_TIME);
+        EnemyBullet.cannonball(X, Y, dx, dy, CliffGun.BULLET_TRAVEL_TIME);
     }
 
     // returns true if attack successful
@@ -173,9 +165,9 @@ export class CliffGun extends Enemy {
         if (this.spriteIndex < 2) {
             return false;
         }
-        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -186,10 +178,10 @@ export class CliffGun extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.state == CliffGun.STATE_HIDDEN) {
+        if (this.state === CliffGun.STATE_HIDDEN) {
             return false;
         }
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -197,12 +189,12 @@ export class CliffGun extends Enemy {
     }
 
     public render(): void {
-        this.main.draw(this.main.cliffGuns[this.spriteIndex], this.x, this.y);
-        if (this.spriteIndex == 3) {
-            if (this.state == CliffGun.STATE_SHOOTING) {
-                this.main.draw(this.main.cliffGuns[4], this.x + 32, this.y - CliffGun.RECOILS[this.delay]);
+        this.main.drawImage(this.main.cliffGuns[this.spriteIndex], this.x, this.y);
+        if (this.spriteIndex === 3) {
+            if (this.state === CliffGun.STATE_SHOOTING) {
+                this.main.drawImage(this.main.cliffGuns[4], this.x + 32, this.y - CliffGun.RECOILS[this.delay]);
             } else {
-                this.main.draw(this.main.cliffGuns[4], this.x + 32, this.y);
+                this.main.drawImage(this.main.cliffGuns[4], this.x + 32, this.y);
             }
         }
     }

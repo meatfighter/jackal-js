@@ -112,7 +112,7 @@ export class SunsetMode implements IMode, IFadeListener {
     public update(gc: GameContainer): void {
         switch (this.state) {
             case SunsetMode.STATE_PAUSED_1:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = SunsetMode.STATE_HELICOPTER;
                 }
                 break;
@@ -120,7 +120,7 @@ export class SunsetMode implements IMode, IFadeListener {
                 let t = javaFloat(this.helicopterDelay * SunsetMode.I_HELICOPTER);
                 if (!this.main.isSoundPlaying(this.main.helicopterSound)) {
                     let volume = javaFloat(t + javaFloat(0.15));
-                    this.main.playSound(this.main.helicopterSound, volume < 1 ? volume : 1);
+                    this.main.playSoundAtVolume(this.main.helicopterSound, volume < 1 ? volume : 1);
                 }
                 this.helicopterX = javaFloat(SunsetMode.HELICOPTER_X0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_X1 - SunsetMode.HELICOPTER_X0) * t));
                 this.helicopterY = javaFloat(SunsetMode.HELICOPTER_Y0 + javaFloat(javaFloat(SunsetMode.HELICOPTER_Y1 - SunsetMode.HELICOPTER_Y0) * t));
@@ -130,13 +130,13 @@ export class SunsetMode implements IMode, IFadeListener {
                 );
                 this.helicopterDelay++;
                 if (this.main.hardMode) {
-                    if (this.helicopterDelay == SunsetMode.HELICOPTER_HARD_TIME) {
+                    if (this.helicopterDelay === SunsetMode.HELICOPTER_HARD_TIME) {
                         this.state = SunsetMode.STATE_HARD_MODE_FADE_OUT;
                         this.main.stopSound(this.main.helicopterSound);
                         this.main.requestSong(this.main.endingSong);
                         this.main.startFade(true, this);
                     }
-                } else if (this.helicopterDelay == SunsetMode.HELICOPTER_TIME) {
+                } else if (this.helicopterDelay === SunsetMode.HELICOPTER_TIME) {
                     this.state = SunsetMode.STATE_PAUSED_2;
                     this.main.stopSound(this.main.helicopterSound);
                     this.main.requestSong(this.main.endingSong);
@@ -145,22 +145,22 @@ export class SunsetMode implements IMode, IFadeListener {
                 }
                 break;
             case SunsetMode.STATE_PAUSED_2:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = SunsetMode.STATE_CREDITS;
                     this.delay = 1;
                 }
                 break;
             case SunsetMode.STATE_CREDITS:
-                if (--this.delay == 0) {
-                    if (this.lineIndex == this.credits[this.creditsIndex].length) {
+                if (--this.delay === 0) {
+                    if (this.lineIndex === this.credits[this.creditsIndex].length) {
                         this.lineIndex = 0;
                         this.creditsIndex++;
                         this.delay = SunsetMode.TYPE_TIME;
-                    } else if (this.lineLength == this.credits[this.creditsIndex][this.lineIndex].length) {
+                    } else if (this.lineLength === this.credits[this.creditsIndex][this.lineIndex].length) {
                         this.lineLength = 0;
                         this.lineIndex++;
-                        if (this.lineIndex == this.credits[this.creditsIndex].length) {
-                            if (this.creditsIndex == this.credits.length - 1) {
+                        if (this.lineIndex === this.credits[this.creditsIndex].length) {
+                            if (this.creditsIndex === this.credits.length - 1) {
                                 this.state = SunsetMode.STATE_WAITING;
                                 this.input.clearKeyPressedRecord();
                             } else {
@@ -171,7 +171,7 @@ export class SunsetMode implements IMode, IFadeListener {
                         }
                     } else {
                         this.lineLength++;
-                        if (this.lineLength == this.credits[this.creditsIndex][this.lineIndex].length) {
+                        if (this.lineLength === this.credits[this.creditsIndex][this.lineIndex].length) {
                             this.delay = SunsetMode.EOL_PAUSE_TIME;
                         } else {
                             this.delay = SunsetMode.TYPE_TIME;
@@ -183,7 +183,7 @@ export class SunsetMode implements IMode, IFadeListener {
                 if (this.input.isFire() || this.input.isShoot() || this.input.isEnter()) {
                     this.state = SunsetMode.STATE_ADVANCE_TO_HARD_MODE;
                     this.main.advancePlayerToHardMode();
-                    this.main.stopSong();
+                    this.main.stopAllSongs();
                     this.main.startFade(true, this);
                 }
                 break;
@@ -191,12 +191,12 @@ export class SunsetMode implements IMode, IFadeListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == SunsetMode.STATE_FADE_IN) {
+        if (this.state === SunsetMode.STATE_FADE_IN) {
             this.state = SunsetMode.STATE_PAUSED_1;
-        } else if (this.state == SunsetMode.STATE_HARD_MODE_FADE_OUT) {
+        } else if (this.state === SunsetMode.STATE_HARD_MODE_FADE_OUT) {
             this.state = SunsetMode.STATE_HARD_MODE_WAITING;
             this.main.requestMode(Modes.HARD_ENDING, this.gc);
-        } else if (this.state == SunsetMode.STATE_ADVANCE_TO_HARD_MODE) {
+        } else if (this.state === SunsetMode.STATE_ADVANCE_TO_HARD_MODE) {
             this.state = SunsetMode.STATE_DONE;
             this.main.requestMode(Modes.GAME, this.gc);
         }
@@ -204,50 +204,50 @@ export class SunsetMode implements IMode, IFadeListener {
 
     private drawHelicopter(alpha: number): void {
         let k = SunsetMode.Z0 / (SunsetMode.Z0 - this.helicopterZ);
-        this.main.rotateGraphics(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
+        this.main.rotateGraphicsScaled(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
         this.main.scaleGraphics(0, -40, 1, 0.2);
         for (let i = 0; i < 4; i++) {
             let ang = 90 * i + this.rotorAngle;
-            this.main.drawRotated(this.main.rescueHelicopters[2], 0, 0, 0, -28, ang, alpha);
+            this.main.drawRotatedAtCenterScaled(this.main.rescueHelicopters[2], 0, 0, 0, -28, ang, alpha);
         }
         this.main.popGraphics();
-        this.main.drawOffset(this.main.rescueHelicopters[0], -38, -40, alpha);
+        this.main.drawOffsetAlpha(this.main.rescueHelicopters[0], -38, -40, alpha);
         this.main.popGraphics();
     }
 
     private drawHelicopterShaded(shade: number): void {
         let k = SunsetMode.Z0 / (SunsetMode.Z0 - this.helicopterZ);
-        this.main.rotateGraphics(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
+        this.main.rotateGraphicsScaled(SunsetMode.CENTER_X + this.helicopterX * k, SunsetMode.CENTER_Y + this.helicopterY * k, this.helicopterAngle, k);
         this.main.scaleGraphics(0, -40, 1, 0.2);
         for (let i = 0; i < 4; i++) {
             let ang = 90 * i + this.rotorAngle;
-            this.main.drawRotated(this.main.rescueHelicopters[2], 0, 0, 0, -28, ang);
+            this.main.drawRotatedAtCenter(this.main.rescueHelicopters[2], 0, 0, 0, -28, ang);
         }
         this.main.popGraphics();
         this.main.drawOffset(this.main.rescueHelicopters[1], -38, -40);
         if (shade > 0) {
-            this.main.drawOffset(this.main.rescueHelicopters[0], -38, -40, shade);
+            this.main.drawOffsetAlpha(this.main.rescueHelicopters[0], -38, -40, shade);
         }
         this.main.popGraphics();
     }
 
     public render(gc: GameContainer, g: Graphics): void {
-        if (this.state == SunsetMode.STATE_HARD_MODE_WAITING) {
+        if (this.state === SunsetMode.STATE_HARD_MODE_WAITING) {
             g.setColor(Color.black);
             g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
             return;
         }
 
         if (this.state < SunsetMode.STATE_PAUSED_2) {
-            if (++this.sunOffsetCounter == 2) {
+            if (++this.sunOffsetCounter === 2) {
                 this.sunOffsetCounter = 0;
-                if (++this.sunOffset == SunsetMode.SUN_HEIGHT) {
+                if (++this.sunOffset === SunsetMode.SUN_HEIGHT) {
                     this.sunOffset = 0;
                 }
             }
 
             this.rotorAngle -= 30;
-            if (this.rotorAngle == -90) {
+            if (this.rotorAngle === -90) {
                 this.rotorAngle = 0;
             }
         }
@@ -255,20 +255,20 @@ export class SunsetMode implements IMode, IFadeListener {
         this.main.sunset.draw(0, 0);
 
         for (let i = 0, j = this.sunOffset; i < SunsetMode.SUN_HEIGHT; i++) {
-            this.main.draw(this.main.suns[i], 428 + SunsetMode.sunOffsets[j], 356 + i);
-            if (++j == SunsetMode.SUN_HEIGHT) {
+            this.main.drawImage(this.main.suns[i], 428 + SunsetMode.sunOffsets[j], 356 + i);
+            if (++j === SunsetMode.SUN_HEIGHT) {
                 j = 0;
             }
         }
 
         for (let i = 0, j = this.sunOffset; i < SunsetMode.WAVES_HEIGHT; i++) {
-            this.main.draw(this.main.waves[i], 428 + SunsetMode.sunOffsets[j], 448 + i);
-            if (++j == SunsetMode.SUN_HEIGHT) {
+            this.main.drawImage(this.main.waves[i], 428 + SunsetMode.sunOffsets[j], 448 + i);
+            if (++j === SunsetMode.SUN_HEIGHT) {
                 j = 0;
             }
         }
 
-        if (this.state != SunsetMode.STATE_PAUSED_1) {
+        if (this.state !== SunsetMode.STATE_PAUSED_1) {
             if (this.helicopterDelay < SunsetMode.FADE_TIME) {
                 this.drawHelicopter(this.helicopterDelay * SunsetMode.I_FADE_TIME);
             } else if (this.helicopterDelay < SunsetMode.SHADE_TIME + SunsetMode.FADE_TIME) {
@@ -283,10 +283,10 @@ export class SunsetMode implements IMode, IFadeListener {
             let indent = false;
             for (let i = 0; i < this.lineIndex; i++) {
                 this.main.drawString(lines[i], indent ? 96 : 32, 48 + (i << 6), MainConstants.FONT_WHITE);
-                indent = lines[i].length != 0;
+                indent = lines[i].length !== 0;
             }
             if (this.lineIndex < lines.length) {
-                this.main.drawString(lines[this.lineIndex], this.lineLength, indent ? 96 : 32, 48 + (this.lineIndex << 6), MainConstants.FONT_WHITE);
+                this.main.drawStringWithLength(lines[this.lineIndex], this.lineLength, indent ? 96 : 32, 48 + (this.lineIndex << 6), MainConstants.FONT_WHITE);
             }
         }
     }

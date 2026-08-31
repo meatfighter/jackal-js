@@ -133,8 +133,9 @@ test("Java collection helpers preserve the valid operations used by Jackal", asy
     assert.equal(list.add("c"), true);
     assert.equal(list.get(1), "b");
     assert.equal(list.set(1, "B"), "b");
-    assert.equal(list.remove(0), "a");
-    assert.equal(list.remove("c"), true);
+    assert.equal(list.removeAt(0), "a");
+    assert.equal(list.removeValue("c"), true);
+    assert.throws(() => list.removeAt(99), RangeError);
     assert.deepEqual(list.toArray(), ["B"]);
 
     const map = new runtime.HashMap();
@@ -148,7 +149,7 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
     const sortCalls = [];
     const putCalls = [];
     const soundGets = [];
-    const nullChecks = [];
+    const missingMapEntryChecks = [];
     const oneArgumentRemovals = [];
 
     visitGameplay((node, sourceFile, path) => {
@@ -167,17 +168,17 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
             if (receiver === "this.lastPlayTime" && name === "get" && node.arguments.length === 1 && node.arguments[0].getText(sourceFile) === "sound") {
                 soundGets.push({ node });
             }
-            if (name === "remove" && node.arguments.length === 1) {
+            if ((name === "removeAt" || name === "removeValue") && node.arguments.length === 1) {
                 oneArgumentRemovals.push(node.getText(sourceFile).replace(/\s+/g, " "));
             }
         }
         if (
             ts.isBinaryExpression(node) &&
-            node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken &&
+            node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
             node.left.getText(sourceFile) === "time" &&
-            node.right.kind === ts.SyntaxKind.NullKeyword
+            node.right.getText(sourceFile) === "undefined"
         ) {
-            nullChecks.push({ node });
+            missingMapEntryChecks.push({ node });
         }
     });
 
@@ -201,19 +202,19 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
     }
 
     assert.equal(soundGets.length, 2);
-    assert.equal(nullChecks.length, 2, "The two sound-throttle lookups intentionally accept a missing JS Map entry.");
+    assert.equal(missingMapEntryChecks.length, 2, "The two sound-throttle lookups explicitly recognize a missing JS Map entry.");
 
     assert.deepEqual(
         oneArgumentRemovals.sort(),
         [
-            "CutsceneSequence.modes.remove(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size()))",
-            "list.remove(j)",
-            "list.remove(j)",
-            "this.bullets.remove(i)",
-            "this.enemies.remove(enemy)",
-            "this.mines.remove(enemy)",
-            "this.shipGuns.remove(bossShipGun)",
-            "this.solids.remove(enemy)"
+            "CutsceneSequence.modes.removeAt(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size()))",
+            "list.removeAt(j)",
+            "list.removeAt(j)",
+            "this.bullets.removeAt(i)",
+            "this.enemies.removeValue(enemy)",
+            "this.mines.removeValue(enemy)",
+            "this.shipGuns.removeValue(bossShipGun)",
+            "this.solids.removeValue(enemy)"
         ].sort()
     );
 });

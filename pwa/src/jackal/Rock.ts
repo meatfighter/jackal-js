@@ -25,22 +25,14 @@ export class Rock extends Enemy {
         this.mines = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Rock(argCount, arg0, arg1);
-    }
 
-    private __construct_Rock(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            this.rollsRight = xLocal > 32 * 35;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.rollsRight = x > 32 * 35;
     }
 
     public static readonly STATE_RESTING_HIGH: number = 0;
@@ -102,8 +94,8 @@ export class Rock extends Enemy {
         for (let i = this.mines!.size() - 1; i >= 0; i--) {
             let mineLocal = this.mines!.get(i);
             if (
-                mineLocal != this &&
-                mineLocal.isMine(
+                mineLocal !== this &&
+                mineLocal.isMineBounds(
                     javaFloat(this.x + this.mineX1),
                     javaFloat(this.y + this.mineY1),
                     javaFloat(this.x + this.mineX2),
@@ -116,7 +108,7 @@ export class Rock extends Enemy {
     }
 
     public override flatten(): void {
-        if (this.state == Rock.STATE_RESTING_LOW) {
+        if (this.state === Rock.STATE_RESTING_LOW) {
             this.explode();
         }
     }
@@ -141,7 +133,7 @@ export class Rock extends Enemy {
                     this.x = javaFloat(this.x - this.vx);
                     this.angle = javaFloat(this.angle - javaFloat(4 * this.vx));
                 }
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Rock.STATE_ROLLING_DOWN;
                     this.vx = javaFloat(this.vx * Rock.ISQRT2);
                     this.delay = Rock.FALL_TIME;
@@ -162,7 +154,7 @@ export class Rock extends Enemy {
                 this.vScale = javaFloat(this.vScale + Rock.SCALE_ACCLERATION);
                 this.scale = javaFloat(this.scale + this.vScale);
                 this.y = javaFloat(this.y + this.vx);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Rock.STATE_ROLLING_FOWARD_LOW;
                     this.vx = javaFloat(this.vx * Rock.SQRT2);
                     this.delay = Rock.LOW_TIME;
@@ -178,7 +170,7 @@ export class Rock extends Enemy {
                     this.x = javaFloat(this.x - this.vx);
                     this.angle = javaFloat(this.angle - javaFloat(4 * this.vx));
                 }
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Rock.STATE_RESTING_LOW;
                 }
                 this.rollOverEnemies();
@@ -187,6 +179,6 @@ export class Rock extends Enemy {
     }
 
     public render(): void {
-        this.main.drawRotated(this.main.rock, this.x, this.y, -32, -32, this.angle, this.scale);
+        this.main.drawRotatedAtCenterScaled(this.main.rock, this.x, this.y, -32, -32, this.angle, this.scale);
     }
 }

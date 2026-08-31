@@ -20,15 +20,6 @@ export class BossStatuesManager extends GameElement implements ICameraPanListene
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossStatuesManager(argCount);
-    }
-
-    private __construct_BossStatuesManager(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly MAX_TANKS: number = 5;
@@ -41,7 +32,7 @@ export class BossStatuesManager extends GameElement implements ICameraPanListene
     }
 
     public statueDestroyed(): void {
-        if (--this.statues == 0) {
+        if (--this.statues === 0) {
             this.gameMode.destroyAll();
             this.gameMode.stageCompleted();
         }
@@ -79,7 +70,7 @@ export class BossStatuesManager extends GameElement implements ICameraPanListene
                 } else if (xLocal > 1760) {
                     xLocal = 1760;
                 }
-                new BrownTank(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
+                BrownTank.withTracker(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
             }
         }
     }

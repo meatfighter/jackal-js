@@ -7,6 +7,7 @@ const metadataPath = path.resolve(process.argv[3]);
 const apply = process.argv.includes("--apply");
 const metadata = fs.readFileSync(metadataPath, "utf8").trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
 const exceptions = JSON.parse(fs.readFileSync(path.join(repo, "scripts", "java-ts-parity-exceptions.json"), "utf8"));
+const signatureMap = JSON.parse(fs.readFileSync(path.join(repo, "scripts", "java-ts-signature-map.json"), "utf8"));
 const classMap = new Map(metadata.filter((entry) => entry.fullName === entry.name).map((entry) => [entry.name, entry]));
 const norm = (type) => String(type ?? "").replace(/\s+/g, "");
 const mappedFieldName = (className, javaName) => exceptions.fieldExceptions?.[`${className}.${javaName}`]?.target ?? javaName;
@@ -71,13 +72,40 @@ function expressionClassName(node) {
 function methodsFor(className, name) {
     return (classMap.get(className)?.methods ?? []).filter((method) => method.name === name);
 }
+function mappedSignatureMeta(className, javaName, parameterTypes, mappingKey) {
+    if (!Array.isArray(parameterTypes)) {
+        throw new Error(`${mappingKey} must identify its Java signature by parameter types.`);
+    }
+    const matches = methodsFor(className, javaName).filter(
+        (method) => method.params.length === parameterTypes.length && method.params.every((parameter, index) => parameter.type === parameterTypes[index])
+    );
+    if (matches.length !== 1) {
+        throw new Error(`${mappingKey} resolved ${matches.length} Java signatures instead of exactly one.`);
+    }
+    return matches[0];
+}
+function mappedMethodMeta(className, tsName) {
+    const mappingKey = `${className}.${tsName}`;
+    const methodMapping = signatureMap.methodMappings?.[mappingKey];
+    if (methodMapping) {
+        return mappedSignatureMeta(className, methodMapping.javaName, methodMapping.javaParameterTypes, mappingKey);
+    }
+    const constructorMapping = signatureMap.constructorFactories?.[mappingKey];
+    if (constructorMapping) {
+        return mappedSignatureMeta(className, "<init>", constructorMapping.javaParameterTypes, mappingKey);
+    }
+    return null;
+}
 function methodMeta(className, tsName) {
-    if (tsName === "constructor") return null;
-    if (tsName === `__construct_${className}`) return { constructorAggregate: true, methods: methodsFor(className, "<init>") };
-    const match = /^(.*)__overload(\d+)$/.exec(tsName);
-    if (match) return methodsFor(className, match[1]).find((method) => method.overloadIndex === Number(match[2])) ?? null;
+    const mapped = mappedMethodMeta(className, tsName);
+    if (mapped) return mapped;
     const candidates = methodsFor(className, tsName);
     return candidates.length === 1 ? candidates[0] : null;
+}
+function callCandidates(owner, tsName, argumentCount) {
+    const mapped = mappedMethodMeta(owner, tsName);
+    if (mapped) return (mapped.params ?? []).length === argumentCount ? [mapped] : [];
+    return methodsFor(owner, tsName).filter((method) => (method.params ?? []).length === argumentCount);
 }
 function staticMeta(className, index) {
     return methodsFor(className, "<static>").find((method) => method.overloadIndex === index) ?? null;
@@ -329,8 +357,7 @@ for (const file of files) {
                     if (ts.isIdentifier(node.expression.expression) && classMap.has(node.expression.expression.text)) owner = node.expression.expression.text;
                     else owner = expressionClassName(node.expression.expression);
                     if (owner) {
-                        const javaName = node.expression.name.text.replace(/__overload\d+$/, "");
-                        const candidates = methodsFor(owner, javaName).filter((method) => (method.params ?? []).length === node.arguments.length);
+                        const candidates = callCandidates(owner, node.expression.name.text, node.arguments.length);
                         const returnTypes = new Set(candidates.map((method) => norm(method.returnType)));
                         if (returnTypes.size === 1) return [...returnTypes][0] || "unknown";
                     }
@@ -379,8 +406,8 @@ for (const file of files) {
             } else if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
                 if (ts.isIdentifier(node.expression.expression) && classMap.has(node.expression.expression.text)) owner = node.expression.expression.text;
                 else owner = expressionClassName(node.expression.expression);
-                javaName = node.expression.name.text.replace(/__overload\d+$/, "");
-                if (owner) candidates = methodsFor(owner, javaName).filter((method) => (method.params ?? []).length === node.arguments.length);
+                javaName = node.expression.name.text;
+                if (owner) candidates = callCandidates(owner, javaName, node.arguments.length);
             }
             if (!owner || !candidates.length) return null;
             const count = ts.isNewExpression(node) ? (node.arguments?.length ?? 0) : node.arguments.length;
@@ -439,7 +466,9 @@ for (const file of files) {
                 const meta = methodMeta(className, member.name.text);
                 processContainer(member.body, member.name.text, meta, meta?.literals ?? []);
             } else if (ts.isConstructorDeclaration(member) && member.body) {
-                processContainer(member.body, "constructor", null, []);
+                const constructors = methodsFor(className, "<init>");
+                const meta = constructors.length === 1 ? constructors[0] : null;
+                processContainer(member.body, "constructor", meta, meta?.literals ?? []);
             } else if (ts.isClassStaticBlockDeclaration(member)) {
                 const meta = staticMeta(className, staticIndex++);
                 processContainer(member.body, "<static>", meta, meta?.literals ?? []);

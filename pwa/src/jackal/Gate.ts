@@ -13,32 +13,22 @@ export class Gate extends Enemy {
         this.bossGarageManager = null;
     }
 
-    public constructor(x: number, y: number, bossGarageManager: BossGarageManager);
-    public constructor(x: number, y: number);
-    public constructor(arg0?: number, arg1?: number, arg2?: BossGarageManager) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_Gate(argCount, arg0, arg1, arg2);
     }
 
-    private __construct_Gate(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            let bossGarageManagerLocal = arg2;
-            this.__construct_Gate(2, xLocal2, yLocal2);
-            this.bossGarageManager = bossGarageManagerLocal!;
-            return;
-        } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
+    public static create(x: number, y: number): Gate {
+        const gate = new Gate();
+        gate.x = javaFloat(x);
+        gate.y = javaFloat(y);
+        gate.groupIndex = gate.gameMode.groupsMap[javaInt(gate.y) >> 5][(javaInt(gate.x) >> 5) + 1];
+        return gate;
+    }
 
-            this.groupIndex = this.gameMode.groupsMap[javaInt(yLocal) >> 5][(javaInt(xLocal) >> 5) + 1];
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+    public static withBossGarageManager(x: number, y: number, bossGarageManager: BossGarageManager): Gate {
+        const gate = Gate.create(x, y);
+        gate.bossGarageManager = bossGarageManager;
+        return gate;
     }
 
     public override init(): void {
@@ -54,11 +44,11 @@ export class Gate extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
+        if (attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + 96), javaFloat(this.y + 64));
+            Explosion.create(javaFloat(this.x + 96), javaFloat(this.y + 64));
             this.gameMode.triggerGroup(this.groupIndex);
-            if (this.bossGarageManager != null) {
+            if (this.bossGarageManager !== null) {
                 this.bossGarageManager.gateOpen();
             }
             return true;
@@ -69,7 +59,7 @@ export class Gate extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;

@@ -11,21 +11,13 @@ export class Flame extends GameElement {
         this.delay = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Flame(argCount, arg0, arg1);
-    }
 
-    private __construct_Flame(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly TIME_TO_LIVE: number = 1 * 91;
@@ -45,13 +37,13 @@ export class Flame extends GameElement {
     }
 
     public update(): void {
-        if (--this.delay == 0) {
+        if (--this.delay === 0) {
             this.remove();
         }
     }
 
     public render(): void {
-        if (++this.spriteCounter == 8) {
+        if (++this.spriteCounter === 8) {
             this.spriteCounter = 0;
             this.spriteIndex ^= 1;
         }

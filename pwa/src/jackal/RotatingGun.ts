@@ -33,61 +33,50 @@ export class RotatingGun extends Enemy {
         this.sprites = null;
     }
 
-    public constructor(x: number, y: number, bossGarageManager: BossGarageManager, white: boolean);
-    public constructor(x: number, y: number, white: boolean);
-    public constructor(x: number, y: number, type: number);
-    public constructor(arg0?: number, arg1?: number, arg2?: BossGarageManager | boolean | number, arg3?: boolean) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_RotatingGun(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_RotatingGun(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager | boolean | number, arg3?: boolean): void {
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "boolean") {
-            let xLocal3 = javaFloat(arg0);
-            let yLocal3 = javaFloat(arg1);
-            let bossGarageManagerLocal = arg2 as BossGarageManager;
-            let whiteLocal2 = arg3;
-            this.x = xLocal3;
-            this.y = yLocal3;
-            this.white = whiteLocal2;
-            this.bossGarageManager = bossGarageManagerLocal;
-            this.groupSize = 2;
-            this.sprites = this.main.grayGuns;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            let whiteLocal = arg2;
-            this.x = xLocal2;
-            this.y = yLocal2;
-            this.white = whiteLocal;
-            this.sprites = this.main.grayGuns;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let typeLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = typeLocal;
-            this.white = typeLocal != RotatingGun.TYPE_BROWN;
-            this.groupSize = 1;
+    public static forGarage(x: number, y: number, bossGarageManager: BossGarageManager, white: boolean): RotatingGun {
+        const gun = new RotatingGun();
+        gun.x = javaFloat(x);
+        gun.y = javaFloat(y);
+        gun.white = white;
+        gun.bossGarageManager = bossGarageManager;
+        gun.groupSize = 2;
+        gun.sprites = gun.main.grayGuns;
+        return gun;
+    }
 
-            switch (typeLocal) {
-                case RotatingGun.TYPE_GREEN:
-                    this.sprites = this.main.greenGuns;
-                    break;
-                case RotatingGun.TYPE_BROWN:
-                    this.sprites = this.main.brownGuns;
-                    break;
-                default:
-                    this.sprites = this.main.grayGuns;
-                    break;
-            }
-            return;
+    public static withWhiteBullets(x: number, y: number, white: boolean): RotatingGun {
+        const gun = new RotatingGun();
+        gun.x = javaFloat(x);
+        gun.y = javaFloat(y);
+        gun.white = white;
+        gun.sprites = gun.main.grayGuns;
+        return gun;
+    }
+
+    public static ofType(x: number, y: number, type: number): RotatingGun {
+        const gun = new RotatingGun();
+        gun.x = javaFloat(x);
+        gun.y = javaFloat(y);
+        gun.type = type;
+        gun.white = type !== RotatingGun.TYPE_BROWN;
+        gun.groupSize = 1;
+
+        switch (type) {
+            case RotatingGun.TYPE_GREEN:
+                gun.sprites = gun.main.greenGuns;
+                break;
+            case RotatingGun.TYPE_BROWN:
+                gun.sprites = gun.main.brownGuns;
+                break;
+            default:
+                gun.sprites = gun.main.grayGuns;
+                break;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        return gun;
     }
 
     public static readonly TYPE_GRAY: number = 0;
@@ -149,7 +138,7 @@ export class RotatingGun extends Enemy {
         switch (this.state) {
             case RotatingGunState.FIRING:
                 if (--this.recoilIndex < 0) {
-                    if (++this.group == this.groupSize) {
+                    if (++this.group === this.groupSize) {
                         this.recoil = 0;
                         this.state = RotatingGunState.TRACKING;
                         this.pause = RotatingGun.PAUSE_BETWEEN_GROUPS;
@@ -184,7 +173,7 @@ export class RotatingGun extends Enemy {
                 }
                 if (Math.abs(deltaAngle) < RotatingGun.ROTATION_SPEED) {
                     this.angle = targetAngle;
-                    if (this.pause == 0) {
+                    if (this.pause === 0) {
                         this.fire();
                     }
                 } else {
@@ -212,9 +201,9 @@ export class RotatingGun extends Enemy {
         let ang = javaFloat((this.angle * Math.PI) / 180);
         let cos = javaFloat(Math.cos(ang));
         let sin = javaFloat(Math.sin(ang));
-        if (this.bossGarageManager != null) {
+        if (this.bossGarageManager !== null) {
             if (this.white) {
-                new EnemyBullet(
+                EnemyBullet.colored(
                     javaFloat(this.x + javaFloat(60 * cos)),
                     javaFloat(this.y + javaFloat(60 * sin)),
                     cos,
@@ -223,7 +212,7 @@ export class RotatingGun extends Enemy {
                     true
                 );
             } else {
-                new EnemyBullet(
+                EnemyBullet.colored(
                     javaFloat(this.x + javaFloat(60 * cos)),
                     javaFloat(this.y + javaFloat(60 * sin)),
                     javaFloat(RotatingGun.YELLOW_BULLET_SPEED * cos),
@@ -233,9 +222,16 @@ export class RotatingGun extends Enemy {
                 );
             }
         } else if (this.white) {
-            new EnemyBullet(javaFloat(this.x + javaFloat(60 * cos)), javaFloat(this.y + javaFloat(60 * sin)), cos, sin, RotatingGun.BULLET_TRAVEL_TIME, true);
+            EnemyBullet.colored(
+                javaFloat(this.x + javaFloat(60 * cos)),
+                javaFloat(this.y + javaFloat(60 * sin)),
+                cos,
+                sin,
+                RotatingGun.BULLET_TRAVEL_TIME,
+                true
+            );
         } else {
-            new EnemyBullet(
+            EnemyBullet.colored(
                 javaFloat(this.x + javaFloat(60 * cos)),
                 javaFloat(this.y + javaFloat(60 * sin)),
                 javaFloat(RotatingGun.YELLOW_BULLET_SPEED * cos),
@@ -247,6 +243,6 @@ export class RotatingGun extends Enemy {
     }
 
     public render(): void {
-        this.main.drawRotated(this.sprites![this.recoil == 0 ? 0 : 1], this.x, this.y, -28, this.recoil - 60, this.angle + 90);
+        this.main.drawRotatedAtCenter(this.sprites![this.recoil === 0 ? 0 : 1], this.x, this.y, -28, this.recoil - 60, this.angle + 90);
     }
 }

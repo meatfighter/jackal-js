@@ -21,35 +21,22 @@ export class Grenade extends GameElement {
         this.enemies = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number) {
+    public constructor(x: number, y: number, angle: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Grenade(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_Grenade(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let angleLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-
-            let unit = this.main.createUnitVector(angleLocal);
-            if (this.gameMode.player.longRange) {
-                this.vx = javaFloat(unit[0] * Grenade.VELOCITY2);
-                this.vy = javaFloat(unit[1] * Grenade.VELOCITY2);
-            } else {
-                this.vx = javaFloat(unit[0] * Grenade.VELOCITY);
-                this.vy = javaFloat(unit[1] * Grenade.VELOCITY);
-            }
-
-            this.enemies = this.gameMode.enemies;
-
-            this.main.playSound(this.main.throwSound);
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        let unit = this.main.createUnitVector(angle);
+        if (this.gameMode.player.longRange) {
+            this.vx = javaFloat(unit[0] * Grenade.VELOCITY2);
+            this.vy = javaFloat(unit[1] * Grenade.VELOCITY2);
+        } else {
+            this.vx = javaFloat(unit[0] * Grenade.VELOCITY);
+            this.vy = javaFloat(unit[1] * Grenade.VELOCITY);
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.enemies = this.gameMode.enemies;
+        this.main.playSound(this.main.throwSound);
     }
 
     public static readonly DISTANCE: number = 320;
@@ -81,7 +68,7 @@ export class Grenade extends GameElement {
         let y2 = javaFloat(this.y + Grenade.MARGIN);
         let hit = false;
 
-        if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
+        if (!this.gameMode.isOutsideOfFrameBounds(x1, y1, x2, y2)) {
             for (let i = this.enemies!.size() - 1; i >= 0; i--) {
                 let enemyLocal = this.enemies!.get(i);
                 if (!enemyLocal.removeFlag && enemyLocal.attack(x1, y1, x2, y2, AttackSource.PLAYER_WEAPON)) {
@@ -96,11 +83,11 @@ export class Grenade extends GameElement {
             if (!hit) {
                 this.main.playExplodeSound2();
             }
-            new Explosion(this.x, this.y).setGrenadeExplosion(true);
+            Explosion.create(this.x, this.y).setGrenadeExplosion(true);
         }
     }
 
     public render(): void {
-        this.main.draw(this.main.grenade, this.x, this.y, this.angle, this.scale);
+        this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale);
     }
 }

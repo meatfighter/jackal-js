@@ -8,19 +8,11 @@ export class AppearingEnemyHelicopter extends GameElement {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number) {
+    public constructor(y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_AppearingEnemyHelicopter(argCount, arg0);
-    }
 
-    private __construct_AppearingEnemyHelicopter(argCount: number, arg0?: number): void {
-        if (argCount === 1 && typeof arg0 === "number") {
-            let yLocal = javaFloat(arg0);
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        y = javaFloat(y);
+        this.y = y;
     }
 
     public init(): void {

@@ -31,39 +31,18 @@ export class Column extends Enemy {
         this.mines = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Column(argCount, arg0, arg1);
-    }
-
-    private __construct_Column(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-
-            this.player = this.gameMode.player;
-
-            let X = javaInt(xLocal) >> 5;
-            let Y = javaInt(yLocal) >> 5;
-
-            this.groupIndex = this.gameMode.groupsMap[Y][X];
-
-            this.canDropLeft = !(
-                this.gameMode.isSolidTile(X - 3, Y + 3) ||
-                this.gameMode.isSolidTile(X - 3, Y + 4) ||
-                this.gameMode.isSolidTile(X - 3, Y + 14)
-            );
-            this.canDropRight = !(
-                this.gameMode.isSolidTile(X + 4, Y + 3) ||
-                this.gameMode.isSolidTile(X + 4, Y + 4) ||
-                this.gameMode.isSolidTile(X + 4, Y + 14)
-            );
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.player = this.gameMode.player;
+        let X = javaInt(x) >> 5;
+        let Y = javaInt(y) >> 5;
+        this.groupIndex = this.gameMode.groupsMap[Y][X];
+        this.canDropLeft = !(this.gameMode.isSolidTile(X - 3, Y + 3) || this.gameMode.isSolidTile(X - 3, Y + 4) || this.gameMode.isSolidTile(X - 3, Y + 14));
+        this.canDropRight = !(this.gameMode.isSolidTile(X + 4, Y + 3) || this.gameMode.isSolidTile(X + 4, Y + 4) || this.gameMode.isSolidTile(X + 4, Y + 14));
     }
 
     public static readonly STATE_HIDDEN: number = 0;
@@ -128,8 +107,8 @@ export class Column extends Enemy {
         for (let i = this.mines!.size() - 1; i >= 0; i--) {
             let mineLocal = this.mines!.get(i);
             if (
-                mineLocal != this &&
-                mineLocal.isMine(
+                mineLocal !== this &&
+                mineLocal.isMineBounds(
                     javaFloat(this.x + this.mineX1),
                     javaFloat(this.y + this.mineY1),
                     javaFloat(this.x + this.mineX2),
@@ -142,7 +121,7 @@ export class Column extends Enemy {
     }
 
     public override flatten(): void {
-        if (this.state == Column.STATE_STATIONARY) {
+        if (this.state === Column.STATE_STATIONARY) {
             this.explode();
         }
     }
@@ -156,7 +135,7 @@ export class Column extends Enemy {
                 this.x = javaFloat(this.x + this.vx);
                 this.y = javaFloat(this.y + this.vy);
                 this.angle = javaFloat(this.angle + this.angleInc);
-                if (--this.tipSteps == 0) {
+                if (--this.tipSteps === 0) {
                     this.startRolling();
                 }
                 break;
@@ -223,16 +202,16 @@ export class Column extends Enemy {
 
         this.state = Column.STATE_TIPPING;
         this.main.playHitExplodeSound();
-        new Explosion(javaFloat(this.x + 32), javaFloat(this.y + 48));
+        Explosion.create(javaFloat(this.x + 32), javaFloat(this.y + 48));
         this.gameMode.triggerGroup(this.groupIndex);
 
         this.x = javaFloat(this.x + 32);
         this.y = javaFloat(this.y + 46);
 
         if (this.canDropLeft && this.canDropRight) {
-            if (this.main.random.nextInt(7) == 3) {
+            if (this.main.random.nextInt(7) === 3) {
                 this.left = this.main.random.nextBoolean();
-            } else if (this.main.random.nextInt(3) == 1) {
+            } else if (this.main.random.nextInt(3) === 1) {
                 this.left = this.player!.x < this.x;
             } else {
                 this.left = this.player!.x > this.x;
@@ -269,18 +248,19 @@ export class Column extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.state == Column.STATE_HIDDEN) {
-            if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (this.state === Column.STATE_HIDDEN) {
+            if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
                 this.startTipping(true);
                 return true;
             }
         } else {
             if (
-                (attackSource == AttackSource.PLAYER_WEAPON || (this.state == Column.STATE_STATIONARY && attackSource == AttackSource.TRAVELING_EXPLOSION)) &&
-                this.hit(x1, y1, x2, y2)
+                (attackSource === AttackSource.PLAYER_WEAPON ||
+                    (this.state === Column.STATE_STATIONARY && attackSource === AttackSource.TRAVELING_EXPLOSION)) &&
+                this.hitBounds(x1, y1, x2, y2)
             ) {
                 this.remove();
-                new Explosion(this.x, this.y);
+                Explosion.create(this.x, this.y);
                 this.main.addPoints(this.points);
                 return true;
             }
@@ -290,7 +270,7 @@ export class Column extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.state == Column.STATE_HIDDEN) {
+        if (this.state === Column.STATE_HIDDEN) {
             return false;
         }
         return super.bulletAttack(x1, y1, x2, y2);
@@ -298,14 +278,14 @@ export class Column extends Enemy {
 
     // returns true if player bumped into the enemy
     public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
-        if (this.state == Column.STATE_HIDDEN) {
-            if (this.gameMode.cameraY < this.y && this.isMine(x1, y1, x2, y2)) {
+        if (this.state === Column.STATE_HIDDEN) {
+            if (this.gameMode.cameraY < this.y && this.isMineBounds(x1, y1, x2, y2)) {
                 this.startTipping(false);
             }
         } else {
-            if (this.isMine(x1, y1, x2, y2)) {
+            if (this.isMineBounds(x1, y1, x2, y2)) {
                 this.remove();
-                new Explosion(this.x, this.y);
+                Explosion.create(this.x, this.y);
                 this.main.addPoints(this.points);
                 return invincible ? false : true;
             }
@@ -324,13 +304,13 @@ export class Column extends Enemy {
                 this.main.drawRotated(this.main.columns[0], this.x, this.y, this.angle);
                 if (this.left) {
                     this.gameMode.g.setWorldClip(this.x - 22, this.y - 23, 56, 48);
-                    this.main.draw(this.main.columns[1], this.x - 46, this.y - 84 + this.rotationOffset);
-                    this.main.draw(this.main.columns[1], this.x - 46, this.y - 28 + this.rotationOffset);
+                    this.main.drawImage(this.main.columns[1], this.x - 46, this.y - 84 + this.rotationOffset);
+                    this.main.drawImage(this.main.columns[1], this.x - 46, this.y - 28 + this.rotationOffset);
                     this.gameMode.g.clearWorldClip();
                 } else {
                     this.gameMode.g.setWorldClip(this.x - 31, this.y - 25, 56, 48);
-                    this.main.draw(this.main.columns[0], this.x - 46, this.y - 84 + this.rotationOffset);
-                    this.main.draw(this.main.columns[0], this.x - 46, this.y - 28 + this.rotationOffset);
+                    this.main.drawImage(this.main.columns[0], this.x - 46, this.y - 84 + this.rotationOffset);
+                    this.main.drawImage(this.main.columns[0], this.x - 46, this.y - 28 + this.rotationOffset);
                     this.gameMode.g.clearWorldClip();
                 }
                 break;

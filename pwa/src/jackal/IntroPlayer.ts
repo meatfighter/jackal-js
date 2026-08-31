@@ -14,23 +14,15 @@ export class IntroPlayer extends GameElement {
         this.chinook = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: Chinook) {
+    public constructor(x: number, y: number, chinook: Chinook) {
         super();
-        const argCount = arguments.length;
-        this.__construct_IntroPlayer(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_IntroPlayer(argCount: number, arg0?: number, arg1?: number, arg2?: Chinook): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let chinookLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.chinook = chinookLocal!;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+
+        this.x = x;
+        this.y = y;
+        this.chinook = chinook;
     }
 
     public static readonly STATE_DIAGONAL: number = 0;
@@ -56,7 +48,7 @@ export class IntroPlayer extends GameElement {
             case IntroPlayer.STATE_DIAGONAL:
                 this.x = javaFloat(this.x - Player.SPEED);
                 this.y = javaFloat(this.y + Player.SPEED);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = IntroPlayer.STATE_REVERSE;
                     this.delay = IntroPlayer.REVERSE_TIME;
                 }
@@ -67,7 +59,7 @@ export class IntroPlayer extends GameElement {
                 } else {
                     this.angle = -90;
                 }
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = IntroPlayer.STATE_PAUSED;
                     this.x = IntroPlayer.FINAL_X;
                     this.y = IntroPlayer.FINAL_Y;

@@ -33,11 +33,11 @@ export class DifficultyMode implements IMode, IFadeListener, IMenuListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == DifficultyMode.STATE_FADE_IN) {
+        if (this.state === DifficultyMode.STATE_FADE_IN) {
             this.state = DifficultyMode.STATE_MENU;
-        } else if (this.state == DifficultyMode.STATE_FADE_OUT) {
+        } else if (this.state === DifficultyMode.STATE_FADE_OUT) {
             this.state = DifficultyMode.STATE_DONE;
-            this.main.hardMode = this.selectedIndex == 1;
+            this.main.hardMode = this.selectedIndex === 1;
             this.main.requestMode(Modes.INTRO, this.gc);
         }
     }
@@ -53,7 +53,7 @@ export class DifficultyMode implements IMode, IFadeListener, IMenuListener {
     public update(gc: GameContainer): void {
         this.menu.update();
 
-        if (this.state == DifficultyMode.STATE_MENU && this.optionSelectedFlag) {
+        if (this.state === DifficultyMode.STATE_MENU && this.optionSelectedFlag) {
             this.state = DifficultyMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
@@ -63,7 +63,7 @@ export class DifficultyMode implements IMode, IFadeListener, IMenuListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == DifficultyMode.STATE_DONE) {
+        if (this.state === DifficultyMode.STATE_DONE) {
             return;
         }
 

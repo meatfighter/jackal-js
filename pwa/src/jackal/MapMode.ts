@@ -41,7 +41,7 @@ export class MapMode implements IMode, IFadeListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == MapMode.STATE_FADE_IN) {
+        if (this.state === MapMode.STATE_FADE_IN) {
             this.state = MapMode.STATE_PAUSED;
         } else {
             this.state = MapMode.STATE_DONE;
@@ -53,12 +53,12 @@ export class MapMode implements IMode, IFadeListener {
     public update(gc: GameContainer): void {
         switch (this.state) {
             case MapMode.STATE_PAUSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = MapMode.STATE_MOVING;
                 }
                 break;
             case MapMode.STATE_MOVING:
-                if (this.main.friendlySoldiersPickedUp > 0 && --this.soldierDelay == 0) {
+                if (this.main.friendlySoldiersPickedUp > 0 && --this.soldierDelay === 0) {
                     this.soldierDelay = MapMode.SOLDIER_DELAY;
                     this.main.friendlySoldiersPickedUp--;
                     this.main.addPoints(2000);
@@ -66,14 +66,14 @@ export class MapMode implements IMode, IFadeListener {
                 this.jeepY = javaFloat(this.jeepY - MapMode.JEEP_SPEED);
                 if (this.jeepY <= this.targetJeepY) {
                     this.jeepY = this.targetJeepY;
-                    if (this.main.friendlySoldiersPickedUp == 0) {
+                    if (this.main.friendlySoldiersPickedUp === 0) {
                         this.state = MapMode.STATE_PAUSED_2;
                         this.delay = MapMode.PAUSE_DELAY_2;
                     }
                 }
                 break;
             case MapMode.STATE_PAUSED_2:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     if (this.main.isSongPlaying()) {
                         this.delay = 1;
                     } else {
@@ -89,7 +89,7 @@ export class MapMode implements IMode, IFadeListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == MapMode.STATE_DONE) {
+        if (this.state === MapMode.STATE_DONE) {
             return;
         }
 
@@ -97,7 +97,7 @@ export class MapMode implements IMode, IFadeListener {
 
         this.main.drawScaled(this.main.players[0][2], 288, this.jeepY, 0.5);
 
-        this.main.draw(this.main.friendlySoldiers[0][8], 552, 344);
+        this.main.drawImage(this.main.friendlySoldiers[0][8], 552, 344);
 
         this.main.drawString("1P SCORE", 416, 256, MainConstants.FONT_GRAY);
         this.main.drawString(this.main.scoreStr, 704, 256, MainConstants.FONT_GRAY);

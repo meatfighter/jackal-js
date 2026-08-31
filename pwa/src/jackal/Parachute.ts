@@ -23,29 +23,19 @@ export class Parachute extends GameElement {
         this.left = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: boolean, arg4?: BossHelicopter) {
+    public constructor(x: number, y: number, distance: number, left: boolean, bossHelicopter: BossHelicopter) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Parachute(argCount, arg0, arg1, arg2, arg3, arg4);
-    }
 
-    private __construct_Parachute(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean, arg4?: BossHelicopter): void {
-        if (argCount === 5 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let distance = arg2;
-            let leftLocal = arg3;
-            let bossHelicopterLocal = arg4;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.bossHelicopter = bossHelicopterLocal!;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        distance = javaFloat(distance);
 
-            this.delay = javaInt(javaFloat(distance / Parachute.SPEED));
-            this.vx = leftLocal ? -Parachute.SPEED : Parachute.SPEED;
-            this.left = leftLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.bossHelicopter = bossHelicopter;
+        this.delay = javaInt(javaFloat(distance / Parachute.SPEED));
+        this.vx = left ? -Parachute.SPEED : Parachute.SPEED;
+        this.left = left;
     }
 
     public static readonly STATE_LAUNCH: number = 0;
@@ -77,7 +67,7 @@ export class Parachute extends GameElement {
     public update(): void {
         if (this.bossHelicopter!.removeFlag) {
             this.state = Parachute.STATE_DEAD;
-            new Explosion(this.x, this.y);
+            Explosion.create(this.x, this.y);
             this.remove();
             return;
         }
@@ -85,7 +75,7 @@ export class Parachute extends GameElement {
         switch (this.state) {
             case Parachute.STATE_LAUNCH:
                 this.x = javaFloat(this.x + this.vx);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Parachute.STATE_DRIFT;
                     this.delay = 0;
                     this.vx = javaFloat(Parachute.MAX_HORIZONTAL_DRIFT_SPEED + javaFloat(Parachute.MAX_HORIZONTAL_DRIFT_SPEED * this.main.random.nextFloat()));
@@ -98,7 +88,7 @@ export class Parachute extends GameElement {
                 this.y = javaFloat(this.y + Parachute.DRIFT_SPEED);
                 this.x = javaFloat(this.x + this.vx);
                 this.inflate2++;
-                if (++this.delay == Parachute.INFLATE_TIME) {
+                if (++this.delay === Parachute.INFLATE_TIME) {
                     this.delay = 0;
                     this.inflate++;
                     if (this.inflate > 5) {
@@ -115,14 +105,14 @@ export class Parachute extends GameElement {
         switch (this.state) {
             default:
             case Parachute.STATE_LAUNCH:
-                this.main.drawCentered(this.main.parachutes[4], this.x + 64, this.y + 64, 0.25, 0.5);
-                this.main.drawCentered(this.main.parachutes[0], this.x, this.y);
+                this.main.drawCenteredScaledAlpha(this.main.parachutes[4], this.x + 64, this.y + 64, 0.25, 0.5);
+                this.main.drawCenteredAt(this.main.parachutes[0], this.x, this.y);
                 break;
             case Parachute.STATE_DRIFT:
                 let percent = this.inflate2 / (6 * Parachute.INFLATE_TIME);
                 let offset = 64 - 64 * percent;
-                this.main.drawCentered(this.main.parachutes[4], this.x + offset, this.y + offset, 0.25 + 0.6 * percent, 0.5);
-                this.main.drawCentered(
+                this.main.drawCenteredScaledAlpha(this.main.parachutes[4], this.x + offset, this.y + offset, 0.25 + 0.6 * percent, 0.5);
+                this.main.drawCenteredScaled(
                     this.main.parachutes[Parachute.INFLATE_INDEX[this.inflate]],
                     this.x,
                     this.y,

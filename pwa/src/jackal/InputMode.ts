@@ -99,9 +99,9 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     public fadeCompleted(): void {
-        if (this.state == InputMode.STATE_FADE_IN) {
+        if (this.state === InputMode.STATE_FADE_IN) {
             this.state = InputMode.STATE_MENU;
-        } else if (this.state == InputMode.STATE_FADE_OUT) {
+        } else if (this.state === InputMode.STATE_FADE_OUT) {
             this.state = InputMode.STATE_DONE;
             this.removeInputListeners();
             this.main.requestMode(Modes.INTRO, this.gc);
@@ -111,7 +111,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public selectionChanged(selectedIndex: number): void {}
 
     public optionSelected(selectedIndex: number): void {
-        if (this.state != InputMode.STATE_MENU) {
+        if (this.state !== InputMode.STATE_MENU) {
             return;
         }
 
@@ -208,7 +208,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public inputStarted(): void {}
 
     public controllerButtonPressed(controllerIndex: number, buttonIndex: number): void {
-        if (this.state != InputMode.STATE_READING) {
+        if (this.state !== InputMode.STATE_READING) {
             return;
         }
 
@@ -226,7 +226,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private bindControllerDirection(buttonIndex: number, controllerIndex: number): void {
-        if (this.state != InputMode.STATE_READING || this.isActionStep()) {
+        if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
             return;
         }
 
@@ -239,7 +239,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     public keyPressed(i: number, c: string): void {
-        if (this.state != InputMode.STATE_READING) {
+        if (this.state !== InputMode.STATE_READING) {
             return;
         }
 
@@ -347,49 +347,49 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private clearDraftKey(key: number): void {
-        if (this.draftButtonMapping.keyUp == key) {
+        if (this.draftButtonMapping.keyUp === key) {
             this.draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyDown == key) {
+        if (this.draftButtonMapping.keyDown === key) {
             this.draftButtonMapping.keyDown = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyLeft == key) {
+        if (this.draftButtonMapping.keyLeft === key) {
             this.draftButtonMapping.keyLeft = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyRight == key) {
+        if (this.draftButtonMapping.keyRight === key) {
             this.draftButtonMapping.keyRight = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyGrenade == key) {
+        if (this.draftButtonMapping.keyGrenade === key) {
             this.draftButtonMapping.keyGrenade = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyGun == key) {
+        if (this.draftButtonMapping.keyGun === key) {
             this.draftButtonMapping.keyGun = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.keyStart == key) {
+        if (this.draftButtonMapping.keyStart === key) {
             this.draftButtonMapping.keyStart = ButtonMapping.NO_BINDING;
         }
     }
 
     private clearDraftControllerButton(buttonIndex: number): void {
-        if (this.draftButtonMapping.controllerUp == buttonIndex) {
+        if (this.draftButtonMapping.controllerUp === buttonIndex) {
             this.draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerDown == buttonIndex) {
+        if (this.draftButtonMapping.controllerDown === buttonIndex) {
             this.draftButtonMapping.controllerDown = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerLeft == buttonIndex) {
+        if (this.draftButtonMapping.controllerLeft === buttonIndex) {
             this.draftButtonMapping.controllerLeft = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerRight == buttonIndex) {
+        if (this.draftButtonMapping.controllerRight === buttonIndex) {
             this.draftButtonMapping.controllerRight = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerGrenade == buttonIndex) {
+        if (this.draftButtonMapping.controllerGrenade === buttonIndex) {
             this.draftButtonMapping.controllerGrenade = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerGun == buttonIndex) {
+        if (this.draftButtonMapping.controllerGun === buttonIndex) {
             this.draftButtonMapping.controllerGun = ButtonMapping.NO_BINDING;
         }
-        if (this.draftButtonMapping.controllerStart == buttonIndex) {
+        if (this.draftButtonMapping.controllerStart === buttonIndex) {
             this.draftButtonMapping.controllerStart = ButtonMapping.NO_BINDING;
         }
     }
@@ -418,7 +418,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     private isActionStep(): boolean {
         let action = this.getCurrentAction();
-        return action == ButtonMapping.ACTION_GRENADE || action == ButtonMapping.ACTION_GUN || action == ButtonMapping.ACTION_START;
+        return action === ButtonMapping.ACTION_GRENADE || action === ButtonMapping.ACTION_GUN || action === ButtonMapping.ACTION_START;
     }
 
     private isDirectionalGamepadButton(buttonIndex: number): boolean {
@@ -426,12 +426,12 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private bindExtraAxisDirectionPressed(): void {
-        if (this.state != InputMode.STATE_READING || this.isActionStep()) {
+        if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
             this.syncExtraAxisDirectionState();
             return;
         }
         let buttonIndex = this.getPressedExtraAxisDirection();
-        if (buttonIndex != null) {
+        if (buttonIndex !== null) {
             this.bindControllerDirection(buttonIndex, 0);
         }
     }
@@ -579,8 +579,8 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                 }
                 break;
             case InputMode.STATE_READ_FADE:
-                if (--this.delay == 0) {
-                    if (++this.nameIndex == InputMode.NAMES.length) {
+                if (--this.delay === 0) {
+                    if (++this.nameIndex === InputMode.NAMES.length) {
                         this.removeInputListeners();
                         this.commitDraftButtonMapping();
                         this.main.notifyInputMappingChanged();
@@ -596,7 +596,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                 }
                 break;
             case InputMode.STATE_SAVED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.message = "";
                     this.state = InputMode.STATE_MENU;
                     this.createMenu(InputMode.OPTION_DONE);
@@ -618,7 +618,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
             );
         }
 
-        if (this.menu != null) {
+        if (this.menu !== null) {
             this.menu.render();
         }
     }
@@ -640,7 +640,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private renderReading(gc: GameContainer, g: Graphics): void {
-        if (this.state == InputMode.STATE_SAVED) {
+        if (this.state === InputMode.STATE_SAVED) {
             this.main.drawString(this.message, this.centerStringX(this.message), 464, MainConstants.FONT_GRAY);
             return;
         }
@@ -648,7 +648,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.main.drawString("ON EITHER YOUR KEYBOARD", 144, 304, MainConstants.FONT_GRAY);
         this.main.drawString("OR GAMEPAD, PRESS:", 224, 368, MainConstants.FONT_GRAY);
 
-        if (this.state == InputMode.STATE_READ_FADE) {
+        if (this.state === InputMode.STATE_READ_FADE) {
             this.main.drawStringAlpha(
                 InputMode.NAMES[this.nameIndex],
                 InputMode.NAME_XS[this.nameIndex],
@@ -659,7 +659,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         } else {
             this.main.drawString(InputMode.NAMES[this.nameIndex], InputMode.NAME_XS[this.nameIndex], 464, MainConstants.FONT_ORANGE_GRAY);
         }
-        if (this.state == InputMode.STATE_READING && this.message.length > 0) {
+        if (this.state === InputMode.STATE_READING && this.message.length > 0) {
             this.main.drawString(this.message, this.centerStringX(this.message), 560, MainConstants.FONT_GRAY);
         }
     }

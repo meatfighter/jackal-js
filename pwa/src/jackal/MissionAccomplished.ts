@@ -32,8 +32,8 @@ export class MissionAccomplished extends GameElement {
     public update(): void {
         switch (this.state) {
             case MissionAccomplished.STATE_TYPING:
-                if (--this.delay == 0) {
-                    if (this.messageLength == MissionAccomplished.MESSAGES[this.messageIndex].length) {
+                if (--this.delay === 0) {
+                    if (this.messageLength === MissionAccomplished.MESSAGES[this.messageIndex].length) {
                         this.state = MissionAccomplished.STATE_PAUSED;
                         this.delay = MissionAccomplished.PAUSE_TIME;
                     } else {
@@ -44,9 +44,9 @@ export class MissionAccomplished extends GameElement {
                 }
                 break;
             case MissionAccomplished.STATE_PAUSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.messageLength = 0;
-                    if (++this.messageIndex == 3) {
+                    if (++this.messageIndex === 3) {
                         this.state = MissionAccomplished.STATE_DONE;
                         this.gameMode.stageCompleted();
                     } else {
@@ -63,7 +63,7 @@ export class MissionAccomplished extends GameElement {
             this.main.drawString(MissionAccomplished.MESSAGES[i], 832, 736 + (i << 6), MainConstants.FONT_ORANGE);
         }
         if (this.messageIndex < 3) {
-            this.main.drawString(
+            this.main.drawStringWithLength(
                 MissionAccomplished.MESSAGES[this.messageIndex],
                 this.messageLength,
                 832,

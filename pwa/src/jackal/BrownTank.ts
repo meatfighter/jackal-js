@@ -47,57 +47,43 @@ export class BrownTank extends Enemy {
         this.tankTracker = null;
     }
 
-    public constructor(x: number, y: number);
-    public constructor(x: number, y: number, firstMove: number);
-    public constructor(x: number, y: number, tankTracker: ITankTracker);
-    public constructor(x: number, y: number, firstMove: number, tankTracker: ITankTracker);
-    public constructor(arg0?: number, arg1?: number, arg2?: number | ITankTracker, arg3?: ITankTracker) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BrownTank(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_BrownTank(argCount: number, arg0?: number, arg1?: number, arg2?: number | ITankTracker, arg3?: ITankTracker): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal4 = javaFloat(arg0);
-            let yLocal4 = javaFloat(arg1);
-            this.x = xLocal4;
-            this.y = yLocal4;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal3 = javaFloat(arg0);
-            let yLocal3 = javaFloat(arg1);
-            let firstMoveLocal2 = arg2;
-            this.__construct_BrownTank(2, xLocal3, yLocal3);
-            this.firstMove = firstMoveLocal2;
-            this.garage = true;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            let tankTrackerLocal2 = arg2 as ITankTracker;
-            this.__construct_BrownTank(2, xLocal2, yLocal2);
-            this.tankTracker = tankTrackerLocal2;
-            if (tankTrackerLocal2 != null) {
-                tankTrackerLocal2.tankCreated();
-                this.points = 0;
-                this.displayAngle = javaFloat((this.targetAngle = 270));
-            }
-            return;
-        } else if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let firstMoveLocal = arg2;
-            let tankTrackerLocal = arg3;
-            this.__construct_BrownTank(3, xLocal, yLocal, firstMoveLocal);
-            this.tankTracker = tankTrackerLocal!;
-            if (tankTrackerLocal != null) {
-                tankTrackerLocal.tankCreated();
-                this.points = 0;
-            }
-            return;
+    public static create(x: number, y: number): BrownTank {
+        const tank = new BrownTank();
+        tank.x = javaFloat(x);
+        tank.y = javaFloat(y);
+        return tank;
+    }
+
+    public static withFirstMove(x: number, y: number, firstMove: number): BrownTank {
+        const tank = BrownTank.create(x, y);
+        tank.firstMove = firstMove;
+        tank.garage = true;
+        return tank;
+    }
+
+    public static withTracker(x: number, y: number, tankTracker: ITankTracker | null): BrownTank {
+        const tank = BrownTank.create(x, y);
+        tank.tankTracker = tankTracker;
+        if (tankTracker !== null) {
+            tankTracker.tankCreated();
+            tank.points = 0;
+            tank.displayAngle = javaFloat((tank.targetAngle = 270));
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        return tank;
+    }
+
+    public static withFirstMoveAndTracker(x: number, y: number, firstMove: number, tankTracker: ITankTracker | null): BrownTank {
+        const tank = BrownTank.withFirstMove(x, y, firstMove);
+        tank.tankTracker = tankTracker;
+        if (tankTracker !== null) {
+            tankTracker.tankCreated();
+            tank.points = 0;
+        }
+        return tank;
     }
 
     public static readonly SPEED: number = 1.25;
@@ -156,13 +142,13 @@ export class BrownTank extends Enemy {
         let Dx = this.directionX;
         let Dy = this.directionY;
 
-        if (this.main.random.nextInt(5) == 4) {
+        if (this.main.random.nextInt(5) === 4) {
             this.vx = -this.vx;
             this.vy = -this.vy;
             this.directionX = -this.directionX;
             this.directionY = -this.directionY;
             this.targetAngle += 180;
-        } else if (this.main.random.nextInt(3) == 2) {
+        } else if (this.main.random.nextInt(3) === 2) {
             this.vx = Vy;
             this.vy = -Vx;
             this.directionX = Dy;
@@ -183,7 +169,7 @@ export class BrownTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * BrownTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * BrownTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
@@ -191,12 +177,12 @@ export class BrownTank extends Enemy {
     private computeMoveSteps(): void {
         let v = 0;
 
-        if (this.directionX != 0) {
+        if (this.directionX !== 0) {
             v = this.directionX;
         } else {
             v = this.directionY;
         }
-        if (v == 0) {
+        if (v === 0) {
             return;
         }
 
@@ -290,13 +276,13 @@ export class BrownTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * BrownTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * BrownTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
 
     private handleLoop(): void {
-        if (this.handlingLoop == 0) {
+        if (this.handlingLoop === 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
             this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
             this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
@@ -304,7 +290,7 @@ export class BrownTank extends Enemy {
     }
 
     public update(): void {
-        if (this.displayAngle != this.targetAngle) {
+        if (this.displayAngle !== this.targetAngle) {
             this.shootCount = BrownTank.SHOOT_COUNT;
             let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
@@ -327,7 +313,7 @@ export class BrownTank extends Enemy {
             }
 
             if (this.firstMove > 0) {
-                if (--this.firstMove == 0) {
+                if (--this.firstMove === 0) {
                     this.garage = false;
                 }
             }
@@ -335,7 +321,7 @@ export class BrownTank extends Enemy {
             if (--this.moveSteps <= 0) {
                 let dx = 0;
                 let dy = 0;
-                if (this.main.random.nextInt(5) == 4) {
+                if (this.main.random.nextInt(5) === 4) {
                     dx = this.main.random.nextInt(512) - 256;
                     dy = this.main.random.nextInt(512) - 256;
                 }
@@ -377,14 +363,14 @@ export class BrownTank extends Enemy {
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
-                        solidLocal != this &&
-                        solidLocal.isSolid(
+                        solidLocal !== this &&
+                        solidLocal.isSolidBounds(
                             javaFloat(nextX + this.solidX1),
                             javaFloat(nextY + this.solidY1),
                             javaFloat(nextX + this.solidX2),
                             javaFloat(nextY + this.solidY2)
                         ) &&
-                        !solidLocal.isSolid(
+                        !solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(this.y + this.solidY1),
                             javaFloat(this.x + this.solidX2),
@@ -416,13 +402,13 @@ export class BrownTank extends Enemy {
             let dy = javaFloat(this.player!.y - this.y);
 
             if (
-                this.moveSteps == 1 &&
-                ((this.vy != 0 && javaInt(this.player!.x) >> 7 == javaInt(this.x) >> 7) ||
-                    (this.vx != 0 && javaInt(this.player!.y) >> 7 == javaInt(this.y) >> 7))
+                this.moveSteps === 1 &&
+                ((this.vy !== 0 && javaInt(this.player!.x) >> 7 === javaInt(this.x) >> 7) ||
+                    (this.vx !== 0 && javaInt(this.player!.y) >> 7 === javaInt(this.y) >> 7))
             ) {
                 this.moveSteps = 2;
             }
-            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2 && this.firstMove == 0) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) !== 2 && this.firstMove === 0) {
                 this.moveSteps = 0;
             }
 
@@ -436,11 +422,11 @@ export class BrownTank extends Enemy {
                 } else {
                     this.shootDelay = BrownTank.SHOOT_DELAY;
                 }
-                new EnemyBullet(
+                EnemyBullet.colored(
                     javaFloat(this.x + javaFloat(this.directionX * 32)),
                     javaFloat(
                         javaFloat(this.y + javaFloat(this.directionY * 32)) +
-                            (this.targetAngle == 0 || this.targetAngle == 180 ? -12 : this.targetAngle != 90 && this.targetAngle != 270 ? -4 : 0)
+                            (this.targetAngle === 0 || this.targetAngle === 180 ? -12 : this.targetAngle !== 90 && this.targetAngle !== 270 ? -4 : 0)
                     ),
                     this.directionX,
                     this.directionY,
@@ -453,7 +439,7 @@ export class BrownTank extends Enemy {
 
     public override remove(): void {
         super.remove();
-        if (this.tankTracker != null) {
+        if (this.tankTracker !== null) {
             this.tankTracker.tankDestroyed();
         }
     }

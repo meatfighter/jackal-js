@@ -18,15 +18,6 @@ export class BossBlueTanksManager extends GameElement implements ICameraPanListe
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossBlueTanksManager(argCount);
-    }
-
-    private __construct_BossBlueTanksManager(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly SPAWN_DELAY: number = 3 * 91;
@@ -47,7 +38,7 @@ export class BossBlueTanksManager extends GameElement implements ICameraPanListe
             return;
         }
 
-        if (this.spawned < BossBlueTanksManager.TANKS && --this.spawnDelay == 0) {
+        if (this.spawned < BossBlueTanksManager.TANKS && --this.spawnDelay === 0) {
             this.spawned++;
             this.spawnDelay = BossBlueTanksManager.SPAWN_DELAY;
             let xLocal = this.main.random.nextBoolean() ? 640 : 1408;
@@ -58,7 +49,7 @@ export class BossBlueTanksManager extends GameElement implements ICameraPanListe
 
     public blueTankDestroyed(): void {
         this.destroyed++;
-        if (this.destroyed == BossBlueTanksManager.TANKS) {
+        if (this.destroyed === BossBlueTanksManager.TANKS) {
             this.gameMode.destroyAll();
             this.gameMode.stageCompleted();
         }

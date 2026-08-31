@@ -22,21 +22,13 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossShipManager(argCount);
-    }
 
-    private __construct_BossShipManager(argCount: number): void {
-        if (argCount === 0) {
-            this.shipGuns.add(new BossShipGun(javaFloat(36 << 5), javaFloat(8 << 5), this));
-            this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(10 << 5), this));
-            this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(6 << 5), this));
-            this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(10 << 5), this));
-            this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(6 << 5), this));
-            this.shipGuns.add(new BossShipGun(javaFloat(13 << 5), javaFloat(8 << 5), this));
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.shipGuns.add(new BossShipGun(javaFloat(36 << 5), javaFloat(8 << 5), this));
+        this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(10 << 5), this));
+        this.shipGuns.add(new BossShipGun(javaFloat(28 << 5), javaFloat(6 << 5), this));
+        this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(10 << 5), this));
+        this.shipGuns.add(new BossShipGun(javaFloat(22 << 5), javaFloat(6 << 5), this));
+        this.shipGuns.add(new BossShipGun(javaFloat(13 << 5), javaFloat(8 << 5), this));
     }
 
     public static readonly MAX_TANKS: number = 5;
@@ -68,7 +60,7 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
             return;
         }
 
-        if (--this.triggerDelay == 0) {
+        if (--this.triggerDelay === 0) {
             this.triggerGuns();
             this.triggerDelay = BossShipManager.TRIGGER_DELAY;
         }
@@ -84,7 +76,7 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
                 } else if (xLocal > 1472) {
                     xLocal = 1472;
                 }
-                new BrownTank(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
+                BrownTank.withTracker(javaFloat(xLocal), javaFloat(MainConstants.DISPLAY_HEIGHT + 48), this);
             }
         }
     }
@@ -107,7 +99,7 @@ export class BossShipManager extends GameElement implements ICameraPanListener, 
     }
 
     public gunDestroyed(bossShipGun: BossShipGun): void {
-        this.shipGuns.remove(bossShipGun);
+        this.shipGuns.removeValue(bossShipGun);
         if (this.shipGuns.isEmpty()) {
             this.gameMode.destroyAll();
             this.gameMode.stageCompleted();

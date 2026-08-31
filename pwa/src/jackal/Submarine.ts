@@ -19,21 +19,13 @@ export class Submarine extends Enemy {
         this.moves = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Submarine(argCount, arg0, arg1);
-    }
 
-    private __construct_Submarine(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly STATE_SUBMERGED: number = 0;
@@ -125,7 +117,7 @@ export class Submarine extends Enemy {
                 break;
             case Submarine.STATE_SHOOTING:
                 this.delay--;
-                if (this.delay == Submarine.SHOOT_DELAY - 68) {
+                if (this.delay === Submarine.SHOOT_DELAY - 68) {
                     new SubmarineMissile(this.x, this.y);
                 } else if (this.delay <= 0) {
                     this.startLowering();
@@ -146,9 +138,9 @@ export class Submarine extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.height > 1 && attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (this.height > 1 && attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(this.x, this.y);
+            Explosion.create(this.x, this.y);
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -159,10 +151,10 @@ export class Submarine extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.height > 1 && this.hit(x1, y1, x2, y2)) {
+        if (this.height > 1 && this.hitBounds(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(this.x, this.y);
+                Explosion.create(this.x, this.y);
                 this.main.addPoints(this.points);
             }
             return true;
@@ -172,9 +164,9 @@ export class Submarine extends Enemy {
     }
 
     public render(): void {
-        this.main.draw(this.main.submarines[0], this.x - 20, this.y - 128, this.alpha);
+        this.main.drawImageAlpha(this.main.submarines[0], this.x - 20, this.y - 128, this.alpha);
         if (this.height > 0) {
-            this.main.drawCentered(this.main.submarines[this.height], this.x, this.y);
+            this.main.drawCenteredAt(this.main.submarines[this.height], this.x, this.y);
         }
     }
 }

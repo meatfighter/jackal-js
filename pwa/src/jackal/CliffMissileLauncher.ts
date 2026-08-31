@@ -14,21 +14,13 @@ export class CliffMissileLauncher extends Enemy {
         this.ready = false;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_CliffMissileLauncher(argCount, arg0, arg1);
-    }
 
-    private __construct_CliffMissileLauncher(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly LAUNCH_DELAY: number = 3 * 91;
@@ -51,9 +43,9 @@ export class CliffMissileLauncher extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if ((attackSource == AttackSource.PLAYER_WEAPON || attackSource == AttackSource.TRAVELING_EXPLOSION) && this.hit(x1, y1, x2, y2)) {
+        if ((attackSource === AttackSource.PLAYER_WEAPON || attackSource === AttackSource.TRAVELING_EXPLOSION) && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -77,6 +69,6 @@ export class CliffMissileLauncher extends Enemy {
     }
 
     public render(): void {
-        this.main.draw(this.main.cliffMissileLauncher, this.x, this.y);
+        this.main.drawImage(this.main.cliffMissileLauncher, this.x, this.y);
     }
 }

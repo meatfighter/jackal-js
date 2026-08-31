@@ -1,0 +1,347 @@
+{
+    "methodMappings": {
+        "Enemy.isMineAt": {
+            "javaName": "isMine",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "Enemy.isMineBounds": {
+            "javaName": "isMine",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "Enemy.isSolidAt": {
+            "javaName": "isSolid",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "Enemy.isSolidBounds": {
+            "javaName": "isSolid",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.addEnemy": {
+            "javaName": "add",
+            "javaParameterTypes": ["Enemy"]
+        },
+        "GameMode.addGameElement": {
+            "javaName": "add",
+            "javaParameterTypes": ["GameElement"]
+        },
+        "GameMode.destroyAllExcept": {
+            "javaName": "destroyAll",
+            "javaParameterTypes": ["Enemy"]
+        },
+        "GameMode.destroyAll": {
+            "javaName": "destroyAll",
+            "javaParameterTypes": []
+        },
+        "GameMode.isDriveableBounds": {
+            "javaName": "isDriveable",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.isDriveable": {
+            "javaName": "isDriveable",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.isOutsideOfFrame": {
+            "javaName": "isOutsideOfFrame",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.isOutsideOfFrameBounds": {
+            "javaName": "isOutsideOfFrame",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.suggestDirectionFromVelocity": {
+            "javaName": "suggestDirection",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.suggestDirectionWithCurrentAngle": {
+            "javaName": "suggestDirection",
+            "javaParameterTypes": ["float", "float", "float", "float", "int", "boolean"],
+            "narrowFloatParameters": true
+        },
+        "GameMode.suggestDirection": {
+            "javaName": "suggestDirection",
+            "javaParameterTypes": ["float", "float", "float", "float", "boolean"],
+            "narrowFloatParameters": true
+        },
+        "HitElement.hitElement": {
+            "javaName": "hit",
+            "javaParameterTypes": ["HitElement"]
+        },
+        "HitElement.hitAt": {
+            "javaName": "hit",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        },
+        "HitElement.hitBounds": {
+            "javaName": "hit",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "Main.drawStringWithLength": {
+            "javaName": "drawString",
+            "javaParameterTypes": ["String", "int", "float", "float", "int"]
+        },
+        "Main.drawString": {
+            "javaName": "drawString",
+            "javaParameterTypes": ["String", "float", "float", "int"]
+        },
+        "Main.drawImage": {
+            "javaName": "draw",
+            "javaParameterTypes": ["Image", "float", "float"]
+        },
+        "Main.drawImageAlpha": {
+            "javaName": "draw",
+            "javaParameterTypes": ["Image", "float", "float", "float"]
+        },
+        "Main.drawImageRotatedScaled": {
+            "javaName": "draw",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float"]
+        },
+        "Main.playSound": {
+            "javaName": "playSound",
+            "javaParameterTypes": ["Sound"]
+        },
+        "Main.playSoundAtVolume": {
+            "javaName": "playSound",
+            "javaParameterTypes": ["Sound", "float"],
+            "narrowFloatParameters": true
+        },
+        "Main.playSoundIfNotPlaying": {
+            "javaName": "playSoundIfNotPlaying",
+            "javaParameterTypes": ["Sound"]
+        },
+        "Main.playSoundIfNotPlayingAtVolume": {
+            "javaName": "playSoundIfNotPlaying",
+            "javaParameterTypes": ["Sound", "float"],
+            "narrowFloatParameters": true
+        },
+        "Main.stopSong": {
+            "javaName": "stopSong",
+            "javaParameterTypes": ["Song"]
+        },
+        "Main.stopAllSongs": {
+            "javaName": "stopSong",
+            "javaParameterTypes": []
+        },
+        "Main.drawRotatedWithCenter": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float[]", "float"]
+        },
+        "Main.drawRotatedAtCenterScaled": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float", "float", "float"]
+        },
+        "Main.drawRotatedAtCenterScaledAlpha": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float", "float", "float", "float"]
+        },
+        "Main.drawRotatedAtCenter": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float", "float"]
+        },
+        "Main.drawRotatedWithAlpha": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float"]
+        },
+        "Main.drawRotated": {
+            "javaName": "drawRotated",
+            "javaParameterTypes": ["Image", "float", "float", "float"]
+        },
+        "Main.drawRotatedScaled": {
+            "javaName": "drawRotatedScaled",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float", "float", "float", "float"]
+        },
+        "Main.drawRotatedScaledAlpha": {
+            "javaName": "drawRotatedScaled",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float", "float", "float", "float", "float"]
+        },
+        "Main.rotateGraphicsScaled": {
+            "javaName": "rotateGraphics",
+            "javaParameterTypes": ["float", "float", "float", "float"]
+        },
+        "Main.rotateGraphics": {
+            "javaName": "rotateGraphics",
+            "javaParameterTypes": ["float", "float", "float"]
+        },
+        "Main.drawCenteredScaledAlpha": {
+            "javaName": "drawCentered",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float"]
+        },
+        "Main.drawCenteredScaled": {
+            "javaName": "drawCentered",
+            "javaParameterTypes": ["Image", "float", "float", "float"]
+        },
+        "Main.drawCentered": {
+            "javaName": "drawCentered",
+            "javaParameterTypes": ["Image"]
+        },
+        "Main.drawCenteredAt": {
+            "javaName": "drawCentered",
+            "javaParameterTypes": ["Image", "float", "float"]
+        },
+        "Main.drawOffset": {
+            "javaName": "drawOffset",
+            "javaParameterTypes": ["Image", "float", "float"]
+        },
+        "Main.drawOffsetAlpha": {
+            "javaName": "drawOffset",
+            "javaParameterTypes": ["Image", "float", "float", "float"]
+        },
+        "Main.drawScaledAlpha": {
+            "javaName": "drawScaled",
+            "javaParameterTypes": ["Image", "float", "float", "float", "float"]
+        },
+        "Main.drawScaled": {
+            "javaName": "drawScaled",
+            "javaParameterTypes": ["Image", "float", "float", "float"]
+        },
+        "Main.drawVehicleWithCenters": {
+            "javaName": "drawVehicle",
+            "javaParameterTypes": ["Image[]", "float", "float", "float[][]", "float"]
+        },
+        "Main.drawVehicleAlpha": {
+            "javaName": "drawVehicle",
+            "javaParameterTypes": ["Image[]", "float", "float", "float", "float"]
+        },
+        "Main.drawVehicle": {
+            "javaName": "drawVehicle",
+            "javaParameterTypes": ["Image[]", "float", "float", "float"]
+        },
+        "Main.loadTriggerMaps": {
+            "javaName": "loadTriggerMap",
+            "javaParameterTypes": ["int", "int[][]", "int", "Stage"]
+        },
+        "Main.loadTriggerMap": {
+            "javaName": "loadTriggerMap",
+            "javaParameterTypes": ["int", "int[][]", "int", "Stage", "boolean"]
+        },
+        "Player.attackBounds": {
+            "javaName": "attack",
+            "javaParameterTypes": ["float", "float", "float", "float"],
+            "narrowFloatParameters": true
+        },
+        "Player.attackAt": {
+            "javaName": "attack",
+            "javaParameterTypes": ["float", "float"],
+            "narrowFloatParameters": true
+        }
+    },
+    "constructorFactories": {
+        "Airplane.forLandingPort": {
+            "javaParameterTypes": ["boolean"]
+        },
+        "Airplane.atWithDirection": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "Airplane.at": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "Bomb.create": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "Bomb.withVelocity": {
+            "javaParameterTypes": ["float", "float", "boolean", "float", "float"]
+        },
+        "BrownTank.create": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "BrownTank.withFirstMove": {
+            "javaParameterTypes": ["float", "float", "int"]
+        },
+        "BrownTank.withTracker": {
+            "javaParameterTypes": ["float", "float", "ITankTracker"]
+        },
+        "BrownTank.withFirstMoveAndTracker": {
+            "javaParameterTypes": ["float", "float", "int", "ITankTracker"]
+        },
+        "EnemyBullet.cannonball": {
+            "javaParameterTypes": ["float", "float", "float", "float", "int"]
+        },
+        "EnemyBullet.colored": {
+            "javaParameterTypes": ["float", "float", "float", "float", "int", "boolean"]
+        },
+        "EnemyBullet.coloredWithSpeedMode": {
+            "javaParameterTypes": ["float", "float", "float", "float", "int", "boolean", "boolean"]
+        },
+        "Explosion.attachedToEnemy": {
+            "javaParameterTypes": ["float", "float", "boolean", "int", "float", "Enemy"]
+        },
+        "Explosion.configured": {
+            "javaParameterTypes": ["float", "float", "boolean", "int", "float"]
+        },
+        "Explosion.create": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "Explosion.withPlayerExplosion": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "FloorGun.create": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "FloorGun.withPlainStyle": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "FriendlySoldier.walkingToHelicopter": {
+            "javaParameterTypes": ["float", "float", "FriendlyHelicopter", "boolean"]
+        },
+        "FriendlySoldier.wandering": {
+            "javaParameterTypes": ["float", "float", "FriendlySoldierType"]
+        },
+        "FriendlySoldier.fromBuilding": {
+            "javaParameterTypes": ["float", "float", "FriendlySoldierType", "int", "boolean"]
+        },
+        "Gate.withBossGarageManager": {
+            "javaParameterTypes": ["float", "float", "BossGarageManager"]
+        },
+        "Gate.create": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "GrayTank.create": {
+            "javaParameterTypes": ["float", "float"]
+        },
+        "GrayTank.fromShack": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "GrayTank.withFirstMove": {
+            "javaParameterTypes": ["float", "float", "int"]
+        },
+        "GrayTank.withFirstMoveAndManager": {
+            "javaParameterTypes": ["float", "float", "int", "BossGarageManager"]
+        },
+        "RotatingGun.forGarage": {
+            "javaParameterTypes": ["float", "float", "BossGarageManager", "boolean"]
+        },
+        "RotatingGun.withWhiteBullets": {
+            "javaParameterTypes": ["float", "float", "boolean"]
+        },
+        "RotatingGun.ofType": {
+            "javaParameterTypes": ["float", "float", "int"]
+        },
+        "Song.fromIntroPath": {
+            "javaParameterTypes": ["String"]
+        },
+        "Song.fromIntroMusic": {
+            "javaParameterTypes": ["Music"]
+        },
+        "Song.fromIntroAndLoopPaths": {
+            "javaParameterTypes": ["String", "String"]
+        },
+        "Song.fromIntroAndLoopMusic": {
+            "javaParameterTypes": ["Music", "Music"]
+        },
+        "Song.fromTwoIntrosAndLoopPaths": {
+            "javaParameterTypes": ["String", "String", "String"]
+        },
+        "Song.fromTwoIntrosAndLoopMusic": {
+            "javaParameterTypes": ["Music", "Music", "Music"]
+        }
+    }
+}

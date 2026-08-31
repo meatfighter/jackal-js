@@ -18,40 +18,26 @@ export class Hut extends Enemy {
         this.tank = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean) {
+    public constructor(x: number, y: number, shack: boolean, tank: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Hut(argCount, arg0, arg1, arg2, arg3);
-    }
-
-    private __construct_Hut(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean): void {
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let shackLocal = arg2;
-            let tankLocal = arg3;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.shack = shackLocal;
-            this.tank = tankLocal;
-
-            let X = javaInt(xLocal) >> 5;
-            let Y = javaInt(yLocal) >> 5;
-
-            if (shackLocal) {
-                this.groupIndex = this.gameMode.groupsMap[Y + 3][X + 2];
-            } else {
-                this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
-            }
-
-            for (let i = shackLocal ? 5 : 4; i >= 0; i--) {
-                for (let j = 0; j < 6; j++) {
-                    this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
-                }
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.shack = shack;
+        this.tank = tank;
+        let X = javaInt(x) >> 5;
+        let Y = javaInt(y) >> 5;
+        if (shack) {
+            this.groupIndex = this.gameMode.groupsMap[Y + 3][X + 2];
+        } else {
+            this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        for (let i = shack ? 5 : 4; i >= 0; i--) {
+            for (let j = 0; j < 6; j++) {
+                this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
+            }
+        }
     }
 
     public override init(): void {
@@ -67,17 +53,17 @@ export class Hut extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource <= AttackSource.TRAVELING_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource <= AttackSource.TRAVELING_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.playSoundOnRemove = false;
             this.main.playSound(this.main.hutSound);
             this.remove();
-            new Explosion(javaFloat(this.x + (this.shack ? 96 : 80)), javaFloat(this.y + 96));
+            Explosion.create(javaFloat(this.x + (this.shack ? 96 : 80)), javaFloat(this.y + 96));
             this.gameMode.triggerGroup(this.groupIndex);
             if (this.tank) {
-                new GrayTank(javaFloat(this.x + 86), javaFloat(this.y + 96), true);
+                GrayTank.fromShack(javaFloat(this.x + 86), javaFloat(this.y + 96), true);
                 this.main.addPoints(500);
             } else {
-                new FriendlySoldier(
+                FriendlySoldier.fromBuilding(
                     javaFloat(this.x + 96),
                     javaFloat(javaFloat(this.y + 48) + (this.shack ? 64 : 0)),
                     FriendlySoldierType.WEAPON_CARRIER,
@@ -95,7 +81,7 @@ export class Hut extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;

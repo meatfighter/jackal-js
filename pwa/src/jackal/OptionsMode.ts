@@ -33,9 +33,9 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == OptionsMode.STATE_FADE_IN) {
+        if (this.state === OptionsMode.STATE_FADE_IN) {
             this.state = OptionsMode.STATE_MENU;
-        } else if (this.state == OptionsMode.STATE_FADE_OUT) {
+        } else if (this.state === OptionsMode.STATE_FADE_OUT) {
             this.state = OptionsMode.STATE_DONE;
             switch (this.selectedIndex) {
                 case 0:
@@ -62,7 +62,7 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
     public update(gc: GameContainer): void {
         this.menu.update();
 
-        if (this.state == OptionsMode.STATE_MENU && this.optionSelectedFlag) {
+        if (this.state === OptionsMode.STATE_MENU && this.optionSelectedFlag) {
             this.state = OptionsMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
@@ -72,7 +72,7 @@ export class OptionsMode implements IMode, IFadeListener, IMenuListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == OptionsMode.STATE_DONE) {
+        if (this.state === OptionsMode.STATE_DONE) {
             return;
         }
 

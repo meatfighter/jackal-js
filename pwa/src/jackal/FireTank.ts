@@ -43,22 +43,14 @@ export class FireTank extends Enemy {
         this.flamePause = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_FireTank(argCount, arg0, arg1);
-    }
 
-    private __construct_FireTank(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            this.firstMove = 2 * 91;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.firstMove = 2 * 91;
     }
 
     public static readonly SPEED: number = 1.5;
@@ -116,13 +108,13 @@ export class FireTank extends Enemy {
         let Dx = this.directionX;
         let Dy = this.directionY;
 
-        if (this.main.random.nextInt(5) == 4) {
+        if (this.main.random.nextInt(5) === 4) {
             this.vx = -this.vx;
             this.vy = -this.vy;
             this.directionX = -this.directionX;
             this.directionY = -this.directionY;
             this.targetAngle += 180;
-        } else if (this.main.random.nextInt(3) == 2) {
+        } else if (this.main.random.nextInt(3) === 2) {
             this.vx = Vy;
             this.vy = -Vx;
             this.directionX = Dy;
@@ -143,7 +135,7 @@ export class FireTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * FireTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * FireTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
@@ -151,12 +143,12 @@ export class FireTank extends Enemy {
     private computeMoveSteps(): void {
         let v = 0;
 
-        if (this.directionX != 0) {
+        if (this.directionX !== 0) {
             v = this.directionX;
         } else {
             v = this.directionY;
         }
-        if (v == 0) {
+        if (v === 0) {
             return;
         }
 
@@ -250,13 +242,13 @@ export class FireTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * FireTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * FireTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
 
     private handleLoop(): void {
-        if (this.handlingLoop == 0) {
+        if (this.handlingLoop === 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
             this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
             this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
@@ -264,7 +256,7 @@ export class FireTank extends Enemy {
     }
 
     public update(): void {
-        if (this.displayAngle != this.targetAngle) {
+        if (this.displayAngle !== this.targetAngle) {
             let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
                 deltaAngle = javaFloat(deltaAngle + 180);
@@ -294,7 +286,7 @@ export class FireTank extends Enemy {
             if (--this.moveSteps <= 0) {
                 let dx = 0;
                 let dy = 0;
-                if (this.main.random.nextInt(5) == 4) {
+                if (this.main.random.nextInt(5) === 4) {
                     dx = this.main.random.nextInt(512) - 256;
                     dy = this.main.random.nextInt(512) - 256;
                 }
@@ -330,14 +322,14 @@ export class FireTank extends Enemy {
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
-                        solidLocal != this &&
-                        solidLocal.isSolid(
+                        solidLocal !== this &&
+                        solidLocal.isSolidBounds(
                             javaFloat(nextX + this.solidX1),
                             javaFloat(nextY + this.solidY1),
                             javaFloat(nextX + this.solidX2),
                             javaFloat(nextY + this.solidY2)
                         ) &&
-                        !solidLocal.isSolid(
+                        !solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(this.y + this.solidY1),
                             javaFloat(this.x + this.solidX2),
@@ -367,20 +359,20 @@ export class FireTank extends Enemy {
             let dy = javaFloat(this.player!.y - this.y);
 
             if (
-                this.moveSteps == 1 &&
-                ((this.vy != 0 && javaInt(this.player!.x) >> 7 == javaInt(this.x) >> 7) ||
-                    (this.vx != 0 && javaInt(this.player!.y) >> 7 == javaInt(this.y) >> 7))
+                this.moveSteps === 1 &&
+                ((this.vy !== 0 && javaInt(this.player!.x) >> 7 === javaInt(this.x) >> 7) ||
+                    (this.vx !== 0 && javaInt(this.player!.y) >> 7 === javaInt(this.y) >> 7))
             ) {
                 this.moveSteps = 2;
             }
-            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2 && this.firstMove == 0) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) !== 2 && this.firstMove === 0) {
                 this.moveSteps = 0;
             }
 
             this.lastDx = dx;
             this.lastDy = dy;
 
-            if (--this.shootDelay <= 0 && this.targetAngle == this.displayAngle) {
+            if (--this.shootDelay <= 0 && this.targetAngle === this.displayAngle) {
                 this.shootDelay = FireTank.SHOOT_DELAY;
                 let bx = 0;
                 let by = 0;

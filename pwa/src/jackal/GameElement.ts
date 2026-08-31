@@ -9,22 +9,11 @@ export abstract class GameElement {
      */
     protected __initializeJavaSubclassDefaults(): void {}
     public constructor() {
-        const argCount = arguments.length;
-        this.__construct_GameElement(argCount);
-    }
-
-    private __construct_GameElement(argCount: number): void {
-        if (argCount === 0) {
-            this.main = MainRuntimeState.mainInstance!;
-            this.gameMode = MainRuntimeState.gameMode!;
-
-            this.__initializeJavaSubclassDefaults();
-            this.init();
-
-            this.gameMode.add(this);
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.main = MainRuntimeState.mainInstance!;
+        this.gameMode = MainRuntimeState.gameMode!;
+        this.__initializeJavaSubclassDefaults();
+        this.init();
+        this.gameMode.addGameElement(this);
     }
 
     public main: Main = null!;

@@ -21,18 +21,9 @@ export abstract class HitElement extends GameElement {
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_HitElement(argCount);
-    }
-
-    private __construct_HitElement(argCount: number): void {
-        if (argCount === 0) {
-            for (let i = 0; i < 8; i++) {
-                this.trail[i] = -i;
-            }
-            return;
+        for (let i = 0; i < 8; i++) {
+            this.trail[i] = -i;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public trail: number[] = javaArray(8, 0);
@@ -47,24 +38,10 @@ export abstract class HitElement extends GameElement {
     }
 
     public hitPoint(h: HitElement): boolean {
-        return this.hit(h.x, h.y);
+        return this.hitAt(h.x, h.y);
     }
 
-    public hit(arg0?: HitElement | number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof HitElement)) {
-            return this.hit__overload0(arg0 as HitElement);
-        }
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.hit__overload1(javaFloat(arg0), javaFloat(arg1));
-        }
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.hit__overload2(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        throw new Error(`No Java method overload matched hit: ${argCount}`);
-    }
-
-    public hit__overload0(h: HitElement): boolean {
+    public hitElement(h: HitElement): boolean {
         return this.overlap(
             javaFloat(h.x + h.hitX1),
             javaFloat(h.y + h.hitY1),
@@ -77,14 +54,22 @@ export abstract class HitElement extends GameElement {
         );
     }
 
-    public hit__overload1(px: number, py: number): boolean {
+    public hitAt(px: number, py: number): boolean {
+        px = javaFloat(px);
+        py = javaFloat(py);
+
         px = javaFloat(px - this.x);
         py = javaFloat(py - this.y);
 
         return py >= this.hitY1 && py <= this.hitY2 && px >= this.hitX1 && px <= this.hitX2;
     }
 
-    public hit__overload2(x1: number, y1: number, x2: number, y2: number): boolean {
+    public hitBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         return this.overlap(
             x1,
             y1,
@@ -107,7 +92,7 @@ export abstract class HitElement extends GameElement {
 
     public updateTrail(): void {
         let cell = ((javaInt(this.y) >> 7) << 4) | (javaInt(this.x) >> 7);
-        if (cell != this.trail[this.trailIndex]) {
+        if (cell !== this.trail[this.trailIndex]) {
             if (--this.trailIndex < 0) {
                 this.trailIndex = 7;
             }
@@ -121,21 +106,21 @@ export abstract class HitElement extends GameElement {
         let i2 = (this.trailIndex + 2) & 7;
         let i3 = (this.trailIndex + 3) & 7;
 
-        if (this.trail[i0] == this.trail[i2] && this.trail[i1] == this.trail[i3]) {
+        if (this.trail[i0] === this.trail[i2] && this.trail[i1] === this.trail[i3]) {
             return true;
         }
 
         let i4 = (this.trailIndex + 4) & 7;
         let i5 = (this.trailIndex + 5) & 7;
 
-        if (this.trail[i0] == this.trail[i3] && this.trail[i1] == this.trail[i4] && this.trail[i2] == this.trail[i5]) {
+        if (this.trail[i0] === this.trail[i3] && this.trail[i1] === this.trail[i4] && this.trail[i2] === this.trail[i5]) {
             return true;
         }
 
         let i6 = (this.trailIndex + 6) & 7;
         let i7 = (this.trailIndex + 7) & 7;
 
-        if (this.trail[i0] == this.trail[i4] && this.trail[i1] == this.trail[i5] && this.trail[i2] == this.trail[i6] && this.trail[i3] == this.trail[i7]) {
+        if (this.trail[i0] === this.trail[i4] && this.trail[i1] === this.trail[i5] && this.trail[i2] === this.trail[i6] && this.trail[i3] === this.trail[i7]) {
             return true;
         }
 

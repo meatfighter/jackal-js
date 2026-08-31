@@ -14,26 +14,16 @@ export class Mine extends Enemy {
         this.player = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Mine(argCount, arg0, arg1);
-    }
 
-    private __construct_Mine(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-
-            this.player = this.gameMode.player;
-
-            this.explosionX = 16;
-            this.explosionY = 16;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.player = this.gameMode.player;
+        this.explosionX = 16;
+        this.explosionY = 16;
     }
 
     public static readonly VISIBLE_DISTANCE: number = 300;
@@ -83,10 +73,10 @@ export class Mine extends Enemy {
 
     public render(): void {
         if (this.visible) {
-            if (++this.spriteIndex == 4) {
+            if (++this.spriteIndex === 4) {
                 this.spriteIndex = 0;
             }
-            this.main.draw(this.main.mines[this.spriteIndex], this.x, this.y);
+            this.main.drawImage(this.main.mines[this.spriteIndex], this.x, this.y);
         }
     }
 }

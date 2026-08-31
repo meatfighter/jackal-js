@@ -39,26 +39,16 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         this.superFire = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossSuperTank(argCount, arg0, arg1);
-    }
 
-    private __construct_BossSuperTank(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            this.player = this.gameMode.player;
-
-            this.player.longRange = true;
-
-            new BossSuperTankGun(this);
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.player = this.gameMode.player;
+        this.player.longRange = true;
+        new BossSuperTankGun(this);
     }
 
     public static readonly STATE_APPEARING: number = 0;
@@ -178,7 +168,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     public update(): void {
         switch (this.state) {
             case BossSuperTank.STATE_APPEARING:
-                if (--this.appearingDelay == 0) {
+                if (--this.appearingDelay === 0) {
                     this.chooseTarget();
                     for (let i = 0; i < 5; i++) {
                         this.main.superTanks[0][i].setAlpha(1);
@@ -218,14 +208,14 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                 }
                 break;
             case BossSuperTank.STATE_STOPPED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.chooseTarget();
                 }
                 break;
             case BossSuperTank.STATE_EXPLODING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     if (this.exploding + 1 < BossSuperTank.EXPLODING_TIME) {
-                        new Explosion(
+                        Explosion.create(
                             javaFloat(this.x + this.main.random.nextInt(456)),
                             javaFloat(javaFloat(this.y + 32) + this.main.random.nextInt(230))
                         ).setDamagesEnemies(false);
@@ -233,20 +223,20 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                     this.delay = 8;
                 }
                 this.smashed = javaFloat(this.exploding * BossSuperTank.INV_EXPLODING_TIME);
-                if (++this.exploding == BossSuperTank.EXPLODING_TIME) {
+                if (++this.exploding === BossSuperTank.EXPLODING_TIME) {
                     this.state = BossSuperTank.STATE_EXPLODING_FINISHING;
                     this.exploding = BossSuperTank.EXPLODING_FINISHING_TIME;
                 }
                 break;
             case BossSuperTank.STATE_EXPLODING_FINISHING:
-                if (--this.exploding == 0) {
+                if (--this.exploding === 0) {
                     this.main.requestSong(this.main.cutsceneSong);
                     this.state = BossSuperTank.STATE_EXPLODED;
                     this.delay = 91;
                 }
                 break;
             case BossSuperTank.STATE_EXPLODED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = BossSuperTank.STATE_PANNING;
                     this.gameMode.startEndingCameraPan(this);
                 }
@@ -256,12 +246,12 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
 
     private kaboom(): void {
         this.state = BossSuperTank.STATE_EXPLODING;
-        this.main.stopSong();
+        this.main.stopAllSongs();
         this.main.playSoundAlways(this.main.headquartersExplodesSound);
         this.main.addPoints(this.points + 2000 * this.main.friendlySoldiersPickedUp);
-        this.gameMode.destroyAll(this);
+        this.gameMode.destroyAllExcept(this);
         this.delay = 1;
-        if (this.superFire != null) {
+        if (this.superFire !== null) {
             this.superFire.remove();
         }
     }
@@ -276,7 +266,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
             let Y = hitY;
             let d = 0;
             do {
-                new Explosion(X, Y, true, d, 0.5, this);
+                Explosion.attachedToEnemy(X, Y, true, d, 0.5, this);
                 d += 2;
                 X += this.main.random.nextInt(128) - 64;
                 if (X < this.x) {
@@ -295,16 +285,16 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         if (this.state >= BossSuperTank.STATE_EXPLODING) {
             return false;
         }
-        if (attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
+        if (attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
             this.hits++;
             this.main.playHitExplodeSound();
-            if (this.hits == BossSuperTank.HITS_EXPLODE) {
+            if (this.hits === BossSuperTank.HITS_EXPLODE) {
                 this.kaboom();
             } else {
                 this.displayHit(javaFloat(0.5 * javaFloat(x1 + x2)), javaFloat(0.5 * javaFloat(y1 + y2)));
-                if (this.hits == BossSuperTank.HITS_ORANGE) {
+                if (this.hits === BossSuperTank.HITS_ORANGE) {
                     this.colorIndex = 1;
-                } else if (this.hits == BossSuperTank.HITS_RED) {
+                } else if (this.hits === BossSuperTank.HITS_RED) {
                     this.colorIndex = 2;
                 }
             }
@@ -320,7 +310,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         if (this.state >= BossSuperTank.STATE_EXPLODING) {
             return false;
         }
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -333,7 +323,7 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
     }
 
     public render(): void {
-        if (this.state == BossSuperTank.STATE_APPEARING) {
+        if (this.state === BossSuperTank.STATE_APPEARING) {
             for (let i = 0; i < 5; i++) {
                 this.main.superTanks[0][i].setAlpha(1 - this.appearingDelay * BossSuperTank.APPEARING_SCALE);
             }
@@ -355,28 +345,28 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
         );
         this.gameMode.g.setWorldClip(this.x + 64, this.y + 200, 336, 64);
         for (let i = 0; i < 6; i++) {
-            this.main.draw(this.main.superTanks[this.colorIndex][0], this.treadOffset + this.x + 32 + (i << 6), this.y + 200);
+            this.main.drawImage(this.main.superTanks[this.colorIndex][0], this.treadOffset + this.x + 32 + (i << 6), this.y + 200);
         }
         this.gameMode.g.clearWorldClip();
         for (let i = 0; i < 6; i++) {
             this.main.drawRotated(this.main.superTanks[this.colorIndex][1], this.x + 72 + (i << 6), this.y + 216, this.wheelAngle);
         }
         if (this.state >= BossSuperTank.STATE_EXPLODING_FINISHING) {
-            this.main.draw(this.main.superTanks[3][2], this.x + 160, this.y);
-            this.main.draw(this.main.superTanks[3][3], this.x, this.y + 32);
-            this.main.draw(this.main.superTanks[3][4], this.x + 192, this.y + 232);
-        } else if (this.state == BossSuperTank.STATE_EXPLODING) {
+            this.main.drawImage(this.main.superTanks[3][2], this.x + 160, this.y);
+            this.main.drawImage(this.main.superTanks[3][3], this.x, this.y + 32);
+            this.main.drawImage(this.main.superTanks[3][4], this.x + 192, this.y + 232);
+        } else if (this.state === BossSuperTank.STATE_EXPLODING) {
             let alpha = 1 - this.smashed;
-            this.main.draw(this.main.superTanks[2][2], this.x + 160, this.y, alpha);
-            this.main.draw(this.main.superTanks[2][3], this.x, this.y + 32, alpha);
-            this.main.draw(this.main.superTanks[2][4], this.x + 192, this.y + 232, alpha);
-            this.main.draw(this.main.superTanks[3][2], this.x + 160, this.y, this.smashed);
-            this.main.draw(this.main.superTanks[3][3], this.x, this.y + 32, this.smashed);
-            this.main.draw(this.main.superTanks[3][4], this.x + 192, this.y + 232, this.smashed);
+            this.main.drawImageAlpha(this.main.superTanks[2][2], this.x + 160, this.y, alpha);
+            this.main.drawImageAlpha(this.main.superTanks[2][3], this.x, this.y + 32, alpha);
+            this.main.drawImageAlpha(this.main.superTanks[2][4], this.x + 192, this.y + 232, alpha);
+            this.main.drawImageAlpha(this.main.superTanks[3][2], this.x + 160, this.y, this.smashed);
+            this.main.drawImageAlpha(this.main.superTanks[3][3], this.x, this.y + 32, this.smashed);
+            this.main.drawImageAlpha(this.main.superTanks[3][4], this.x + 192, this.y + 232, this.smashed);
         } else {
-            this.main.draw(this.main.superTanks[this.colorIndex][2], this.x + 160, this.y);
-            this.main.draw(this.main.superTanks[this.colorIndex][3], this.x, this.y + 32);
-            this.main.draw(this.main.superTanks[this.colorIndex][4], this.x + 192, this.y + 232);
+            this.main.drawImage(this.main.superTanks[this.colorIndex][2], this.x + 160, this.y);
+            this.main.drawImage(this.main.superTanks[this.colorIndex][3], this.x, this.y + 32);
+            this.main.drawImage(this.main.superTanks[this.colorIndex][4], this.x + 192, this.y + 232);
         }
     }
 }

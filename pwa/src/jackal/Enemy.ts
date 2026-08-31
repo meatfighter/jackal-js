@@ -43,25 +43,22 @@ export abstract class Enemy extends HitElement {
 
     public playSoundOnRemove: boolean = true;
 
-    public isSolid(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isSolid__overload0(javaFloat(arg0), javaFloat(arg1));
-        }
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isSolid__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        throw new Error(`No Java method overload matched isSolid: ${argCount}`);
-    }
+    public isSolidAt(px: number, py: number): boolean {
+        px = javaFloat(px);
+        py = javaFloat(py);
 
-    public isSolid__overload0(px: number, py: number): boolean {
         px = javaFloat(px - this.x);
         py = javaFloat(py - this.y);
 
         return py >= this.solidY1 && py <= this.solidY2 && px >= this.solidX1 && px <= this.solidX2;
     }
 
-    public isSolid__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
+    public isSolidBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         return this.overlap(
             x1,
             y1,
@@ -74,25 +71,22 @@ export abstract class Enemy extends HitElement {
         );
     }
 
-    public isMine(arg0?: number, arg1?: number, arg2?: number, arg3?: number): boolean {
-        const argCount = arguments.length;
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            return this.isMine__overload0(javaFloat(arg0), javaFloat(arg1));
-        }
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.isMine__overload1(javaFloat(arg0), javaFloat(arg1), javaFloat(arg2), javaFloat(arg3));
-        }
-        throw new Error(`No Java method overload matched isMine: ${argCount}`);
-    }
+    public isMineAt(px: number, py: number): boolean {
+        px = javaFloat(px);
+        py = javaFloat(py);
 
-    public isMine__overload0(px: number, py: number): boolean {
         px = javaFloat(px - this.x);
         py = javaFloat(py - this.y);
 
         return py >= this.mineY1 && py <= this.mineY2 && px >= this.mineX1 && px <= this.mineX2;
     }
 
-    public isMine__overload1(x1: number, y1: number, x2: number, y2: number): boolean {
+    public isMineBounds(x1: number, y1: number, x2: number, y2: number): boolean {
+        x1 = javaFloat(x1);
+        y1 = javaFloat(y1);
+        x2 = javaFloat(x2);
+        y2 = javaFloat(y2);
+
         return this.overlap(
             x1,
             y1,
@@ -112,7 +106,7 @@ export abstract class Enemy extends HitElement {
     public explode(): void {
         if (!this.removeFlag) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
         }
     }
@@ -122,9 +116,9 @@ export abstract class Enemy extends HitElement {
         if (invincible) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -141,9 +135,9 @@ export abstract class Enemy extends HitElement {
 
     // returns true if attack successful
     public attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hit(x1, y1, x2, y2)) {
+        if (attackSource < AttackSource.PLAYER_EXPLOSION && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             return true;
         } else {
@@ -153,10 +147,10 @@ export abstract class Enemy extends HitElement {
 
     // returns true if player bullet was absorbed by enemy
     public bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             if (--this.bulletHits <= 0) {
                 this.remove();
-                new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+                Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
                 this.main.addPoints(this.points);
             } else {
                 this.main.playSoundAlways(this.main.bulletHitSound);

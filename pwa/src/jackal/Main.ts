@@ -42,6 +42,7 @@ import {
     javaInt,
     javaIntDiv
 } from "../java/JavaRuntime.js";
+import { MainConstants } from "../java/MainConstants.js";
 
 import { ButtonMapping } from "./ButtonMapping.js";
 
@@ -59,6 +60,7 @@ import { IntroMapMode } from "./IntroMapMode.js";
 import { IntroMode } from "./IntroMode.js";
 import { JeepHereMode } from "./JeepHereMode.js";
 import { JeepYeahMode } from "./JeepYeahMode.js";
+import { rotatePointLikeJava } from "./JackalMath.js";
 import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
 import { MapMode } from "./MapMode.js";
@@ -108,33 +110,24 @@ interface BrowserFullscreenController {
 export class Main extends BasicGame {
     public constructor() {
         super("Jackal");
-        const argCount = arguments.length;
-        this.__construct_Main(argCount);
     }
 
-    private __construct_Main(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
-    }
+    public static readonly DISPLAY_WIDTH: number = MainConstants.DISPLAY_WIDTH;
+    public static readonly DISPLAY_HEIGHT: number = MainConstants.DISPLAY_HEIGHT;
 
-    public static readonly DISPLAY_WIDTH: number = 1024;
-    public static readonly DISPLAY_HEIGHT: number = 960;
+    public static readonly FONT_WHITE: number = MainConstants.FONT_WHITE;
+    public static readonly FONT_GRAY: number = MainConstants.FONT_GRAY;
+    public static readonly FONT_ORANGE: number = MainConstants.FONT_ORANGE;
+    public static readonly FONT_ORANGE_GRAY: number = MainConstants.FONT_ORANGE_GRAY;
 
-    public static readonly FONT_WHITE: number = 0;
-    public static readonly FONT_GRAY: number = 1;
-    public static readonly FONT_ORANGE: number = 2;
-    public static readonly FONT_ORANGE_GRAY: number = 3;
+    public static readonly ISQRT2: number = javaFloat(MainConstants.ISQRT2);
+    public static readonly I_QUARTER_WIDTH: number = javaFloat(MainConstants.I_QUARTER_WIDTH);
+    public static readonly I_WIDTH: number = javaFloat(MainConstants.I_WIDTH);
+    public static readonly MINIMUM_SOUND_TIME: number = MainConstants.MINIMUM_SOUND_TIME;
 
-    public static readonly ISQRT2: number = javaFloat(1.0 / Math.sqrt(2));
-    public static readonly I_QUARTER_WIDTH: number = javaFloat(4 / Main.DISPLAY_WIDTH);
-    public static readonly I_WIDTH: number = javaFloat(1 / Main.DISPLAY_WIDTH);
-    public static readonly MINIMUM_SOUND_TIME: number = 125;
+    public static readonly CHARS: string = MainConstants.CHARS;
 
-    public static readonly CHARS: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,'-0123456789©!:()&`\" ";
-
-    public static readonly TILES: number[] = [218, 235, 273, 233, 328, 330];
+    public static readonly TILES: readonly number[] = MainConstants.TILES;
 
     public static readonly FADES: Color[] = javaArray(23, null!);
 
@@ -144,8 +137,21 @@ export class Main extends BasicGame {
         }
     }
 
-    public static mainInstance: Main = null!;
-    public static gameMode: GameMode = null!;
+    public static get mainInstance(): Main {
+        return MainRuntimeState.mainInstance!;
+    }
+
+    public static set mainInstance(mainInstance: Main) {
+        MainRuntimeState.mainInstance = mainInstance;
+    }
+
+    public static get gameMode(): GameMode {
+        return MainRuntimeState.gameMode!;
+    }
+
+    public static set gameMode(gameMode: GameMode) {
+        MainRuntimeState.gameMode = gameMode;
+    }
 
     public random: Random = new Random();
     public buttonMapping: ButtonMapping = new ButtonMapping();
@@ -327,7 +333,6 @@ export class Main extends BasicGame {
 
     public init(gc: GameContainer): void {
         Main.mainInstance = this;
-        MainRuntimeState.mainInstance = this;
         this.gc = gc;
 
         gc.setAlwaysRender(true);
@@ -377,7 +382,7 @@ export class Main extends BasicGame {
             this.input.snap();
             this.mode.update(gc);
             this.nextFrameTime += javaInt(javaFloat(javaFloat(Sys.getTimerResolution() * javaFloat(0.01)) + 0.5));
-            if (++count == 8) {
+            if (++count === 8) {
                 this.resetNextFrameTime();
                 break;
             }
@@ -392,15 +397,15 @@ export class Main extends BasicGame {
 
     private advanceFade(): boolean {
         if (this.fadeOut) {
-            if (++this.fadeIndex != Main.FADES.length) {
+            if (++this.fadeIndex !== Main.FADES.length) {
                 return false;
             }
-        } else if (--this.fadeIndex != -1) {
+        } else if (--this.fadeIndex !== -1) {
             return false;
         }
 
         this.fading = false;
-        if (this.fadeListener != null) {
+        if (this.fadeListener !== null) {
             this.fadeListener.fadeCompleted();
         }
         return true;
@@ -408,16 +413,16 @@ export class Main extends BasicGame {
 
     private updateMusic(): void {
         this.applyRequestedSongChange();
-        if (this.currentSong != null) {
+        if (this.currentSong !== null) {
             this.currentSong.update();
         }
     }
 
     private applyRequestedSongChange(): void {
-        if (this.currentSong == this.requestedSong) {
+        if (this.currentSong === this.requestedSong) {
             return;
         }
-        if (this.currentSong != null) {
+        if (this.currentSong !== null) {
             this.currentSong.stop();
         }
         this.currentSong = this.requestedSong;
@@ -467,16 +472,16 @@ export class Main extends BasicGame {
     private fullScreenToggleCheck(gc: GameContainer): void {
         let isEscape = this.input.isEscape();
         if (this.input.isFullscreenTogglePressed() || isEscape) {
-            let fullscreen = this.browserFullscreenController != null ? this.browserFullscreenController.isFullscreen() : gc.isFullscreen();
+            let fullscreen = this.browserFullscreenController !== null ? this.browserFullscreenController.isFullscreen() : gc.isFullscreen();
             if (fullscreen) {
-                if (this.browserFullscreenController != null) {
+                if (this.browserFullscreenController !== null) {
                     this.browserFullscreenController.exitFullscreen();
                 } else {
                     this.showMouseCursor();
                     gc.setFullscreen(false);
                 }
             } else if (!isEscape) {
-                if (this.browserFullscreenController != null) {
+                if (this.browserFullscreenController !== null) {
                     this.browserFullscreenController.enterFullscreen();
                 } else {
                     this.hideMouseCursor();
@@ -503,7 +508,7 @@ export class Main extends BasicGame {
             soundPlayed = true;
         }
         if (this.konamiCode.enabled) {
-            if (!(this.hasMissiles && this.missilePower == 2)) {
+            if (!(this.hasMissiles && this.missilePower === 2)) {
                 this.hasMissiles = true;
                 this.missilePower = 2;
                 if (!alwaysPlaySound) {
@@ -541,7 +546,6 @@ export class Main extends BasicGame {
         switch (mode) {
             case Modes.GAME:
                 Main.gameMode = new GameMode();
-                MainRuntimeState.gameMode = Main.gameMode;
                 Main.gameMode.setStage(this.stageIndex, this.stages[this.stageIndex], this.hardMode);
                 this.setMode(Main.gameMode, gc);
                 break;
@@ -599,7 +603,7 @@ export class Main extends BasicGame {
     public addPoints(points: number): void {
         let before = this.score;
         this.score += points;
-        if ((before < 20000 && this.score >= 20000) || javaIntDiv(before - 20000, 50000) != javaIntDiv(this.score - 20000, 50000)) {
+        if ((before < 20000 && this.score >= 20000) || javaIntDiv(before - 20000, 50000) !== javaIntDiv(this.score - 20000, 50000)) {
             this.gainExtraLife();
         }
 
@@ -629,10 +633,10 @@ export class Main extends BasicGame {
         this.addPoints(500);
         this.friendlySoldiersPickedUp++;
         if (
-            this.friendlySoldiersPickedUp == 3 ||
-            this.friendlySoldiersPickedUp == 8 ||
-            this.friendlySoldiersPickedUp == 13 ||
-            this.friendlySoldiersPickedUp == 18
+            this.friendlySoldiersPickedUp === 3 ||
+            this.friendlySoldiersPickedUp === 8 ||
+            this.friendlySoldiersPickedUp === 13 ||
+            this.friendlySoldiersPickedUp === 18
         ) {
             return this.upgradeWeapon(false);
         }
@@ -649,7 +653,7 @@ export class Main extends BasicGame {
 
     private hideMouseCursor(): void {
         try {
-            if (this.hiddenCursor == null) {
+            if (this.hiddenCursor === null) {
                 let buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
                 this.hiddenCursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
             }
@@ -661,10 +665,10 @@ export class Main extends BasicGame {
     }
 
     public drawNumber(value: number, digits: number, x: number, y: number, color: number): void {
-        let font = this.fonts[color] as unknown as Record<string, Image>;
+        const font = this.fonts[color];
         x += (digits - 1) << 5;
         for (let i = 0; i < digits; i++, x -= 32, value = javaIntDiv(value, 10)) {
-            font[String.fromCharCode("0".charCodeAt(0) + Math.trunc(value % 10))].draw(x, y);
+            font["0".charCodeAt(0) + Math.trunc(value % 10)].draw(x, y);
         }
     }
 
@@ -684,116 +688,66 @@ export class Main extends BasicGame {
         this.fadeListener = null!;
     }
 
-    public drawString(arg0?: string, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
-        const argCount = arguments.length;
-        if (
-            argCount === 5 &&
-            typeof arg0 === "string" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawString__overload0(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (argCount === 4 && typeof arg0 === "string" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawString__overload1(arg0, arg1, arg2, arg3);
-        }
-        throw new Error(`No Java method overload matched drawString: ${argCount}`);
-    }
-
-    public drawString__overload0(string: string, length: number, x: number, y: number, color: number): void {
-        let font = this.fonts[color] as unknown as Record<string, Image>;
+    public drawStringWithLength(string: string, length: number, x: number, y: number, color: number): void {
+        const font = this.fonts[color];
         for (let i = 0; i < length; i++, x += 32) {
-            font[string.charAt(i)].draw(x, y);
+            font[string.charCodeAt(i)].draw(x, y);
         }
     }
 
-    public drawString__overload1(string: string, x: number, y: number, color: number): void {
-        let font = this.fonts[color] as unknown as Record<string, Image>;
-        let length = string.length;
+    public drawString(string: string, x: number, y: number, color: number): void {
+        const font = this.fonts[color];
+        const length = string.length;
         for (let i = 0; i < length; i++, x += 32) {
-            font[string.charAt(i)].draw(x, y);
+            font[string.charCodeAt(i)].draw(x, y);
         }
     }
 
     public drawStringAlpha(string: string, x: number, y: number, color: number, alpha: number): void {
-        let font = this.fonts[color] as unknown as Record<string, Image>;
-        let length = string.length;
+        const font = this.fonts[color];
+        const length = string.length;
         for (let i = 0; i < length; i++, x += 32) {
-            let image = font[string.charAt(i)];
+            const image = font[string.charCodeAt(i)];
             image.setAlpha(alpha);
             image.draw(x, y);
             image.setAlpha(1);
         }
     }
 
-    public draw(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
-            return this.draw__overload0(arg0, arg1, arg2);
-        }
-        if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.draw__overload1(arg0, arg1, arg2, arg3);
-        }
-        if (
-            argCount === 5 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.draw__overload2(arg0, arg1, arg2, arg3, arg4);
-        }
-        throw new Error(`No Java method overload matched draw: ${argCount}`);
-    }
-
-    public draw__overload0(image: Image, x: number, y: number): void {
+    public drawImage(image: Image, x: number, y: number): void {
         image.draw(x, y);
     }
 
-    public draw__overload1(image: Image, x: number, y: number, alpha: number): void {
+    public drawImageAlpha(image: Image, x: number, y: number, alpha: number): void {
         image.setAlpha(alpha);
         image.draw(x, y);
         image.setAlpha(1);
     }
 
     public playHitExplodeSound(): void {
-        this.playSound(this.enemyHitSound, javaFloat(0.6));
-        this.playSound(this.explodeSound, javaFloat(0.65));
+        this.playSoundAtVolume(this.enemyHitSound, javaFloat(0.6));
+        this.playSoundAtVolume(this.explodeSound, javaFloat(0.65));
     }
 
     public playExplodeSound2(): void {
-        this.playSound(this.explodeSound2, javaFloat(0.65));
+        this.playSoundAtVolume(this.explodeSound2, javaFloat(0.65));
     }
 
     public playExplodeSound3(): void {
-        this.playSound(this.explodeSound3, javaFloat(0.65));
+        this.playSoundAtVolume(this.explodeSound3, javaFloat(0.65));
     }
 
     public isSoundPlaying(sound: Sound): boolean {
         return sound.playing();
     }
 
-    public playSound(arg0?: Sound, arg1?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
-            return this.playSound__overload0(arg0);
-        }
-        if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
-            return this.playSound__overload1(arg0, javaFloat(arg1));
-        }
-        throw new Error(`No Java method overload matched playSound: ${argCount}`);
-    }
-
-    public playSound__overload0(sound: Sound): void {
+    public playSound(sound: Sound): void {
         if (this.closeRequestedFlag) {
             return;
         }
         let time = this.lastPlayTime.get(sound);
         let now = System.currentTimeMillis();
-        if (time == null || now - time > Main.MINIMUM_SOUND_TIME) {
+        if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play();
             this.lastPlayTime.put(sound, System.currentTimeMillis());
         }
@@ -806,30 +760,21 @@ export class Main extends BasicGame {
         sound.play();
     }
 
-    public playSound__overload1(sound: Sound, volume: number): void {
+    public playSoundAtVolume(sound: Sound, volume: number): void {
+        volume = javaFloat(volume);
+
         if (this.closeRequestedFlag) {
             return;
         }
         let time = this.lastPlayTime.get(sound);
         let now = System.currentTimeMillis();
-        if (time == null || now - time > Main.MINIMUM_SOUND_TIME) {
+        if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play(1, volume);
             this.lastPlayTime.put(sound, System.currentTimeMillis());
         }
     }
 
-    public playSoundIfNotPlaying(arg0?: Sound, arg1?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Sound)) {
-            return this.playSoundIfNotPlaying__overload0(arg0);
-        }
-        if (argCount === 2 && (arg0 === null || arg0 instanceof Sound) && typeof arg1 === "number") {
-            return this.playSoundIfNotPlaying__overload1(arg0, javaFloat(arg1));
-        }
-        throw new Error(`No Java method overload matched playSoundIfNotPlaying: ${argCount}`);
-    }
-
-    public playSoundIfNotPlaying__overload0(sound: Sound): void {
+    public playSoundIfNotPlaying(sound: Sound): void {
         if (this.closeRequestedFlag) {
             return;
         }
@@ -838,7 +783,9 @@ export class Main extends BasicGame {
         }
     }
 
-    public playSoundIfNotPlaying__overload1(sound: Sound, volume: number): void {
+    public playSoundIfNotPlayingAtVolume(sound: Sound, volume: number): void {
+        volume = javaFloat(volume);
+
         if (this.closeRequestedFlag) {
             return;
         }
@@ -847,25 +794,14 @@ export class Main extends BasicGame {
         }
     }
 
-    public stopSong(arg0?: Song): void {
-        const argCount = arguments.length;
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Song)) {
-            return this.stopSong__overload0(arg0);
-        }
-        if (argCount === 0) {
-            return this.stopSong__overload1();
-        }
-        throw new Error(`No Java method overload matched stopSong: ${argCount}`);
-    }
-
-    public stopSong__overload0(song: Song): void {
-        if (song != null) {
+    public stopSong(song: Song): void {
+        if (song !== null) {
             song.stop();
         }
     }
 
     public stopSound(sound: Sound): void {
-        if (sound != null && sound.playing()) {
+        if (sound !== null && sound.playing()) {
             sound.stop();
         }
     }
@@ -919,71 +855,7 @@ export class Main extends BasicGame {
         return this.unitVector;
     }
 
-    public drawRotated(arg0?: Image, arg1?: number, arg2?: number, arg3?: number[] | number, arg4?: number, arg5?: number, arg6?: number, arg7?: number): void {
-        const argCount = arguments.length;
-        if (
-            argCount === 5 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            Array.isArray(arg3) &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawRotated__overload0(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (
-            argCount === 7 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "number" &&
-            typeof arg6 === "number"
-        ) {
-            return this.drawRotated__overload1(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-        }
-        if (
-            argCount === 8 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "number" &&
-            typeof arg6 === "number" &&
-            typeof arg7 === "number"
-        ) {
-            return this.drawRotated__overload2(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-        if (
-            argCount === 6 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "number"
-        ) {
-            return this.drawRotated__overload3(arg0, arg1, arg2, arg3, arg4, arg5);
-        }
-        if (
-            argCount === 5 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawRotated__overload4(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawRotated__overload5(arg0, arg1, arg2, arg3);
-        }
-        throw new Error(`No Java method overload matched drawRotated: ${argCount}`);
-    }
-
-    public drawRotated__overload0(image: Image, x: number, y: number, centers: number[], angle: number): void {
+    public drawRotatedWithCenter(image: Image, x: number, y: number, centers: number[], angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -991,58 +863,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotatedScaled(
-        arg0?: Image,
-        arg1?: number,
-        arg2?: number,
-        arg3?: number,
-        arg4?: number,
-        arg5?: number,
-        arg6?: number,
-        arg7?: number,
-        arg8?: number
-    ): void {
-        const argCount = arguments.length;
-        if (
-            argCount === 8 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "number" &&
-            typeof arg6 === "number" &&
-            typeof arg7 === "number"
-        ) {
-            return this.drawRotatedScaled__overload0(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-        if (
-            argCount === 9 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number" &&
-            typeof arg5 === "number" &&
-            typeof arg6 === "number" &&
-            typeof arg7 === "number" &&
-            typeof arg8 === "number"
-        ) {
-            return this.drawRotatedScaled__overload1(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-        }
-        throw new Error(`No Java method overload matched drawRotatedScaled: ${argCount}`);
-    }
-
-    public drawRotatedScaled__overload0(
-        image: Image,
-        x: number,
-        y: number,
-        centerX: number,
-        centerY: number,
-        angle: number,
-        scaleX: number,
-        scaleY: number
-    ): void {
+    public drawRotatedScaled(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scaleX: number, scaleY: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1051,7 +872,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotatedScaled__overload1(
+    public drawRotatedScaledAlpha(
         image: Image,
         x: number,
         y: number,
@@ -1072,7 +893,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawRotated__overload1(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scale: number): void {
+    public drawRotatedAtCenterScaled(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1081,7 +902,16 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload2(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number, scale: number, alpha: number): void {
+    public drawRotatedAtCenterScaledAlpha(
+        image: Image,
+        x: number,
+        y: number,
+        centerX: number,
+        centerY: number,
+        angle: number,
+        scale: number,
+        alpha: number
+    ): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1092,7 +922,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawRotated__overload3(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number): void {
+    public drawRotatedAtCenter(image: Image, x: number, y: number, centerX: number, centerY: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1100,7 +930,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload4(image: Image, x: number, y: number, angle: number, alpha: number): void {
+    public drawRotatedWithAlpha(image: Image, x: number, y: number, angle: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1115,18 +945,7 @@ export class Main extends BasicGame {
         GL11.glTranslatef(x, y, 0);
     }
 
-    public rotateGraphics(arg0?: number, arg1?: number, arg2?: number, arg3?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.rotateGraphics__overload0(arg0, arg1, arg2, arg3);
-        }
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            return this.rotateGraphics__overload1(arg0, arg1, arg2);
-        }
-        throw new Error(`No Java method overload matched rotateGraphics: ${argCount}`);
-    }
-
-    public rotateGraphics__overload0(x: number, y: number, angle: number, scale: number): void {
+    public rotateGraphicsScaled(x: number, y: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1139,7 +958,7 @@ export class Main extends BasicGame {
         GL11.glScalef(scaleX, scaleY, 1);
     }
 
-    public rotateGraphics__overload1(x: number, y: number, angle: number): void {
+    public rotateGraphics(x: number, y: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1149,7 +968,7 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawRotated__overload5(image: Image, x: number, y: number, angle: number): void {
+    public drawRotated(image: Image, x: number, y: number, angle: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1167,7 +986,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public draw__overload2(image: Image, x: number, y: number, angle: number, scale: number): void {
+    public drawImageRotatedScaled(image: Image, x: number, y: number, angle: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glRotatef(angle, 0, 0, 1);
@@ -1185,31 +1004,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawCentered(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
-        const argCount = arguments.length;
-        if (
-            argCount === 5 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawCentered__overload0(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawCentered__overload1(arg0, arg1, arg2, arg3);
-        }
-        if (argCount === 1 && (arg0 === null || arg0 instanceof Image)) {
-            return this.drawCentered__overload2(arg0);
-        }
-        if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
-            return this.drawCentered__overload3(arg0, arg1, arg2);
-        }
-        throw new Error(`No Java method overload matched drawCentered: ${argCount}`);
-    }
-
-    public drawCentered__overload0(image: Image, x: number, y: number, scale: number, alpha: number): void {
+    public drawCenteredScaledAlpha(image: Image, x: number, y: number, scale: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1219,7 +1014,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawCentered__overload1(image: Image, x: number, y: number, scale: number): void {
+    public drawCenteredScaled(image: Image, x: number, y: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glScalef(scale, scale, 1);
@@ -1227,57 +1022,28 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawOffset(arg0?: Image, arg1?: number, arg2?: number, arg3?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 3 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number") {
-            return this.drawOffset__overload0(arg0, arg1, arg2);
-        }
-        if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawOffset__overload1(arg0, arg1, arg2, arg3);
-        }
-        throw new Error(`No Java method overload matched drawOffset: ${argCount}`);
-    }
-
-    public drawOffset__overload0(image: Image, x: number, y: number): void {
+    public drawOffset(image: Image, x: number, y: number): void {
         image.draw(x, y);
     }
 
-    public drawOffset__overload1(image: Image, x: number, y: number, alpha: number): void {
+    public drawOffsetAlpha(image: Image, x: number, y: number, alpha: number): void {
         image.setAlpha(alpha);
         image.draw(x, y);
         image.setAlpha(1);
     }
 
-    public drawCentered__overload2(image: Image): void {
+    public drawCentered(image: Image): void {
         image.draw(-image.getWidth() * 0.5, -image.getHeight() * 0.5);
     }
 
-    public drawCentered__overload3(image: Image, x: number, y: number): void {
+    public drawCenteredAt(image: Image, x: number, y: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         image.draw(-image.getWidth() * 0.5, -image.getHeight() * 0.5);
         GL11.glPopMatrix();
     }
 
-    public drawScaled(arg0?: Image, arg1?: number, arg2?: number, arg3?: number, arg4?: number): void {
-        const argCount = arguments.length;
-        if (
-            argCount === 5 &&
-            (arg0 === null || arg0 instanceof Image) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawScaled__overload0(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (argCount === 4 && (arg0 === null || arg0 instanceof Image) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawScaled__overload1(arg0, arg1, arg2, arg3);
-        }
-        throw new Error(`No Java method overload matched drawScaled: ${argCount}`);
-    }
-
-    public drawScaled__overload0(image: Image, x: number, y: number, scale: number, alpha: number): void {
+    public drawScaledAlpha(image: Image, x: number, y: number, scale: number, alpha: number): void {
         image.setAlpha(alpha);
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
@@ -1287,7 +1053,7 @@ export class Main extends BasicGame {
         image.setAlpha(1);
     }
 
-    public drawScaled__overload1(image: Image, x: number, y: number, scale: number): void {
+    public drawScaled(image: Image, x: number, y: number, scale: number): void {
         GL11.glPushMatrix();
         GL11.glTranslatef(x, y, 0);
         GL11.glScalef(scale, scale, 1);
@@ -1295,78 +1061,57 @@ export class Main extends BasicGame {
         GL11.glPopMatrix();
     }
 
-    public drawVehicle(arg0?: Image[], arg1?: number, arg2?: number, arg3?: number[][] | number, arg4?: number): void {
-        const argCount = arguments.length;
-        if (argCount === 5 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && Array.isArray(arg3) && typeof arg4 === "number") {
-            return this.drawVehicle__overload0(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (
-            argCount === 5 &&
-            Array.isArray(arg0) &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            return this.drawVehicle__overload1(arg0, arg1, arg2, arg3, arg4);
-        }
-        if (argCount === 4 && Array.isArray(arg0) && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            return this.drawVehicle__overload2(arg0, arg1, arg2, arg3);
-        }
-        throw new Error(`No Java method overload matched drawVehicle: ${argCount}`);
-    }
-
-    public drawVehicle__overload0(sprites: Image[], x: number, y: number, centers: number[][], angle: number): void {
+    public drawVehicleWithCenters(sprites: Image[], x: number, y: number, centers: number[][], angle: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
         }
 
         if (angle >= 337.5 || angle < 22.5) {
-            this.drawRotated(sprites[0], x, y, centers[0], angle);
+            this.drawRotatedWithCenter(sprites[0], x, y, centers[0], angle);
         } else if (angle < 67.5) {
-            this.drawRotated(sprites[1], x, y, centers[1], angle + 45);
+            this.drawRotatedWithCenter(sprites[1], x, y, centers[1], angle + 45);
         } else if (angle < 112.5) {
-            this.drawRotated(sprites[2], x, y, centers[2], angle + 90);
+            this.drawRotatedWithCenter(sprites[2], x, y, centers[2], angle + 90);
         } else if (angle < 157.5) {
-            this.drawRotated(sprites[4], x, y, centers[4], angle - 225);
+            this.drawRotatedWithCenter(sprites[4], x, y, centers[4], angle - 225);
         } else if (angle < 202.5) {
-            this.drawRotated(sprites[3], x, y, centers[3], angle - 180);
+            this.drawRotatedWithCenter(sprites[3], x, y, centers[3], angle - 180);
         } else if (angle < 247.5) {
-            this.drawRotated(sprites[4], x, y, centers[4], angle - 225);
+            this.drawRotatedWithCenter(sprites[4], x, y, centers[4], angle - 225);
         } else if (angle < 292.5) {
-            this.drawRotated(sprites[2], x, y, centers[2], angle + 90);
+            this.drawRotatedWithCenter(sprites[2], x, y, centers[2], angle + 90);
         } else {
-            this.drawRotated(sprites[1], x, y, centers[1], angle + 45);
+            this.drawRotatedWithCenter(sprites[1], x, y, centers[1], angle + 45);
         }
     }
 
-    public drawVehicle__overload1(sprites: Image[], x: number, y: number, angle: number, alpha: number): void {
+    public drawVehicleAlpha(sprites: Image[], x: number, y: number, angle: number, alpha: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
         }
 
         if (angle >= 337.5 || angle < 22.5) {
-            this.drawRotated(sprites[0], x, y, angle, alpha);
+            this.drawRotatedWithAlpha(sprites[0], x, y, angle, alpha);
         } else if (angle < 67.5) {
-            this.drawRotated(sprites[1], x, y, angle + 45, alpha);
+            this.drawRotatedWithAlpha(sprites[1], x, y, angle + 45, alpha);
         } else if (angle < 112.5) {
-            this.drawRotated(sprites[2], x, y, angle + 90, alpha);
+            this.drawRotatedWithAlpha(sprites[2], x, y, angle + 90, alpha);
         } else if (angle < 157.5) {
-            this.drawRotated(sprites[4], x, y, angle - 225, alpha);
+            this.drawRotatedWithAlpha(sprites[4], x, y, angle - 225, alpha);
         } else if (angle < 202.5) {
-            this.drawRotated(sprites[3], x, y, angle - 180, alpha);
+            this.drawRotatedWithAlpha(sprites[3], x, y, angle - 180, alpha);
         } else if (angle < 247.5) {
-            this.drawRotated(sprites[4], x, y, angle - 225, alpha);
+            this.drawRotatedWithAlpha(sprites[4], x, y, angle - 225, alpha);
         } else if (angle < 292.5) {
-            this.drawRotated(sprites[2], x, y, angle + 90, alpha);
+            this.drawRotatedWithAlpha(sprites[2], x, y, angle + 90, alpha);
         } else {
-            this.drawRotated(sprites[1], x, y, angle + 45, alpha);
+            this.drawRotatedWithAlpha(sprites[1], x, y, angle + 45, alpha);
         }
     }
 
-    public drawVehicle__overload2(sprites: Image[], x: number, y: number, angle: number): void {
+    public drawVehicle(sprites: Image[], x: number, y: number, angle: number): void {
         angle %= 360;
         if (angle < 0) {
             angle += 360;
@@ -1392,11 +1137,11 @@ export class Main extends BasicGame {
     }
 
     public isSongPlaying(): boolean {
-        return this.currentSong != null && this.currentSong.playing;
+        return this.currentSong !== null && this.currentSong.playing;
     }
 
-    public stopSong__overload1(): void {
-        if (this.currentSong != null) {
+    public stopAllSongs(): void {
+        if (this.currentSong !== null) {
             this.currentSong.stop();
         }
         this.requestedSong = null!;
@@ -1515,9 +1260,10 @@ export class Main extends BasicGame {
                     break;
             }
             for (let j = 0; j < Main.CHARS.length; j++) {
-                (this.fonts[i] as unknown as Record<string, Image>)[Character.toLowerCase(Main.CHARS.charAt(j))] = (
-                    this.fonts[i] as unknown as Record<string, Image>
-                )[Main.CHARS.charAt(j)] = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(Main.CHARS.charAt(j))))!;
+                const character = Main.CHARS.charAt(j);
+                const image = pack.getSprite(JavaString.format("font-%s-%s.png", color, this.getCharacterName(character)))!;
+                this.fonts[i][character.charCodeAt(0)] = image;
+                this.fonts[i][Character.toLowerCase(character).charCodeAt(0)] = image;
             }
         }
     }
@@ -1527,8 +1273,8 @@ export class Main extends BasicGame {
         let size = Main.TILES[index];
         stage.tiles = javaArray(size, null!);
         for (let i = 0; i < size; i++) {
-            if (i == 225) {
-                if (index == 5) {
+            if (i === 225) {
+                if (index === 5) {
                     pack = new XMLPackedSheet("images/large-5.png", "images/large-5.xml");
                 } else {
                     pack = new XMLPackedSheet("images/tiles-6.png", "images/tiles-6.xml");
@@ -1536,7 +1282,7 @@ export class Main extends BasicGame {
             }
             stage.tiles[i] = pack.getSprite(JavaString.format("tile-%d-%03d.png", index, i))!;
         }
-        if (index == 5) {
+        if (index === 5) {
             for (let i = 0; i < 16; i++) {
                 this.conveyors[i] = stage.tiles[i];
             }
@@ -1579,7 +1325,7 @@ export class Main extends BasicGame {
         this.grayGuns[1] = pack1.getSprite("gray-gun-5.png")!;
 
         for (let i = 0; i < 2; i++) {
-            let color = i == 0 ? "brown" : "yellow";
+            let color = i === 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
                     this.enemySoldiers[i][j] = pack1.getSprite(JavaString.format("enemy-soldier-%s-%d.png", color, j))!;
@@ -1710,7 +1456,7 @@ export class Main extends BasicGame {
         this.rock = pack2.getSprite("rock-large.png")!;
 
         for (let i = 0; i < 2; i++) {
-            let color = i == 0 ? "brown" : "yellow";
+            let color = i === 0 ? "brown" : "yellow";
             for (let j = 0; j < 8; j++) {
                 if (j < 6) {
                     this.swampSoldiers[i][j] = pack2.getSprite(JavaString.format("swamp-soldier-%s-%d.png", color, j))!;
@@ -1725,7 +1471,7 @@ export class Main extends BasicGame {
         let pack3 = new XMLPackedSheet("images/sprites-3.png", "images/sprites-3.xml");
 
         for (let j = 0; j < 2; j++) {
-            let color = j == 0 ? "blue" : "brown";
+            let color = j === 0 ? "blue" : "brown";
             let k = j << 1;
             for (let i = 0; i < 3; i++) {
                 this.bossBlueTanks[k][i] = pack3.getSprite(JavaString.format("boss-%s-tank-%d.png", color, i << 1))!;
@@ -1809,7 +1555,7 @@ export class Main extends BasicGame {
 
         for (let i = 0; i < 3; i++) {
             this.fires[0][i] = pack4.getSprite(JavaString.format("fire-%d.png", i))!;
-            if (i == 2) {
+            if (i === 2) {
                 this.fires[1][i] = this.fires[0][i].getFlippedCopy(true, false);
             } else {
                 this.fires[1][i] = this.fires[0][i].getFlippedCopy(true, true);
@@ -1953,7 +1699,7 @@ export class Main extends BasicGame {
         for (let i = 0, j = 0; i < tileCount; i++) {
             while (true) {
                 tiles[i] = packs[j]!.getSprite(JavaString.format("%s-%03d.png", name, i))!;
-                if (tiles[i] == null) {
+                if (tiles[i] === null) {
                     j++;
                 } else {
                     break;
@@ -1989,30 +1735,12 @@ export class Main extends BasicGame {
         return new LargeImage(this, tiles!, mapLocal, width, height);
     }
 
-    private loadTriggerMap(arg0?: number, arg1?: number[][], arg2?: number, arg3?: Stage, arg4?: boolean): void {
-        const argCount = arguments.length;
-        if (argCount === 4 && typeof arg0 === "number" && Array.isArray(arg1) && typeof arg2 === "number" && (arg3 === null || arg3 instanceof Stage)) {
-            return this.loadTriggerMap__overload0(arg0, arg1, arg2, arg3);
-        }
-        if (
-            argCount === 5 &&
-            typeof arg0 === "number" &&
-            Array.isArray(arg1) &&
-            typeof arg2 === "number" &&
-            (arg3 === null || arg3 instanceof Stage) &&
-            typeof arg4 === "boolean"
-        ) {
-            return this.loadTriggerMap__overload1(arg0, arg1, arg2, arg3, arg4);
-        }
-        throw new Error(`No Java method overload matched loadTriggerMap: ${argCount}`);
-    }
-
-    private loadTriggerMap__overload0(height: number, enemySizes: number[][], stageIndex: number, stage: Stage): void {
+    private loadTriggerMaps(height: number, enemySizes: number[][], stageIndex: number, stage: Stage): void {
         this.loadTriggerMap(height, enemySizes, stageIndex, stage, false);
         this.loadTriggerMap(height, enemySizes, stageIndex, stage, true);
     }
 
-    private loadTriggerMap__overload1(height: number, enemySizes: number[][], stageIndex: number, stage: Stage, hard: boolean): void {
+    private loadTriggerMap(height: number, enemySizes: number[][], stageIndex: number, stage: Stage, hard: boolean): void {
         let lists: ArrayList<number[]>[] = javaArray<ArrayList<number[]>>(height, null!);
         for (let i = 0; i < height; i++) {
             lists[i] = new ArrayList<number[]>();
@@ -2056,12 +1784,12 @@ export class Main extends BasicGame {
             let height = dis.readShort();
 
             if (
-                i == Triggers.BOSS_BLUE_TANKS ||
-                i == Triggers.BOSS_GARAGE ||
-                i == Triggers.BOSS_HEADQUARTERS ||
-                i == Triggers.BOSS_HELICOPTER ||
-                i == Triggers.BOSS_SHIP ||
-                i == Triggers.BOSS_STATUES
+                i === Triggers.BOSS_BLUE_TANKS ||
+                i === Triggers.BOSS_GARAGE ||
+                i === Triggers.BOSS_HEADQUARTERS ||
+                i === Triggers.BOSS_HELICOPTER ||
+                i === Triggers.BOSS_SHIP ||
+                i === Triggers.BOSS_STATUES
             ) {
                 height -= 4;
             }
@@ -2138,7 +1866,7 @@ export class Main extends BasicGame {
         this.loadMaps(index, stage);
         this.loadTypes(index, stage);
         this.loadDirections(index, stage);
-        this.loadTriggerMap(stage.mapHeight, this.triggerSizes, index, stage);
+        this.loadTriggerMaps(stage.mapHeight, this.triggerSizes, index, stage);
     }
 
     private loadDirections(index: number, stage: Stage): void {
@@ -2181,26 +1909,26 @@ export class Main extends BasicGame {
                 this.start = new Music("music/start.ogg", Song.STREAMING);
                 break;
             case 6:
-                this.bossSong = new Song(this.bossIntro, this.bossRepeat);
-                this.continueSong = new Song("music/continue.ogg");
+                this.bossSong = Song.fromIntroAndLoopMusic(this.bossIntro, this.bossRepeat);
+                this.continueSong = Song.fromIntroPath("music/continue.ogg");
                 break;
             case 7:
-                this.cutsceneSong = new Song("music/cutscene.ogg");
+                this.cutsceneSong = Song.fromIntroPath("music/cutscene.ogg");
                 break;
             case 8:
-                this.endingSong = new Song("music/ending_intro.ogg", "music/ending_repeat.ogg");
+                this.endingSong = Song.fromIntroAndLoopPaths("music/ending_intro.ogg", "music/ending_repeat.ogg");
                 break;
             case 9:
-                this.introSong = new Song(this.start, this.stage0Intro, this.stage0Repeat);
-                this.stageSong0 = new Song(this.stage0Intro, this.stage0Repeat);
-                this.stageSong1 = new Song("music/stage1_intro.ogg", "music/stage1_repeat.ogg");
+                this.introSong = Song.fromTwoIntrosAndLoopMusic(this.start, this.stage0Intro, this.stage0Repeat);
+                this.stageSong0 = Song.fromIntroAndLoopMusic(this.stage0Intro, this.stage0Repeat);
+                this.stageSong1 = Song.fromIntroAndLoopPaths("music/stage1_intro.ogg", "music/stage1_repeat.ogg");
                 break;
             case 10:
-                this.stageSong2 = new Song(null!, "music/stage2_repeat.ogg");
+                this.stageSong2 = Song.fromIntroAndLoopPaths(null, "music/stage2_repeat.ogg");
                 break;
             case 11:
-                this.superTankSong = new Song(this.superTankIntro, this.bossRepeat);
-                this.titleSong = new Song("music/title.ogg");
+                this.superTankSong = Song.fromIntroAndLoopMusic(this.superTankIntro, this.bossRepeat);
+                this.titleSong = Song.fromIntroPath("music/title.ogg");
                 this.bossIntro = null!;
                 this.bossRepeat = null!;
                 this.superTankIntro = null!;
@@ -2297,8 +2025,8 @@ export class Main extends BasicGame {
                 break;
             case 41:
                 let loadingHandled = false;
-                if (this.loadingCompleteHandler != null) {
-                    loadingHandled = this.loadingCompleteHandler(this.gc) == true;
+                if (this.loadingCompleteHandler !== null) {
+                    loadingHandled = this.loadingCompleteHandler(this.gc) === true;
                 }
                 this.notifyLoadingFinished();
                 if (!loadingHandled) {
@@ -2322,28 +2050,28 @@ export class Main extends BasicGame {
     }
 
     public isStateSaveReady(): boolean {
-        return this.loadIndex >= 42 && this.mode != null && this.gc != null;
+        return this.loadIndex >= 42 && this.mode !== null && this.gc !== null;
     }
 
     public isStateSaveInvalidatingMenuActive(): boolean {
-        return this.mode == null || this.loadIndex < 42;
+        return this.mode === null || this.loadIndex < 42;
     }
 
     public setBrowserSuspended(suspended: boolean): void {
-        if (this.browserSuspended == suspended) {
+        if (this.browserSuspended === suspended) {
             return;
         }
         this.browserSuspended = suspended;
         if (suspended) {
-            this.browserSuspendedMusicOn = this.gc == null ? true : this.gc.isMusicOn();
-            this.browserSuspendedSoundOn = this.gc == null ? true : this.gc.isSoundOn();
-            if (this.gc != null) {
+            this.browserSuspendedMusicOn = this.gc === null ? true : this.gc.isMusicOn();
+            this.browserSuspendedSoundOn = this.gc === null ? true : this.gc.isSoundOn();
+            if (this.gc !== null) {
                 this.gc.setMusicOn(false);
                 this.gc.setSoundOn(false);
             }
             this.clearInputPressedRecords();
         } else {
-            if (this.gc != null) {
+            if (this.gc !== null) {
                 this.gc.setMusicOn(this.browserSuspendedMusicOn);
                 this.gc.setSoundOn(this.browserSuspendedSoundOn);
             }
@@ -2354,10 +2082,10 @@ export class Main extends BasicGame {
     }
 
     private resumeBrowserAudio(): void {
-        if (this.gc == null || !this.browserSuspendedMusicOn || !this.gc.isMusicOn()) {
+        if (this.gc === null || !this.browserSuspendedMusicOn || !this.gc.isMusicOn()) {
             return;
         }
-        if (this.currentSong != null) {
+        if (this.currentSong !== null) {
             this.currentSong.resumeAfterBrowserSuspension();
         }
     }
@@ -2367,22 +2095,32 @@ export class Main extends BasicGame {
     }
 
     public clearInputPressedRecords(): void {
-        if (this.input != null) {
+        if (this.input !== null) {
             this.input.clearKeyPressedRecord();
         }
-        if (this.gc != null && this.gc.getInput != null) {
+        if (this.gc !== null && this.gc.getInput !== null && this.gc.getInput !== undefined) {
             let slickInput = this.gc.getInput();
-            if (slickInput != null && slickInput.clearKeyPressedRecord != null) {
+            if (
+                slickInput !== null &&
+                slickInput !== undefined &&
+                slickInput.clearKeyPressedRecord !== null &&
+                slickInput.clearKeyPressedRecord !== undefined
+            ) {
                 slickInput.clearKeyPressedRecord();
             }
-            if (slickInput != null && slickInput.clearControlPressedRecord != null) {
+            if (
+                slickInput !== null &&
+                slickInput !== undefined &&
+                slickInput.clearControlPressedRecord !== null &&
+                slickInput.clearControlPressedRecord !== undefined
+            ) {
                 slickInput.clearControlPressedRecord();
             }
         }
     }
 
     public getWindowedDisplayMode(): WindowedDisplayMode {
-        if (this.windowedDisplayModeProvider != null) {
+        if (this.windowedDisplayModeProvider !== null) {
             return this.windowedDisplayModeProvider();
         }
         return { width: Main.DISPLAY_WIDTH, height: Main.DISPLAY_HEIGHT };
@@ -2393,19 +2131,19 @@ export class Main extends BasicGame {
             return;
         }
         this.loadingFinishedNotified = true;
-        if (this.loadingFinishedHandler != null) {
+        if (this.loadingFinishedHandler !== null) {
             this.loadingFinishedHandler();
         }
     }
 
     private notifyStateSaveInvalidated(): void {
-        if (this.stateSaveInvalidatedHandler != null) {
+        if (this.stateSaveInvalidatedHandler !== null) {
             this.stateSaveInvalidatedHandler();
         }
     }
 
     public notifyInputMappingChanged(): void {
-        if (this.inputMappingChangedHandler != null) {
+        if (this.inputMappingChangedHandler !== null) {
             this.inputMappingChangedHandler();
         }
     }
@@ -2430,9 +2168,7 @@ export class Main extends BasicGame {
     }
 
     public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
-        let cos = javaFloat(Math.cos(angle));
-        let sin = javaFloat(Math.sin(angle));
-        return new Point2D.Float(javaFloat(javaFloat(x * cos) - javaFloat(y * sin)), javaFloat(javaFloat(x * sin) + javaFloat(y * cos)));
+        return rotatePointLikeJava(x, y, angle);
     }
 
     public static javaMain(args: string[]): void {

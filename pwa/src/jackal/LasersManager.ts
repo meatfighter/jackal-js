@@ -18,21 +18,13 @@ export class LasersManager extends GameElement {
         this.laser = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_LasersManager(argCount, arg0, arg1);
-    }
 
-    private __construct_LasersManager(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly STATE_OUTER_FLASHING: number = 0;
@@ -62,7 +54,7 @@ export class LasersManager extends GameElement {
             this.visibles[i] = this.beamVisible(javaFloat(javaFloat(this.x + 64) + javaFloat(i * LasersManager.BEAM_SPACING)));
         }
         let nextIndex = this.beamIndex + 1;
-        if (nextIndex == 3) {
+        if (nextIndex === 3) {
             nextIndex = 0;
         }
         if (this.visibles[nextIndex]) {
@@ -70,7 +62,7 @@ export class LasersManager extends GameElement {
             return;
         }
         nextIndex++;
-        if (nextIndex == 3) {
+        if (nextIndex === 3) {
             nextIndex = 0;
         }
         if (this.visibles[nextIndex]) {
@@ -118,7 +110,7 @@ export class LasersManager extends GameElement {
 
     public render(): void {
         this.flash = !this.flash;
-        if (++this.colorIndex == 4) {
+        if (++this.colorIndex === 4) {
             this.colorIndex = 0;
         }
 
@@ -129,34 +121,34 @@ export class LasersManager extends GameElement {
                 if (this.flash) {
                     let Y = this.y + 40;
                     for (let i = 0; i < 2; i++, Y -= LasersManager.VERTICAL_SPACE) {
-                        this.main.draw(this.main.lasers[4], X + 16, Y);
-                        this.main.draw(this.main.lasers[4], X + 96, Y);
+                        this.main.drawImage(this.main.lasers[4], X + 16, Y);
+                        this.main.drawImage(this.main.lasers[4], X + 96, Y);
                     }
                     Y += 64;
-                    this.main.draw(this.main.lasers[4], X + 16, Y);
-                    this.main.draw(this.main.lasers[4], X + 96, Y);
+                    this.main.drawImage(this.main.lasers[4], X + 16, Y);
+                    this.main.drawImage(this.main.lasers[4], X + 96, Y);
                 }
                 break;
             case LasersManager.STATE_INNER_FLASHING:
                 if (this.flash) {
                     let Y = this.y + 44;
                     for (let i = 0; i < 2; i++, Y -= LasersManager.VERTICAL_SPACE) {
-                        this.main.draw(this.main.lasers[5], X + 48, Y);
-                        this.main.draw(this.main.lasers[5], X + 68, Y);
+                        this.main.drawImage(this.main.lasers[5], X + 48, Y);
+                        this.main.drawImage(this.main.lasers[5], X + 68, Y);
                     }
                     Y += 64;
-                    this.main.draw(this.main.lasers[5], X + 48, Y);
-                    this.main.draw(this.main.lasers[5], X + 68, Y);
+                    this.main.drawImage(this.main.lasers[5], X + 48, Y);
+                    this.main.drawImage(this.main.lasers[5], X + 68, Y);
                 }
                 break;
             case LasersManager.STATE_WARMING_UP:
                 break;
             case LasersManager.STATE_LASERING:
                 for (let i = 1; i < 13; i++) {
-                    this.main.draw(this.main.lasers[this.colorIndex], X + 48, this.y - (i << 5) + 4);
+                    this.main.drawImage(this.main.lasers[this.colorIndex], X + 48, this.y - (i << 5) + 4);
                 }
                 for (let i = 1; i < 11; i++) {
-                    this.main.draw(this.main.lasers[this.colorIndex], X + 48, this.y - (i << 5) - 508);
+                    this.main.drawImage(this.main.lasers[this.colorIndex], X + 48, this.y - (i << 5) - 508);
                 }
                 break;
         }

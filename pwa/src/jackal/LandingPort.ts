@@ -11,35 +11,24 @@ export class LandingPort extends GameElement {
         this.blueIndex = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number) {
+    public constructor(x: number, y: number, type: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_LandingPort(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_LandingPort(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let typeLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = typeLocal;
-
-            switch (typeLocal) {
-                case LandingPort.TYPE_LEFT:
-                    new FriendlyHelicopter(javaFloat(xLocal + 320), javaFloat(yLocal + 192), false, true);
-                    break;
-                case LandingPort.TYPE_RIGHT:
-                    new FriendlyHelicopter(javaFloat(xLocal + 192), javaFloat(yLocal + 192), false, false);
-                    break;
-                case LandingPort.TYPE_CIRCLE:
-                    new FriendlyHelicopter(javaFloat(xLocal + 224), javaFloat(yLocal + 256), false, false);
-                    break;
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        switch (type) {
+            case LandingPort.TYPE_LEFT:
+                new FriendlyHelicopter(javaFloat(x + 320), javaFloat(y + 192), false, true);
+                break;
+            case LandingPort.TYPE_RIGHT:
+                new FriendlyHelicopter(javaFloat(x + 192), javaFloat(y + 192), false, false);
+                break;
+            case LandingPort.TYPE_CIRCLE:
+                new FriendlyHelicopter(javaFloat(x + 224), javaFloat(y + 256), false, false);
+                break;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly TYPE_LEFT: number = 0;
@@ -79,10 +68,10 @@ export class LandingPort extends GameElement {
     }
 
     public update(): void {
-        if (++this.redIndex == 182) {
+        if (++this.redIndex === 182) {
             this.redIndex = 0;
         }
-        if (++this.blueIndex == 182) {
+        if (++this.blueIndex === 182) {
             this.blueIndex = 0;
         }
     }
@@ -93,27 +82,27 @@ export class LandingPort extends GameElement {
                 for (let i = 0; i < 6; i++) {
                     let X = this.x + 136 + (i << 6);
                     let Y = this.y + 16;
-                    if ((i & 1) == 0) {
-                        this.main.draw(this.main.lamps[3], X, Y);
-                        this.main.draw(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
-                        this.main.draw(this.main.lamps[3], X, Y + 320);
-                        this.main.draw(this.main.lamps[2], X, Y + 320, LandingPort.ALPHAS[this.redIndex]);
+                    if ((i & 1) === 0) {
+                        this.main.drawImage(this.main.lamps[3], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
+                        this.main.drawImage(this.main.lamps[3], X, Y + 320);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y + 320, LandingPort.ALPHAS[this.redIndex]);
                     } else {
-                        this.main.draw(this.main.lamps[1], X, Y);
-                        this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
-                        this.main.draw(this.main.lamps[1], X, Y + 320);
-                        this.main.draw(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y + 320);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
                     }
                 }
                 for (let i = 0; i < 3; i++) {
                     let X = this.x + 488;
                     let Y = this.y + 80 + i * 96;
-                    if ((i & 1) == 0) {
-                        this.main.draw(this.main.lamps[3], X, Y);
-                        this.main.draw(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
+                    if ((i & 1) === 0) {
+                        this.main.drawImage(this.main.lamps[3], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
                     } else {
-                        this.main.draw(this.main.lamps[1], X, Y);
-                        this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
                     }
                 }
                 break;
@@ -121,27 +110,27 @@ export class LandingPort extends GameElement {
                 for (let i = 0; i < 6; i++) {
                     let X = this.x + 40 + (i << 6);
                     let Y = this.y + 16;
-                    if ((i & 1) == 0) {
-                        this.main.draw(this.main.lamps[3], X, Y);
-                        this.main.draw(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
-                        this.main.draw(this.main.lamps[3], X, Y + 320);
-                        this.main.draw(this.main.lamps[2], X, Y + 320, LandingPort.ALPHAS[this.redIndex]);
+                    if ((i & 1) === 0) {
+                        this.main.drawImage(this.main.lamps[3], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
+                        this.main.drawImage(this.main.lamps[3], X, Y + 320);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y + 320, LandingPort.ALPHAS[this.redIndex]);
                     } else {
-                        this.main.draw(this.main.lamps[1], X, Y);
-                        this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
-                        this.main.draw(this.main.lamps[1], X, Y + 320);
-                        this.main.draw(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y + 320);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y + 320, LandingPort.ALPHAS[this.blueIndex]);
                     }
                 }
                 for (let i = 0; i < 3; i++) {
                     let X = this.x + 8;
                     let Y = this.y + 80 + i * 96;
-                    if ((i & 1) == 1) {
-                        this.main.draw(this.main.lamps[3], X, Y);
-                        this.main.draw(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
+                    if ((i & 1) === 1) {
+                        this.main.drawImage(this.main.lamps[3], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
                     } else {
-                        this.main.draw(this.main.lamps[1], X, Y);
-                        this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
                     }
                 }
                 break;
@@ -151,11 +140,11 @@ export class LandingPort extends GameElement {
                     let X = this.x + LandingPort.CIRCLE_LIGHTS[i][0];
                     let Y = this.y + LandingPort.CIRCLE_LIGHTS[i][1];
                     if (blue) {
-                        this.main.draw(this.main.lamps[1], X, Y);
-                        this.main.draw(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
+                        this.main.drawImage(this.main.lamps[1], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[0], X, Y, LandingPort.ALPHAS[this.blueIndex]);
                     } else {
-                        this.main.draw(this.main.lamps[3], X, Y);
-                        this.main.draw(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
+                        this.main.drawImage(this.main.lamps[3], X, Y);
+                        this.main.drawImageAlpha(this.main.lamps[2], X, Y, LandingPort.ALPHAS[this.redIndex]);
                     }
                 }
                 break;

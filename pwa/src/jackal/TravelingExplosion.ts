@@ -20,36 +20,20 @@ export class TravelingExplosion extends GameElement {
         this.enemies = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: boolean) {
+    public constructor(x: number, y: number, vx: number, vy: number, notifier: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_TravelingExplosion(argCount, arg0, arg1, arg2, arg3, arg4);
-    }
 
-    private __construct_TravelingExplosion(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: boolean): void {
-        if (
-            argCount === 5 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "boolean"
-        ) {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let vxLocal = javaFloat(arg2);
-            let vyLocal = javaFloat(arg3);
-            let notifierLocal = arg4;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.notifier = notifierLocal;
-            this.vx = javaFloat(TravelingExplosion.VELOCITY * vxLocal);
-            this.vy = javaFloat(TravelingExplosion.VELOCITY * vyLocal);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        vx = javaFloat(vx);
+        vy = javaFloat(vy);
 
-            this.enemies = this.gameMode.enemies;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.notifier = notifier;
+        this.vx = javaFloat(TravelingExplosion.VELOCITY * vx);
+        this.vy = javaFloat(TravelingExplosion.VELOCITY * vy);
+        this.enemies = this.gameMode.enemies;
     }
 
     public static readonly DISTANCE: number = 320;
@@ -93,7 +77,7 @@ export class TravelingExplosion extends GameElement {
             let y1 = javaFloat(this.y - margin);
             let x2 = javaFloat(this.x + margin);
             let y2 = javaFloat(this.y + margin);
-            if (!this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
+            if (!this.gameMode.isOutsideOfFrameBounds(x1, y1, x2, y2)) {
                 for (let i = this.enemies!.size() - 1; i >= 0; i--) {
                     let enemyLocal = this.enemies!.get(i);
                     if (!enemyLocal.removeFlag) {
@@ -106,11 +90,11 @@ export class TravelingExplosion extends GameElement {
 
     public render(): void {
         if (this.t < TravelingExplosion.PERIOD0) {
-            this.main.drawScaled(this.main.explosions[1], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
+            this.main.drawScaledAlpha(this.main.explosions[1], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
         } else if (this.t < TravelingExplosion.PERIOD1) {
-            this.main.drawScaled(this.main.explosions[0], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
+            this.main.drawScaledAlpha(this.main.explosions[0], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
         } else {
-            this.main.drawScaled(this.main.explosions[3], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
+            this.main.drawScaledAlpha(this.main.explosions[3], this.x, this.y, this.scale, TravelingExplosion.ALPHA);
         }
     }
 }

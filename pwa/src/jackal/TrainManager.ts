@@ -8,21 +8,13 @@ export class TrainManager extends GameElement {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_TrainManager(argCount, arg0, arg1);
-    }
 
-    private __construct_TrainManager(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly CARS: number = 6;
@@ -33,7 +25,7 @@ export class TrainManager extends GameElement {
         if (this.y > javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT)) {
             this.remove();
             for (let i = 0; i < TrainManager.CARS; i++) {
-                new Train(javaFloat(this.x + (i == 0 ? 0 : 4)), javaFloat(this.y + (i << 7)), i == 0);
+                new Train(javaFloat(this.x + (i === 0 ? 0 : 4)), javaFloat(this.y + (i << 7)), i === 0);
             }
         }
     }

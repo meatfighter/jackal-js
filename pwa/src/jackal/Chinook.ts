@@ -24,15 +24,6 @@ export class Chinook extends GameElement {
 
     public constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_Chinook(argCount);
-    }
-
-    private __construct_Chinook(argCount: number): void {
-        if (argCount === 0) {
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly STATE_FOWARDS: number = 0;
@@ -85,10 +76,10 @@ export class Chinook extends GameElement {
                     this.state = Chinook.STATE_UNLOADING;
                     this.introPlayer = new IntroPlayer(this.x, javaFloat(this.y + 102), this);
                 }
-                this.main.playSoundIfNotPlaying(this.main.helicopterSound, 0.5);
+                this.main.playSoundIfNotPlayingAtVolume(this.main.helicopterSound, 0.5);
                 break;
             case Chinook.STATE_UNLOADING:
-                this.main.playSoundIfNotPlaying(this.main.helicopterSound, 0.5);
+                this.main.playSoundIfNotPlayingAtVolume(this.main.helicopterSound, 0.5);
                 break;
             case Chinook.STATE_AWAY:
                 this.vt = javaFloat(this.vt + Chinook.AT);
@@ -101,7 +92,7 @@ export class Chinook extends GameElement {
                     this.remove();
                     this.createPlayer();
                 } else {
-                    this.main.playSoundIfNotPlaying(this.main.helicopterSound, javaFloat(0.5 + javaFloat(javaFloat(this.angle + 90) / 76)));
+                    this.main.playSoundIfNotPlayingAtVolume(this.main.helicopterSound, javaFloat(0.5 + javaFloat(javaFloat(this.angle + 90) / 76)));
                 }
                 break;
         }
@@ -111,7 +102,7 @@ export class Chinook extends GameElement {
         this.gameMode.player.x = IntroPlayer.FINAL_X;
         this.gameMode.player.y = IntroPlayer.FINAL_Y;
         this.gameMode.player.makeInvincible();
-        if (this.introPlayer != null) {
+        if (this.introPlayer !== null) {
             this.introPlayer.remove();
         }
         this.gameMode.playing = true;
@@ -127,7 +118,7 @@ export class Chinook extends GameElement {
 
     public render(): void {
         this.rotorAngle -= 30;
-        if (this.rotorAngle == -90) {
+        if (this.rotorAngle === -90) {
             this.rotorAngle = 0;
         }
 
@@ -144,13 +135,13 @@ export class Chinook extends GameElement {
             shadowScale,
             shadowScale
         );
-        this.main.rotateGraphics(this.x, this.y, this.angle, scale);
+        this.main.rotateGraphicsScaled(this.x, this.y, this.angle, scale);
         this.main.drawOffset(this.main.chinooks[0], -154, 0);
         this.main.drawOffset(this.main.chinooks[1], -154, -80);
         for (let i = 0; i < 4; i++) {
             let ang = 90 * i + this.rotorAngle;
-            this.main.drawRotated(this.main.chinooks[2], -102, 0, 0, -38, ang);
-            this.main.drawRotated(this.main.chinooks[2], 96, 0, 0, -38, 315 - ang);
+            this.main.drawRotatedAtCenter(this.main.chinooks[2], -102, 0, 0, -38, ang);
+            this.main.drawRotatedAtCenter(this.main.chinooks[2], 96, 0, 0, -38, 315 - ang);
         }
         this.main.popGraphics();
     }

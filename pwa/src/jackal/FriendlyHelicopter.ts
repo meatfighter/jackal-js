@@ -46,38 +46,26 @@ export class FriendlyHelicopter extends GameElement {
         this.createdPlane = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean) {
+    public constructor(x: number, y: number, landing: boolean, leftStop: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_FriendlyHelicopter(argCount, arg0, arg1, arg2, arg3);
-    }
-
-    private __construct_FriendlyHelicopter(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: boolean): void {
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean" && typeof arg3 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let landing = arg2;
-            let leftStopLocal = arg3;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.player = this.gameMode.player;
-            this.leftStop = leftStopLocal;
-
-            if (landing) {
-                this.slowRotor = false;
-                this.z = 0;
-                this.state = FriendlyHelicopter.STATE_FLYING_TOWARD;
-                this.rotorSpeed = 30;
-                this.changeLayer(7);
-            } else {
-                this.slowRotor = true;
-                this.z = 1;
-                this.state = FriendlyHelicopter.STATE_PICK_UP;
-                this.rotorSpeed = 15;
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.player = this.gameMode.player;
+        this.leftStop = leftStop;
+        if (landing) {
+            this.slowRotor = false;
+            this.z = 0;
+            this.state = FriendlyHelicopter.STATE_FLYING_TOWARD;
+            this.rotorSpeed = 30;
+            this.changeLayer(7);
+        } else {
+            this.slowRotor = true;
+            this.z = 1;
+            this.state = FriendlyHelicopter.STATE_PICK_UP;
+            this.rotorSpeed = 15;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly DROP_OFF_DELAY: number = 91;
@@ -188,16 +176,16 @@ export class FriendlyHelicopter extends GameElement {
                     let dx = javaFloat(this.player!.x - this.x);
 
                     if (Math.abs(javaFloat(this.player!.y - this.y)) <= 128) {
-                        if (--this.planeSpawnDelay == 0) {
+                        if (--this.planeSpawnDelay === 0) {
                             this.planeSpawnDelay = FriendlyHelicopter.PLANE_SPAWN_DELAY;
-                            if (this.gameMode.stageIndex == 5) {
+                            if (this.gameMode.stageIndex === 5) {
                                 new EnemyHelicopter(true);
-                            } else if (this.gameMode.stageIndex == 4) {
-                                new Airplane(this.leftStop);
-                            } else if (this.gameMode.stageIndex == 1) {
+                            } else if (this.gameMode.stageIndex === 4) {
+                                Airplane.forLandingPort(this.leftStop);
+                            } else if (this.gameMode.stageIndex === 1) {
                                 if (!this.createdPlane) {
                                     this.createdPlane = true;
-                                    new Airplane(this.leftStop);
+                                    Airplane.forLandingPort(this.leftStop);
                                 }
                             }
                         }
@@ -212,16 +200,16 @@ export class FriendlyHelicopter extends GameElement {
                             this.dropOffDelay--;
                         } else {
                             this.dropOffDelay = FriendlyHelicopter.DROP_OFF_DELAY;
-                            new FriendlySoldier(this.player!.x, javaFloat(this.player!.y + 28), this, this.player!.pows == 1);
+                            FriendlySoldier.walkingToHelicopter(this.player!.x, javaFloat(this.player!.y + 28), this, this.player!.pows === 1);
                             this.player!.dropOffPOW();
                             this.walkingSoldiers++;
                         }
                     }
                 }
                 if (
-                    this.walkingSoldiers == 0 &&
+                    this.walkingSoldiers === 0 &&
                     this.player!.y < javaFloat(this.y + 80) &&
-                    ((FriendlySoldier.count == 0 && this.player!.pows == 0) || this.player!.y < javaFloat(this.y - 512))
+                    ((FriendlySoldier.count === 0 && this.player!.pows === 0) || this.player!.y < javaFloat(this.y - 512))
                 ) {
                     if (this.preparingToTakeOff > 0) {
                         this.preparingToTakeOff--;
@@ -239,7 +227,7 @@ export class FriendlyHelicopter extends GameElement {
                     this.slowRotor = false;
                     this.changeLayer(7);
                 }
-                if (++this.revvingUp == 91) {
+                if (++this.revvingUp === 91) {
                     this.rotorSpeed = 30;
                     this.state = FriendlyHelicopter.STATE_LIFTING_OFF;
                 }
@@ -250,13 +238,13 @@ export class FriendlyHelicopter extends GameElement {
                 } else {
                     this.z = 0;
                 }
-                if (++this.liftingOff == 114) {
+                if (++this.liftingOff === 114) {
                     this.state = FriendlyHelicopter.STATE_ACCELERATING;
                 }
                 break;
             case FriendlyHelicopter.STATE_ACCELERATING:
                 this.y = javaFloat(this.y - javaFloat(this.accelerating * FriendlyHelicopter.ACCELERATION));
-                if (++this.accelerating == FriendlyHelicopter.ACCELERATION_TIME) {
+                if (++this.accelerating === FriendlyHelicopter.ACCELERATION_TIME) {
                     this.state = FriendlyHelicopter.STATE_TURNING;
                     this.turnX = this.x;
                     this.turnY = this.y;
@@ -266,7 +254,7 @@ export class FriendlyHelicopter extends GameElement {
                 this.x = javaFloat(this.turnX + FriendlyHelicopter.TURNS[this.turning][0]);
                 this.y = javaFloat(this.turnY + FriendlyHelicopter.TURNS[this.turning][1]);
                 this.angle = javaFloat(FriendlyHelicopter.TURNS[this.turning][2]);
-                if (++this.turning == FriendlyHelicopter.TURNS_LENGTH) {
+                if (++this.turning === FriendlyHelicopter.TURNS_LENGTH) {
                     this.state = FriendlyHelicopter.STATE_FLYING_AWAY;
                     this.angle = -180;
                 }
@@ -307,14 +295,23 @@ export class FriendlyHelicopter extends GameElement {
         if (this.z < 1) {
             let s0 = 1 + FriendlyHelicopter.SHADOW_K * this.z;
             let s1 = 1 - this.z;
-            this.main.drawRotated(this.main.friendlyHelicopters[1], this.x + 32 * s1, this.y + 37 * s1, -10, -18, this.angle, s0, 1 - this.z);
+            this.main.drawRotatedAtCenterScaledAlpha(
+                this.main.friendlyHelicopters[1],
+                this.x + 32 * s1,
+                this.y + 37 * s1,
+                -10,
+                -18,
+                this.angle,
+                s0,
+                1 - this.z
+            );
         }
 
         let scale = FriendlyHelicopter.Z0 / (FriendlyHelicopter.Z0 - this.z);
-        this.main.drawRotated(this.main.friendlyHelicopters[0], this.x, this.y, -36, -60, this.angle, scale);
-        this.main.drawRotated(blade, this.x, this.y, 0, offset, this.rotorAngle, scale);
-        this.main.drawRotated(blade, this.x, this.y, 0, offset, this.rotorAngle + 90, scale);
-        this.main.drawRotated(blade, this.x, this.y, 0, offset, this.rotorAngle + 180, scale);
-        this.main.drawRotated(blade, this.x, this.y, 0, offset, this.rotorAngle + 270, scale);
+        this.main.drawRotatedAtCenterScaled(this.main.friendlyHelicopters[0], this.x, this.y, -36, -60, this.angle, scale);
+        this.main.drawRotatedAtCenterScaled(blade, this.x, this.y, 0, offset, this.rotorAngle, scale);
+        this.main.drawRotatedAtCenterScaled(blade, this.x, this.y, 0, offset, this.rotorAngle + 90, scale);
+        this.main.drawRotatedAtCenterScaled(blade, this.x, this.y, 0, offset, this.rotorAngle + 180, scale);
+        this.main.drawRotatedAtCenterScaled(blade, this.x, this.y, 0, offset, this.rotorAngle + 270, scale);
     }
 }

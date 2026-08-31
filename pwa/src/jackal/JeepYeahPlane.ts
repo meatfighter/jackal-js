@@ -5,29 +5,18 @@ import type { Main } from "./Main.js";
 import { javaFloat } from "../java/JavaRuntime.js";
 
 export class JeepYeahPlane {
-    public constructor(arg0?: boolean) {
-        const argCount = arguments.length;
-        this.__construct_JeepYeahPlane(argCount, arg0);
-    }
-
-    private __construct_JeepYeahPlane(argCount: number, arg0?: boolean): void {
-        if (argCount === 1 && typeof arg0 === "boolean") {
-            let leftLocal = arg0;
-            this.left = leftLocal;
-
-            if (leftLocal) {
-                this.z = -8;
-                this.x = -650;
-                this.y = -300;
-            } else {
-                this.z = -15;
-                this.x = -950;
-                this.y = -400;
-                this.angle = -30;
-            }
-            return;
+    public constructor(left: boolean) {
+        this.left = left;
+        if (left) {
+            this.z = -8;
+            this.x = -650;
+            this.y = -300;
+        } else {
+            this.z = -15;
+            this.x = -950;
+            this.y = -400;
+            this.angle = -30;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly CENTER_X: number = javaFloat(MainConstants.DISPLAY_WIDTH / 2);
@@ -58,7 +47,7 @@ export class JeepYeahPlane {
         g.setWorldClip(0, 288, MainConstants.DISPLAY_WIDTH, 416);
         if (this.left) {
             if (this.z < -7) {
-                main.drawRotated(
+                main.drawRotatedAtCenterScaledAlpha(
                     main.blackPlane,
                     JeepYeahPlane.CENTER_X + k * this.x,
                     JeepYeahPlane.CENTER_Y + k * this.y,
@@ -69,11 +58,19 @@ export class JeepYeahPlane {
                     8 + this.z
                 );
             } else {
-                main.drawRotated(main.blackPlane, JeepYeahPlane.CENTER_X + k * this.x, JeepYeahPlane.CENTER_Y + k * this.y, -64, -20, this.angle, k);
+                main.drawRotatedAtCenterScaled(
+                    main.blackPlane,
+                    JeepYeahPlane.CENTER_X + k * this.x,
+                    JeepYeahPlane.CENTER_Y + k * this.y,
+                    -64,
+                    -20,
+                    this.angle,
+                    k
+                );
             }
         } else {
             if (this.z < -14) {
-                main.drawRotated(
+                main.drawRotatedAtCenterScaledAlpha(
                     main.blackPlane,
                     JeepYeahPlane.CENTER_X + k * this.x,
                     JeepYeahPlane.CENTER_Y + k * this.y,
@@ -84,7 +81,15 @@ export class JeepYeahPlane {
                     15 + this.z
                 );
             } else {
-                main.drawRotated(main.blackPlane, JeepYeahPlane.CENTER_X + k * this.x, JeepYeahPlane.CENTER_Y + k * this.y, -64, -20, this.angle, k);
+                main.drawRotatedAtCenterScaled(
+                    main.blackPlane,
+                    JeepYeahPlane.CENTER_X + k * this.x,
+                    JeepYeahPlane.CENTER_Y + k * this.y,
+                    -64,
+                    -20,
+                    this.angle,
+                    k
+                );
             }
         }
         g.clearWorldClip();

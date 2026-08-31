@@ -9,19 +9,9 @@ export enum KonamiCodeKeys {
     GUN
 }
 export class KonamiCode {
-    public constructor(arg0?: Main) {
-        const argCount = arguments.length;
-        this.__construct_KonamiCode(argCount, arg0);
-    }
-
-    private __construct_KonamiCode(argCount: number, arg0?: Main): void {
-        if (argCount === 1) {
-            let mainLocal = arg0;
-            this.main = mainLocal!;
-            this.input = mainLocal!.input;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+    public constructor(main: Main) {
+        this.main = main;
+        this.input = main.input;
     }
 
     // Try the following sequence on the title screen :)
@@ -48,7 +38,7 @@ export class KonamiCode {
     public gettingClose(): boolean {
         return (
             !this.enabled &&
-            (KonamiCode.SEQUENCE[this.sequenceIndex] == KonamiCodeKeys.GRENADE || KonamiCode.SEQUENCE[this.sequenceIndex] == KonamiCodeKeys.GUN)
+            (KonamiCode.SEQUENCE[this.sequenceIndex] === KonamiCodeKeys.GRENADE || KonamiCode.SEQUENCE[this.sequenceIndex] === KonamiCodeKeys.GUN)
         );
     }
 
@@ -83,12 +73,12 @@ export class KonamiCode {
                 key = KonamiCodeKeys.GUN;
             }
 
-            if (key == KonamiCode.SEQUENCE[this.sequenceIndex]) {
-                if (++this.sequenceIndex == KonamiCode.SEQUENCE.length) {
+            if (key === KonamiCode.SEQUENCE[this.sequenceIndex]) {
+                if (++this.sequenceIndex === KonamiCode.SEQUENCE.length) {
                     this.main.playSoundAlways(this.main.weaponUpgradeSound);
                     this.enabled = true;
                 }
-            } else if (key != null) {
+            } else if (key !== null) {
                 this.sequenceIndex = 0;
             }
         }

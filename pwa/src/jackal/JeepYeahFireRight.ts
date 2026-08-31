@@ -42,7 +42,7 @@ export class JeepYeahFireRight {
             case JeepYeahFireRight.STATE_MOVING:
                 this.x = javaFloat(this.x + JeepYeahFireRight.vx);
                 this.y = javaFloat(this.y + JeepYeahFireRight.vy);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireRight.STATE_SHRINKING;
                     this.delay = JeepYeahFireRight.SHRINK_STEPS;
                 }
@@ -51,13 +51,13 @@ export class JeepYeahFireRight {
                 this.x = javaFloat(this.x + JeepYeahFireRight.vx);
                 this.y = javaFloat(this.y + JeepYeahFireRight.vy);
                 this.scale = javaFloat(JeepYeahFireRight.I_SHRINK_STEPS * this.delay);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireRight.STATE_PAUSED;
                     this.delay = JeepYeahFireRight.PAUSE_TIME;
                 }
                 break;
             case JeepYeahFireRight.STATE_PAUSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireRight.STATE_GROWING;
                     this.x = 0;
                     this.scale = 0;
@@ -72,7 +72,7 @@ export class JeepYeahFireRight {
                 main.drawRotatedScaled(main.gunFires[0], 768, 437, 0, -18, JeepYeahFireRight.ANGLE, this.scale, 1);
                 break;
             case JeepYeahFireRight.STATE_MOVING:
-                main.drawRotated(main.gunFires[0], this.x, this.y, 0, -18, JeepYeahFireRight.ANGLE);
+                main.drawRotatedAtCenter(main.gunFires[0], this.x, this.y, 0, -18, JeepYeahFireRight.ANGLE);
                 break;
             case JeepYeahFireRight.STATE_SHRINKING:
                 main.drawRotatedScaled(main.gunFires[0], this.x, this.y, 0, -18, JeepYeahFireRight.ANGLE, this.scale, 1);

@@ -4,20 +4,11 @@ import type { Main } from "./Main.js";
 import { javaFloat } from "../java/JavaRuntime.js";
 
 export class JeepYeahExplosion {
-    public constructor(arg0?: number, arg1?: number) {
-        const argCount = arguments.length;
-        this.__construct_JeepYeahExplosion(argCount, arg0, arg1);
-    }
-
-    private __construct_JeepYeahExplosion(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+    public constructor(x: number, y: number) {
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly GROW_RATE: number = javaFloat(1.03);
@@ -64,8 +55,8 @@ export class JeepYeahExplosion {
 
     public update(): void {
         if (this.delay > 0) {
-            if (--this.delay == 0) {
-                if (this.enemy != null) {
+            if (--this.delay === 0) {
+                if (this.enemy !== null) {
                     this.x = javaFloat(javaFloat(this.x + this.enemy.x) - this.enemyX);
                     this.y = javaFloat(javaFloat(this.y + this.enemy.y) - this.enemyY);
                 }
@@ -93,10 +84,10 @@ export class JeepYeahExplosion {
     }
 
     public render(main: Main): void {
-        if (this.alpha == 1) {
+        if (this.alpha === 1) {
             main.drawScaled(main.explosions[this.spriteIndex], this.x, this.y, this.scale);
         } else {
-            main.drawScaled(main.explosions[this.spriteIndex], this.x, this.y, this.scale, this.alpha);
+            main.drawScaledAlpha(main.explosions[this.spriteIndex], this.x, this.y, this.scale, this.alpha);
         }
     }
 }

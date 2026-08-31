@@ -36,40 +36,24 @@ export class Fire extends GameElement {
         this.sourceEnemy = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number, arg5?: Enemy) {
+    public constructor(x: number, y: number, vx: number, vy: number, angle: number, enemy: Enemy) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Fire(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
-    }
 
-    private __construct_Fire(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: number, arg4?: number, arg5?: Enemy): void {
-        if (
-            argCount === 6 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "number" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let vxLocal = javaFloat(arg2);
-            let vyLocal = javaFloat(arg3);
-            let angleLocal = javaFloat(arg4);
-            let enemyLocal = arg5;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.dx = vxLocal;
-            this.dy = vyLocal;
-            this.vx = javaFloat(Fire.SPEED * vxLocal);
-            this.vy = javaFloat(Fire.SPEED * vyLocal);
-            this.angle = angleLocal;
-            this.sourceEnemy = enemyLocal!;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        vx = javaFloat(vx);
+        vy = javaFloat(vy);
+        angle = javaFloat(angle);
 
-            this.enemyBullet = true;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.dx = vx;
+        this.dy = vy;
+        this.vx = javaFloat(Fire.SPEED * vx);
+        this.vy = javaFloat(Fire.SPEED * vy);
+        this.angle = angle;
+        this.sourceEnemy = enemy;
+        this.enemyBullet = true;
     }
 
     public static readonly STATE_GROWING: number = 0;
@@ -99,14 +83,14 @@ export class Fire extends GameElement {
                 }
                 for (let i = 0; i <= 5; i++) {
                     let mag = javaFloat(javaFloat(javaFloat(0.2) * i) * this.length);
-                    this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
+                    this.player!.attackAt(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                 }
                 break;
             }
             case Fire.STATE_TRAVELING:
                 this.x = javaFloat(this.x + this.vx);
                 this.y = javaFloat(this.y + this.vy);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Fire.STATE_SHRINKING;
                     this.x = javaFloat(this.x + javaFloat(this.dx * this.length));
                     this.y = javaFloat(this.y + javaFloat(this.dy * this.length));
@@ -114,7 +98,7 @@ export class Fire extends GameElement {
                 } else {
                     for (let i = 0; i <= 5; i++) {
                         let mag = javaFloat(javaFloat(javaFloat(0.2) * i) * this.length);
-                        this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
+                        this.player!.attackAt(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                     }
                 }
                 break;
@@ -126,14 +110,14 @@ export class Fire extends GameElement {
                 }
                 for (let i = 0; i <= 5; i++) {
                     let mag = javaFloat(javaFloat(-javaFloat(0.2) * i) * this.length);
-                    this.player!.attack(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
+                    this.player!.attackAt(javaFloat(this.x + javaFloat(mag * this.dx)), javaFloat(this.y + javaFloat(mag * this.dy)));
                 }
                 break;
         }
     }
 
     public render(): void {
-        if (++this.flickerCounter == 4) {
+        if (++this.flickerCounter === 4) {
             this.flickerIndex ^= 1;
             this.flickerCounter = 0;
         }
@@ -145,9 +129,9 @@ export class Fire extends GameElement {
             index = 1;
             scale = this.length * 0.0078125;
         }
-        if (this.state == Fire.STATE_SHRINKING) {
+        if (this.state === Fire.STATE_SHRINKING) {
             scale = -scale;
         }
-        this.main.drawRotatedScaled(this.main.fires[this.flickerIndex][index], this.x, this.y, 0, -8, this.angle, scale, 1, this.alpha);
+        this.main.drawRotatedScaledAlpha(this.main.fires[this.flickerIndex][index], this.x, this.y, 0, -8, this.angle, scale, 1, this.alpha);
     }
 }

@@ -53,57 +53,44 @@ export class GrayTank extends Enemy {
         this.bossGarageManager = null;
     }
 
-    public constructor(x: number, y: number);
-    public constructor(x: number, y: number, shack: boolean);
-    public constructor(x: number, y: number, firstMove: number);
-    public constructor(x: number, y: number, firstMove: number, bossGarageManager: BossGarageManager);
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean | number, arg3?: BossGarageManager) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_GrayTank(argCount, arg0, arg1, arg2, arg3);
     }
 
-    private __construct_GrayTank(argCount: number, arg0?: number, arg1?: number, arg2?: boolean | number, arg3?: BossGarageManager): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal4 = javaFloat(arg0);
-            let yLocal4 = javaFloat(arg1);
-            this.x = xLocal4;
-            this.y = yLocal4;
-            this.firstMove = 2 * 91;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal3 = javaFloat(arg0);
-            let yLocal3 = javaFloat(arg1);
-            let shackLocal = arg2;
-            this.x = xLocal3;
-            this.y = yLocal3;
-            this.shack = shackLocal;
-            this.shackX = javaFloat(xLocal3 - 62);
-            this.shackY = javaFloat(yLocal3 - 80);
-            this.firstMove = 105;
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            let firstMoveLocal2 = arg2;
-            this.__construct_GrayTank(2, xLocal2, yLocal2);
-            this.firstMove = firstMoveLocal2;
-            this.garage = true;
-            return;
-        } else if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let firstMoveLocal = arg2;
-            let bossGarageManagerLocal = arg3;
-            this.__construct_GrayTank(3, xLocal, yLocal, firstMoveLocal);
-            this.bossGarageManager = bossGarageManagerLocal!;
-            if (bossGarageManagerLocal != null) {
-                bossGarageManagerLocal.tankCreated();
-                this.points = 0;
-            }
-            return;
+    public static create(x: number, y: number): GrayTank {
+        const tank = new GrayTank();
+        tank.x = javaFloat(x);
+        tank.y = javaFloat(y);
+        tank.firstMove = 2 * 91;
+        return tank;
+    }
+
+    public static fromShack(x: number, y: number, shack: boolean): GrayTank {
+        const tank = new GrayTank();
+        tank.x = javaFloat(x);
+        tank.y = javaFloat(y);
+        tank.shack = shack;
+        tank.shackX = javaFloat(tank.x - 62);
+        tank.shackY = javaFloat(tank.y - 80);
+        tank.firstMove = 105;
+        return tank;
+    }
+
+    public static withFirstMove(x: number, y: number, firstMove: number): GrayTank {
+        const tank = GrayTank.create(x, y);
+        tank.firstMove = firstMove;
+        tank.garage = true;
+        return tank;
+    }
+
+    public static withFirstMoveAndManager(x: number, y: number, firstMove: number, bossGarageManager: BossGarageManager | null): GrayTank {
+        const tank = GrayTank.withFirstMove(x, y, firstMove);
+        tank.bossGarageManager = bossGarageManager;
+        if (bossGarageManager !== null) {
+            bossGarageManager.tankCreated();
+            tank.points = 0;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        return tank;
     }
 
     public static readonly SPEED: number = 1.5;
@@ -163,13 +150,13 @@ export class GrayTank extends Enemy {
         let Dx = this.directionX;
         let Dy = this.directionY;
 
-        if (this.main.random.nextInt(5) == 4) {
+        if (this.main.random.nextInt(5) === 4) {
             this.vx = -this.vx;
             this.vy = -this.vy;
             this.directionX = -this.directionX;
             this.directionY = -this.directionY;
             this.targetAngle += 180;
-        } else if (this.main.random.nextInt(3) == 2) {
+        } else if (this.main.random.nextInt(3) === 2) {
             this.vx = Vy;
             this.vy = -Vx;
             this.directionX = Dy;
@@ -190,7 +177,7 @@ export class GrayTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * GrayTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * GrayTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
@@ -198,12 +185,12 @@ export class GrayTank extends Enemy {
     private computeMoveSteps(): void {
         let v = 0;
 
-        if (this.directionX != 0) {
+        if (this.directionX !== 0) {
             v = this.directionX;
         } else {
             v = this.directionY;
         }
-        if (v == 0) {
+        if (v === 0) {
             return;
         }
 
@@ -297,13 +284,13 @@ export class GrayTank extends Enemy {
         this.sensorX = javaFloat(this.directionX * GrayTank.SENSOR_RADIUS);
         this.sensorY = javaFloat(this.directionY * GrayTank.SENSOR_RADIUS);
 
-        if (this.main.random.nextInt(5) != 4) {
+        if (this.main.random.nextInt(5) !== 4) {
             this.computeMoveSteps();
         }
     }
 
     private handleLoop(): void {
-        if (this.handlingLoop == 0) {
+        if (this.handlingLoop === 0) {
             this.handlingLoop = 91 * (2 + this.main.random.nextInt(5));
             this.loopTargetX = javaFloat(this.main.random.nextFloat() * 2048);
             this.loopTargetY = javaFloat(this.main.random.nextFloat() * this.player!.y);
@@ -311,7 +298,7 @@ export class GrayTank extends Enemy {
     }
 
     public update(): void {
-        if (this.displayAngle != this.targetAngle) {
+        if (this.displayAngle !== this.targetAngle) {
             this.shootCount = GrayTank.SHOOT_COUNT;
             let deltaAngle = javaFloat(javaFloat(javaFloat(this.targetAngle - this.displayAngle) + 180) % 360);
             if (deltaAngle < 0) {
@@ -334,7 +321,7 @@ export class GrayTank extends Enemy {
             }
 
             if (this.firstMove > 0) {
-                if (--this.firstMove == 0) {
+                if (--this.firstMove === 0) {
                     this.garage = false;
                     this.shack = false;
                 }
@@ -343,7 +330,7 @@ export class GrayTank extends Enemy {
             if (--this.moveSteps <= 0) {
                 let dx = 0;
                 let dy = 0;
-                if (this.main.random.nextInt(5) == 4) {
+                if (this.main.random.nextInt(5) === 4) {
                     dx = this.main.random.nextInt(512) - 256;
                     dy = this.main.random.nextInt(512) - 256;
                 }
@@ -381,14 +368,14 @@ export class GrayTank extends Enemy {
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
-                        solidLocal != this &&
-                        solidLocal.isSolid(
+                        solidLocal !== this &&
+                        solidLocal.isSolidBounds(
                             javaFloat(nextX + this.solidX1),
                             javaFloat(nextY + this.solidY1),
                             javaFloat(nextX + this.solidX2),
                             javaFloat(nextY + this.solidY2)
                         ) &&
-                        !solidLocal.isSolid(
+                        !solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(this.y + this.solidY1),
                             javaFloat(this.x + this.solidX2),
@@ -420,13 +407,13 @@ export class GrayTank extends Enemy {
             let dy = javaFloat(this.player!.y - this.y);
 
             if (
-                this.moveSteps == 1 &&
-                ((this.vy != 0 && javaInt(this.player!.x) >> 7 == javaInt(this.x) >> 7) ||
-                    (this.vx != 0 && javaInt(this.player!.y) >> 7 == javaInt(this.y) >> 7))
+                this.moveSteps === 1 &&
+                ((this.vy !== 0 && javaInt(this.player!.x) >> 7 === javaInt(this.x) >> 7) ||
+                    (this.vx !== 0 && javaInt(this.player!.y) >> 7 === javaInt(this.y) >> 7))
             ) {
                 this.moveSteps = 2;
             }
-            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) != 2 && this.firstMove == 0) {
+            if ((javaFloat(this.lastDx * dx) <= 0 || javaFloat(this.lastDy * dy) <= 0) && this.main.random.nextInt(3) !== 2 && this.firstMove === 0) {
                 this.moveSteps = 0;
             }
 
@@ -477,7 +464,7 @@ export class GrayTank extends Enemy {
                         by = -37;
                         break;
                 }
-                new EnemyBullet(
+                EnemyBullet.cannonball(
                     javaFloat(this.x + bx),
                     javaFloat(this.y + by),
                     javaFloat(GrayTank.BULLET_SPEED * this.directionX),
@@ -510,7 +497,7 @@ export class GrayTank extends Enemy {
 
     public override remove(): void {
         super.remove();
-        if (this.bossGarageManager != null) {
+        if (this.bossGarageManager !== null) {
             this.bossGarageManager.tankDestroyed();
         }
     }
@@ -518,7 +505,7 @@ export class GrayTank extends Enemy {
     public render(): void {
         this.main.drawVehicle(this.main.grayTanks, this.x, this.y, this.displayAngle);
         if (this.shack && this.firstMove > 0) {
-            this.main.draw(this.main.tankShack, this.shackX, this.shackY);
+            this.main.drawImage(this.main.tankShack, this.shackX, this.shackY);
         }
     }
 }

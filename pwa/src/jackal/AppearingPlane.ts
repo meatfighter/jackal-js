@@ -8,21 +8,13 @@ export class AppearingPlane extends GameElement {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_AppearingPlane(argCount, arg0, arg1);
-    }
 
-    private __construct_AppearingPlane(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public init(): void {
@@ -31,7 +23,7 @@ export class AppearingPlane extends GameElement {
 
     public update(): void {
         if (javaFloat(this.gameMode.cameraY + MainConstants.DISPLAY_HEIGHT) < javaFloat(this.y - 48)) {
-            new Airplane(this.x, this.y, true);
+            Airplane.atWithDirection(this.x, this.y, true);
             this.remove();
         }
     }

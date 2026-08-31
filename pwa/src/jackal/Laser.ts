@@ -6,26 +6,16 @@ export class Laser extends Enemy {
         super.__initializeJavaSubclassDefaults();
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Laser(argCount, arg0, arg1);
-    }
-
-    private __construct_Laser(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            this.playSoundOnRemove = false;
-
-            if (this.gameMode.cameraY <= javaFloat(yLocal + 896)) {
-                this.main.playSound(this.main.laserSound);
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.playSoundOnRemove = false;
+        if (this.gameMode.cameraY <= javaFloat(y + 896)) {
+            this.main.playSound(this.main.laserSound);
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public override init(): void {
@@ -52,7 +42,7 @@ export class Laser extends Enemy {
         if (invincible) {
             return false;
         }
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;

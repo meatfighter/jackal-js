@@ -26,34 +26,20 @@ export class TileDebris extends GameElement {
         this.scale = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: number) {
+    public constructor(x: number, y: number, tile: number, type: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_TileDebris(argCount, arg0, arg1, arg2, arg3);
-    }
-
-    private __construct_TileDebris(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: number): void {
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "number") {
-            let xLocal = arg0;
-            let yLocal = arg1;
-            let tileLocal = arg2;
-            let typeLocal = arg3;
-            this.X = xLocal;
-            this.Y = yLocal;
-            this.x = javaFloat((xLocal << 5) + 16);
-            this.y = javaFloat((yLocal << 5) + 16);
-            this.tile = tileLocal;
-            this.type = typeLocal;
-            this.sprite = this.gameMode.tiles[this.gameMode.tileMap[yLocal][xLocal]];
-            this.delay = javaInt(javaFloat(this.gameMode.player.x - this.x)) >> 3;
-
-            if (this.delay < 0) {
-                this.delay = -this.delay;
-            }
-            this.delay++;
-            return;
+        this.X = x;
+        this.Y = y;
+        this.x = javaFloat((x << 5) + 16);
+        this.y = javaFloat((y << 5) + 16);
+        this.tile = tile;
+        this.type = type;
+        this.sprite = this.gameMode.tiles[this.gameMode.tileMap[y][x]];
+        this.delay = javaInt(javaFloat(this.gameMode.player.x - this.x)) >> 3;
+        if (this.delay < 0) {
+            this.delay = -this.delay;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.delay++;
     }
 
     public static readonly GRAVITY: number = javaFloat(0.2);
@@ -76,7 +62,7 @@ export class TileDebris extends GameElement {
                 this.remove();
             }
         } else {
-            if (--this.delay == 0) {
+            if (--this.delay === 0) {
                 this.moving = true;
                 this.gameMode.tileMap[this.Y][this.X] = this.tile;
                 this.gameMode.typesMap[this.Y][this.X] = this.type;
@@ -91,7 +77,7 @@ export class TileDebris extends GameElement {
 
     public render(): void {
         if (this.moving) {
-            this.main.drawCentered(this.sprite!, this.x, this.y, this.scale);
+            this.main.drawCenteredScaled(this.sprite!, this.x, this.y, this.scale);
         }
     }
 }

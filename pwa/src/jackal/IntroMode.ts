@@ -109,15 +109,15 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         this.state = IntroMode.STATE_TITLE;
         this.delay = IntroMode.TITLE_DELAY;
         this.scrollOffsetX = 0;
-        this.main.stopSong();
+        this.main.stopAllSongs();
         this.menu.setInputEnabled(true);
     }
 
     private updateTitleScreen(): void {
         this.menu.update();
 
-        if (--this.delay == 0) {
-            this.main.stopSong();
+        if (--this.delay === 0) {
+            this.main.stopAllSongs();
             this.main.requestSong(this.main.titleSong);
             this.state = IntroMode.STATE_STORY_SCROLL;
             this.delay = IntroMode.SCROLL_DELAY;
@@ -129,7 +129,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     private updateStoryScroll(): void {
         this.scrollOffsetX = javaFloat(MainConstants.DISPLAY_WIDTH * javaFloat(javaFloat(this.delay * IntroMode.I_SCROLL_DELAY) - 1));
 
-        if (--this.delay == 0) {
+        if (--this.delay === 0) {
             this.state = IntroMode.STATE_STORY;
             this.scrollOffsetX = javaFloat(-MainConstants.DISPLAY_WIDTH);
             this.delay = IntroMode.STORY_DELAY;
@@ -147,7 +147,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     private updateStory(): void {
-        if (--this.delay == 0) {
+        if (--this.delay === 0) {
             this.startSolidersEnter(0);
         }
     }
@@ -157,7 +157,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         this.upperSolderX = javaFloat(IntroMode.UPPER_SOLDIER_X0 + javaFloat(javaFloat(IntroMode.UPPER_SOLDIER_X1 - IntroMode.UPPER_SOLDIER_X0) * t));
         this.lowerSolderX = javaFloat(IntroMode.LOWER_SOLDIER_X0 + javaFloat(javaFloat(IntroMode.LOWER_SOLDIER_X1 - IntroMode.LOWER_SOLDIER_X0) * t));
 
-        if (--this.delay == 0) {
+        if (--this.delay === 0) {
             this.main.playSoundAlways(this.main.introChingSound);
             this.state = IntroMode.STATE_TYPING;
             this.upperSolderX = IntroMode.UPPER_SOLDIER_X1;
@@ -167,19 +167,19 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     private updateTyping(): void {
-        if (--this.delay == 0) {
-            if (this.namesIndex == IntroMode.NAMES[this.soldierSet].length) {
+        if (--this.delay === 0) {
+            if (this.namesIndex === IntroMode.NAMES[this.soldierSet].length) {
                 this.state = IntroMode.STATE_NAMES_PAUSE;
                 this.delay = IntroMode.NAMES_DELAY;
-            } else if (this.nameLength == IntroMode.NAMES[this.soldierSet][this.namesIndex].length) {
+            } else if (this.nameLength === IntroMode.NAMES[this.soldierSet][this.namesIndex].length) {
                 this.nameLength = 0;
                 this.namesIndex++;
                 this.delay = IntroMode.TYPE_DELAY;
             } else {
                 this.main.playSoundAlways(this.main.introTypeSound);
                 this.nameLength++;
-                if (this.nameLength == IntroMode.NAMES[this.soldierSet][this.namesIndex].length) {
-                    if (this.namesIndex == 1) {
+                if (this.nameLength === IntroMode.NAMES[this.soldierSet][this.namesIndex].length) {
+                    if (this.namesIndex === 1) {
                         this.delay = IntroMode.EON_DELAY;
                     } else {
                         this.delay = IntroMode.TYPE_DELAY;
@@ -192,8 +192,8 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     private updateNamesPause(): void {
-        if (--this.delay == 0) {
-            if (this.soldierSet == 0) {
+        if (--this.delay === 0) {
+            if (this.soldierSet === 0) {
                 this.startSolidersEnter(1);
             } else if (this.main.isSongPlaying()) {
                 this.delay = 1;
@@ -225,7 +225,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     }
 
     public selectionChanged(selectedIndex: number): void {
-        if (this.state == IntroMode.STATE_TITLE) {
+        if (this.state === IntroMode.STATE_TITLE) {
             this.delay = IntroMode.TITLE_DELAY;
         }
     }
@@ -233,7 +233,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
     public optionSelected(selectedIndex: number): void {
         this.selectionMade = true;
         this.selectedIndex = selectedIndex;
-        if (this.state == IntroMode.STATE_TITLE) {
+        if (this.state === IntroMode.STATE_TITLE) {
             this.delay = IntroMode.TITLE_DELAY;
         }
     }
@@ -272,7 +272,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
                 this.updateNamesPause();
                 break;
             case IntroMode.STATE_EXPLOSION:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = IntroMode.STATE_START_GAME;
                     this.main.startFade(true, this);
                 }
@@ -284,12 +284,12 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
             this.startTitle();
         }
 
-        if (this.state == IntroMode.STATE_TITLE && this.selectionMade) {
-            if (this.selectedIndex == 0) {
+        if (this.state === IntroMode.STATE_TITLE && this.selectionMade) {
+            if (this.selectedIndex === 0) {
                 this.state = IntroMode.STATE_EXPLOSION;
                 this.delay = IntroMode.EXPLOSION_DELAY;
                 this.main.playSound(this.main.explodeSound);
-            } else if (this.selectedIndex == 1) {
+            } else if (this.selectedIndex === 1) {
                 this.state = IntroMode.STATE_OPTIONS;
                 this.main.startFade(true, this);
                 this.main.playSound(this.main.explodeSound3);
@@ -306,18 +306,18 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == IntroMode.STATE_STORY_SCROLL || this.state == IntroMode.STATE_STORY) {
+        if (this.state === IntroMode.STATE_STORY_SCROLL || this.state === IntroMode.STATE_STORY) {
             this.main.translateGraphics(this.scrollOffsetX, 0);
         }
 
-        if (this.state <= IntroMode.STATE_TITLE || this.state == IntroMode.STATE_STORY_SCROLL) {
+        if (this.state <= IntroMode.STATE_TITLE || this.state === IntroMode.STATE_STORY_SCROLL) {
             this.main.titleImage.draw(128, 192);
             this.menu.render();
             this.main.drawString(IntroMode.FULL_SCREEN_TEXT, IntroMode.FULL_SCREEN_TEXT_X, IntroMode.FULL_SCREEN_TEXT_Y, MainConstants.FONT_GRAY);
             this.main.drawString(IntroMode.COPYRIGHT_TEXT, IntroMode.COPYRIGHT_TEXT_X, IntroMode.COPYRIGHT_TEXT_Y, MainConstants.FONT_GRAY);
         }
 
-        if (this.state == IntroMode.STATE_STORY_SCROLL || this.state == IntroMode.STATE_STORY) {
+        if (this.state === IntroMode.STATE_STORY_SCROLL || this.state === IntroMode.STATE_STORY) {
             for (let i = 0; i < IntroMode.STORY.length; i++) {
                 this.main.drawString(IntroMode.STORY[i], MainConstants.DISPLAY_WIDTH + 96, (i << 6) + 96, MainConstants.FONT_GRAY);
             }
@@ -346,8 +346,8 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         for (let i = 0; i < this.namesIndex; i++) {
             this.main.drawString(IntroMode.NAMES[this.soldierSet][i], IntroMode.NAME_XYS[i][0], IntroMode.NAME_XYS[i][1], MainConstants.FONT_GRAY);
         }
-        if (this.namesIndex != IntroMode.NAMES[this.soldierSet].length) {
-            this.main.drawString(
+        if (this.namesIndex !== IntroMode.NAMES[this.soldierSet].length) {
+            this.main.drawStringWithLength(
                 IntroMode.NAMES[this.soldierSet][this.namesIndex],
                 this.nameLength,
                 IntroMode.NAME_XYS[this.namesIndex][0],

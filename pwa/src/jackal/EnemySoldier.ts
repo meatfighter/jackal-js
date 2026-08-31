@@ -66,62 +66,50 @@ export class EnemySoldier extends Enemy {
         this.fire = false;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: EnemySoldierType) {
+    public constructor(x: number, y: number, type: EnemySoldierType) {
         super();
-        const argCount = arguments.length;
-        this.__construct_EnemySoldier(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_EnemySoldier(argCount: number, arg0?: number, arg1?: number, arg2?: EnemySoldierType): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let typeLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = typeLocal!;
-
-            switch (typeLocal) {
-                case EnemySoldierType.APPEARING:
-                    this.runUpwards();
-                    break;
-                case EnemySoldierType.WALKER:
-                    this.startSeeking();
-                    break;
-                case EnemySoldierType.STATIONARY:
-                    this.startAiming();
-                    break;
-                case EnemySoldierType.TROOPS_TRUCK:
-                    this.runLeft();
-                    break;
-                case EnemySoldierType.FIRE:
-                    typeLocal = EnemySoldierType.STATIONARY;
-                    this.startAiming();
-                    this.fire = true;
-                    break;
-            }
-
-            if (this.fire) {
-                this.totalShots = 1;
-            } else {
-                switch (this.gameMode.stageIndex) {
-                    case 0:
-                    case 1:
-                        this.totalShots = 1;
-                        break;
-                    case 2:
-                    case 3:
-                        this.totalShots = 2;
-                        break;
-                    case 4:
-                    case 5:
-                        this.totalShots = 3;
-                        break;
-                }
-            }
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        switch (type) {
+            case EnemySoldierType.APPEARING:
+                this.runUpwards();
+                break;
+            case EnemySoldierType.WALKER:
+                this.startSeeking();
+                break;
+            case EnemySoldierType.STATIONARY:
+                this.startAiming();
+                break;
+            case EnemySoldierType.TROOPS_TRUCK:
+                this.runLeft();
+                break;
+            case EnemySoldierType.FIRE:
+                type = EnemySoldierType.STATIONARY;
+                this.startAiming();
+                this.fire = true;
+                break;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        if (this.fire) {
+            this.totalShots = 1;
+        } else {
+            switch (this.gameMode.stageIndex) {
+                case 0:
+                case 1:
+                    this.totalShots = 1;
+                    break;
+                case 2:
+                case 3:
+                    this.totalShots = 2;
+                    break;
+                case 4:
+                case 5:
+                    this.totalShots = 3;
+                    break;
+            }
+        }
     }
 
     public static readonly WALK_SPEED: number = 0.5;
@@ -244,7 +232,7 @@ export class EnemySoldier extends Enemy {
     }
 
     private walkAtRightAngleToBarrier(): void {
-        let direction = this.gameMode.suggestDirection(this.directionX, this.directionY);
+        let direction = this.gameMode.suggestDirectionFromVelocity(this.directionX, this.directionY);
         this.directionX = direction[0];
         this.directionY = direction[1];
         this.targetVx = javaFloat(this.getWalkSpeed() * direction[0]);
@@ -260,7 +248,7 @@ export class EnemySoldier extends Enemy {
         if (this.aiming > EnemySoldier.AIM_BLINKING) {
             let r2 = javaFloat(javaFloat(this.directionX * this.directionX) + javaFloat(this.directionY * this.directionY));
             if (r2 <= 9216) {
-                if (this.type == EnemySoldierType.WALKER) {
+                if (this.type === EnemySoldierType.WALKER) {
                     this.startSeeking();
                 } else {
                     return;
@@ -270,9 +258,9 @@ export class EnemySoldier extends Enemy {
 
         if (--this.aiming <= 0) {
             this.shoot();
-            if (++this.shots == this.totalShots) {
+            if (++this.shots === this.totalShots) {
                 this.shots = 0;
-                if (this.type == EnemySoldierType.WALKER) {
+                if (this.type === EnemySoldierType.WALKER) {
                     this.startSeeking();
                 } else {
                     this.startAiming();
@@ -295,7 +283,7 @@ export class EnemySoldier extends Enemy {
                 this
             );
         } else {
-            new EnemyBullet(
+            EnemyBullet.colored(
                 this.x,
                 javaFloat(this.y - 30),
                 javaFloat(this.directionX * imag),
@@ -309,7 +297,7 @@ export class EnemySoldier extends Enemy {
     private startAiming(): void {
         this.state = EnemySoldier.STATE_AIMING;
         this.aiming = EnemySoldier.AIM_FRAMES;
-        if (this.type != EnemySoldierType.WALKER) {
+        if (this.type !== EnemySoldierType.WALKER) {
             this.aiming += this.main.random.nextInt(EnemySoldier.EXTRA_AIMING_TIME);
         }
         this.aim();
@@ -373,19 +361,19 @@ export class EnemySoldier extends Enemy {
         let nextX = javaFloat(this.x + this.targetVx);
         let nextY = javaFloat(this.y + this.targetVy);
         let walkable = true;
-        if (this.gameMode.isDriveable(javaFloat(nextX - 16), javaFloat(nextY - 6), javaFloat(nextX + 16), javaFloat(nextY + 6))) {
+        if (this.gameMode.isDriveableBounds(javaFloat(nextX - 16), javaFloat(nextY - 6), javaFloat(nextX + 16), javaFloat(nextY + 6))) {
             // avoid bumping into other enemies
             for (let i = this.solids!.size() - 1; i >= 0; i--) {
                 let solidLocal = this.solids!.get(i);
                 if (
-                    solidLocal != this &&
-                    solidLocal.isSolid(
+                    solidLocal !== this &&
+                    solidLocal.isSolidBounds(
                         javaFloat(nextX + this.solidX1),
                         javaFloat(nextY + this.solidY1),
                         javaFloat(nextX + this.solidX2),
                         javaFloat(nextY + this.solidY2)
                     ) &&
-                    !solidLocal.isSolid(
+                    !solidLocal.isSolidBounds(
                         javaFloat(this.x + this.solidX1),
                         javaFloat(this.y + this.solidY1),
                         javaFloat(this.x + this.solidX2),
@@ -404,10 +392,10 @@ export class EnemySoldier extends Enemy {
             this.x = nextX;
             this.y = nextY;
 
-            if (this.legFrames == 0) {
+            if (this.legFrames === 0) {
                 this.legFrames = EnemySoldier.LEG_FRAMES - 1;
                 this.legIndex = 1;
-            } else if (this.legFrames == 13) {
+            } else if (this.legFrames === 13) {
                 this.legIndex = 0;
             }
             this.wobbleX = javaFloat(this.wobbleScaleX * EnemySoldier.WOBBLES[this.legFrames]);
@@ -422,19 +410,19 @@ export class EnemySoldier extends Enemy {
         if (this.gameMode.conveyorDelta > 0 && this.gameMode.isConveyor(this.x, this.y)) {
             let nextY = javaFloat(this.y + this.gameMode.conveyorDelta);
             let walkable = true;
-            if (this.gameMode.isDriveable(javaFloat(this.x - 16), javaFloat(nextY - 6), javaFloat(this.x + 16), javaFloat(nextY + 6))) {
+            if (this.gameMode.isDriveableBounds(javaFloat(this.x - 16), javaFloat(nextY - 6), javaFloat(this.x + 16), javaFloat(nextY + 6))) {
                 // avoid bumping into other enemies
                 for (let i = this.solids!.size() - 1; i >= 0; i--) {
                     let solidLocal = this.solids!.get(i);
                     if (
-                        solidLocal != this &&
-                        solidLocal.isSolid(
+                        solidLocal !== this &&
+                        solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(nextY + this.solidY1),
                             javaFloat(this.x + this.solidX2),
                             javaFloat(nextY + this.solidY2)
                         ) &&
-                        !solidLocal.isSolid(
+                        !solidLocal.isSolidBounds(
                             javaFloat(this.x + this.solidX1),
                             javaFloat(this.y + this.solidY1),
                             javaFloat(this.x + this.solidX2),
@@ -476,11 +464,11 @@ export class EnemySoldier extends Enemy {
     public override explode(): void {
         this.remove();
         new DeadEnemySoldier(this.x, this.y);
-        new Explosion(this.x, this.y);
+        Explosion.create(this.x, this.y);
     }
 
     public override bump(x1: number, y1: number, x2: number, y2: number, invincible: boolean): boolean {
-        if (this.isMine(x1, y1, x2, y2)) {
+        if (this.isMineBounds(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
         }
@@ -488,7 +476,7 @@ export class EnemySoldier extends Enemy {
     }
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
         }
@@ -497,7 +485,7 @@ export class EnemySoldier extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
             new DeadEnemySoldier(this.x, this.y);
             return true;
@@ -508,12 +496,12 @@ export class EnemySoldier extends Enemy {
 
     public override remove(): void {
         this.removeFlag = true;
-        if (this.bossHelicopter != null) {
+        if (this.bossHelicopter !== null) {
             this.bossHelicopter.soldierKilled();
         }
         if (
             this.playSoundOnRemove &&
-            !this.gameMode.isOutsideOfFrame(
+            !this.gameMode.isOutsideOfFrameBounds(
                 javaFloat(this.x + this.hitX1),
                 javaFloat(this.y + this.hitY1),
                 javaFloat(this.x + this.hitX2),
@@ -526,7 +514,7 @@ export class EnemySoldier extends Enemy {
 
     public update(): void {
         this.inSwamp = this.gameMode.isSwamp(this.x, this.y);
-        if (this.type == EnemySoldierType.WALKER) {
+        if (this.type === EnemySoldierType.WALKER) {
             this.walk();
         } else {
             this.aim();
@@ -538,17 +526,17 @@ export class EnemySoldier extends Enemy {
             this.blink = 4;
         }
         if (this.fire) {
-            this.main.draw(
+            this.main.drawImage(
                 (this.inSwamp ? this.main.swampSoldiers : this.main.enemySoldiers)[
-                    this.blink < 2 && this.state == EnemySoldier.STATE_AIMING && this.aiming <= EnemySoldier.AIM_BLINKING ? 0 : 1
+                    this.blink < 2 && this.state === EnemySoldier.STATE_AIMING && this.aiming <= EnemySoldier.AIM_BLINKING ? 0 : 1
                 ][this.orientation + this.legIndex],
                 this.x + this.wobbleX - 16,
                 this.y + this.wobbleY - 54
             );
         } else {
-            this.main.draw(
+            this.main.drawImage(
                 (this.inSwamp ? this.main.swampSoldiers : this.main.enemySoldiers)[
-                    this.blink < 2 && this.state == EnemySoldier.STATE_AIMING && this.aiming <= EnemySoldier.AIM_BLINKING ? 1 : 0
+                    this.blink < 2 && this.state === EnemySoldier.STATE_AIMING && this.aiming <= EnemySoldier.AIM_BLINKING ? 1 : 0
                 ][this.orientation + this.legIndex],
                 this.x + this.wobbleX - 16,
                 this.y + this.wobbleY - 54

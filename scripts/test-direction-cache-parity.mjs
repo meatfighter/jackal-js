@@ -105,7 +105,7 @@ test("the PWA decodes directions once and uses allocation-free byte lookups in t
     assert.match(loadText, /JAVA_LONG_PACKED_3BIT_SHIFTS\[j\]/);
     assert.match(loadText, /JAVA_LONG_LOW_3_BITS/);
 
-    for (const methodName of ["suggestDirection__overload1", "suggestDirection__overload2"]) {
+    for (const methodName of ["suggestDirectionWithCurrentAngle", "suggestDirection"]) {
         const parsed = readMethod(gameModePath, "GameMode", methodName);
         const text = parsed.method.getText(parsed.sourceFile);
         assert.match(text, /this\.directionsDecoded\[i\]/, `${methodName} must use the predecoded byte cache.`);

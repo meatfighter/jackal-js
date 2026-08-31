@@ -7,21 +7,13 @@ export class BulletHit extends GameElement {
         this.timeToLive = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BulletHit(argCount, arg0, arg1);
-    }
 
-    private __construct_BulletHit(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly TIME_TO_LIVE: number = 10;
@@ -39,6 +31,6 @@ export class BulletHit extends GameElement {
     }
 
     public render(): void {
-        this.main.drawCentered(this.main.bulletHit, this.x, this.y);
+        this.main.drawCenteredAt(this.main.bulletHit, this.x, this.y);
     }
 }

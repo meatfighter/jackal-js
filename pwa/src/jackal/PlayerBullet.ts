@@ -14,23 +14,14 @@ export class PlayerBullet extends GameElement {
         this.enemies = null;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_PlayerBullet(argCount, arg0, arg1);
-    }
 
-    private __construct_PlayerBullet(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-
-            this.enemies = this.gameMode.enemies;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.enemies = this.gameMode.enemies;
     }
 
     public static readonly DISTANCE: number = 360;
@@ -66,6 +57,6 @@ export class PlayerBullet extends GameElement {
     }
 
     public render(): void {
-        this.main.drawCentered(this.main.yellowBullet, this.x, this.y);
+        this.main.drawCenteredAt(this.main.yellowBullet, this.x, this.y);
     }
 }

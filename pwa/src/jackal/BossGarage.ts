@@ -32,28 +32,18 @@ export class BossGarage extends Enemy {
         this.groupIndex = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: BossGarageManager) {
+    public constructor(x: number, y: number, bossGarageManager: BossGarageManager) {
         super();
-        const argCount = arguments.length;
-        this.__construct_BossGarage(argCount, arg0, arg1, arg2);
-    }
 
-    private __construct_BossGarage(argCount: number, arg0?: number, arg1?: number, arg2?: BossGarageManager): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let bossGarageManagerLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.bossGarageManager = bossGarageManagerLocal!;
+        x = javaFloat(x);
+        y = javaFloat(y);
 
-            let X = javaInt(xLocal) >> 5;
-            let Y = javaInt(yLocal) >> 5;
-
-            this.groupIndex = this.gameMode.groupsMap[Y][X];
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.x = x;
+        this.y = y;
+        this.bossGarageManager = bossGarageManager;
+        let X = javaInt(x) >> 5;
+        let Y = javaInt(y) >> 5;
+        this.groupIndex = this.gameMode.groupsMap[Y][X];
     }
 
     public static readonly STATE_CLOSED: number = 0;
@@ -100,13 +90,13 @@ export class BossGarage extends Enemy {
                 if (this.isBrownTank) {
                     this.vehicleY = javaFloat(this.vehicleY + BrownTank.SPEED);
                     if (this.vehicleY > javaFloat(this.y + 72)) {
-                        this.brownTank = new BrownTank(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
+                        this.brownTank = BrownTank.withFirstMoveAndTracker(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
                         this.state = BossGarage.STATE_OPEN_2;
                     }
                 } else {
                     this.vehicleY = javaFloat(this.vehicleY + GrayTank.SPEED);
                     if (this.vehicleY > javaFloat(this.y + 80)) {
-                        this.grayTank = new GrayTank(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
+                        this.grayTank = GrayTank.withFirstMoveAndManager(javaFloat(this.x + 64), this.vehicleY, 125, this.bossGarageManager!);
                         this.state = BossGarage.STATE_OPEN_2;
                     }
                 }
@@ -131,7 +121,7 @@ export class BossGarage extends Enemy {
                 }
                 break;
             case BossGarage.STATE_OPEN_3:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = BossGarage.STATE_CLOSING;
                 }
                 break;
@@ -139,7 +129,7 @@ export class BossGarage extends Enemy {
     }
 
     public open(): void {
-        if (this.state == BossGarage.STATE_CLOSED) {
+        if (this.state === BossGarage.STATE_CLOSED) {
             this.state = BossGarage.STATE_OPENING;
             this.isBrownTank = this.main.random.nextBoolean();
             if (this.isBrownTank) {
@@ -155,12 +145,12 @@ export class BossGarage extends Enemy {
     // returns true if attack successful
 
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if (this.state >= BossGarage.STATE_OPEN && attackSource == AttackSource.PLAYER_WEAPON && this.hit(x1, y1, x2, y2)) {
+        if (this.state >= BossGarage.STATE_OPEN && attackSource === AttackSource.PLAYER_WEAPON && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            if (this.state == BossGarage.STATE_OPEN) {
-                new Explosion(javaFloat(this.x + 64), this.vehicleY);
+            if (this.state === BossGarage.STATE_OPEN) {
+                Explosion.create(javaFloat(this.x + 64), this.vehicleY);
             }
-            new Explosion(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
+            Explosion.create(javaFloat(this.x + this.explosionX), javaFloat(this.y + this.explosionY));
             this.main.addPoints(this.points);
             this.bossGarageManager!.garageDestroyed();
             this.gameMode.triggerGroup(this.groupIndex);
@@ -173,7 +163,7 @@ export class BossGarage extends Enemy {
     // returns true if player bullet was absorbed by enemy
 
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -181,17 +171,17 @@ export class BossGarage extends Enemy {
     }
 
     public render(): void {
-        if (this.state == BossGarage.STATE_CLOSED) {
-            this.main.draw(this.main.garages[0], this.x, this.y);
+        if (this.state === BossGarage.STATE_CLOSED) {
+            this.main.drawImage(this.main.garages[0], this.x, this.y);
         } else {
-            if (--this.lightIndex == 0) {
+            if (--this.lightIndex === 0) {
                 this.lightIndex = 3;
             }
 
-            this.main.draw(this.main.garages[1], this.x, this.y);
-            if (this.state == BossGarage.STATE_OPEN) {
+            this.main.drawImage(this.main.garages[1], this.x, this.y);
+            if (this.state === BossGarage.STATE_OPEN) {
                 this.gameMode.g.setWorldClip(this.x - 1, this.y, 130, 256);
-                this.main.drawVehicle(
+                this.main.drawVehicleAlpha(
                     this.vehicle!,
                     this.x + 64,
                     this.vehicleY,
@@ -200,14 +190,14 @@ export class BossGarage extends Enemy {
                 );
                 this.gameMode.g.clearWorldClip();
             }
-            this.main.draw(this.main.garages[4], this.x, this.y);
+            this.main.drawImage(this.main.garages[4], this.x, this.y);
             if (this.lightIndex > 1) {
-                this.main.draw(this.main.garages[this.lightIndex], this.x + 46, this.y - 4);
+                this.main.drawImage(this.main.garages[this.lightIndex], this.x + 46, this.y - 4);
             }
 
-            if (this.state == BossGarage.STATE_OPENING || this.state == BossGarage.STATE_CLOSING) {
+            if (this.state === BossGarage.STATE_OPENING || this.state === BossGarage.STATE_CLOSING) {
                 this.gameMode.g.setWorldClip(this.x - 1, this.y, 130, 256);
-                this.main.draw(this.main.garages[0], this.x, this.y - this.doorY);
+                this.main.drawImage(this.main.garages[0], this.x, this.y - this.doorY);
                 this.gameMode.g.clearWorldClip();
             }
         }

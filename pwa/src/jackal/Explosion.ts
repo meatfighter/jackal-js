@@ -35,71 +35,37 @@ export class Explosion extends GameElement {
         this.sourceEnemy = null;
     }
 
-    public constructor(x: number, y: number, tiny: boolean, delay: number, alpha: number, enemy: Enemy);
-    public constructor(x: number, y: number, tiny: boolean, delay: number, alpha: number);
-    public constructor(x: number, y: number);
-    public constructor(x: number, y: number, playerExplosion: boolean);
-    public constructor(arg0?: number, arg1?: number, arg2?: boolean, arg3?: number, arg4?: number, arg5?: Enemy) {
+    private constructor() {
         super();
-        const argCount = arguments.length;
-        this.__construct_Explosion(argCount, arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
-    private __construct_Explosion(argCount: number, arg0?: number, arg1?: number, arg2?: boolean, arg3?: number, arg4?: number, arg5?: Enemy): void {
-        if (
-            argCount === 6 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "boolean" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            let xLocal4 = javaFloat(arg0);
-            let yLocal4 = javaFloat(arg1);
-            let tinyLocal2 = arg2;
-            let delayLocal2 = arg3;
-            let alphaLocal2 = javaFloat(arg4);
-            let enemyLocal = arg5;
-            this.__construct_Explosion(5, xLocal4, yLocal4, tinyLocal2, delayLocal2, alphaLocal2);
-            this.sourceEnemy = enemyLocal!;
-            this.enemyX = enemyLocal!.x;
-            this.enemyY = enemyLocal!.y;
-            return;
-        } else if (
-            argCount === 5 &&
-            typeof arg0 === "number" &&
-            typeof arg1 === "number" &&
-            typeof arg2 === "boolean" &&
-            typeof arg3 === "number" &&
-            typeof arg4 === "number"
-        ) {
-            let xLocal3 = javaFloat(arg0);
-            let yLocal3 = javaFloat(arg1);
-            let tinyLocal = arg2;
-            let delayLocal = arg3;
-            let alphaLocal = javaFloat(arg4);
-            this.__construct_Explosion(3, xLocal3, yLocal3, false);
-            this.setTiny(tinyLocal);
-            this.setDelayed(delayLocal);
-            this.setAlpha(alphaLocal);
-            return;
-        } else if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal2 = javaFloat(arg0);
-            let yLocal2 = javaFloat(arg1);
-            this.__construct_Explosion(3, xLocal2, yLocal2, false);
-            return;
-        } else if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let playerExplosion = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = playerExplosion ? AttackSource.PLAYER_EXPLOSION : AttackSource.EXPLOSION;
+    public static create(x: number, y: number): Explosion {
+        return Explosion.withPlayerExplosion(x, y, false);
+    }
 
-            this.enemies = this.gameMode.enemies;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+    public static withPlayerExplosion(x: number, y: number, playerExplosion: boolean): Explosion {
+        const explosion = new Explosion();
+        explosion.x = javaFloat(x);
+        explosion.y = javaFloat(y);
+        explosion.type = playerExplosion ? AttackSource.PLAYER_EXPLOSION : AttackSource.EXPLOSION;
+        explosion.enemies = explosion.gameMode.enemies;
+        return explosion;
+    }
+
+    public static configured(x: number, y: number, tiny: boolean, delay: number, alpha: number): Explosion {
+        const explosion = Explosion.withPlayerExplosion(x, y, false);
+        explosion.setTiny(tiny);
+        explosion.setDelayed(delay);
+        explosion.setAlpha(javaFloat(alpha));
+        return explosion;
+    }
+
+    public static attachedToEnemy(x: number, y: number, tiny: boolean, delay: number, alpha: number, enemy: Enemy): Explosion {
+        const explosion = Explosion.configured(x, y, tiny, delay, alpha);
+        explosion.sourceEnemy = enemy;
+        explosion.enemyX = enemy.x;
+        explosion.enemyY = enemy.y;
+        return explosion;
     }
 
     public static readonly GROW_RATE: number = javaFloat(1.03);
@@ -139,8 +105,8 @@ export class Explosion extends GameElement {
 
     public update(): void {
         if (this.delay > 0) {
-            if (--this.delay == 0) {
-                if (this.sourceEnemy != null) {
+            if (--this.delay === 0) {
+                if (this.sourceEnemy !== null) {
                     this.x = javaFloat(javaFloat(this.x + this.sourceEnemy.x) - this.enemyX);
                     this.y = javaFloat(javaFloat(this.y + this.sourceEnemy.y) - this.enemyY);
                 }
@@ -167,7 +133,7 @@ export class Explosion extends GameElement {
         let y1 = javaFloat(this.y - margin);
         let x2 = javaFloat(this.x + margin);
         let y2 = javaFloat(this.y + margin);
-        if (this.damagesEnemies && !this.gameMode.isOutsideOfFrame(x1, y1, x2, y2)) {
+        if (this.damagesEnemies && !this.gameMode.isOutsideOfFrameBounds(x1, y1, x2, y2)) {
             for (let i = this.enemies!.size() - 1; i >= 0; i--) {
                 let enemyLocal = this.enemies!.get(i);
                 if (!enemyLocal.removeFlag) {
@@ -185,10 +151,10 @@ export class Explosion extends GameElement {
     }
 
     public render(): void {
-        if (this.alpha == 1) {
+        if (this.alpha === 1) {
             this.main.drawScaled(this.main.explosions[this.spriteIndex], this.x, this.y, this.scale);
         } else {
-            this.main.drawScaled(this.main.explosions[this.spriteIndex], this.x, this.y, this.scale, this.alpha);
+            this.main.drawScaledAlpha(this.main.explosions[this.spriteIndex], this.x, this.y, this.scale, this.alpha);
         }
     }
 }

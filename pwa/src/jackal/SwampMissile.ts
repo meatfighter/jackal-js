@@ -25,28 +25,18 @@ export class SwampMissile extends Enemy {
         this.entryDelay = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(launcherX: number, launcherY: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_SwampMissile(argCount, arg0, arg1);
-    }
 
-    private __construct_SwampMissile(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let launcherXLocal = javaFloat(arg0);
-            let launcherYLocal = javaFloat(arg1);
-            this.launcherX = launcherXLocal;
-            this.launcherY = launcherYLocal;
-
-            this.player = this.gameMode.player;
-
-            this.x = launcherXLocal;
-            this.y = javaFloat(launcherYLocal + 32);
-            this.vx = 0;
-            this.vy = -SwampMissile.SPEED;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        launcherX = javaFloat(launcherX);
+        launcherY = javaFloat(launcherY);
+        this.launcherX = launcherX;
+        this.launcherY = launcherY;
+        this.player = this.gameMode.player;
+        this.x = launcherX;
+        this.y = javaFloat(launcherY + 32);
+        this.vx = 0;
+        this.vy = -SwampMissile.SPEED;
     }
 
     public static readonly ROTATION_SPEED: number = javaFloat(0.9);
@@ -117,9 +107,9 @@ export class SwampMissile extends Enemy {
         ) {
             this.playSoundOnRemove = false;
             this.remove();
-        } else if (++this.explodeDelay == SwampMissile.EXPLODE_DELAY) {
+        } else if (++this.explodeDelay === SwampMissile.EXPLODE_DELAY) {
             this.remove();
-            new Explosion(
+            Explosion.create(
                 javaFloat(this.x + javaFloat(SwampMissile.EXPLODE_OFFSET * this.vx)),
                 javaFloat(this.y + javaFloat(SwampMissile.EXPLODE_OFFSET * this.vy))
             ).setTiny(true);

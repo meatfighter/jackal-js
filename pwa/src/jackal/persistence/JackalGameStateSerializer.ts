@@ -25,7 +25,6 @@ import type { IFadeListener } from "../IFadeListener.js";
 import type { IMenuListener } from "../IMenuListener.js";
 import type { IMode } from "../IMode.js";
 import { Main } from "../Main.js";
-import { MainRuntimeState } from "../MainRuntimeState.js";
 import { MapMode } from "../MapMode.js";
 import { Menu } from "../Menu.js";
 
@@ -730,8 +729,6 @@ export class JackalGameStateSerializer {
         const gameMode = new GameMode();
         Main.mainInstance = main;
         Main.gameMode = gameMode;
-        MainRuntimeState.mainInstance = main;
-        MainRuntimeState.gameMode = gameMode;
         gameMode.setStage(
             snapshot.mainFields.stageIndex as number,
             main.stages[snapshot.mainFields.stageIndex as number],
@@ -786,8 +783,6 @@ export class JackalGameStateSerializer {
     private restoreStandaloneModeSnapshot(main: Main, gc: GameContainer, snapshot: JackalStandaloneModeStateSnapshot): void {
         Main.mainInstance = main;
         Main.gameMode = null!;
-        MainRuntimeState.mainInstance = main;
-        MainRuntimeState.gameMode = null;
 
         const context: RestoreContext = {
             main,

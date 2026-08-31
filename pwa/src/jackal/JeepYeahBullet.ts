@@ -29,6 +29,6 @@ export class JeepYeahBullet {
     }
 
     public render(main: Main): void {
-        main.drawRotated(main.jeepYeahBullet, this.x, this.y, -10, -2, this.angle, this.scale);
+        main.drawRotatedAtCenterScaled(main.jeepYeahBullet, this.x, this.y, -10, -2, this.angle, this.scale);
     }
 }

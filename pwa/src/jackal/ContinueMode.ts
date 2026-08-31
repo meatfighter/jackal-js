@@ -35,11 +35,11 @@ export class ContinueMode implements IMode, IFadeListener, IMenuListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == ContinueMode.STATE_FADE_IN) {
+        if (this.state === ContinueMode.STATE_FADE_IN) {
             this.state = ContinueMode.STATE_MENU;
-        } else if (this.state == ContinueMode.STATE_FADE_OUT) {
+        } else if (this.state === ContinueMode.STATE_FADE_OUT) {
             this.state = ContinueMode.STATE_DONE;
-            if (this.selectedIndex == 0) {
+            if (this.selectedIndex === 0) {
                 this.main.continuePlayer();
                 this.main.requestMode(Modes.GAME, this.gc);
             } else {
@@ -53,13 +53,13 @@ export class ContinueMode implements IMode, IFadeListener, IMenuListener {
     public optionSelected(selectedIndex: number): void {
         this.optionSelectedFlag = true;
         this.selectedIndex = selectedIndex;
-        this.main.stopSong();
+        this.main.stopAllSongs();
     }
 
     public update(gc: GameContainer): void {
         this.menu.update();
 
-        if (this.state == ContinueMode.STATE_MENU && this.optionSelectedFlag) {
+        if (this.state === ContinueMode.STATE_MENU && this.optionSelectedFlag) {
             this.state = ContinueMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
@@ -69,7 +69,7 @@ export class ContinueMode implements IMode, IFadeListener, IMenuListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == ContinueMode.STATE_DONE) {
+        if (this.state === ContinueMode.STATE_DONE) {
             return;
         }
 

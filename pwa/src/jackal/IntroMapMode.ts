@@ -27,7 +27,7 @@ export class IntroMapMode implements IMode, IFadeListener {
     }
 
     public fadeCompleted(): void {
-        if (this.state == IntroMapMode.STATE_FADE_IN) {
+        if (this.state === IntroMapMode.STATE_FADE_IN) {
             this.state = IntroMapMode.STATE_PAUSED;
         } else {
             this.state = IntroMapMode.STATE_DONE;
@@ -37,7 +37,7 @@ export class IntroMapMode implements IMode, IFadeListener {
     }
 
     public update(gc: GameContainer): void {
-        if (this.state == IntroMapMode.STATE_PAUSED && --this.delay == 0) {
+        if (this.state === IntroMapMode.STATE_PAUSED && --this.delay === 0) {
             this.state = IntroMapMode.STATE_FADE_OUT;
             this.main.startFade(true, this);
         }
@@ -47,7 +47,7 @@ export class IntroMapMode implements IMode, IFadeListener {
         g.setColor(Color.black);
         g.fillRect(0, 0, MainConstants.DISPLAY_WIDTH, MainConstants.DISPLAY_HEIGHT);
 
-        if (this.state == IntroMapMode.STATE_DONE) {
+        if (this.state === IntroMapMode.STATE_DONE) {
             return;
         }
 

@@ -52,25 +52,10 @@ export class ArrayList<T> {
         return previous;
     }
 
-    public remove(index: number): T;
-    public remove(value: T): boolean;
-    public remove(valueOrIndex: T | number): T | boolean {
-        if (typeof valueOrIndex === "number") {
-            const index = Math.trunc(valueOrIndex);
-            if (index < 0 || index >= this.values.length) {
-                return false;
-            }
-            return this.removeAt(index);
+    public removeAt(index: number): T {
+        if (!Number.isInteger(index) || index < 0 || index >= this.values.length) {
+            throw new RangeError(`ArrayList index out of bounds: ${index}`);
         }
-        const index = this.values.indexOf(valueOrIndex);
-        if (index < 0) {
-            return false;
-        }
-        this.removeAt(index);
-        return true;
-    }
-
-    private removeAt(index: number): T {
         const previous = this.values[index];
         const lastIndex = this.values.length - 1;
         for (let i = index; i < lastIndex; i++) {
@@ -78,6 +63,15 @@ export class ArrayList<T> {
         }
         this.values.length = lastIndex;
         return previous;
+    }
+
+    public removeValue(value: T): boolean {
+        const index = this.values.indexOf(value);
+        if (index < 0) {
+            return false;
+        }
+        this.removeAt(index);
+        return true;
     }
 
     public size(): number {
@@ -328,12 +322,6 @@ export function javaLong(value: unknown): bigint {
 
 export function resourceStream(ref: string): ArrayBuffer | null {
     return ResourceLoader.getResourceAsStream(ref);
-}
-
-export function rotatePoint(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
 }
 
 function cloneDefault<T>(value: T): T {

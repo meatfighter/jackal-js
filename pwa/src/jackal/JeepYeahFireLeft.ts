@@ -2,18 +2,9 @@ import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import type { Main } from "./Main.js";
 export class JeepYeahFireLeft {
     public constructor() {
-        const argCount = arguments.length;
-        this.__construct_JeepYeahFireLeft(argCount);
-    }
-
-    private __construct_JeepYeahFireLeft(argCount: number): void {
-        if (argCount === 0) {
-            for (let i = 0; i < 7; i++) {
-                this.update();
-            }
-            return;
+        for (let i = 0; i < 7; i++) {
+            this.update();
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
     }
 
     public static readonly STATE_GROWING: number = 0;
@@ -57,7 +48,7 @@ export class JeepYeahFireLeft {
             case JeepYeahFireLeft.STATE_MOVING:
                 this.x = javaFloat(this.x + JeepYeahFireLeft.vx);
                 this.y = javaFloat(this.y + JeepYeahFireLeft.vy);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireLeft.STATE_SHRINKING;
                     this.delay = JeepYeahFireLeft.SHRINK_STEPS;
                 }
@@ -66,13 +57,13 @@ export class JeepYeahFireLeft {
                 this.x = javaFloat(this.x + JeepYeahFireLeft.vx);
                 this.y = javaFloat(this.y + JeepYeahFireLeft.vy);
                 this.scale = javaFloat(JeepYeahFireLeft.I_SHRINK_STEPS * this.delay);
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireLeft.STATE_PAUSED;
                     this.delay = JeepYeahFireLeft.PAUSE_TIME;
                 }
                 break;
             case JeepYeahFireLeft.STATE_PAUSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = JeepYeahFireLeft.STATE_GROWING;
                     this.x = 0;
                     this.scale = 0;
@@ -87,7 +78,7 @@ export class JeepYeahFireLeft {
                 main.drawRotatedScaled(main.gunFires[1], 382, 276, 0, -18, JeepYeahFireLeft.ANGLE, this.scale, 1);
                 break;
             case JeepYeahFireLeft.STATE_MOVING:
-                main.drawRotated(main.gunFires[1], this.x, this.y, 0, -18, JeepYeahFireLeft.ANGLE);
+                main.drawRotatedAtCenter(main.gunFires[1], this.x, this.y, 0, -18, JeepYeahFireLeft.ANGLE);
                 break;
             case JeepYeahFireLeft.STATE_SHRINKING:
                 main.drawRotatedScaled(main.gunFires[1], this.x, this.y, 0, -18, JeepYeahFireLeft.ANGLE, this.scale, 1);

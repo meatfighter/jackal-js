@@ -5,56 +5,19 @@ import type { Main } from "./Main.js";
 import { javaFloat } from "../java/JavaRuntime.js";
 
 export class Menu {
-    public constructor(
-        arg0?: number,
-        arg1?: number,
-        arg2?: Main,
-        arg3?: number,
-        arg4?: number,
-        arg5?: IMenuListener,
-        arg6?: string,
-        arg7?: string,
-        arg8?: string
-    ) {
-        const argCount = arguments.length;
-        this.__construct_Menu(argCount, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-    }
+    public constructor(x: number, y: number, main: Main, selectedIndex: number, icon: number, menuListener: IMenuListener, ...options: string[]) {
+        this.x = javaFloat(x);
+        this.y = javaFloat(y);
+        this.main = main;
+        this.selectedIndex = selectedIndex;
+        this.icon = icon;
+        this.menuListener = menuListener;
+        this.options = options;
 
-    private __construct_Menu(
-        argCount: number,
-        arg0?: number,
-        arg1?: number,
-        arg2?: Main,
-        arg3?: number,
-        arg4?: number,
-        arg5?: IMenuListener,
-        arg6?: string,
-        arg7?: string,
-        arg8?: string
-    ): void {
-        if (argCount >= 6 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg3 === "number" && typeof arg4 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let mainLocal = arg2;
-            let selectedIndexLocal = arg3;
-            let iconLocal = arg4;
-            let menuListenerLocal = arg5;
-            let optionsLocal = [arg6, arg7, arg8].slice(0, Math.max(0, argCount - 6));
-            this.x = xLocal;
-            this.y = yLocal;
-            this.main = mainLocal!;
-            this.selectedIndex = selectedIndexLocal;
-            this.icon = iconLocal;
-            this.menuListener = menuListenerLocal!;
-            this.options = optionsLocal as string[];
+        this.input = main.input;
+        this.iconY = javaFloat(16 + (selectedIndex << 6));
 
-            this.input = mainLocal!.input;
-            this.iconY = javaFloat(16 + (selectedIndexLocal << 6));
-
-            this.input.clearKeyPressedRecord();
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.input.clearKeyPressedRecord();
     }
 
     public static readonly ICON_JEEP: number = 0;
@@ -100,7 +63,7 @@ export class Menu {
     }
 
     private moveIcon(): void {
-        if (this.menuListener != null) {
+        if (this.menuListener !== null) {
             this.menuListener.selectionChanged(this.selectedIndex);
         }
         this.selectState = Menu.SELECT_STATE_ACCELERATING;
@@ -125,13 +88,13 @@ export class Menu {
         if (this.buttonReleased) {
             if (this.input.isDown()) {
                 this.buttonReleased = false;
-                if (this.inputEnabled && !this.selectionMade && this.selectedIndex != this.options.length - 1) {
+                if (this.inputEnabled && !this.selectionMade && this.selectedIndex !== this.options.length - 1) {
                     this.selectedIndex++;
                     this.moveIcon();
                 }
             } else if (this.input.isUp()) {
                 this.buttonReleased = false;
-                if (this.inputEnabled && !this.selectionMade && this.selectedIndex != 0) {
+                if (this.inputEnabled && !this.selectionMade && this.selectedIndex !== 0) {
                     this.selectedIndex--;
                     this.moveIcon();
                 }
@@ -139,7 +102,7 @@ export class Menu {
                 this.buttonReleased = false;
                 if (!this.selectionMade && this.inputEnabled) {
                     this.selectionMade = true;
-                    if (this.menuListener != null) {
+                    if (this.menuListener !== null) {
                         this.menuListener.optionSelected(this.selectedIndex);
                     }
                 }
@@ -148,7 +111,7 @@ export class Menu {
 
         if (!this.selectionMade && this.input.isEnter() && this.inputEnabled) {
             this.selectionMade = true;
-            if (this.menuListener != null) {
+            if (this.menuListener !== null) {
                 this.menuListener.optionSelected(this.selectedIndex);
             }
         }

@@ -17,32 +17,19 @@ export class Statue extends Enemy {
         this.eyesVisible = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number) {
+    public constructor(x: number, y: number, type: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_Statue(argCount, arg0, arg1, arg2);
-    }
-
-    private __construct_Statue(argCount: number, arg0?: number, arg1?: number, arg2?: number): void {
-        if (argCount === 3 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let typeLocal = arg2;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.type = typeLocal;
-
-            let X = javaInt(xLocal) >> 5;
-            let Y = javaInt(yLocal) >> 5;
-
-            if (typeLocal == Statue.TYPE_LEFT) {
-                this.delay += 108;
-            }
-
-            this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
-            return;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        let X = javaInt(x) >> 5;
+        let Y = javaInt(y) >> 5;
+        if (type === Statue.TYPE_LEFT) {
+            this.delay += 108;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        this.groupIndex = this.gameMode.groupsMap[Y + 1][X + 1];
     }
 
     public static readonly PAUSE_TIME: number = 91;
@@ -74,9 +61,9 @@ export class Statue extends Enemy {
 
     // returns true if attack successful
     public override attack(x1: number, y1: number, x2: number, y2: number, attackSource: number): boolean {
-        if ((attackSource == AttackSource.PLAYER_WEAPON || attackSource == AttackSource.TRAVELING_EXPLOSION) && this.hit(x1, y1, x2, y2)) {
+        if ((attackSource === AttackSource.PLAYER_WEAPON || attackSource === AttackSource.TRAVELING_EXPLOSION) && this.hitBounds(x1, y1, x2, y2)) {
             this.remove();
-            new Explosion(javaFloat(this.x + 48), javaFloat(this.y + 64));
+            Explosion.create(javaFloat(this.x + 48), javaFloat(this.y + 64));
             this.gameMode.triggerGroup(this.groupIndex);
             this.main.addPoints(800);
             return true;
@@ -87,7 +74,7 @@ export class Statue extends Enemy {
 
     // returns true if player bullet was absorbed by enemy
     public override bulletAttack(x1: number, y1: number, x2: number, y2: number): boolean {
-        if (this.hit(x1, y1, x2, y2)) {
+        if (this.hitBounds(x1, y1, x2, y2)) {
             return true;
         } else {
             return false;
@@ -95,27 +82,27 @@ export class Statue extends Enemy {
     }
 
     public update(): void {
-        if (this.type == Statue.TYPE_NONE) {
+        if (this.type === Statue.TYPE_NONE) {
             return;
         }
         switch (this.state) {
             case Statue.STATE_PAUSED:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Statue.STATE_EYES_FLASHING;
                     this.delay = Statue.EYES_FLASHING_TIME;
                 }
                 break;
             case Statue.STATE_EYES_FLASHING:
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Statue.STATE_MOUTH_OPEN;
                     this.delay = Statue.MOUTH_OPEN_TIME;
                 }
                 break;
             case Statue.STATE_MOUTH_OPEN:
-                if (this.delay == Statue.MISSILE_TIME) {
-                    new StatueMissile(this.x, this.y, this.type == Statue.TYPE_RIGHT);
+                if (this.delay === Statue.MISSILE_TIME) {
+                    new StatueMissile(this.x, this.y, this.type === Statue.TYPE_RIGHT);
                 }
-                if (--this.delay == 0) {
+                if (--this.delay === 0) {
                     this.state = Statue.STATE_PAUSED;
                     this.delay = Statue.PAUSE_TIME;
                 }
@@ -127,14 +114,14 @@ export class Statue extends Enemy {
         switch (this.state) {
             case Statue.STATE_EYES_FLASHING:
                 if (this.eyesVisible < 2) {
-                    this.main.draw(this.main.statueBlueEyes, this.x + 32, this.y + 64);
+                    this.main.drawImage(this.main.statueBlueEyes, this.x + 32, this.y + 64);
                 }
-                if (++this.eyesVisible == 4) {
+                if (++this.eyesVisible === 4) {
                     this.eyesVisible = 0;
                 }
                 break;
             case Statue.STATE_MOUTH_OPEN:
-                this.main.draw(this.main.statueBlueMouth, this.x + 32, this.y + 96);
+                this.main.drawImage(this.main.statueBlueMouth, this.x + 32, this.y + 96);
                 break;
         }
     }

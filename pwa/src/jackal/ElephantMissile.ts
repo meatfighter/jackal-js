@@ -24,57 +24,43 @@ export class ElephantMissile extends GameElement {
         this.player = null;
     }
 
-    public constructor(arg0?: number, arg1?: number, arg2?: number, arg3?: boolean) {
+    public constructor(x: number, y: number, angle: number, left: boolean) {
         super();
-        const argCount = arguments.length;
-        this.__construct_ElephantMissile(argCount, arg0, arg1, arg2, arg3);
-    }
-
-    private __construct_ElephantMissile(argCount: number, arg0?: number, arg1?: number, arg2?: number, arg3?: boolean): void {
-        if (argCount === 4 && typeof arg0 === "number" && typeof arg1 === "number" && typeof arg2 === "number" && typeof arg3 === "boolean") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            let angleLocal = arg2;
-            let left = arg3;
-            this.x = xLocal;
-            this.y = yLocal;
-            this.angle = javaFloat(angleLocal);
-
-            switch (angleLocal) {
-                case 45:
-                    this.vx = ElephantMissile.DIAGONAL_SPEED;
-                    this.vy = ElephantMissile.DIAGONAL_SPEED;
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
+        this.angle = javaFloat(angle);
+        switch (angle) {
+            case 45:
+                this.vx = ElephantMissile.DIAGONAL_SPEED;
+                this.vy = ElephantMissile.DIAGONAL_SPEED;
+                this.explosionOffset = 32;
+                this.tipX = 10;
+                this.tipY = 10;
+                break;
+            case 90:
+                this.vx = 0;
+                this.vy = ElephantMissile.SPEED;
+                if (!left) {
                     this.explosionOffset = 32;
-                    this.tipX = 10;
-                    this.tipY = 10;
-                    break;
-                case 90:
-                    this.vx = 0;
-                    this.vy = ElephantMissile.SPEED;
-                    if (!left) {
-                        this.explosionOffset = 32;
-                    }
-                    this.tipX = 0;
-                    this.tipY = 16;
-                    break;
-                case 135:
-                    this.vx = -ElephantMissile.DIAGONAL_SPEED;
-                    this.vy = ElephantMissile.DIAGONAL_SPEED;
-                    this.tipX = -10;
-                    this.tipY = 10;
-                    break;
-            }
-
-            if (angleLocal == 90) {
-                this.maxY = 908;
-            } else {
-                this.maxY = this.main.random.nextBoolean() ? 598 : 822;
-            }
-
-            this.main.playSound(this.main.laserSound);
-            return;
+                }
+                this.tipX = 0;
+                this.tipY = 16;
+                break;
+            case 135:
+                this.vx = -ElephantMissile.DIAGONAL_SPEED;
+                this.vy = ElephantMissile.DIAGONAL_SPEED;
+                this.tipX = -10;
+                this.tipY = 10;
+                break;
         }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        if (angle === 90) {
+            this.maxY = 908;
+        } else {
+            this.maxY = this.main.random.nextBoolean() ? 598 : 822;
+        }
+        this.main.playSound(this.main.laserSound);
     }
 
     public static readonly SPEED: number = 6;
@@ -95,10 +81,10 @@ export class ElephantMissile extends GameElement {
             let Y = javaInt(this.y) >> 5;
             let groupIndex = this.gameMode.groupsMap[Y][X];
             this.gameMode.triggerGroup(groupIndex);
-            new Explosion(javaFloat((X << 5) + this.explosionOffset), javaFloat((Y << 5) + 32)).setDamagesEnemies(false);
-        } else if (this.player!.attack(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY))) {
+            Explosion.create(javaFloat((X << 5) + this.explosionOffset), javaFloat((Y << 5) + 32)).setDamagesEnemies(false);
+        } else if (this.player!.attackAt(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY))) {
             this.remove();
-            new Explosion(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY));
+            Explosion.create(javaFloat(this.x + this.tipX), javaFloat(this.y + this.tipY));
         }
     }
 

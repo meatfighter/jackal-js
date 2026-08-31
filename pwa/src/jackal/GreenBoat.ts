@@ -17,21 +17,13 @@ export class GreenBoat extends Enemy {
         this.movementDelay = 0;
     }
 
-    public constructor(arg0?: number, arg1?: number) {
+    public constructor(x: number, y: number) {
         super();
-        const argCount = arguments.length;
-        this.__construct_GreenBoat(argCount, arg0, arg1);
-    }
 
-    private __construct_GreenBoat(argCount: number, arg0?: number, arg1?: number): void {
-        if (argCount === 2 && typeof arg0 === "number" && typeof arg1 === "number") {
-            let xLocal = javaFloat(arg0);
-            let yLocal = javaFloat(arg1);
-            this.x = xLocal;
-            this.y = yLocal;
-            return;
-        }
-        throw new Error(`No Java constructor overload matched arguments: ${argCount}`);
+        x = javaFloat(x);
+        y = javaFloat(y);
+        this.x = x;
+        this.y = y;
     }
 
     public static readonly SPRITE_TOGGLE_FRAMES: number = 12;
@@ -77,11 +69,11 @@ export class GreenBoat extends Enemy {
             let dy = javaFloat(this.player!.y - Y);
             let imag = javaFloat(1 / javaFloat(Math.sqrt(javaFloat(javaFloat(dx * dx) + javaFloat(dy * dy)))));
 
-            new EnemyBullet(X, Y, javaFloat(dx * imag), javaFloat(dy * imag), GreenBoat.BULLET_TRAVEL_TIME, true);
+            EnemyBullet.colored(X, Y, javaFloat(dx * imag), javaFloat(dy * imag), GreenBoat.BULLET_TRAVEL_TIME, true);
         }
     }
 
     public render(): void {
-        this.main.draw(this.main.greenBoats[this.spriteIndex], this.x - 58, this.y - 64);
+        this.main.drawImage(this.main.greenBoats[this.spriteIndex], this.x - 58, this.y - 64);
     }
 }
