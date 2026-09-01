@@ -1,5 +1,17 @@
 import { Color, type ControllerListener, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
+import {
+    AXIS_RECENTER_THRESHOLD,
+    AXIS_THRESHOLD,
+    CONTROLLER_INDEX_LIMIT,
+    EXTRA_HORIZONTAL_AXES,
+    EXTRA_VERTICAL_AXES,
+    GAMEPAD_AXIS_LIMIT,
+    createExtraAxisBaselines,
+    isAnyCalibratedAxisGreaterThan,
+    isAnyCalibratedAxisLessThan,
+    resetExtraAxisBaselines
+} from "../app/BrowserGamepadAxes.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IFadeListener } from "./IFadeListener.js";
@@ -26,12 +38,12 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public static readonly I_FADE_TIME: number = javaFloat(1 / InputMode.FADE_TIME);
     public static readonly DONE_DELAY: number = 30;
     public static readonly ARM_DELAY: number = 8;
-    public static readonly CONTROLLER_INDEX_LIMIT: number = 16;
-    public static readonly GAMEPAD_AXIS_LIMIT: number = 16;
-    public static readonly AXIS_THRESHOLD: number = 0.5;
-    public static readonly AXIS_RECENTER_THRESHOLD: number = 0.05;
-    public static readonly EXTRA_HORIZONTAL_AXES: number[] = [2, 6];
-    public static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
+    public static readonly CONTROLLER_INDEX_LIMIT: number = CONTROLLER_INDEX_LIMIT;
+    public static readonly GAMEPAD_AXIS_LIMIT: number = GAMEPAD_AXIS_LIMIT;
+    public static readonly AXIS_THRESHOLD: number = AXIS_THRESHOLD;
+    public static readonly AXIS_RECENTER_THRESHOLD: number = AXIS_RECENTER_THRESHOLD;
+    public static readonly EXTRA_HORIZONTAL_AXES: readonly number[] = EXTRA_HORIZONTAL_AXES;
+    public static readonly EXTRA_VERTICAL_AXES: readonly number[] = EXTRA_VERTICAL_AXES;
 
     public static readonly INPUT_TITLE: string = "INPUT";
     public static readonly INPUT_TITLE_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2);
@@ -76,7 +88,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
-    public extraAxisBaselines: number[] = javaArray(InputMode.CONTROLLER_INDEX_LIMIT * InputMode.GAMEPAD_AXIS_LIMIT, Number.NaN);
+    public extraAxisBaselines: number[] = createExtraAxisBaselines();
     public extraAxisUpDown: boolean = false;
     public extraAxisDownDown: boolean = false;
     public extraAxisLeftDown: boolean = false;
@@ -461,19 +473,19 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     }
 
     private isExtraAxisUpDown(): boolean {
-        return this.isAnyAxisLessThan(InputMode.EXTRA_VERTICAL_AXES, -InputMode.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisLessThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_VERTICAL_AXES, -InputMode.AXIS_THRESHOLD);
     }
 
     private isExtraAxisDownDown(): boolean {
-        return this.isAnyAxisGreaterThan(InputMode.EXTRA_VERTICAL_AXES, InputMode.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisGreaterThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_VERTICAL_AXES, InputMode.AXIS_THRESHOLD);
     }
 
     private isExtraAxisLeftDown(): boolean {
-        return this.isAnyAxisLessThan(InputMode.EXTRA_HORIZONTAL_AXES, -InputMode.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisLessThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_HORIZONTAL_AXES, -InputMode.AXIS_THRESHOLD);
     }
 
     private isExtraAxisRightDown(): boolean {
-        return this.isAnyAxisGreaterThan(InputMode.EXTRA_HORIZONTAL_AXES, InputMode.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisGreaterThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_HORIZONTAL_AXES, InputMode.AXIS_THRESHOLD);
     }
 
     private isExtraAxisUpPressed(): boolean {
@@ -504,55 +516,8 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return pressed;
     }
 
-    private isAnyAxisLessThan(axes: readonly number[], threshold: number): boolean {
-        for (let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
-            for (let i = 0; i < axes.length; i++) {
-                if (this.readExtraAxisValue(controller, axes[i]) < threshold) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private isAnyAxisGreaterThan(axes: readonly number[], threshold: number): boolean {
-        for (let controller = 0; controller < InputMode.CONTROLLER_INDEX_LIMIT; controller++) {
-            for (let i = 0; i < axes.length; i++) {
-                if (this.readExtraAxisValue(controller, axes[i]) > threshold) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private readExtraAxisValue(controller: number, axis: number): number {
-        try {
-            let input = this.gc.getInput();
-            if (input.getAxisCount(controller) <= axis) {
-                return 0;
-            }
-            let value = input.getAxisValue(controller, axis);
-            let baselineIndex = controller * InputMode.GAMEPAD_AXIS_LIMIT + axis;
-            let baseline = this.extraAxisBaselines[baselineIndex];
-            if (Number.isNaN(baseline)) {
-                baseline = value;
-                this.extraAxisBaselines[baselineIndex] = baseline;
-            }
-            if (Math.abs(value) <= InputMode.AXIS_RECENTER_THRESHOLD) {
-                baseline = 0;
-                this.extraAxisBaselines[baselineIndex] = baseline;
-            }
-            return value - baseline;
-        } catch (e) {
-            return 0;
-        }
-    }
-
     private resetExtraAxisBaselines(): void {
-        for (let i = 0; i < this.extraAxisBaselines.length; i++) {
-            this.extraAxisBaselines[i] = Number.NaN;
-        }
+        resetExtraAxisBaselines(this.extraAxisBaselines);
     }
 
     private syncExtraAxisDirectionState(): void {

@@ -15,10 +15,6 @@ import type { EncodedRecord, EncodedValue } from "./GameStateSnapshot.js";
 import type { GameElementTypeId } from "./GameElementTypeIds.js";
 import { ENEMY_BULLET_SPRITE_FIELD, FLOOR_GUN_PLAIN_FIELD, TILE_DEBRIS_SPRITE_TILE_FIELD, type EnemyBulletSpriteId } from "./EntityRuntimeFields.js";
 
-const LEGACY_ENEMY_BULLET_SPRITE_FIELD = "__jackalEnemyBulletSprite";
-const LEGACY_FLOOR_GUN_PLAIN_FIELD = "__jackalFloorGunPlain";
-const LEGACY_TILE_DEBRIS_SPRITE_TILE_FIELD = "__jackalTileDebrisSpriteTile";
-
 const ENEMY_BULLET_SPRITE_CANNONBALL: EnemyBulletSpriteId = "cannonball";
 const ENEMY_BULLET_SPRITE_WHITE: EnemyBulletSpriteId = "white";
 const ENEMY_BULLET_SPRITE_YELLOW: EnemyBulletSpriteId = "yellow";
@@ -63,7 +59,7 @@ const ENTITY_RUNTIME_POINTERS: Partial<Record<GameElementTypeId, readonly Runtim
     TroopsTruck: ["player"]
 };
 
-export function captureEntityRuntimeFields(entity: GameElement, main: Main, gameMode: GameMode): EncodedRecord | undefined {
+export function captureEntityRuntimeFields(entity: GameElement, main: Main, gameMode: GameMode): EncodedRecord | null {
     const fields: EncodedRecord = {};
 
     if (entity instanceof EnemyBullet) {
@@ -74,7 +70,7 @@ export function captureEntityRuntimeFields(entity: GameElement, main: Main, game
         fields[TILE_DEBRIS_SPRITE_TILE_FIELD] = indexOfReference(gameMode.tiles, entity.sprite, "TileDebris sprite");
     }
 
-    return Object.keys(fields).length === 0 ? undefined : fields;
+    return Object.keys(fields).length === 0 ? null : fields;
 }
 
 export function restoreEntityRuntimeState(
@@ -82,11 +78,10 @@ export function restoreEntityRuntimeState(
     type: GameElementTypeId,
     main: Main,
     gameMode: GameMode,
-    runtimeFields: EncodedRecord | undefined
+    runtimeFields: EncodedRecord | null
 ): void {
     attachEntityRuntimeReferences(entity, type, main, gameMode);
     restoreEntityRuntimeImages(entity, main, gameMode, runtimeFields);
-    clearLegacyRuntimeFields(entity);
 }
 
 export function attachEntityRuntimeReferences(entity: GameElement, type: GameElementTypeId, main: Main, gameMode: GameMode): void {
@@ -115,7 +110,7 @@ function runtimePointerValue(pointer: RuntimePointer, gameMode: GameMode): Array
     }
 }
 
-function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: GameMode, runtimeFields: EncodedRecord | undefined): void {
+function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: GameMode, runtimeFields: EncodedRecord | null): void {
     if (entity instanceof RotatingGun) {
         switch (entity.type) {
             case RotatingGun.TYPE_GREEN:
@@ -129,9 +124,9 @@ function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: G
                 break;
         }
     } else if (entity instanceof EnemyBullet) {
-        entity.sprite = enemyBulletSpriteById(main, runtimeValue(runtimeFields, ENEMY_BULLET_SPRITE_FIELD, entity, LEGACY_ENEMY_BULLET_SPRITE_FIELD));
+        entity.sprite = enemyBulletSpriteById(main, requireRuntimeField(runtimeFields, ENEMY_BULLET_SPRITE_FIELD));
     } else if (entity instanceof FloorGun) {
-        const plain = runtimeValue(runtimeFields, FLOOR_GUN_PLAIN_FIELD, entity, LEGACY_FLOOR_GUN_PLAIN_FIELD) === true;
+        const plain = requireRuntimeField(runtimeFields, FLOOR_GUN_PLAIN_FIELD) === true;
         entity.mask = plain ? main.plainFloorGuns[0] : main.floorGuns[6];
         entity.panel = plain ? main.plainFloorGuns[1] : main.floorGuns[7];
     } else if (entity instanceof StatueMissile) {
@@ -139,7 +134,7 @@ function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: G
     } else if (entity instanceof StatueSeekerMissile) {
         entity.sprite = main.statueMissiles[0];
     } else if (entity instanceof TileDebris) {
-        const tile = runtimeValue(runtimeFields, TILE_DEBRIS_SPRITE_TILE_FIELD, entity, LEGACY_TILE_DEBRIS_SPRITE_TILE_FIELD);
+        const tile = requireRuntimeField(runtimeFields, TILE_DEBRIS_SPRITE_TILE_FIELD);
         if (typeof tile === "number" && Number.isInteger(tile) && tile >= 0 && tile < gameMode.tiles.length) {
             entity.sprite = gameMode.tiles[tile];
         } else {
@@ -150,17 +145,11 @@ function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: G
     }
 }
 
-function runtimeValue(runtimeFields: EncodedRecord | undefined, field: string, entity: GameElement, legacyField: string): EncodedValue | unknown {
-    if (runtimeFields !== undefined && Object.hasOwn(runtimeFields, field)) {
-        return runtimeFields[field];
+function requireRuntimeField(runtimeFields: EncodedRecord | null, field: string): EncodedValue {
+    if (runtimeFields === null || !Object.hasOwn(runtimeFields, field)) {
+        throw new Error(`Missing ${field} runtime descriptor in saved game state.`);
     }
-    return Reflect.get(entity, legacyField);
-}
-
-function clearLegacyRuntimeFields(entity: GameElement): void {
-    Reflect.deleteProperty(entity, LEGACY_ENEMY_BULLET_SPRITE_FIELD);
-    Reflect.deleteProperty(entity, LEGACY_FLOOR_GUN_PLAIN_FIELD);
-    Reflect.deleteProperty(entity, LEGACY_TILE_DEBRIS_SPRITE_TILE_FIELD);
+    return runtimeFields[field];
 }
 
 function enemyBulletSpriteId(sprite: Image | null, main: Main): EnemyBulletSpriteId {

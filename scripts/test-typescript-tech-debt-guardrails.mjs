@@ -75,7 +75,7 @@ test("browser code does not retain dead Java desktop compatibility theater", () 
     assert.match(resources, /ResourceLoader\.getResourceAsStream\(ref\)/);
 });
 
-test("save-state persistence stays modular, shared, backward-compatible, and cast-safe", () => {
+test("save-state persistence stays modular, shared, current-only, and cast-safe", () => {
     const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
     const serializerLineCount = serializer.split(/\r?\n/).length;
     assert.ok(serializerLineCount < 800, `Serializer has regrown into a monolith (${serializerLineCount} lines).`);
@@ -87,19 +87,51 @@ test("save-state persistence stays modular, shared, backward-compatible, and cas
 
     const webApp = read("pwa/src/app/JackalWebApp.ts");
     const store = read("pwa/src/jackal/persistence/JackalGameStateStore.ts");
-    assert.match(webApp, /isSupportedGameStateSnapshot/);
-    assert.match(store, /this\.serializer\.isSupportedSnapshot\(snapshot\)/);
-    assert.doesNotMatch(webApp, /function isPotentialGameStateSnapshot/);
+    const storage = read("pwa/src/jackal/persistence/GameStateStorage.ts");
+    assert.match(webApp, /hasCurrentStoredGameState/);
+    assert.match(store, /inspectStoredGameState/);
+    assert.match(storage, /isSupportedGameStateSnapshot/);
+    assert.doesNotMatch(webApp, /localStorage\.(?:getItem|setItem|removeItem)|function isPotentialGameStateSnapshot/);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*5/);
-    assert.match(schema, /MIN_SUPPORTED_GAME_STATE_VERSION\s*=\s*4/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*6/);
+    assert.doesNotMatch(schema, /MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
 
     const snapshot = read("pwa/src/jackal/persistence/GameStateSnapshot.ts");
     const runtime = read("pwa/src/jackal/persistence/EntityRuntimePersistence.ts");
-    assert.match(snapshot, /runtimeFields\?: EncodedRecord/);
-    assert.match(runtime, /LEGACY_ENEMY_BULLET_SPRITE_FIELD/);
-    assert.match(runtime, /clearLegacyRuntimeFields\(entity\)/);
+    assert.match(snapshot, /runtimeFields: EncodedRecord \| null/);
+    assert.match(snapshot, /modeExtra: GenericModeExtraSnapshot \| null/);
+    assert.doesNotMatch(runtime, /LEGACY_|legacyField|clearLegacyRuntimeFields/);
+});
+
+test("browser orchestration is split, session-scoped, cycle-free, and independent of library-private state", () => {
+    const webApp = read("pwa/src/app/JackalWebApp.ts");
+    assert.ok(webApp.split(/\r?\n/).length < 600, "JackalWebApp must remain a focused orchestrator.");
+    for (const moduleName of [
+        "AppPreferences.js",
+        "GameViewportController.js",
+        "JackalRuntimeLoader.js",
+        "JackalScreens.js",
+        "PageLifecycleMonitor.js",
+        "ScalingPicker.js"
+    ]) {
+        assert.match(webApp, new RegExp(moduleName.replace(".", "\\.")));
+    }
+    assert.match(webApp, /gameSessionGeneration/);
+    assert.match(webApp, /isCurrentGameSession/);
+    assert.match(webApp, /mainGame\.reserveBrowserRuntime\(\)/);
+    assert.match(webApp, /this\.game\?\.disposeBrowserRuntime\(\)/);
+
+    const audio = read("pwa/src/jackal/persistence/GameStateAudio.ts");
+    const javaRuntime = read("pwa/src/java/JavaRuntime.ts");
+    assert.doesNotMatch(audio, /Reflect\.|playbackRate|paused|buffer/);
+    assert.doesNotMatch(javaRuntime, /import\s+\{\s*JavaRandom\s*\}|extends\s+JavaRandom|Reflect\.(?:get|set)\([^)]*seed/);
+
+    const humanInput = read("pwa/src/jackal/HumanInput.ts");
+    const inputMode = read("pwa/src/jackal/InputMode.ts");
+    assert.match(humanInput, /BrowserGamepadAxes\.js/);
+    assert.match(inputMode, /BrowserGamepadAxes\.js/);
+    assert.doesNotMatch(humanInput + inputMode, /private readExtraAxisValue|private isAnyAxisLessThan|private isAnyAxisGreaterThan/);
 });
 
 test("TypeScript-native modules keep truthful nullability and stricter lint policy", () => {

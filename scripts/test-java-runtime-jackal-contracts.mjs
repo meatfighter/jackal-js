@@ -16,20 +16,6 @@ class BinaryReader {
         this.stream = stream;
     }
 }
-class JavaRandom {
-    constructor() {
-        this.seed0 = 0;
-        this.seed1 = 0;
-        this.seed2 = 0;
-    }
-    nextInt() {
-        const value = ((this.seed2 << 16) ^ this.seed1 ^ this.seed0) | 0;
-        this.seed0 = (this.seed0 + 0x1234) & 0xffff;
-        this.seed1 = (this.seed1 + 0x2345) & 0xffff;
-        this.seed2 = (this.seed2 + 0x3456) & 0xffff;
-        return value;
-    }
-}
 const ResourceLoader = {
     getResourceAsStream() {
         return null;
@@ -158,6 +144,25 @@ test("Java collection helpers preserve the valid operations used by Jackal", asy
     assert.throws(() => list.removeAt(99), RangeError);
     assert.deepEqual([...list], ["B"]);
 
+    const javaSeedOneInts = [-1155869325, 431529176, 1761283695, 1749940626, 892128508];
+    const seeded = new runtime.Random(1);
+    assert.deepEqual(
+        javaSeedOneInts.map(() => seeded.nextInt()),
+        javaSeedOneInts,
+        "Random must match java.util.Random bit-for-bit."
+    );
+
+    const bounded = new runtime.Random(1);
+    assert.deepEqual(
+        [1, 2, 3, 5, 7, 16, 31, 1000, 2147483647].map((bound) => bounded.nextInt(bound)),
+        [0, 0, 1, 3, 6, 0, 4, 606, 2078239978]
+    );
+    const floating = new runtime.Random(1);
+    assert.deepEqual(
+        Array.from({ length: 5 }, () => floating.nextFloat()),
+        [0.7308781743049622, 0.10047316551208496, 0.41008079051971436, 0.4074397683143616, 0.20771479606628418]
+    );
+
     const state = { seed0: 11, seed1: 22, seed2: 33 };
     const random = runtime.Random.fromState(state);
     const control = runtime.Random.fromState(state);
@@ -231,13 +236,17 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
 
     const runtimeSource = readFileSync(join(rootDir, "pwa", "src", "java", "JavaRuntime.ts"), "utf8");
     assert.doesNotMatch(runtimeSource, /export class (HashMap|Collections|Arrays|BufferedInputStream|DataInputStream|Class|Integer|Character|JavaString)\b/);
-    assert.doesNotMatch(runtimeSource, /declare seed[012]/, "The adapter must not redeclare slick2d-ts private fields.");
-    assert.match(runtimeSource, /Reflect\.(?:get|set)\(random, (?:name|"seed[012]")/, "Random state access must stay isolated behind reflection.");
+    assert.doesNotMatch(
+        runtimeSource,
+        /import\s+\{\s*JavaRandom\s*\}|extends\s+JavaRandom|Reflect\.(?:get|set)\([^)]*seed/,
+        "Random must not depend on slick2d-ts private state."
+    );
+    assert.match(runtimeSource, /private nextBits\(bits: number\): number/, "Random must own its allocation-free Java LCG implementation.");
 
     assert.deepEqual(
         oneArgumentRemovals.sort(),
         [
-            "CutsceneSequence.modes.removeAt(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size()))",
+            "CutsceneSequence.modes.removeAt(main.random.nextInt(CutsceneSequence.modes.size()))",
             "list.removeAt(j)",
             "list.removeAt(j)",
             "this.bullets.removeAt(i)",

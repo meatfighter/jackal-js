@@ -4,7 +4,7 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMode } from "./IMode.js";
 import { Modes } from "./Modes.js";
-import { Player } from "./Player.js";
+import { PLAYER_RUMBLE, PLAYER_SPEED } from "./PlayerMotionConstants.js";
 import type { IInput } from "./IInput.js";
 import type { Main } from "./Main.js";
 export class HardEndingMode implements IMode, IFadeListener {
@@ -206,7 +206,7 @@ export class HardEndingMode implements IMode, IFadeListener {
 
     private updateFinalScoreJeep(): void {
         if (this.jeepX < MainConstants.DISPLAY_WIDTH + 50) {
-            this.jeepX = javaFloat(this.jeepX + Player.SPEED);
+            this.jeepX = javaFloat(this.jeepX + PLAYER_SPEED);
         } else {
             this.state = HardEndingMode.STATE_FINAL_SCORE;
             this.input.clearKeyPressedRecord();
@@ -285,7 +285,7 @@ export class HardEndingMode implements IMode, IFadeListener {
                 if (++this.rumble === 17) {
                     this.rumble = 0;
                 }
-                this.main.drawVehicle(this.main.players[0], this.jeepX, 512 + Player.RUMBLE[this.rumble], 0);
+                this.main.drawVehicle(this.main.players[0], this.jeepX, 512 + PLAYER_RUMBLE[this.rumble], 0);
             }
         } else if (this.state === HardEndingMode.STATE_CREDITS) {
             this.main.translateGraphics(0, this.creditsY);

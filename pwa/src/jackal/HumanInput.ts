@@ -1,5 +1,13 @@
 import { Input, type GameContainer } from "slick2d-ts";
-import { javaArray } from "../java/JavaRuntime.js";
+import {
+    AXIS_THRESHOLD,
+    CONTROLLER_INDEX_LIMIT,
+    EXTRA_HORIZONTAL_AXES,
+    EXTRA_VERTICAL_AXES,
+    createExtraAxisBaselines,
+    isAnyCalibratedAxisGreaterThan,
+    isAnyCalibratedAxisLessThan
+} from "../app/BrowserGamepadAxes.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IInput } from "./IInput.js";
 export class HumanInput implements IInput {
@@ -8,18 +16,12 @@ export class HumanInput implements IInput {
         this.input = gc.getInput();
     }
 
-    private static readonly CONTROLLER_INDEX_LIMIT: number = 16;
     private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET: number = 4;
     private static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = 100;
-    private static readonly GAMEPAD_AXIS_LIMIT: number = 16;
-    private static readonly AXIS_THRESHOLD: number = 0.5;
-    private static readonly AXIS_RECENTER_THRESHOLD: number = 0.05;
-    private static readonly EXTRA_HORIZONTAL_AXES: number[] = [2, 6];
-    private static readonly EXTRA_VERTICAL_AXES: number[] = [3, 7];
 
     private buttonMapping: ButtonMapping = null!;
     private input: Input = null!;
-    private extraAxisBaselines: number[] = javaArray(HumanInput.CONTROLLER_INDEX_LIMIT * HumanInput.GAMEPAD_AXIS_LIMIT, Number.NaN);
+    private extraAxisBaselines: number[] = createExtraAxisBaselines();
     private up: boolean = false;
     private down: boolean = false;
     private left: boolean = false;
@@ -68,7 +70,7 @@ export class HumanInput implements IInput {
         }
         let pressed = false;
         let control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
+        for (let controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
             pressed = this.isControlPressed(control, controller) || pressed;
         }
         return pressed;
@@ -82,7 +84,7 @@ export class HumanInput implements IInput {
 
     private isAnyNonDirectionalControllerButtonPressed(): boolean {
         let pressed = false;
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
+        for (let controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
             for (let button = 0; button < HumanInput.GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
                 if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
                     pressed = this.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
@@ -146,63 +148,19 @@ export class HumanInput implements IInput {
     }
 
     private isExtraAxisUpDown(): boolean {
-        return this.isAnyAxisLessThan(HumanInput.EXTRA_VERTICAL_AXES, -HumanInput.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisLessThan(this.input, this.extraAxisBaselines, EXTRA_VERTICAL_AXES, -AXIS_THRESHOLD);
     }
 
     private isExtraAxisDownDown(): boolean {
-        return this.isAnyAxisGreaterThan(HumanInput.EXTRA_VERTICAL_AXES, HumanInput.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisGreaterThan(this.input, this.extraAxisBaselines, EXTRA_VERTICAL_AXES, AXIS_THRESHOLD);
     }
 
     private isExtraAxisLeftDown(): boolean {
-        return this.isAnyAxisLessThan(HumanInput.EXTRA_HORIZONTAL_AXES, -HumanInput.AXIS_THRESHOLD);
+        return isAnyCalibratedAxisLessThan(this.input, this.extraAxisBaselines, EXTRA_HORIZONTAL_AXES, -AXIS_THRESHOLD);
     }
 
     private isExtraAxisRightDown(): boolean {
-        return this.isAnyAxisGreaterThan(HumanInput.EXTRA_HORIZONTAL_AXES, HumanInput.AXIS_THRESHOLD);
-    }
-
-    private isAnyAxisLessThan(axes: readonly number[], threshold: number): boolean {
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
-            for (let i = 0; i < axes.length; i++) {
-                if (this.readExtraAxisValue(controller, axes[i]) < threshold) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private isAnyAxisGreaterThan(axes: readonly number[], threshold: number): boolean {
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
-            for (let i = 0; i < axes.length; i++) {
-                if (this.readExtraAxisValue(controller, axes[i]) > threshold) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private readExtraAxisValue(controller: number, axis: number): number {
-        try {
-            if (this.input.getAxisCount(controller) <= axis) {
-                return 0;
-            }
-            let value = this.input.getAxisValue(controller, axis);
-            let baselineIndex = controller * HumanInput.GAMEPAD_AXIS_LIMIT + axis;
-            let baseline = this.extraAxisBaselines[baselineIndex];
-            if (Number.isNaN(baseline)) {
-                baseline = value;
-                this.extraAxisBaselines[baselineIndex] = baseline;
-            }
-            if (Math.abs(value) <= HumanInput.AXIS_RECENTER_THRESHOLD) {
-                baseline = 0;
-                this.extraAxisBaselines[baselineIndex] = baseline;
-            }
-            return value - baseline;
-        } catch (e) {
-            return 0;
-        }
+        return isAnyCalibratedAxisGreaterThan(this.input, this.extraAxisBaselines, EXTRA_HORIZONTAL_AXES, AXIS_THRESHOLD);
     }
 
     public reset(): void {}

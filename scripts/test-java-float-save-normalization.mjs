@@ -23,7 +23,7 @@ async function loadJavaFloatState() {
     return import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`);
 }
 
-test("legacy binary64 save values are normalized at Java float storage boundaries", async () => {
+test("decoded numeric save values are normalized at Java float storage boundaries", async () => {
     const state = await loadJavaFloatState();
 
     const tank = {

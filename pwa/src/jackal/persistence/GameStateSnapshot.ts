@@ -14,10 +14,6 @@ export type RandomSnapshot = {
 
 export type MusicSnapshot = {
     id: MusicId;
-    looped: boolean;
-    paused: boolean;
-    playing: boolean;
-    playbackRate: number;
     position: number;
     volume: number;
 };
@@ -52,8 +48,8 @@ export type EntitySnapshot = {
     id: number;
     type: GameElementTypeId;
     fields: EncodedRecord;
-    /** Version 5+: transient asset/runtime descriptors kept separate from translated Java fields. */
-    runtimeFields?: EncodedRecord;
+    /** Transient browser asset/runtime descriptors kept separate from translated Java fields. */
+    runtimeFields: EncodedRecord | null;
 };
 
 export type GameModeSnapshot = {
@@ -86,11 +82,7 @@ export type InputModeExtraSnapshot = {
     assignedControllerButtons: number[];
 };
 
-export type GenericModeExtraSnapshot = {
-    menu?: MenuSnapshot | null;
-    input?: InputModeExtraSnapshot;
-    jeepYeah?: JeepYeahModeExtraSnapshot;
-};
+export type GenericModeExtraSnapshot = { menu: MenuSnapshot | null } | { input: InputModeExtraSnapshot } | { jeepYeah: JeepYeahModeExtraSnapshot };
 
 export type JackalBaseStateSnapshot = {
     version: SupportedGameStateVersion;
@@ -101,7 +93,6 @@ export type JackalBaseStateSnapshot = {
     konamiCodeFields: EncodedRecord | null;
     random: RandomSnapshot;
     friendlySoldierCount: number;
-    currentSongId: SongId | null;
     requestedSongId: SongId | null;
     currentSongState: SongSnapshot | null;
     audioState: AudioStateSnapshot;
@@ -117,7 +108,7 @@ export type JackalStandaloneModeStateSnapshot = JackalBaseStateSnapshot & {
     kind: "mode";
     modeId: StandaloneModeId;
     modeFields: EncodedRecord;
-    modeExtra?: GenericModeExtraSnapshot;
+    modeExtra: GenericModeExtraSnapshot | null;
 };
 
 export type JackalGameStateSnapshot = JackalGameModeStateSnapshot | JackalStandaloneModeStateSnapshot;

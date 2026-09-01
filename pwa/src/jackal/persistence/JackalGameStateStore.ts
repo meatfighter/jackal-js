@@ -1,9 +1,8 @@
 import type { GameContainer } from "slick2d-ts";
-import { getDeploymentStorageKey } from "../../app/DeploymentStorageKeys.js";
 import type { Main } from "../Main.js";
-import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
-import { GAME_STATE_STORAGE_KEY, isFutureGameStateSnapshot } from "./GameStateSchema.js";
+import { clearStoredGameState, inspectStoredGameState, writeStoredGameState } from "./GameStateStorage.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
+
 export class JackalGameStateStore {
     private readonly serializer = new JackalGameStateSerializer();
 
@@ -13,11 +12,8 @@ export class JackalGameStateStore {
         if (!main.isStateSaveReady()) {
             return false;
         }
-
         try {
-            const snapshot = this.serializer.createSnapshot(main, this.appVersion);
-            localStorage.setItem(this.getStorageKey(), JSON.stringify(snapshot));
-            return true;
+            return writeStoredGameState(this.serializer.createSnapshot(main, this.appVersion));
         } catch (error) {
             console.warn("Unable to save Jackal game state.", error);
             return false;
@@ -26,12 +22,11 @@ export class JackalGameStateStore {
 
     public restore(main: Main, gc: GameContainer): boolean {
         try {
-            const snapshot = this.readSnapshot();
-            if (snapshot === null) {
+            const stored = inspectStoredGameState();
+            if (stored.status !== "current") {
                 return false;
             }
-
-            this.serializer.restoreSnapshot(main, gc, snapshot);
+            this.serializer.restoreSnapshot(main, gc, stored.snapshot);
             return true;
         } catch (error) {
             console.warn("Unable to restore Jackal game state.", error);
@@ -40,47 +35,10 @@ export class JackalGameStateStore {
     }
 
     public hasValidSave(): boolean {
-        try {
-            return this.readSnapshot() !== null;
-        } catch (error) {
-            console.warn("Unable to inspect Jackal game state.", error);
-            return false;
-        }
+        return inspectStoredGameState().status === "current";
     }
 
     public clear(): void {
-        try {
-            localStorage.removeItem(this.getStorageKey());
-        } catch (error) {
-            console.warn("Unable to clear Jackal game state.", error);
-        }
-    }
-
-    private readSnapshot(): JackalGameStateSnapshot | null {
-        const text = localStorage.getItem(this.getStorageKey());
-        if (text === null) {
-            return null;
-        }
-
-        let snapshot: unknown;
-        try {
-            snapshot = JSON.parse(text);
-        } catch {
-            this.clear();
-            return null;
-        }
-
-        if (!this.serializer.isSupportedSnapshot(snapshot)) {
-            if (!isFutureGameStateSnapshot(snapshot)) {
-                this.clear();
-            }
-            return null;
-        }
-
-        return snapshot;
-    }
-
-    private getStorageKey(): string {
-        return getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+        clearStoredGameState();
     }
 }

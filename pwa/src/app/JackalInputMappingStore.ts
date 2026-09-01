@@ -1,5 +1,5 @@
 import type { ButtonMapping } from "../jackal/ButtonMapping.js";
-import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
+import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 const NO_BINDING = -1;
 
 interface JackalInputMappingSnapshot {
@@ -24,13 +24,12 @@ interface JackalInputMappingSnapshot {
 }
 
 export class JackalInputMappingStore {
-    private static readonly STORAGE_KEY = "jackal.input-mapping";
     private static readonly SNAPSHOT_VERSION = 1;
+    private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
 
     public save(buttonMapping: ButtonMapping): boolean {
         try {
-            localStorage.setItem(
-                JackalInputMappingStore.getStorageKey(),
+            return this.storage.write(
                 JSON.stringify({
                     version: JackalInputMappingStore.SNAPSHOT_VERSION,
                     keyUp: buttonMapping.keyUp,
@@ -52,9 +51,8 @@ export class JackalInputMappingStore {
                     gunKeyMapped: buttonMapping.gunKeyMapped
                 } satisfies JackalInputMappingSnapshot)
             );
-            return true;
         } catch (error) {
-            console.warn("Unable to save Jackal input mapping.", error);
+            console.warn("Unable to encode Jackal input mapping.", error);
             return false;
         }
     }
@@ -91,20 +89,16 @@ export class JackalInputMappingStore {
     }
 
     public clear(): void {
-        try {
-            localStorage.removeItem(JackalInputMappingStore.getStorageKey());
-        } catch {
-            // Storage can be disabled in hardened/private browser contexts.
-        }
+        this.storage.remove();
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
-        const text = localStorage.getItem(JackalInputMappingStore.getStorageKey());
-        if (text === null) {
+        const stored = this.storage.read();
+        if (!stored.available || stored.value === null) {
             return null;
         }
 
-        const snapshot: unknown = JSON.parse(text);
+        const snapshot: unknown = JSON.parse(stored.value);
         if (!this.isSupportedSnapshot(snapshot)) {
             this.clear();
             return null;
@@ -147,9 +141,5 @@ export class JackalInputMappingStore {
 
     private isBinding(value: unknown): value is number {
         return value === NO_BINDING || this.isInteger(value);
-    }
-
-    private static getStorageKey(): string {
-        return getDeploymentStorageKey(JackalInputMappingStore.STORAGE_KEY);
     }
 }

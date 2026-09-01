@@ -51,7 +51,14 @@ import { openDataResource } from "./JackalResources.js";
 import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
 import { MapMode } from "./MapMode.js";
-import { MainRuntimeState } from "./MainRuntimeState.js";
+import {
+    clearMainRuntime,
+    installMainRuntime,
+    isMainRuntimeActive,
+    requireMainRuntime,
+    requireMainRuntimeGameMode,
+    setMainRuntimeGameMode
+} from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { OptionsMode } from "./OptionsMode.js";
 
@@ -125,27 +132,20 @@ export class Main extends BasicGame {
     }
 
     public static get mainInstance(): Main {
-        const mainInstance = MainRuntimeState.mainInstance;
-        if (mainInstance === null) {
-            throw new Error("Jackal main instance is unavailable.");
-        }
-        return mainInstance;
+        return requireMainRuntime();
     }
 
     public static set mainInstance(mainInstance: Main) {
-        MainRuntimeState.mainInstance = mainInstance;
+        mainInstance.browserRuntimeActive = true;
+        installMainRuntime(mainInstance);
     }
 
     public static get gameMode(): GameMode {
-        const gameMode = MainRuntimeState.gameMode;
-        if (gameMode === null) {
-            throw new Error("Jackal game mode is unavailable.");
-        }
-        return gameMode;
+        return requireMainRuntimeGameMode();
     }
 
     public static set gameMode(gameMode: GameMode | null) {
-        MainRuntimeState.gameMode = gameMode;
+        setMainRuntimeGameMode(gameMode);
     }
 
     public random: Random = new Random();
@@ -322,9 +322,16 @@ export class Main extends BasicGame {
     public browserSuspendedMusicOn: boolean = true;
     public browserSuspendedSoundOn: boolean = true;
     private loadingFinishedNotified: boolean = false;
+    private browserRuntimeActive: boolean = false;
 
     public init(gc: GameContainer): void {
-        Main.mainInstance = this;
+        if (this.browserRuntimeActive) {
+            if (!isMainRuntimeActive(this)) {
+                throw new Error("Cannot initialize a stale Jackal browser session.");
+            }
+        } else {
+            Main.mainInstance = this;
+        }
         this.gc = gc;
 
         gc.setAlwaysRender(true);
@@ -2039,6 +2046,28 @@ export class Main extends BasicGame {
 
     public isStateSaveReady(): boolean {
         return this.loadIndex >= 42 && this.mode !== null && this.gc !== null;
+    }
+
+    /** Reserves the process-wide Java-style runtime slot before asynchronous container startup. */
+    public reserveBrowserRuntime(): void {
+        Main.mainInstance = this;
+    }
+
+    public isBrowserRuntimeActive(): boolean {
+        return this.browserRuntimeActive && isMainRuntimeActive(this);
+    }
+
+    public disposeBrowserRuntime(): void {
+        if (!this.browserRuntimeActive) {
+            return;
+        }
+        this.browserRuntimeActive = false;
+        clearMainRuntime(this);
+        this.inputMappingChangedHandler = null;
+        this.loadingCompleteHandler = null;
+        this.loadingFinishedHandler = null;
+        this.windowedDisplayModeProvider = null;
+        this.browserFullscreenController = null;
     }
 
     public setBrowserSuspended(suspended: boolean): void {

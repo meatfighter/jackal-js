@@ -2,7 +2,7 @@ import { javaFloat, javaInt } from "../java/JavaRuntime.js";
 import { AttackSource } from "./AttackSource.js";
 import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
-import { GameMode } from "./GameMode.js";
+import { TILE_TYPE_SOLID } from "./GameTileTypes.js";
 import { Help } from "./Help.js";
 export class House extends Enemy {
     declare public groupIndex: number;
@@ -26,7 +26,7 @@ export class House extends Enemy {
         this.groupIndex = this.gameMode.groupsMap[Y + 2][X + (left ? 0 : 5)];
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 6; j++) {
-                this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
+                this.gameMode.typesMap[Y + i][X + j] = TILE_TYPE_SOLID;
             }
         }
     }

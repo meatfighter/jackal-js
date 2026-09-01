@@ -1,0 +1,73 @@
+import { DeploymentStorageEntry } from "./DeploymentStorage.js";
+
+export const VOLUME_STORAGE_KEY = "jackal-volume";
+export const SCALING_STORAGE_KEY = "jackal-scaling";
+export const DEFAULT_VOLUME = 0.1;
+export const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";
+
+export const SCALING_MODE_DEFINITIONS = [
+    { value: "smooth", label: "Smooth" },
+    { value: "crisp", label: "Crisp" },
+    { value: "pixel-perfect", label: "Pixel Perfect" }
+] as const;
+
+export type ScalingModeDefinition = (typeof SCALING_MODE_DEFINITIONS)[number];
+export type JackalScalingPreference = ScalingModeDefinition["value"];
+
+const volumeStorage = new DeploymentStorageEntry(VOLUME_STORAGE_KEY, "Jackal volume preference");
+const scalingStorage = new DeploymentStorageEntry(SCALING_STORAGE_KEY, "Jackal scaling preference");
+
+export function readVolume(): number {
+    const result = volumeStorage.read();
+    if (!result.available || result.value === null) {
+        return DEFAULT_VOLUME;
+    }
+    const percent = Number.parseInt(result.value, 10);
+    return Number.isFinite(percent) ? Math.max(0, Math.min(1, percent / 100)) : DEFAULT_VOLUME;
+}
+
+export function writeVolume(value: number): boolean {
+    return volumeStorage.write(String(Math.round(value * 100)));
+}
+
+function clearVolume(): boolean {
+    return volumeStorage.remove();
+}
+
+export function readScalingPreference(): JackalScalingPreference {
+    const result = scalingStorage.read();
+    if (!result.available || result.value === null) {
+        return DEFAULT_SCALING_PREFERENCE;
+    }
+    if (isScalingPreference(result.value)) {
+        return result.value;
+    }
+    scalingStorage.write(DEFAULT_SCALING_PREFERENCE);
+    return DEFAULT_SCALING_PREFERENCE;
+}
+
+export function writeScalingPreference(value: JackalScalingPreference): boolean {
+    return scalingStorage.write(value);
+}
+
+function clearScalingPreference(): boolean {
+    return scalingStorage.remove();
+}
+
+export function clearPreferences(): boolean {
+    const volumeCleared = clearVolume();
+    const scalingCleared = clearScalingPreference();
+    return volumeCleared && scalingCleared;
+}
+
+export function isScalingPreference(value: unknown): value is JackalScalingPreference {
+    return typeof value === "string" && SCALING_MODE_DEFINITIONS.some((definition) => definition.value === value);
+}
+
+export function getScalingDefinition(value: JackalScalingPreference): ScalingModeDefinition {
+    return SCALING_MODE_DEFINITIONS.find((definition) => definition.value === value) ?? SCALING_MODE_DEFINITIONS[0];
+}
+
+export function clampVolume(value: number, fallback: number): number {
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : fallback;
+}

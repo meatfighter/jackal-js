@@ -7,8 +7,8 @@ import type { AudioStateSnapshot, JackalGameStateSnapshot, MusicSnapshot, SongSn
 export function captureAudioStateSnapshot(main: Main): AudioStateSnapshot {
     if (main.browserSuspended) {
         return {
-            musicOn: Boolean(main.browserSuspendedMusicOn),
-            soundOn: Boolean(main.browserSuspendedSoundOn)
+            musicOn: main.browserSuspendedMusicOn,
+            soundOn: main.browserSuspendedSoundOn
         };
     }
     return {
@@ -48,7 +48,7 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
 export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
     const currentSongState = snapshot.currentSongState;
     const currentSong = currentSongState === null ? null : songById(main, currentSongState.id);
-    const requestedSong = songById(main, snapshot.requestedSongId ?? snapshot.currentSongId);
+    const requestedSong = songById(main, snapshot.requestedSongId);
     main.currentSong = currentSong;
     main.requestedSong = requestedSong;
 
@@ -67,13 +67,13 @@ export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: Jac
 }
 
 function captureActiveSongMusic(main: Main, song: Song): MusicSnapshot | null {
-    if (song.intro !== null && isMusicActiveForSnapshot(song.intro)) {
+    if (song.intro !== null && song.intro.playing()) {
         return captureMusic(main, song.intro);
     }
-    if (song.intro2 !== null && isMusicActiveForSnapshot(song.intro2)) {
+    if (song.intro2 !== null && song.intro2.playing()) {
         return captureMusic(main, song.intro2);
     }
-    if (song.loop !== null && isMusicActiveForSnapshot(song.loop)) {
+    if (song.loop !== null && song.loop.playing()) {
         return captureMusic(main, song.loop);
     }
     return null;
@@ -84,15 +84,10 @@ function captureMusic(main: Main, music: Music): MusicSnapshot {
     if (id === null) {
         throw new Error("Unable to identify music for game-state save.");
     }
-    const looped = Boolean(Reflect.get(music, "looped"));
     return {
         id,
-        looped,
-        paused: Boolean(Reflect.get(music, "paused")),
-        playing: music.playing(),
-        playbackRate: numberField(music, "playbackRate", 1),
-        position: normalizeMusicPosition(music, music.getPosition(), looped),
-        volume: music.getVolume()
+        position: sanitizeMusicPosition(music.getPosition()),
+        volume: sanitizeMusicVolume(music.getVolume())
     };
 }
 
@@ -134,46 +129,51 @@ function musicById(main: Main, id: MusicId): Music | null {
 
 function restoreActiveMusic(main: Main, gc: GameContainer, audioState: AudioStateSnapshot, snapshot: MusicSnapshot): void {
     const music = musicById(main, snapshot.id);
-    if (music === null) {
+    if (music === null || !main.isBrowserRuntimeActive()) {
         restoreAudioEnabled(main, gc, audioState);
         return;
     }
 
-    const position = normalizeMusicPosition(music, snapshot.position, snapshot.looped);
-    if (!snapshot.playing && !snapshot.paused) {
-        music.setVolume(snapshot.volume);
-        music.setPosition(position);
+    const position = sanitizeMusicPosition(snapshot.position);
+    const volume = sanitizeMusicVolume(snapshot.volume);
+    const parts = parseMusicId(snapshot.id);
+    if (parts === null) {
         restoreAudioEnabled(main, gc, audioState);
         return;
     }
 
     gc.setMusicOn(false);
-    music.setVolume(snapshot.volume);
+    music.setVolume(volume);
     music.setPosition(position);
-    if (snapshot.looped) {
-        music.loop(snapshot.playbackRate, snapshot.volume);
+    if (parts.suffix === "loop") {
+        music.loop(1, volume);
     } else {
-        music.play(snapshot.playbackRate, snapshot.volume);
+        music.play(1, volume);
     }
 
     void music
         .ready()
         .then(() => {
             globalThis.setTimeout(() => {
-                music.setPosition(normalizeMusicPosition(music, position, snapshot.looped));
-                music.setVolume(snapshot.volume);
-                if (snapshot.paused) {
-                    music.pause();
+                if (!main.isBrowserRuntimeActive()) {
+                    return;
                 }
+                music.setPosition(position);
+                music.setVolume(volume);
                 restoreAudioEnabled(main, gc, audioState);
             }, 0);
         })
         .catch(() => {
-            restoreAudioEnabled(main, gc, audioState);
+            if (main.isBrowserRuntimeActive()) {
+                restoreAudioEnabled(main, gc, audioState);
+            }
         });
 }
 
 function restoreAudioEnabled(main: Main, gc: GameContainer, audioState: AudioStateSnapshot): void {
+    if (!main.isBrowserRuntimeActive()) {
+        return;
+    }
     if (main.browserSuspended) {
         main.browserSuspendedMusicOn = audioState.musicOn;
         main.browserSuspendedSoundOn = audioState.soundOn;
@@ -185,25 +185,10 @@ function restoreAudioEnabled(main: Main, gc: GameContainer, audioState: AudioSta
     gc.setSoundOn(audioState.soundOn);
 }
 
-function normalizeMusicPosition(music: Music, position: number, looped: boolean): number {
-    const sanitized = Number.isFinite(position) ? Math.max(0, position) : 0;
-    if (!looped) {
-        return sanitized;
-    }
-
-    const buffer = Reflect.get(music, "buffer");
-    const duration = buffer !== null && typeof buffer === "object" ? Reflect.get(buffer, "duration") : 0;
-    if (typeof duration !== "number" || !Number.isFinite(duration) || duration <= 0) {
-        return sanitized;
-    }
-    return sanitized % duration;
+function sanitizeMusicPosition(position: number): number {
+    return Number.isFinite(position) ? Math.max(0, position) : 0;
 }
 
-function isMusicActiveForSnapshot(music: Music): boolean {
-    return music.playing() || Boolean(Reflect.get(music, "paused"));
-}
-
-function numberField(target: object, field: string, fallback: number): number {
-    const value = Reflect.get(target, field);
-    return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+function sanitizeMusicVolume(volume: number): number {
+    return Number.isFinite(volume) ? Math.max(0, volume) : 1;
 }

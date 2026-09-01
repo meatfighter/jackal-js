@@ -214,30 +214,29 @@ test("generic object serialization explicitly excludes reconstructed and runtime
     assert.match(codecSource, /record\[key\] = encodeValue\(value, context\)/);
 });
 
-test("legacy Fire, Explosion, and JeepYeah save migrations remain bidirectionally compatible", () => {
+test("current save snapshots preserve translated hidden fields without legacy aliases", () => {
     const schema = readFileSync(join(jackalRoot, "persistence", "GameStateSchema.ts"), "utf8");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*5/);
-    assert.match(schema, /MIN_SUPPORTED_GAME_STATE_VERSION\s*=\s*4/);
+    const codec = readFileSync(join(jackalRoot, "persistence", "GameStateCodec.ts"), "utf8");
 
-    assert.match(serializerSource, /entity instanceof Fire \|\| entity instanceof Explosion/);
-    assert.match(serializerSource, /record\.enemy = encodeValue\(entity\.sourceEnemy, context\)/);
-    assert.match(serializerSource, /delete record\.sourceEnemy/);
-    assert.match(serializerSource, /entity\.sourceEnemy =/);
-    assert.match(serializerSource, /entity\.enemy = false/);
-
-    assert.match(serializerSource, /Reflect\.get\(value, "removeFlag"\) === true/);
-    assert.match(serializerSource, /value\.remove = true/);
-    assert.match(serializerSource, /Reflect\.deleteProperty\(value, "removeFlag"\)/);
-    assert.match(serializerSource, /record\.removeFlag = encodeValue\(source\.remove, context\)/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*6/);
+    assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
+    assert.match(serializerSource, /const fields = encodeObjectFields\(entity, context\)/);
+    assert.match(codec, /for \(const key of Object\.keys\(source\)\)/);
+    assert.doesNotMatch(serializerSource, /record\.enemy =|delete record\.sourceEnemy|removeFlag alias|normalizeLegacy|normalizeTranslated/);
 });
 
-test("runtime-only entity descriptors are separated from translated Java fields with v4 migration support", () => {
+test("runtime-only entity descriptors are required exact current-format data", () => {
+    const snapshotSource = readFileSync(join(jackalRoot, "persistence", "GameStateSnapshot.ts"), "utf8");
+    const runtimeFieldsSource = readFileSync(join(jackalRoot, "persistence", "EntityRuntimeFields.ts"), "utf8");
+    const validatorSource = readFileSync(join(jackalRoot, "persistence", "GameStateSnapshotValidator.ts"), "utf8");
+
     assert.match(serializerSource, /captureEntityRuntimeFields\(entity, context\.main, context\.gameMode\)/);
-    assert.match(serializerSource, /runtimeFields === undefined \? \{\} : \{ runtimeFields \}/);
-    assert.match(runtimeSource, /LEGACY_ENEMY_BULLET_SPRITE_FIELD/);
-    assert.match(runtimeSource, /LEGACY_FLOOR_GUN_PLAIN_FIELD/);
-    assert.match(runtimeSource, /LEGACY_TILE_DEBRIS_SPRITE_TILE_FIELD/);
-    assert.match(runtimeSource, /clearLegacyRuntimeFields\(entity\)/);
+    assert.match(serializerSource, /runtimeFields\s*\n?\s*\}/);
+    assert.match(snapshotSource, /runtimeFields: EncodedRecord \| null/);
+    assert.match(validatorSource, /isEntityRuntimeFields\(entitySnapshot\.type, entitySnapshot\.runtimeFields\)/);
+    assert.match(runtimeFieldsSource, /default:\s*return value === null/);
+    assert.doesNotMatch(runtimeSource, /LEGACY_|clearLegacyRuntimeFields|runtimeValue\(/);
+    assert.doesNotMatch(runtimeFieldsSource, /version:/);
 });
 
 test("every skipped entity collection/player pointer is reconstructed from GameMode", () => {

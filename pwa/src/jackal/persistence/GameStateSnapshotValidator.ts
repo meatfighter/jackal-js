@@ -55,7 +55,6 @@ function isBaseSnapshot(snapshot: UnknownRecord): boolean {
         (snapshot.konamiCodeFields === null || isEncodedRecord(snapshot.konamiCodeFields, new Set<number>())) &&
         isRandomSnapshot(snapshot.random) &&
         isNonNegativeInteger(snapshot.friendlySoldierCount) &&
-        isNullableSongId(snapshot.currentSongId) &&
         isNullableSongId(snapshot.requestedSongId) &&
         isSongSnapshot(snapshot.currentSongState) &&
         isAudioStateSnapshot(snapshot.audioState)
@@ -66,7 +65,6 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (!isSupportedGameStateVersion(snapshot.version)) {
         return false;
     }
-    const version = snapshot.version;
     const gameMode = snapshot.gameMode;
     if (!isRecord(gameMode) || !isEncodedRecord(gameMode.fields) || !hasEncodedFields(gameMode.fields, GAME_MODE_FIELD_NAMES)) {
         return false;
@@ -96,7 +94,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
             !isRecord(entitySnapshot) ||
             !isGameElementTypeId(entitySnapshot.type) ||
             !isEncodedRecord(entitySnapshot.fields, entityIds) ||
-            !isEntityRuntimeFields(entitySnapshot.type, entitySnapshot.runtimeFields, version)
+            !isEntityRuntimeFields(entitySnapshot.type, entitySnapshot.runtimeFields)
         ) {
             return false;
         }
@@ -148,15 +146,19 @@ function isModeExtraSnapshot(modeId: StandaloneModeId, extra: unknown): boolean 
         case "CONTINUE":
         case "DIFFICULTY":
         case "OPTIONS":
-            return isRecord(extra) && isMenuSnapshot(extra.menu);
+            return isExactObject(extra, "menu") && isMenuSnapshot(extra.menu);
         case "INPUT":
-            return isRecord(extra) && isInputModeExtraSnapshot(extra.input);
+            return isExactObject(extra, "input") && isInputModeExtraSnapshot(extra.input);
         case "YEAH":
         case "WE_MADE_IT":
-            return isRecord(extra) && isJeepYeahModeExtraSnapshot(extra.jeepYeah);
+            return isExactObject(extra, "jeepYeah") && isJeepYeahModeExtraSnapshot(extra.jeepYeah);
         default:
-            return typeof extra === "undefined";
+            return extra === null;
     }
+}
+
+function isExactObject(value: unknown, key: string): value is UnknownRecord {
+    return isRecord(value) && Object.keys(value).length === 1 && Object.hasOwn(value, key);
 }
 
 function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
@@ -260,17 +262,7 @@ function isSongSnapshot(value: unknown): value is SongSnapshot | null {
 }
 
 function isMusicSnapshot(value: unknown): value is MusicSnapshot | null {
-    return (
-        value === null ||
-        (isRecord(value) &&
-            isMusicId(value.id) &&
-            typeof value.looped === "boolean" &&
-            typeof value.paused === "boolean" &&
-            typeof value.playing === "boolean" &&
-            Number.isFinite(value.playbackRate) &&
-            Number.isFinite(value.position) &&
-            Number.isFinite(value.volume))
-    );
+    return value === null || (isRecord(value) && isMusicId(value.id) && Number.isFinite(value.position) && Number.isFinite(value.volume));
 }
 
 function isNullableSongId(value: unknown): boolean {

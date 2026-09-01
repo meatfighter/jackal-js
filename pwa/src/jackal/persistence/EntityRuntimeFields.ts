@@ -1,5 +1,4 @@
 import type { GameElementTypeId } from "./GameElementTypeIds.js";
-import type { SupportedGameStateVersion } from "./GameStateSchema.js";
 
 export const ENEMY_BULLET_SPRITE_FIELD = "enemyBulletSprite";
 export const FLOOR_GUN_PLAIN_FIELD = "floorGunPlain";
@@ -14,12 +13,8 @@ export function isEnemyBulletSpriteId(value: unknown): value is EnemyBulletSprit
     return typeof value === "string" && ENEMY_BULLET_SPRITE_ID_SET.has(value);
 }
 
-/** Validates the browser-only entity descriptors introduced by save schema v5. */
-export function isEntityRuntimeFields(type: GameElementTypeId, value: unknown, version: SupportedGameStateVersion): boolean {
-    if (version < 5) {
-        return typeof value === "undefined";
-    }
-
+/** Validates the browser-only entity descriptors in the current save schema. */
+export function isEntityRuntimeFields(type: GameElementTypeId, value: unknown): boolean {
     switch (type) {
         case "EnemyBullet":
             return isExactRecord(value, ENEMY_BULLET_SPRITE_FIELD, isEnemyBulletSpriteId);
@@ -28,7 +23,7 @@ export function isEntityRuntimeFields(type: GameElementTypeId, value: unknown, v
         case "TileDebris":
             return isExactRecord(value, TILE_DEBRIS_SPRITE_TILE_FIELD, (entry) => typeof entry === "number" && Number.isInteger(entry) && entry >= 0);
         default:
-            return typeof value === "undefined";
+            return value === null;
     }
 }
 

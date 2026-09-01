@@ -6,6 +6,8 @@
     },
     "typescriptOnlyFiles": {
         "MainRuntimeState": "Breaks ESM circular dependencies while preserving Java-style global runtime ownership.",
+        "GameTileTypes": "Cycle-safe source of truth for tile type constants shared by GameMode and translated entities.",
+        "PlayerMotionConstants": "Cycle-safe source of truth for Player motion constants and precomputed rumble values used by cutscenes.",
         "index": "Browser module export surface.",
         "JackalMath": "Provides a cycle-safe, Java-float-compatible rotation helper shared by Main and Player.",
         "JackalResources": "Provides the browser resource-loading boundary for Jackal packed data files."

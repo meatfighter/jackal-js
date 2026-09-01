@@ -1,13 +1,9 @@
-export const GAME_STATE_VERSION = 5 as const;
-export const MIN_SUPPORTED_GAME_STATE_VERSION = 4 as const;
-export const SUPPORTED_GAME_STATE_VERSIONS = [MIN_SUPPORTED_GAME_STATE_VERSION, GAME_STATE_VERSION] as const;
-export type SupportedGameStateVersion = (typeof SUPPORTED_GAME_STATE_VERSIONS)[number];
+export const GAME_STATE_VERSION = 6 as const;
+export type SupportedGameStateVersion = typeof GAME_STATE_VERSION;
 export const GAME_STATE_STORAGE_KEY = "jackal.game-state";
 
-const SUPPORTED_GAME_STATE_VERSION_SET: ReadonlySet<number> = new Set(SUPPORTED_GAME_STATE_VERSIONS);
-
 export function isSupportedGameStateVersion(value: unknown): value is SupportedGameStateVersion {
-    return typeof value === "number" && Number.isInteger(value) && SUPPORTED_GAME_STATE_VERSION_SET.has(value);
+    return value === GAME_STATE_VERSION;
 }
 
 export function isFutureGameStateSnapshot(value: unknown): boolean {

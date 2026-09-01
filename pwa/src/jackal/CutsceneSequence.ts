@@ -1,6 +1,6 @@
 import type { GameContainer } from "slick2d-ts";
 import { ArrayList } from "../java/JavaRuntime.js";
-import { Main } from "./Main.js";
+import { requireMainRuntime } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 export class CutsceneSequence {
     public constructor() {}
@@ -17,6 +17,7 @@ export class CutsceneSequence {
         if (CutsceneSequence.modes.isEmpty()) {
             CutsceneSequence.fillList();
         }
-        Main.mainInstance.requestMode(CutsceneSequence.modes.removeAt(Main.mainInstance.random.nextInt(CutsceneSequence.modes.size())), gc);
+        const main = requireMainRuntime();
+        main.requestMode(CutsceneSequence.modes.removeAt(main.random.nextInt(CutsceneSequence.modes.size())), gc);
     }
 }

@@ -53,9 +53,11 @@ test("Java field hiding remains represented by separate JavaScript properties", 
     assert.match(baseSource, /public\s+enemy:\s*boolean\s*=\s*false/);
 
     const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
-    assert.match(serializer, /record\.enemy\s*=\s*encodeValue\(entity\.sourceEnemy/);
-    assert.match(serializer, /entity\.sourceEnemy\s*=/);
-    assert.match(serializer, /entity\.enemy\s*=\s*false/);
+    const codec = read("pwa/src/jackal/persistence/GameStateCodec.ts");
+    assert.match(serializer, /const fields = encodeObjectFields\(entity, context\);/);
+    assert.match(codec, /for \(const key of Object\.keys\(source\)\)/);
+    assert.match(codec, /record\[key\] = encodeValue\(value, context\)/);
+    assert.doesNotMatch(serializer, /record\.enemy\s*=|delete record\.sourceEnemy|normalizeTranslatedEntityFields/);
 });
 
 test("JeepYeah removal state follows the original Java field", () => {
@@ -240,14 +242,14 @@ test("Java-shaped shared representations avoid JavaScript coercion and duplicate
     assert.match(main, /this\.fonts\[i\]\[character\.charCodeAt\(0\)\] = image;/);
     assert.doesNotMatch(main, /Record<string, Image>/);
 
-    assert.match(main, /const mainInstance = MainRuntimeState\.mainInstance;/);
-    assert.match(main, /if \(mainInstance === null\)/);
-    assert.match(main, /return mainInstance;/);
-    assert.match(main, /MainRuntimeState\.mainInstance = mainInstance;/);
-    assert.match(main, /const gameMode = MainRuntimeState\.gameMode;/);
-    assert.match(main, /if \(gameMode === null\)/);
-    assert.match(main, /return gameMode;/);
-    assert.match(main, /MainRuntimeState\.gameMode = gameMode;/);
+    assert.match(main, /public static get mainInstance\(\): Main \{\s*return requireMainRuntime\(\);/);
+    assert.match(
+        main,
+        /public static set mainInstance\(mainInstance: Main\) \{\s*mainInstance\.browserRuntimeActive = true;\s*installMainRuntime\(mainInstance\);/
+    );
+    assert.match(main, /public static get gameMode\(\): GameMode \{\s*return requireMainRuntimeGameMode\(\);/);
+    assert.match(main, /public static set gameMode\(gameMode: GameMode \| null\) \{\s*setMainRuntimeGameMode\(gameMode\);/);
+    assert.match(main, /public disposeBrowserRuntime\(\): void \{[\s\S]*?clearMainRuntime\(this\);/);
     assert.doesNotMatch(main, /public static (?:mainInstance|gameMode):/);
 
     for (const constant of [
@@ -286,6 +288,6 @@ test("TypeScript policy strengthens checking without changing Java field semanti
     assert.equal(options.noFallthroughCasesInSwitch, true);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*5/);
-    assert.match(schema, /MIN_SUPPORTED_GAME_STATE_VERSION\s*=\s*4/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*6/);
+    assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
 });

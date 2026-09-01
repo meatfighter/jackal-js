@@ -1,7 +1,5 @@
 import type { GameContainer } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
-import { Explosion } from "../Explosion.js";
-import { Fire } from "../Fire.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
 import { Enemy } from "../Enemy.js";
 import type { GameElement } from "../GameElement.js";
@@ -66,7 +64,6 @@ import {
     encodeNamedFields,
     encodeNullableNamedFields,
     encodeObjectFields,
-    encodeValue,
     readEncodedBooleanField,
     readEncodedNumberField,
     type GameStateDecodeContext,
@@ -166,7 +163,6 @@ export class JackalGameStateSerializer {
             konamiCodeFields: main.konamiCode === null ? null : encodeObjectFields(main.konamiCode, context),
             random: main.random.getState(),
             friendlySoldierCount: FriendlySoldier.count,
-            currentSongId: songIdFor(main, main.currentSong),
             requestedSongId: songIdFor(main, main.requestedSong),
             currentSongState: captureSongSnapshot(main, main.currentSong),
             audioState: captureAudioStateSnapshot(main)
@@ -211,7 +207,6 @@ export class JackalGameStateSerializer {
                 throw new Error(`Missing restored entity ${entitySnapshot.id}.`);
             }
             decodeFieldsInto(entity, entitySnapshot.fields, context, GAME_ELEMENT_JAVA_FLOAT_FIELDS[entitySnapshot.type]);
-            this.normalizeTranslatedEntityFields(entity);
         }
 
         this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);
@@ -360,7 +355,7 @@ export class JackalGameStateSerializer {
         }
     }
 
-    private createModeExtraSnapshot(modeId: StandaloneModeId, mode: object, context: GameStateEncodeContext): GenericModeExtraSnapshot | undefined {
+    private createModeExtraSnapshot(modeId: StandaloneModeId, mode: object, context: GameStateEncodeContext): GenericModeExtraSnapshot | null {
         switch (modeId) {
             case "INTRO":
             case "CONTINUE":
@@ -379,7 +374,7 @@ export class JackalGameStateSerializer {
                 }
                 return { jeepYeah: this.createJeepYeahModeExtraSnapshot(mode, context) };
             default:
-                return undefined;
+                return null;
         }
     }
 
@@ -414,11 +409,11 @@ export class JackalGameStateSerializer {
         const bullets: EncodedRecord[] = [];
         if (mode.bullets !== null) {
             for (let i = 0; i < mode.bullets.size(); i++) {
-                bullets.push(this.encodeLegacyJeepYeahFields(mode.bullets.get(i), JEEP_YEAH_BULLET_FIELD_NAMES, context));
+                bullets.push(encodeNamedFields(mode.bullets.get(i), JEEP_YEAH_BULLET_FIELD_NAMES, context));
             }
         }
         return {
-            explosion: this.encodeNullableLegacyJeepYeahFields(mode.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, context),
+            explosion: encodeNullableNamedFields(mode.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, context),
             leftPlane: encodeNullableNamedFields(mode.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
             rightPlane: encodeNullableNamedFields(mode.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context),
             fireLeft: encodeNullableNamedFields(mode.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES, context),
@@ -427,17 +422,15 @@ export class JackalGameStateSerializer {
         };
     }
 
-    private restoreModeExtraSnapshot(mode: object, extra: GenericModeExtraSnapshot | undefined, context: RestoreContext): void {
-        if (extra === undefined) {
+    private restoreModeExtraSnapshot(mode: object, extra: GenericModeExtraSnapshot | null, context: RestoreContext): void {
+        if (extra === null) {
             return;
         }
-        if (extra.menu !== undefined) {
+        if ("menu" in extra) {
             this.restoreModeMenu(mode, extra.menu, context);
-        }
-        if (extra.input !== undefined && mode instanceof InputMode) {
+        } else if ("input" in extra && mode instanceof InputMode) {
             this.restoreInputModeExtraSnapshot(mode, extra.input, context);
-        }
-        if (extra.jeepYeah !== undefined && mode instanceof JeepYeahMode) {
+        } else if ("jeepYeah" in extra && mode instanceof JeepYeahMode) {
             this.restoreJeepYeahModeExtraSnapshot(mode, extra.jeepYeah, context);
         }
     }
@@ -469,7 +462,6 @@ export class JackalGameStateSerializer {
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
         Reflect.set(mode, "explosion", this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context, JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS));
-        this.normalizeLegacyJeepYeahRemoval(mode.explosion);
         Reflect.set(mode, "leftPlane", this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS));
         Reflect.set(mode, "rightPlane", this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS));
         Reflect.set(mode, "fireLeft", this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context, JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS));
@@ -478,37 +470,8 @@ export class JackalGameStateSerializer {
         for (const bulletSnapshot of snapshot.bullets) {
             const bullet = createUninitialized(JeepYeahBullet.prototype);
             decodeFieldsInto(bullet, bulletSnapshot, context, JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS);
-            this.normalizeLegacyJeepYeahRemoval(bullet);
             mode.bullets.add(bullet);
         }
-    }
-
-    /**
-     * Java lets Fire/Explosion hide GameElement.enemy:boolean with Enemy enemy.
-     * JavaScript has one property namespace, so the translated reference is sourceEnemy.
-     * Also migrates snapshots written before the two Java fields were separated.
-     */
-    private normalizeTranslatedEntityFields(entity: GameElement): void {
-        if (!(entity instanceof Fire) && !(entity instanceof Explosion)) {
-            return;
-        }
-
-        if (!Object.hasOwn(entity, "sourceEnemy")) {
-            const legacyEnemy: unknown = Reflect.get(entity, "enemy");
-            entity.sourceEnemy = legacyEnemy instanceof Enemy ? legacyEnemy : null;
-        }
-        entity.enemy = false;
-    }
-
-    /** Migrates JeepYeah snapshots produced by the old accidental removeFlag translation. */
-    private normalizeLegacyJeepYeahRemoval(value: JeepYeahBullet | JeepYeahExplosion | null): void {
-        if (value === null) {
-            return;
-        }
-        if (Reflect.get(value, "removeFlag") === true) {
-            value.remove = true;
-        }
-        Reflect.deleteProperty(value, "removeFlag");
     }
 
     private restoreNullableTypedRecord<T extends object>(
@@ -562,31 +525,6 @@ export class JackalGameStateSerializer {
         return mode;
     }
 
-    /** Preserves the legacy field name used before Java's hidden Enemy field was split in TypeScript. */
-    private encodeEntityFields(entity: GameElement, context: GameStateEncodeContext): EncodedRecord {
-        const record = encodeObjectFields(entity, context);
-        if (entity instanceof Fire || entity instanceof Explosion) {
-            record.enemy = encodeValue(entity.sourceEnemy, context);
-            delete record.sourceEnemy;
-        }
-        return record;
-    }
-
-    /** Writes the old removeFlag alias so a rolled-back release can read new saves. */
-    private encodeLegacyJeepYeahFields(source: JeepYeahBullet | JeepYeahExplosion, names: readonly string[], context: GameStateEncodeContext): EncodedRecord {
-        const record = encodeNamedFields(source, names, context);
-        record.removeFlag = encodeValue(source.remove, context);
-        return record;
-    }
-
-    private encodeNullableLegacyJeepYeahFields(
-        source: JeepYeahExplosion | null,
-        names: readonly string[],
-        context: GameStateEncodeContext
-    ): EncodedRecord | null {
-        return source === null ? null : this.encodeLegacyJeepYeahFields(source, names, context);
-    }
-
     private createGameStateEncodeContext(main: Main, gameMode: GameMode, player: Player): GameModeEncodeContext {
         const ids = new Map<object, number>();
         const entities: GameElement[] = [];
@@ -609,13 +547,13 @@ export class JackalGameStateSerializer {
         if (id === undefined) {
             throw new Error(`Unregistered Jackal entity: ${type}`);
         }
-        const fields = this.encodeEntityFields(entity, context);
+        const fields = encodeObjectFields(entity, context);
         const runtimeFields = captureEntityRuntimeFields(entity, context.main, context.gameMode);
         return {
             id,
             type,
             fields,
-            ...(runtimeFields === undefined ? {} : { runtimeFields })
+            runtimeFields
         };
     }
 

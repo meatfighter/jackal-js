@@ -3,9 +3,11 @@ import { rotatePointLikeJava } from "./JackalMath.js";
 import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
-import { GameMode } from "./GameMode.js";
+import { TILE_TYPE_CONVEYOR, TILE_TYPE_SWAMP } from "./GameTileTypes.js";
+import { PLAYER_ANGLE_STEPS, PLAYER_ANGLE_VELOCITY, PLAYER_RUMBLE, PLAYER_SPEED } from "./PlayerMotionConstants.js";
+import type { GameMode } from "./GameMode.js";
 import { Grenade } from "./Grenade.js";
-import { MainRuntimeState } from "./MainRuntimeState.js";
+import { requireMainRuntime, requireMainRuntimeGameMode } from "./MainRuntimeState.js";
 import { Modes } from "./Modes.js";
 import { PlayerBullet } from "./PlayerBullet.js";
 import { PlayerMissile } from "./PlayerMissile.js";
@@ -14,15 +16,15 @@ import type { IInput } from "./IInput.js";
 import type { Main } from "./Main.js";
 export class Player {
     public constructor() {
-        this.main = MainRuntimeState.mainInstance!;
-        this.gameMode = MainRuntimeState.gameMode!;
+        this.main = requireMainRuntime();
+        this.gameMode = requireMainRuntimeGameMode();
         this.input = this.main.input;
         this.mines = this.gameMode.mines;
     }
 
-    public static readonly SPEED: number = 2.5;
-    public static readonly ANGLE_STEPS: number = 8;
-    public static readonly ANGLE_VELOCITY: number = javaFloat(45 / Player.ANGLE_STEPS);
+    public static readonly SPEED: number = javaFloat(PLAYER_SPEED);
+    public static readonly ANGLE_STEPS: number = PLAYER_ANGLE_STEPS;
+    public static readonly ANGLE_VELOCITY: number = javaFloat(PLAYER_ANGLE_VELOCITY);
     public static readonly DIAGONAL_DELAY: number = 4;
     public static readonly GUN_ARMED_DELAY: number = 45;
     public static readonly RESPAWN_DELAY: number = 91 * 2;
@@ -38,14 +40,13 @@ export class Player {
     public static SENSOR_D_Y1: number = 0;
     public static SENSOR_D_Y2: number = 0;
 
-    public static readonly RUMBLE: number[] = javaArray(17, 0);
+    public static readonly RUMBLE: number[] = PLAYER_RUMBLE;
     public static readonly WAKE_ALPHAS: number[] = javaArray(17, 0);
 
     static {
         let angle = 0;
         for (let i = 0; i < 17; i++) {
             Player.WAKE_ALPHAS[i] = javaFloat(0.5 + javaFloat(0.5 * javaFloat(Math.sin(angle))));
-            Player.RUMBLE[i] = javaFloat(javaFloat(1.6) * javaFloat(Math.sin(angle)));
             angle = javaFloat(angle + javaFloat(0.74));
         }
 
@@ -211,7 +212,7 @@ export class Player {
 
     public update(): void {
         let tileType = this.gameMode.getTileType(this.x, this.y);
-        this.inSwamp = tileType === GameMode.TYPE_SWAMP;
+        this.inSwamp = tileType === TILE_TYPE_SWAMP;
         let speed = javaFloat(this.getSpeed());
 
         if (this.respawning > 0) {
@@ -230,7 +231,7 @@ export class Player {
             }
         }
 
-        if (tileType === GameMode.TYPE_CONVEYOR) {
+        if (tileType === TILE_TYPE_CONVEYOR) {
             let Y = javaFloat(javaFloat(this.y + Player.SENSOR_X) + Player.SPEED);
             if (
                 this.gameMode.isDriveable(this.x, Y) &&

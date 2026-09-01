@@ -4,7 +4,7 @@ import { Enemy } from "./Enemy.js";
 import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
-import { GameMode } from "./GameMode.js";
+import { TILE_TYPE_SOLID } from "./GameTileTypes.js";
 import { GrayTank } from "./GrayTank.js";
 export class Hut extends Enemy {
     declare public groupIndex: number;
@@ -35,7 +35,7 @@ export class Hut extends Enemy {
         }
         for (let i = shack ? 5 : 4; i >= 0; i--) {
             for (let j = 0; j < 6; j++) {
-                this.gameMode.typesMap[Y + i][X + j] = GameMode.TYPE_SOLID;
+                this.gameMode.typesMap[Y + i][X + j] = TILE_TYPE_SOLID;
             }
         }
     }

@@ -30,6 +30,7 @@ import { FloorMissileLauncher } from "./FloorMissileLauncher.js";
 import { FriendlyHelicopter } from "./FriendlyHelicopter.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { GameElement } from "./GameElement.js";
+import { TILE_TYPE_CONVEYOR, TILE_TYPE_EMPTY, TILE_TYPE_SHIELD, TILE_TYPE_SOLID, TILE_TYPE_SWAMP, TILE_TYPE_WATER } from "./GameTileTypes.js";
 import { Gate } from "./Gate.js";
 import { GrayBoat } from "./GrayBoat.js";
 import { GrayJeep } from "./GrayJeep.js";
@@ -71,12 +72,12 @@ export class GameMode implements IMode, IFadeListener {
     public static readonly CONVEYOR_SPEED: number = javaFloat(Player.SPEED / 3);
     public static readonly STAGE_COMPLETED_DELAY: number = 228;
 
-    public static readonly TYPE_SOLID: number = 0;
-    public static readonly TYPE_EMPTY: number = 1;
-    public static readonly TYPE_SHIELD: number = 2;
-    public static readonly TYPE_WATER: number = 3;
-    public static readonly TYPE_SWAMP: number = 4;
-    public static readonly TYPE_CONVEYOR: number = 5;
+    public static readonly TYPE_SOLID: number = TILE_TYPE_SOLID;
+    public static readonly TYPE_EMPTY: number = TILE_TYPE_EMPTY;
+    public static readonly TYPE_SHIELD: number = TILE_TYPE_SHIELD;
+    public static readonly TYPE_WATER: number = TILE_TYPE_WATER;
+    public static readonly TYPE_SWAMP: number = TILE_TYPE_SWAMP;
+    public static readonly TYPE_CONVEYOR: number = TILE_TYPE_CONVEYOR;
 
     public static readonly DIR_UP: number = 0;
     public static readonly DIR_DOWN: number = 1;

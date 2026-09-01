@@ -1,4 +1,4 @@
-import { MainRuntimeState } from "./MainRuntimeState.js";
+import { requireMainRuntime, requireMainRuntimeGameMode } from "./MainRuntimeState.js";
 import type { GameMode } from "./GameMode.js";
 import type { Main } from "./Main.js";
 export abstract class GameElement {
@@ -9,8 +9,8 @@ export abstract class GameElement {
      */
     protected __initializeJavaSubclassDefaults(): void {}
     public constructor() {
-        this.main = MainRuntimeState.mainInstance!;
-        this.gameMode = MainRuntimeState.gameMode!;
+        this.main = requireMainRuntime();
+        this.gameMode = requireMainRuntimeGameMode();
         this.__initializeJavaSubclassDefaults();
         this.init();
         this.gameMode.addGameElement(this);

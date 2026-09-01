@@ -1,5 +1,5 @@
 import { GameElement } from "./GameElement.js";
-import { Player } from "./Player.js";
+import { PLAYER_ANGLE_VELOCITY, PLAYER_RUMBLE, PLAYER_SPEED } from "./PlayerMotionConstants.js";
 import type { Chinook } from "./Chinook.js";
 import { javaFloat } from "../java/JavaRuntime.js";
 
@@ -46,8 +46,8 @@ export class IntroPlayer extends GameElement {
     public update(): void {
         switch (this.state) {
             case IntroPlayer.STATE_DIAGONAL:
-                this.x = javaFloat(this.x - Player.SPEED);
-                this.y = javaFloat(this.y + Player.SPEED);
+                this.x = javaFloat(this.x - PLAYER_SPEED);
+                this.y = javaFloat(this.y + PLAYER_SPEED);
                 if (--this.delay === 0) {
                     this.state = IntroPlayer.STATE_REVERSE;
                     this.delay = IntroPlayer.REVERSE_TIME;
@@ -55,7 +55,7 @@ export class IntroPlayer extends GameElement {
                 break;
             case IntroPlayer.STATE_REVERSE:
                 if (this.angle > -90) {
-                    this.angle = javaFloat(this.angle - Player.ANGLE_VELOCITY);
+                    this.angle = javaFloat(this.angle - PLAYER_ANGLE_VELOCITY);
                 } else {
                     this.angle = -90;
                 }
@@ -70,6 +70,6 @@ export class IntroPlayer extends GameElement {
     }
 
     public render(): void {
-        this.main.drawVehicle(this.main.players[0], this.x, this.y + Player.RUMBLE[0], this.angle);
+        this.main.drawVehicle(this.main.players[0], this.x, this.y + PLAYER_RUMBLE[0], this.angle);
     }
 }

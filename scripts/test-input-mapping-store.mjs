@@ -38,9 +38,14 @@ function compileModule(source) {
 async function loadStore() {
     const helperSource = readFileSync(new URL("../pwa/src/app/DeploymentStorageKeys.ts", import.meta.url), "utf8");
     const helperModuleUrl = compileModule(helperSource);
-    const source = readFileSync(new URL("../pwa/src/app/JackalInputMappingStore.ts", import.meta.url), "utf8").replace(
+    const storageSource = readFileSync(new URL("../pwa/src/app/DeploymentStorage.ts", import.meta.url), "utf8").replace(
         `from "./DeploymentStorageKeys.js";`,
         `from "${helperModuleUrl}";`
+    );
+    const storageModuleUrl = compileModule(storageSource);
+    const source = readFileSync(new URL("../pwa/src/app/JackalInputMappingStore.ts", import.meta.url), "utf8").replace(
+        `from "./DeploymentStorage.js";`,
+        `from "${storageModuleUrl}";`
     );
     return import(compileModule(source));
 }
