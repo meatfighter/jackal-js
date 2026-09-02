@@ -41,6 +41,17 @@ jobs:
             - name: Apply maintenance
               run: python .github/scripts/apply-2026-09-maintenance.py
 
+            - name: Align post-migration fixup expectations
+              run: |
+                  python - <<'PY'
+                  from pathlib import Path
+                  path = Path('.github/scripts/apply-2026-09-fixups.py')
+                  text = path.read_text()
+                  text = text.replace('GAME_STATE_VERSION = 7 as const', 'GAME_STATE_VERSION = 8 as const')
+                  text = text.replace('GAME_STATE_VERSION\\\\s*=\\\\s*7', 'GAME_STATE_VERSION\\\\s*=\\\\s*8')
+                  path.write_text(text)
+                  PY
+
             - name: Apply validation fixups
               run: python .github/scripts/apply-2026-09-fixups.py
 
