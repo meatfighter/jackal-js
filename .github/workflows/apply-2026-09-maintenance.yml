@@ -50,6 +50,7 @@ jobs:
                   text = text.replace('GAME_STATE_VERSION\\\\s*=\\\\s*7', 'GAME_STATE_VERSION\\\\s*=\\\\s*8')
                   text = text.replace('GAME_STATE_VERSION = 7 as const/);', 'GAME_STATE_VERSION = 7 as const;/);')
                   text = text.replace('GAME_STATE_VERSION = \\\\d+ as const/);', 'GAME_STATE_VERSION = \\\\d+ as const;/);')
+                  text = text.replace("replace_count(web_path, 'this.showPendingPersistenceWarning();', 'this.persistenceWarnings.showPending();', 2)", "replace_count(web_path, 'this.showPendingPersistenceWarning();', 'this.persistenceWarnings.showPending();', 3)")
                   path.write_text(text)
                   PY
 
