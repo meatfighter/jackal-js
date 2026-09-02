@@ -284,7 +284,7 @@ function buildWithJdk() {
         throw new Error("The desktop build requires jar on PATH.");
     }
 
-    console.log("Building desktop archive with javac fallback.");
+    console.log("Building desktop archive with JDK tools.");
     cleanDesktopTargetDirectory(classesDir, "desktop classes directory");
     ensureDesktopTargetDirectory(targetDir, "desktop target directory");
     copyRuntimeToTarget();
