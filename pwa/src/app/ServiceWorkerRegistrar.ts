@@ -26,7 +26,9 @@ async function clearDevelopmentServiceWorkers(): Promise<void> {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.filter((registration) => registration.scope === appScope).map((registration) => registration.unregister()));
     if ("caches" in window) {
+        const scopeCacheId = encodeURIComponent(new URL(appScope).pathname);
+        const cachePrefix = `jackal|${scopeCacheId}|`;
         const keys = await caches.keys();
-        await Promise.all(keys.filter((key) => key.startsWith("jackal|") || key.startsWith("jackal-")).map((key) => caches.delete(key)));
+        await Promise.all(keys.filter((key) => key.startsWith(cachePrefix)).map((key) => caches.delete(key)));
     }
 }

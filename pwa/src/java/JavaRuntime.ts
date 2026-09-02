@@ -1,3 +1,5 @@
+import { JavaRandom, type JavaRandomState } from "slick2d-ts";
+
 const JAVA_INT_MIN = -2147483648;
 const JAVA_INT_MAX = 2147483647;
 const JAVA_FLOAT_HALF = Math.fround(0.5);
@@ -88,125 +90,15 @@ export class ArrayList<T> {
     }
 }
 
-export interface JavaRandomState {
-    seed0: number;
-    seed1: number;
-    seed2: number;
-}
+export type { JavaRandomState };
 
-const JAVA_RANDOM_SEED_LIMB_MAX = 0xffff;
-const JAVA_RANDOM_MULTIPLIER_LOW = 0xe66d;
-const JAVA_RANDOM_MULTIPLIER_MIDDLE = 0xdeec;
-const JAVA_RANDOM_MULTIPLIER_HIGH = 0x0005;
-const JAVA_RANDOM_ADDEND = 0x000b;
-const JAVA_RANDOM_FLOAT_DIVISOR = 0x1000000;
-const JAVA_RANDOM_INT_DIVISOR = 0x80000000;
-let javaRandomSeedUniquifier = 0x106689d45497fdb5n;
-
-/**
- * Allocation-free implementation of the 48-bit LCG used by java.util.Random.
- *
- * The seed is stored as three unsigned 16-bit limbs. This avoids BigInt work in
- * gameplay while preserving Java's exact bit sequence and making save-state
- * capture an explicit public contract rather than a reflection dependency on
- * slick2d-ts internals.
- */
-export class Random {
-    private seed0: number;
-    private seed1: number;
-    private seed2: number;
-
-    public constructor(seed: number | bigint = createDefaultJavaRandomSeed()) {
-        const externalSeed = typeof seed === "bigint" ? seed : BigInt(Math.trunc(seed));
-        const internalSeed = BigInt.asUintN(48, externalSeed ^ 0x5deece66dn);
-        this.seed0 = Number(internalSeed & 0xffffn);
-        this.seed1 = Number((internalSeed >> 16n) & 0xffffn);
-        this.seed2 = Number((internalSeed >> 32n) & 0xffffn);
-    }
-
-    public nextInt(bound?: number): number {
-        if (typeof bound === "undefined") {
-            return this.nextBits(32) | 0;
-        }
-        if (!Number.isInteger(bound) || bound <= 0 || bound > JAVA_INT_MAX) {
-            throw new RangeError(`Random bound must be an integer from 1 through ${JAVA_INT_MAX}: ${bound}`);
-        }
-
-        const bits = this.nextBits(31);
-        if ((bound & -bound) === bound) {
-            return Math.floor(bits / (JAVA_RANDOM_INT_DIVISOR / bound));
-        }
-
-        let value = bits % bound;
-        let candidate = bits;
-        while (((candidate - value + (bound - 1)) | 0) < 0) {
-            candidate = this.nextBits(31);
-            value = candidate % bound;
-        }
-        return value;
-    }
-
-    public nextBoolean(): boolean {
-        return this.nextBits(1) !== 0;
-    }
-
-    public nextFloat(): number {
-        return Math.fround(this.nextBits(24) / JAVA_RANDOM_FLOAT_DIVISOR);
-    }
-
-    public getState(): JavaRandomState {
-        return {
-            seed0: this.seed0,
-            seed1: this.seed1,
-            seed2: this.seed2
-        };
-    }
-
-    public static fromState(state: JavaRandomState): Random {
+/** Java counterpart: java.util.Random, backed by slick2d-ts's exact 48-bit implementation. */
+export class Random extends JavaRandom {
+    public static override fromState(state: JavaRandomState): Random {
         const random = new Random(0);
-        random.seed0 = validateJavaRandomSeedLimb(state.seed0, "seed0");
-        random.seed1 = validateJavaRandomSeedLimb(state.seed1, "seed1");
-        random.seed2 = validateJavaRandomSeedLimb(state.seed2, "seed2");
+        random.setState(state);
         return random;
     }
-
-    private nextBits(bits: number): number {
-        const lowProduct = this.seed0 * JAVA_RANDOM_MULTIPLIER_LOW + JAVA_RANDOM_ADDEND;
-        const seed0 = lowProduct & JAVA_RANDOM_SEED_LIMB_MAX;
-        let carry = Math.floor(lowProduct / 0x10000);
-
-        const middleProduct = this.seed1 * JAVA_RANDOM_MULTIPLIER_LOW + this.seed0 * JAVA_RANDOM_MULTIPLIER_MIDDLE + carry;
-        const seed1 = middleProduct & JAVA_RANDOM_SEED_LIMB_MAX;
-        carry = Math.floor(middleProduct / 0x10000);
-
-        const highProduct =
-            this.seed2 * JAVA_RANDOM_MULTIPLIER_LOW + this.seed1 * JAVA_RANDOM_MULTIPLIER_MIDDLE + this.seed0 * JAVA_RANDOM_MULTIPLIER_HIGH + carry;
-        const seed2 = highProduct & JAVA_RANDOM_SEED_LIMB_MAX;
-
-        this.seed0 = seed0;
-        this.seed1 = seed1;
-        this.seed2 = seed2;
-
-        if (bits <= 16) {
-            return seed2 >>> (16 - bits);
-        }
-        const high32 = seed2 * 0x10000 + seed1;
-        return Math.floor(high32 / 2 ** (32 - bits));
-    }
-}
-
-function createDefaultJavaRandomSeed(): bigint {
-    javaRandomSeedUniquifier = BigInt.asUintN(64, javaRandomSeedUniquifier * 1181783497276652981n);
-    const time = BigInt(Date.now());
-    const highResolutionTime = BigInt(Math.trunc(globalThis.performance?.now?.() ?? 0) * 1000);
-    return BigInt.asIntN(64, javaRandomSeedUniquifier ^ (time << 20n) ^ highResolutionTime);
-}
-
-function validateJavaRandomSeedLimb(value: unknown, name: keyof JavaRandomState): number {
-    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > JAVA_RANDOM_SEED_LIMB_MAX) {
-        throw new RangeError(`Invalid Random ${name}: ${String(value)}`);
-    }
-    return value;
 }
 
 export class System {

@@ -1,33 +1,25 @@
 import { Input, type GameContainer } from "slick2d-ts";
-import {
-    AXIS_THRESHOLD,
-    CONTROLLER_INDEX_LIMIT,
-    EXTRA_HORIZONTAL_AXES,
-    EXTRA_VERTICAL_AXES,
-    createExtraAxisBaselines,
-    isAnyCalibratedAxisGreaterThan,
-    isAnyCalibratedAxisLessThan
-} from "../app/BrowserGamepadAxes.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IInput } from "./IInput.js";
+
 export class HumanInput implements IInput {
+    private static readonly CONTROLLER_INDEX_LIMIT = 16;
+    private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET = 4;
+    private static readonly GAMEPAD_BUTTON_INDEX_LIMIT = 100;
+
+    private buttonMapping: ButtonMapping;
+    private input: Input;
+    private up = false;
+    private down = false;
+    private left = false;
+    private right = false;
+    private fire = false;
+    private shoot = false;
+
     public constructor(buttonMapping: ButtonMapping, gc: GameContainer) {
         this.buttonMapping = buttonMapping;
         this.input = gc.getInput();
     }
-
-    private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET: number = 4;
-    private static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = 100;
-
-    private buttonMapping: ButtonMapping = null!;
-    private input: Input = null!;
-    private extraAxisBaselines: number[] = createExtraAxisBaselines();
-    private up: boolean = false;
-    private down: boolean = false;
-    private left: boolean = false;
-    private right: boolean = false;
-    private fire: boolean = false;
-    private shoot: boolean = false;
 
     public snap(): void {
         this.up = this.input.isKeyDown(this.buttonMapping.keyUp) || this.isControllerBindingDown(this.buttonMapping.controllerUp);
@@ -41,13 +33,13 @@ export class HumanInput implements IInput {
     private isControllerBindingDown(button: number): boolean {
         switch (button) {
             case 12:
-                return this.isControllerUpDown() || this.isAnyControllerButtonDown(button);
+                return this.input.isControllerUp(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
             case 13:
-                return this.isControllerDownDown() || this.isAnyControllerButtonDown(button);
+                return this.input.isControllerDown(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
             case 14:
-                return this.isControllerLeftDown() || this.isAnyControllerButtonDown(button);
+                return this.input.isControllerLeft(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
             case 15:
-                return this.isControllerRightDown() || this.isAnyControllerButtonDown(button);
+                return this.input.isControllerRight(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
             default:
                 return this.isAnyControllerButtonDown(button);
         }
@@ -59,7 +51,7 @@ export class HumanInput implements IInput {
         }
         try {
             return this.input.isButtonPressed(button, Input.ANY_CONTROLLER);
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -69,8 +61,8 @@ export class HumanInput implements IInput {
             return false;
         }
         let pressed = false;
-        let control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
-        for (let controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
+        const control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
+        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
             pressed = this.isControlPressed(control, controller) || pressed;
         }
         return pressed;
@@ -84,7 +76,7 @@ export class HumanInput implements IInput {
 
     private isAnyNonDirectionalControllerButtonPressed(): boolean {
         let pressed = false;
-        for (let controller = 0; controller < CONTROLLER_INDEX_LIMIT; controller++) {
+        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
             for (let button = 0; button < HumanInput.GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
                 if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
                     pressed = this.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
@@ -110,57 +102,9 @@ export class HumanInput implements IInput {
     private isControlPressed(control: number, controller: number): boolean {
         try {
             return this.input.isControlPressed(control, controller);
-        } catch (e) {
+        } catch {
             return false;
         }
-    }
-
-    private isControllerUpDown(): boolean {
-        try {
-            return this.input.isControllerUp(Input.ANY_CONTROLLER) || this.isExtraAxisUpDown();
-        } catch (e) {
-            return this.isExtraAxisUpDown();
-        }
-    }
-
-    private isControllerDownDown(): boolean {
-        try {
-            return this.input.isControllerDown(Input.ANY_CONTROLLER) || this.isExtraAxisDownDown();
-        } catch (e) {
-            return this.isExtraAxisDownDown();
-        }
-    }
-
-    private isControllerLeftDown(): boolean {
-        try {
-            return this.input.isControllerLeft(Input.ANY_CONTROLLER) || this.isExtraAxisLeftDown();
-        } catch (e) {
-            return this.isExtraAxisLeftDown();
-        }
-    }
-
-    private isControllerRightDown(): boolean {
-        try {
-            return this.input.isControllerRight(Input.ANY_CONTROLLER) || this.isExtraAxisRightDown();
-        } catch (e) {
-            return this.isExtraAxisRightDown();
-        }
-    }
-
-    private isExtraAxisUpDown(): boolean {
-        return isAnyCalibratedAxisLessThan(this.input, this.extraAxisBaselines, EXTRA_VERTICAL_AXES, -AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisDownDown(): boolean {
-        return isAnyCalibratedAxisGreaterThan(this.input, this.extraAxisBaselines, EXTRA_VERTICAL_AXES, AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisLeftDown(): boolean {
-        return isAnyCalibratedAxisLessThan(this.input, this.extraAxisBaselines, EXTRA_HORIZONTAL_AXES, -AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisRightDown(): boolean {
-        return isAnyCalibratedAxisGreaterThan(this.input, this.extraAxisBaselines, EXTRA_HORIZONTAL_AXES, AXIS_THRESHOLD);
     }
 
     public reset(): void {}

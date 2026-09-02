@@ -139,7 +139,7 @@ async function runActivate(worker) {
     await activatePromise;
 }
 
-async function runFetch(worker, request) {
+function runFetchIfHandled(worker, request) {
     let responsePromise = null;
     const listener = worker.listeners.get("fetch");
     assert.equal(typeof listener, "function");
@@ -149,6 +149,11 @@ async function runFetch(worker, request) {
             responsePromise = Promise.resolve(promise);
         }
     });
+    return responsePromise;
+}
+
+async function runFetch(worker, request) {
+    const responsePromise = runFetchIfHandled(worker, request);
     assert.notEqual(responsePromise, null);
     return responsePromise;
 }
@@ -393,4 +398,33 @@ test("runtime fetches do not mutate immutable build-resource caches", async () =
     assert.equal(navigationResult, navigationResponse);
     assert.equal(resourceResult, resourceResponse);
     assert.deepEqual(cacheBackend.putUrls, []);
+});
+
+test("service worker ignores cross-origin and out-of-scope requests", () => {
+    const worker = loadServiceWorker();
+
+    assert.equal(
+        runFetchIfHandled(worker, {
+            method: "GET",
+            mode: "cors",
+            url: "https://cdn.example.test/game-resource.dat"
+        }),
+        null
+    );
+    assert.equal(
+        runFetchIfHandled(worker, {
+            method: "GET",
+            mode: "same-origin",
+            url: "https://example.test/another-app/resource.dat"
+        }),
+        null
+    );
+    assert.equal(
+        runFetchIfHandled(worker, {
+            method: "POST",
+            mode: "same-origin",
+            url: `${SCOPE}api`
+        }),
+        null
+    );
 });

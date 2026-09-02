@@ -118,6 +118,7 @@ export class Main extends BasicGame {
     public static readonly I_QUARTER_WIDTH: number = javaFloat(MainConstants.I_QUARTER_WIDTH);
     public static readonly I_WIDTH: number = javaFloat(MainConstants.I_WIDTH);
     public static readonly MINIMUM_SOUND_TIME: number = MainConstants.MINIMUM_SOUND_TIME;
+    private static readonly GAME_TICK_MS: number = 10;
 
     public static readonly CHARS: string = MainConstants.CHARS;
 
@@ -346,6 +347,10 @@ export class Main extends BasicGame {
             Log.error("Loading error", t);
         }
 
+        gc.getInput().setAdditionalControllerDirectionAxes([
+            { horizontalAxis: 2, verticalAxis: 3 },
+            { horizontalAxis: 6, verticalAxis: 7 }
+        ]);
         this.input = new HumanInput(this.buttonMapping, gc);
         this.konamiCode = new KonamiCode(this);
         this.startPlayer();
@@ -383,7 +388,7 @@ export class Main extends BasicGame {
                 throw new Error("Jackal mode is unavailable during update.");
             }
             mode.update(gc);
-            this.nextFrameTime += javaInt(javaFloat(javaFloat(Sys.getTimerResolution() * javaFloat(0.01)) + 0.5));
+            this.nextFrameTime += Main.GAME_TICK_MS;
             if (++count === 8) {
                 this.resetNextFrameTime();
                 break;

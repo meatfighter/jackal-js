@@ -38,6 +38,10 @@ self.addEventListener("fetch", (event) => {
     if (event.request.method !== "GET") {
         return;
     }
+    const requestUrl = new URL(event.request.url);
+    if (requestUrl.origin !== self.location.origin || !requestUrl.href.startsWith(self.registration.scope)) {
+        return;
+    }
     if (event.request.mode === "navigate") {
         event.respondWith(networkFirstNavigation(event.request));
         return;

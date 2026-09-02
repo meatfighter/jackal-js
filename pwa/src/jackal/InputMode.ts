@@ -1,17 +1,5 @@
 import { Color, type ControllerListener, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
-import {
-    AXIS_RECENTER_THRESHOLD,
-    AXIS_THRESHOLD,
-    CONTROLLER_INDEX_LIMIT,
-    EXTRA_HORIZONTAL_AXES,
-    EXTRA_VERTICAL_AXES,
-    GAMEPAD_AXIS_LIMIT,
-    createExtraAxisBaselines,
-    isAnyCalibratedAxisGreaterThan,
-    isAnyCalibratedAxisLessThan,
-    resetExtraAxisBaselines
-} from "../app/BrowserGamepadAxes.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
 import type { IFadeListener } from "./IFadeListener.js";
@@ -38,12 +26,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public static readonly I_FADE_TIME: number = javaFloat(1 / InputMode.FADE_TIME);
     public static readonly DONE_DELAY: number = 30;
     public static readonly ARM_DELAY: number = 8;
-    public static readonly CONTROLLER_INDEX_LIMIT: number = CONTROLLER_INDEX_LIMIT;
-    public static readonly GAMEPAD_AXIS_LIMIT: number = GAMEPAD_AXIS_LIMIT;
-    public static readonly AXIS_THRESHOLD: number = AXIS_THRESHOLD;
-    public static readonly AXIS_RECENTER_THRESHOLD: number = AXIS_RECENTER_THRESHOLD;
-    public static readonly EXTRA_HORIZONTAL_AXES: readonly number[] = EXTRA_HORIZONTAL_AXES;
-    public static readonly EXTRA_VERTICAL_AXES: readonly number[] = EXTRA_VERTICAL_AXES;
 
     public static readonly INPUT_TITLE: string = "INPUT";
     public static readonly INPUT_TITLE_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2);
@@ -88,11 +70,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
-    public extraAxisBaselines: number[] = createExtraAxisBaselines();
-    public extraAxisUpDown: boolean = false;
-    public extraAxisDownDown: boolean = false;
-    public extraAxisLeftDown: boolean = false;
-    public extraAxisRightDown: boolean = false;
     public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
@@ -158,9 +135,8 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.assignedControllerButtons.clear();
         this.message = "";
         this.armDelay = InputMode.ARM_DELAY;
-        this.resetExtraAxisBaselines();
+        this.gc.getInput().resetAdditionalControllerDirectionAxisCalibration();
         this.addInputListeners();
-        this.syncExtraAxisDirectionState();
         this.gc.getInput().clearKeyPressedRecord();
         this.gc.getInput().clearControlPressedRecord();
     }
@@ -445,88 +421,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return buttonIndex >= ButtonMapping.DEFAULT_CONTROLLER_UP && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
 
-    private bindExtraAxisDirectionPressed(): void {
-        if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
-            this.syncExtraAxisDirectionState();
-            return;
-        }
-        let buttonIndex = this.getPressedExtraAxisDirection();
-        if (buttonIndex !== null) {
-            this.bindControllerDirection(buttonIndex, 0);
-        }
-    }
-
-    private getPressedExtraAxisDirection(): number | null {
-        if (this.isExtraAxisUpPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_UP;
-        }
-        if (this.isExtraAxisDownPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
-        }
-        if (this.isExtraAxisLeftPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
-        }
-        if (this.isExtraAxisRightPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-        }
-        return null;
-    }
-
-    private isExtraAxisUpDown(): boolean {
-        return isAnyCalibratedAxisLessThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_VERTICAL_AXES, -InputMode.AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisDownDown(): boolean {
-        return isAnyCalibratedAxisGreaterThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_VERTICAL_AXES, InputMode.AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisLeftDown(): boolean {
-        return isAnyCalibratedAxisLessThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_HORIZONTAL_AXES, -InputMode.AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisRightDown(): boolean {
-        return isAnyCalibratedAxisGreaterThan(this.gc.getInput(), this.extraAxisBaselines, InputMode.EXTRA_HORIZONTAL_AXES, InputMode.AXIS_THRESHOLD);
-    }
-
-    private isExtraAxisUpPressed(): boolean {
-        let down = this.isExtraAxisUpDown();
-        let pressed = down && !this.extraAxisUpDown;
-        this.extraAxisUpDown = down;
-        return pressed;
-    }
-
-    private isExtraAxisDownPressed(): boolean {
-        let down = this.isExtraAxisDownDown();
-        let pressed = down && !this.extraAxisDownDown;
-        this.extraAxisDownDown = down;
-        return pressed;
-    }
-
-    private isExtraAxisLeftPressed(): boolean {
-        let down = this.isExtraAxisLeftDown();
-        let pressed = down && !this.extraAxisLeftDown;
-        this.extraAxisLeftDown = down;
-        return pressed;
-    }
-
-    private isExtraAxisRightPressed(): boolean {
-        let down = this.isExtraAxisRightDown();
-        let pressed = down && !this.extraAxisRightDown;
-        this.extraAxisRightDown = down;
-        return pressed;
-    }
-
-    private resetExtraAxisBaselines(): void {
-        resetExtraAxisBaselines(this.extraAxisBaselines);
-    }
-
-    private syncExtraAxisDirectionState(): void {
-        this.extraAxisUpDown = this.isExtraAxisUpDown();
-        this.extraAxisDownDown = this.isExtraAxisDownDown();
-        this.extraAxisLeftDown = this.isExtraAxisLeftDown();
-        this.extraAxisRightDown = this.isExtraAxisRightDown();
-    }
-
     private getCurrentAction(): number {
         return InputMode.ACTIONS[this.nameIndex];
     }
@@ -545,10 +439,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                 break;
             case InputMode.STATE_READING:
                 if (this.armDelay > 0) {
-                    this.syncExtraAxisDirectionState();
                     this.armDelay--;
-                } else {
-                    this.bindExtraAxisDirectionPressed();
                 }
                 break;
             case InputMode.STATE_READ_FADE:
@@ -564,7 +455,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                     } else {
                         this.state = InputMode.STATE_READING;
                         this.armDelay = InputMode.ARM_DELAY;
-                        this.syncExtraAxisDirectionState();
                     }
                 }
                 break;

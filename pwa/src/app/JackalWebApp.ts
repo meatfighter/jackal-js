@@ -1,7 +1,7 @@
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
 import type { BufferedScalingMode } from "slick2d-ts";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
-import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
+import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 import { clearStoredGameState, hasCurrentStoredGameState } from "../jackal/persistence/GameStateStorage.js";
@@ -19,12 +19,12 @@ import {
 } from "./AppPreferences.js";
 import { GameViewportController } from "./GameViewportController.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
-import { JackalRuntimeLoader, type PreparedRuntime } from "./JackalRuntimeLoader.js";
+import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
 import { bindScalingPicker, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
-import versionInfo from "../../../version.json";
+import { APP_VERSION, BUILD_STAMP } from "./BuildInfo.js";
 const GAME_DISPLAY_WIDTH = MainConstants.DISPLAY_WIDTH;
 const GAME_DISPLAY_HEIGHT = MainConstants.DISPLAY_HEIGHT;
 const HIGH_DPI_ENABLED = true;
@@ -60,7 +60,7 @@ export class JackalWebApp {
                 this.showError("Unable to resize the game. Reload the page and try again.");
             }
         });
-        registerServiceWorker(versionInfo.buildStamp);
+        registerServiceWorker(BUILD_STAMP);
     }
 
     public showMenu(errorMessage: string | null = null): void {
@@ -234,19 +234,28 @@ export class JackalWebApp {
     private async startGame(restoreSavedGame: boolean): Promise<void> {
         this.destroyGame();
         const session = this.gameSessionGeneration;
-        // Audio unlocking still begins synchronously in the user-gesture call stack,
-        // but settles into a value so an abandoned session cannot leak a rejection.
         const audioUnlockPromise = this.unlockAudio().then(
             () => ({ ok: true as const }),
             (error: unknown) => ({ ok: false as const, error })
         );
 
-        try {
-            if (this.runtimeLoader.preparedRuntime === null) {
-                this.renderLoading(this.runtimeLoader.progress);
-            }
+        if (this.runtimeLoader.preparedRuntime === null) {
+            this.renderLoading(this.runtimeLoader.progress);
+        }
 
-            const runtime = await this.runtimeLoader.ensurePrepared(this.runtimeLoader.error !== null);
+        let runtime: PreparedRuntime;
+        try {
+            runtime = await this.runtimeLoader.ensurePrepared(this.runtimeLoader.error !== null);
+        } catch (error) {
+            if (!this.isCurrentGameSession(session) || isRuntimePreparationAbort(error)) {
+                return;
+            }
+            console.error(error);
+            this.showResourceLoadError(error, restoreSavedGame);
+            return;
+        }
+
+        try {
             if (!this.isCurrentGameSession(session)) {
                 return;
             }
@@ -264,11 +273,15 @@ export class JackalWebApp {
                 return;
             }
             console.error(error);
+            if (error instanceof ResourceLoadException) {
+                this.showResourceLoadError(error, restoreSavedGame);
+                return;
+            }
             if (restoreSavedGame) {
                 this.showMenu("Unable to restore the saved game. Start a new game and try again.");
                 return;
             }
-            this.showLoadError("Unable to start.", "Check your connection and try again.", () => {
+            this.showLoadError("Unable to start.", "The game encountered an unexpected startup error. Reload the page and try again.", () => {
                 void this.startGame(false);
             });
         }
@@ -359,8 +372,8 @@ export class JackalWebApp {
                 return;
             }
             console.error(error);
-            this.showLoadError("Unable to start.", "Check your connection and try again.", () => {
-                void this.startGame(restoreSavedGame);
+            this.showLoadError("Game error.", "The game encountered an unexpected error. Reload the page and try again.", () => {
+                this.showMenu();
             });
         });
         this.viewport.startResponsiveSizing(host);
@@ -419,6 +432,22 @@ export class JackalWebApp {
         this.showLoadError("Unable to start.", message, () => this.showMenu());
     }
 
+    private showResourceLoadError(error: unknown, restoreSavedGame: boolean): void {
+        let message = "A required game resource could not be loaded. Try again.";
+        if (error instanceof ResourceLoadException) {
+            if (error.kind === "network" || (error.kind === "http" && error.status !== null && error.status >= 500)) {
+                message = "Check your connection and try again.";
+            } else if (error.kind === "http") {
+                message = "A required game resource is unavailable on the server.";
+            } else if (error.kind === "decode") {
+                message = "A game resource could not be decoded by this browser.";
+            }
+        }
+        this.showLoadError("Unable to load the game.", message, () => {
+            void this.startGame(restoreSavedGame);
+        });
+    }
+
     private showLoadError(title: string, message: string, retryHandler: () => void): void {
         this.destroyGame();
         renderLoadErrorScreen(this.root, title, message)?.addEventListener("click", retryHandler);
@@ -439,6 +468,7 @@ export class JackalWebApp {
 
     private destroyGame(): void {
         this.gameSessionGeneration++;
+        this.runtimeLoader.cancelPreparation();
         this.removeMenuOverlay();
         this.saveCurrentInputMapping();
         this.resetLifecycleSuspension();
@@ -478,7 +508,7 @@ export class JackalWebApp {
 
     private getGameStateStore(runtime: PreparedRuntime): JackalGameStateStore {
         if (this.gameStateStore === null) {
-            this.gameStateStore = new runtime.JackalGameStateStore(versionInfo.version);
+            this.gameStateStore = new runtime.JackalGameStateStore(APP_VERSION);
         }
         return this.gameStateStore;
     }

@@ -3,13 +3,18 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
+import { JavaRandom } from "slick2d-ts";
 import { rootDir } from "./build-utils.mjs";
 
 const gameplayRoot = join(rootDir, "pwa", "src", "jackal");
 
 async function loadJavaRuntime() {
     const runtimePath = join(rootDir, "pwa", "src", "java", "JavaRuntime.ts");
-    const source = readFileSync(runtimePath, "utf8").replace(/^import\s+\{[^\n]+\}\s+from\s+["']slick2d-ts["'];\s*$/m, "");
+    const source = readFileSync(runtimePath, "utf8").replace(
+        /^import\s+\{[^\n]+\}\s+from\s+["']slick2d-ts["'];\s*$/m,
+        "const JavaRandom = globalThis.__jackalTestJavaRandom;"
+    );
+    globalThis.__jackalTestJavaRandom = JavaRandom;
     const testStubs = `
 class BinaryReader {
     constructor(stream) {
@@ -238,10 +243,12 @@ test("Jackal uses JavaRuntime only within the lightweight contracts tested above
     assert.doesNotMatch(runtimeSource, /export class (HashMap|Collections|Arrays|BufferedInputStream|DataInputStream|Class|Integer|Character|JavaString)\b/);
     assert.doesNotMatch(
         runtimeSource,
-        /import\s+\{\s*JavaRandom\s*\}|extends\s+JavaRandom|Reflect\.(?:get|set)\([^)]*seed/,
+        /Reflect\.(?:get|set)\([^)]*seed|JAVA_RANDOM_MULTIPLIER|seedUniquifier/,
         "Random must not depend on slick2d-ts private state."
     );
-    assert.match(runtimeSource, /private nextBits\(bits: number\): number/, "Random must own its allocation-free Java LCG implementation.");
+    assert.match(runtimeSource, /import\s+\{\s*JavaRandom,\s*type\s+JavaRandomState\s*\}\s+from\s+["']slick2d-ts["']/);
+    assert.match(runtimeSource, /export class Random extends JavaRandom/);
+    assert.doesNotMatch(runtimeSource, /private nextBits\(bits: number\): number/, "Jackal must use slick2d-ts's supported JavaRandom implementation.");
 
     assert.deepEqual(
         oneArgumentRemovals.sort(),

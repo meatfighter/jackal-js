@@ -50,14 +50,14 @@ async function loadTimingHarness() {
     const source = `
 let now = 0;
 const Sys = {
-    getTime: () => now,
-    getTimerResolution: () => 1000
+    getTime: () => now
 };
 const javaInt = (value) => Math.trunc(value);
 const javaFloat = (value) => Math.fround(value);
 
 class Main {
     static FADES = new Array(23);
+    static GAME_TICK_MS = 10;
 
     constructor() {
         this.browserSuspended = false;
@@ -118,6 +118,9 @@ test("screen fades are advanced by the existing fixed-step loop, not the browser
 
     assert.equal(callsNamed(update.body, "advanceFade").length, 1);
     assert.equal(callsNamed(loop.statement, "advanceFade").length, 1, "advanceFade() must be inside the fixed-step loop.");
+    assert.match(mainSource, /private static readonly GAME_TICK_MS: number = 10/);
+    assert.match(loopText, /this\.nextFrameTime \+= Main\.GAME_TICK_MS/);
+    assert.doesNotMatch(updateText, /getTimerResolution/);
     assert.ok(loopText.indexOf("this.advanceFade()") < loopText.indexOf("this.updateMusic()"));
     const modeUpdateIndex = loopText.indexOf("mode.update(gc)");
     assert.ok(modeUpdateIndex >= 0, "The fixed-step loop must update the active mode.");

@@ -94,7 +94,7 @@ test("save-state persistence stays modular, shared, current-only, and cast-safe"
     assert.doesNotMatch(webApp, /localStorage\.(?:getItem|setItem|removeItem)|function isPotentialGameStateSnapshot/);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*6/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*7/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
 
     const snapshot = read("pwa/src/jackal/persistence/GameStateSnapshot.ts");
@@ -125,13 +125,24 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
     const audio = read("pwa/src/jackal/persistence/GameStateAudio.ts");
     const javaRuntime = read("pwa/src/java/JavaRuntime.ts");
     assert.doesNotMatch(audio, /Reflect\.|playbackRate|paused|buffer/);
-    assert.doesNotMatch(javaRuntime, /import\s+\{\s*JavaRandom\s*\}|extends\s+JavaRandom|Reflect\.(?:get|set)\([^)]*seed/);
+    assert.match(javaRuntime, /import\s+\{\s*JavaRandom,\s*type\s+JavaRandomState\s*\}\s+from\s+"slick2d-ts"/);
+    assert.match(javaRuntime, /export class Random extends JavaRandom/);
+    assert.doesNotMatch(javaRuntime, /JAVA_RANDOM_MULTIPLIER|seedUniquifier|Reflect\.(?:get|set)\([^)]*seed/);
 
     const humanInput = read("pwa/src/jackal/HumanInput.ts");
     const inputMode = read("pwa/src/jackal/InputMode.ts");
-    assert.match(humanInput, /BrowserGamepadAxes\.js/);
-    assert.match(inputMode, /BrowserGamepadAxes\.js/);
-    assert.doesNotMatch(humanInput + inputMode, /private readExtraAxisValue|private isAnyAxisLessThan|private isAnyAxisGreaterThan/);
+    const main = read("pwa/src/jackal/Main.ts");
+    assert.doesNotMatch(humanInput + inputMode, /BrowserGamepadAxes|extraAxisBaselines|isExtraAxis/);
+    assert.match(main, /setAdditionalControllerDirectionAxes/);
+
+    const runtimeLoader = read("pwa/src/app/JackalRuntimeLoader.ts");
+    assert.match(runtimeLoader, /private cancellationBarrier: Promise<void>/);
+    assert.match(runtimeLoader, /Promise\.allSettled\(\[previousBarrier, pending\]\)/);
+    assert.match(runtimeLoader, /ResourceLoader\.preloadResources\(resourceRefs, \{\s*signal,/);
+    assert.match(runtimeLoader, /preloadAudioBuffers\(audioRefs, \{\s*signal,/);
+    assert.match(runtimeLoader, /ResourceLoader\.setCacheBust\(BUILD_STAMP\)/);
+    assert.match(webApp, /error instanceof ResourceLoadException/);
+    assert.match(webApp, /The game encountered an unexpected error\. Reload the page and try again\./);
 });
 
 test("TypeScript-native modules keep truthful nullability and stricter lint policy", () => {

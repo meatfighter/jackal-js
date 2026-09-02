@@ -79,11 +79,11 @@ function gameSnapshot(fields, version, entity) {
 
 test("save-state validator accepts only the current schema", async () => {
     const { fields, validator } = await loadPersistenceValidation();
-    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 5)), false);
-    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 6)), true);
-    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 7)), false);
+    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 6)), false);
+    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 7)), true);
+    assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 8)), false);
 
-    const invalidSeed = modeSnapshot(fields, 6);
+    const invalidSeed = modeSnapshot(fields, 7);
     invalidSeed.random.seed2 = 65536;
     assert.equal(validator.isSupportedGameStateSnapshot(invalidSeed), false);
 });
@@ -91,11 +91,11 @@ test("save-state validator accepts only the current schema", async () => {
 test("current entity runtime descriptors are required and exact", async () => {
     const { fields, validator } = await loadPersistenceValidation();
     const enemyBullet = { id: 0, type: "EnemyBullet", fields: {}, runtimeFields: { enemyBulletSprite: "yellow" } };
-    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 6, enemyBullet)), true);
-    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 6, { id: 0, type: "EnemyBullet", fields: {}, runtimeFields: null })), false);
+    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 7, enemyBullet)), true);
+    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 7, { id: 0, type: "EnemyBullet", fields: {}, runtimeFields: null })), false);
     assert.equal(
         validator.isSupportedGameStateSnapshot(
-            gameSnapshot(fields, 6, {
+            gameSnapshot(fields, 7, {
                 id: 0,
                 type: "EnemyBullet",
                 fields: {},
@@ -104,7 +104,7 @@ test("current entity runtime descriptors are required and exact", async () => {
         ),
         false
     );
-    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 6, { id: 0, type: "Bomb", fields: {}, runtimeFields: null })), true);
+    assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, 7, { id: 0, type: "Bomb", fields: {}, runtimeFields: null })), true);
 });
 
 test("runtime descriptor validators cover every browser-only entity asset choice", async () => {

@@ -120,19 +120,7 @@ export const INTRO_MODE_FIELD_NAMES = fieldsOf<IntroMode>()(
 // ContinueMode, DifficultyMode, and OptionsMode deliberately share this Java-shaped state.
 export const SIMPLE_MENU_MODE_FIELD_NAMES = fieldsOf<ContinueMode>()("state", "optionSelectedFlag", "selectedIndex");
 
-export const INPUT_MODE_FIELD_NAMES = fieldsOf<InputMode>()(
-    "state",
-    "nameIndex",
-    "delay",
-    "selectedIndex",
-    "message",
-    "armDelay",
-    "extraAxisBaselines",
-    "extraAxisUpDown",
-    "extraAxisDownDown",
-    "extraAxisLeftDown",
-    "extraAxisRightDown"
-);
+export const INPUT_MODE_FIELD_NAMES = fieldsOf<InputMode>()("state", "nameIndex", "delay", "selectedIndex", "message", "armDelay");
 
 export const INTRO_MAP_MODE_FIELD_NAMES = fieldsOf<IntroMapMode>()("delay", "state");
 export const MAP_MODE_FIELD_NAMES = fieldsOf<MapMode>()("state", "delay", "jeepY", "soldierDelay", "targetJeepY");

@@ -1,4 +1,4 @@
-export const GAME_STATE_VERSION = 6 as const;
+export const GAME_STATE_VERSION = 7 as const;
 export type SupportedGameStateVersion = typeof GAME_STATE_VERSION;
 export const GAME_STATE_STORAGE_KEY = "jackal.game-state";
 

@@ -17,3 +17,10 @@ test("development service-worker cleanup failures are logged without blocking st
     assert.match(registrarSource, /clearDevelopmentServiceWorkers\(\)\.catch\(\(error: unknown\) => \{/);
     assert.match(registrarSource, /console\.warn\("Unable to clear Jackal development service workers\.", error\);/);
 });
+
+test("development cache cleanup is isolated to the current deployment scope", () => {
+    assert.match(registrarSource, /const scopeCacheId = encodeURIComponent\(new URL\(appScope\)\.pathname\);/);
+    assert.match(registrarSource, /const cachePrefix = `jackal\|\$\{scopeCacheId\}\|`;/);
+    assert.match(registrarSource, /keys\.filter\(\(key\) => key\.startsWith\(cachePrefix\)\)/);
+    assert.doesNotMatch(registrarSource, /key\.startsWith\("jackal-"\)|key\.startsWith\("jackal\\\|"\)/);
+});

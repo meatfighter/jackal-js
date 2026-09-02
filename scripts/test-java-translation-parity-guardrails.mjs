@@ -288,6 +288,6 @@ test("TypeScript policy strengthens checking without changing Java field semanti
     assert.equal(options.noFallthroughCasesInSwitch, true);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*6/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*7/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
 });
