@@ -23,6 +23,7 @@ test("Jackal PWA renders through the native buffered scaler with configurable pr
     assert.doesNotMatch(webAppSource, /new runtime\.slick\.ScalableGame\(\s*mainGame/);
     assert.doesNotMatch(webAppSource, /mainGame\.scalableGame\s*=/);
     assert.match(viewportSource, /public attach\(container: AppGameContainer, bufferedGame: BufferedScalableGame, sessionGeneration: number\): void/);
+    assert.match(webAppSource, /const MAX_DEVICE_PIXEL_RATIO = 4;/);
 });
 
 test("Jackal PWA exposes a persisted scaling menu with Smooth as the default", () => {
@@ -83,14 +84,18 @@ test("Jackal requires a compatible slick2d-ts release", () => {
 
     assert.equal(dependency, lockedDependency);
 
-    const dependencyMatch = /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#semver:\^(\d+\.\d+\.\d+)$/.exec(dependency);
+    const dependencyMatch =
+        /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#semver:\^(\d+\.\d+\.\d+)$/.exec(dependency);
     assert.ok(dependencyMatch, `Unexpected slick2d-ts dependency: ${dependency}`);
 
     const requestedVersion = parseVersion(dependencyMatch[1]);
     const lockedVersion = parseVersion(lockedSlick.version);
     assert.equal(requestedVersion[0], 1, "Jackal currently targets slick2d-ts 1.x");
     assert.equal(lockedVersion[0], 1, "Jackal currently targets slick2d-ts 1.x");
-    assert.ok(compareVersions(requestedVersion, minimumSlickVersion) >= 0, `slick2d-ts dependency ${dependencyMatch[1]} is older than required 1.5.2`);
+    assert.ok(
+        compareVersions(requestedVersion, minimumSlickVersion) >= 0,
+        `slick2d-ts dependency ${dependencyMatch[1]} is older than required 1.5.2`
+    );
     assert.ok(compareVersions(lockedVersion, minimumSlickVersion) >= 0, `locked slick2d-ts ${lockedSlick.version} is older than required 1.5.2`);
     assert.match(
         lockedSlick.resolved,
