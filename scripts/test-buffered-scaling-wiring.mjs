@@ -59,9 +59,38 @@ test("Jackal PWA reset clears persisted state and restores menu defaults", () =>
     assert.match(stylesSource, /\.reset-button\s*\{/);
 });
 
-test("Jackal requires a slick2d-ts release with buffered scaling support", () => {
-    assert.equal(packageJson.dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.5.1");
-    assert.equal(packageLock.packages[""].dependencies["slick2d-ts"], "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.5.1");
-    assert.equal(packageLock.packages["node_modules/slick2d-ts"].version, "1.5.1");
-    assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#/);
+const minimumSlickVersion = [1, 5, 2];
+
+function parseVersion(version) {
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+    assert.ok(match, `Expected a numeric semantic version, received ${version}`);
+    return match.slice(1).map(Number);
+}
+
+function compareVersions(left, right) {
+    for (let i = 0; i < 3; i++) {
+        if (left[i] !== right[i]) {
+            return left[i] - right[i];
+        }
+    }
+    return 0;
+}
+
+test("Jackal requires a compatible slick2d-ts release", () => {
+    const dependency = packageJson.dependencies["slick2d-ts"];
+    const lockedDependency = packageLock.packages[""].dependencies["slick2d-ts"];
+    const lockedSlick = packageLock.packages["node_modules/slick2d-ts"];
+
+    assert.equal(dependency, lockedDependency);
+
+    const dependencyMatch = /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#semver:\^(\d+\.\d+\.\d+)$/.exec(dependency);
+    assert.ok(dependencyMatch, `Unexpected slick2d-ts dependency: ${dependency}`);
+
+    const requestedVersion = parseVersion(dependencyMatch[1]);
+    const lockedVersion = parseVersion(lockedSlick.version);
+    assert.equal(requestedVersion[0], 1, "Jackal currently targets slick2d-ts 1.x");
+    assert.equal(lockedVersion[0], 1, "Jackal currently targets slick2d-ts 1.x");
+    assert.ok(compareVersions(requestedVersion, minimumSlickVersion) >= 0, `slick2d-ts dependency ${dependencyMatch[1]} is older than required 1.5.2`);
+    assert.ok(compareVersions(lockedVersion, minimumSlickVersion) >= 0, `locked slick2d-ts ${lockedSlick.version} is older than required 1.5.2`);
+    assert.match(lockedSlick.resolved, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#/);
 });
