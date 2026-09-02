@@ -7,7 +7,7 @@ Project page: https://meatfighter.com/jackal/
 To get oriented, start with these key points:
 
 1. **`pwa/` is the browser game.** `pwa/src/jackal/` is the TypeScript gameplay port, structured to closely mirror the Java implementation; `pwa/src/app/` is the browser integration layer.
-2. **`desktop/` is the Java game.** It is buildable and is the primary behavioral reference when checking gameplay parity.
+2. **`desktop/` is the Java/Slick2D reference implementation.** It remains buildable and is the primary behavioral reference when checking gameplay parity.
 3. **`about/` is the about page source.** It is assembled into the same production release as the PWA and desktop download.
 4. **`scripts/` is the release system.** It owns component builds, version stamping, source provenance, path safety, desktop packaging, release verification, locking, atomic promotion, and recovery.
 5. **`dist/` is the canonical production artifact.** Never turn a component build into production by manually copying files into `dist/`.
@@ -45,7 +45,7 @@ The repository has three layers:
 SOURCE
   about/        about page
   pwa/          TypeScript browser game
-  desktop/      Java desktop game
+  desktop/      Java/Slick2D reference implementation
        |
        v
 RELEASE TOOLING
@@ -170,23 +170,11 @@ The JavaScript toolchain uses TypeScript, Vite, ESLint, Prettier, and `slick2d-t
 
 The `slick2d-ts` dependency uses a compatible semver range in `package.json`, while `package-lock.json` records the exact resolved Git revision used by a given checkout. Treat dependency refreshes as deliberate gameplay/runtime changes, even when the range accepts them.
 
-### Java
+### Java desktop toolchain
 
-Use Java 21 LTS for current desktop release builds and smoke tests.
+Use JDK 21 LTS for current desktop builds and smoke tests. The supported desktop build requires `javac` and `jar` on `PATH`; repository tooling invokes them directly against the vendored legacy runtime jars.
 
-The Java source is compiled as Java 8-compatible bytecode, but Java 21 LTS is the primary current validation runtime for generated desktop releases.
-
-### Maven
-
-Maven is optional.
-
-`npm run build:desktop` tries:
-
-1. Maven on the host;
-2. WSL2 Maven when running on Windows;
-3. a direct `javac`/`jar` fallback.
-
-The fallback keeps the desktop build available to developers with a JDK but no Maven installation.
+The Java source is compiled as Java 8-compatible bytecode while JDK 21 remains the primary current build and validation environment. Build the desktop component through `npm run build:desktop` rather than maintaining a separate Java build-system definition.
 
 ### Git
 
@@ -207,7 +195,7 @@ Production provenance depends on Git. The normal production build requires a cle
 | `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store.                             |
 | `pwa/src/java/`               | Compatibility helpers used to preserve selected Java semantics.                                                 |
 | `pwa/public/`                 | Manifest, service-worker source, notices, icons, and game resources.                                            |
-| `desktop/`                    | Java implementation plus desktop packaging/runtime material.                                                    |
+| `desktop/`                    | Maintained Java/Slick2D reference implementation plus desktop runtime/package material.                         |
 | `scripts/`                    | Build, verification, versioning, source-provenance, path-safety, locking, ZIP, promotion, and recovery tooling. |
 | `version.json`                | Tracked application version/build-stamp source.                                                                 |
 | `package.json`                | Root command surface and JavaScript dependencies.                                                               |
@@ -317,14 +305,14 @@ Important pieces are:
 
 The stable entity registry is deliberate. Renaming, reordering, or minifying classes must not silently reinterpret an older save as a different game object type.
 
-### `desktop/` — Java desktop version
+### `desktop/` — Java/Slick2D reference implementation
 
 The desktop tree serves two purposes:
 
-1. preserve/build the original Java implementation;
-2. provide a behavioral reference for the TypeScript port.
+1. maintain and build the Java/Slick2D implementation;
+2. provide the primary behavioral and structural reference for the TypeScript port.
 
-The full project includes Java source plus runtime packaging material:
+The project intentionally keeps the Java source layout close to the game implementation rather than adapting it to a separate build-system or IDE convention. The repository's Node tooling invokes JDK 21 `javac` and `jar` directly and packages the exact vendored runtime files.
 
 ```text
 desktop/
@@ -336,8 +324,6 @@ desktop/
 ├── natives/
 ├── licenses/
 ├── sources/
-├── pom.xml
-├── assembly.xml
 ├── run-windows.cmd
 ├── run-windows.ps1
 ├── run-linux.sh

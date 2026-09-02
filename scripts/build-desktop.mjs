@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assertLocalGeneratedOutputPath, assertRealDirectory, assertRealFile, assertRealFileOrDirectory, rootDir } from "./build-utils.mjs";
 import { withReleaseOperationLock } from "./release-lock-utils.mjs";
@@ -276,60 +276,12 @@ function createDistribution() {
     });
 }
 
-function normalizeMavenOutputs() {
-    const mavenStableJar = join(targetDir, `${distributionName}.jar`);
-    const mavenStableZip = join(targetDir, `${distributionName}.zip`);
-    assertRealFile(mavenStableJar, "Maven desktop JAR");
-    assertRealFile(mavenStableZip, "Maven desktop ZIP");
-    createDistribution();
-}
-
-function quoteSh(value) {
-    return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-function windowsPathToWslPath(path) {
-    const normalized = resolve(path).replaceAll("\\", "/");
-    const match = normalized.match(/^([A-Za-z]):\/(.*)$/);
-    if (!match) {
-        return normalized;
-    }
-    return `/mnt/${match[1].toLowerCase()}/${match[2]}`;
-}
-
-function tryNativeMaven() {
-    const command = process.platform === "win32" ? "mvn.cmd" : "mvn";
-    if (!commandExists(command)) {
-        return false;
-    }
-    console.log("Building desktop archive with Maven.");
-    run(command, ["package"], desktopDir);
-    normalizeMavenOutputs();
-    return true;
-}
-
-function tryWslMaven() {
-    if (process.platform !== "win32" || !commandExists("wsl.exe")) {
-        return false;
-    }
-    const check = spawnSync("wsl.exe", ["sh", "-lc", "command -v mvn >/dev/null 2>&1"], {
-        stdio: "ignore"
-    });
-    if (check.status !== 0) {
-        return false;
-    }
-    console.log("Building desktop archive with WSL2 Maven.");
-    run("wsl.exe", ["sh", "-lc", `cd ${quoteSh(windowsPathToWslPath(desktopDir))} && mvn package`]);
-    normalizeMavenOutputs();
-    return true;
-}
-
-function buildWithJavacFallback() {
+function buildWithJdk() {
     if (!commandExists("javac")) {
-        throw new Error("The desktop build requires Maven, WSL2 Maven, or javac on PATH.");
+        throw new Error("The desktop build requires javac on PATH.");
     }
     if (!commandExists("jar")) {
-        throw new Error("The desktop build requires Maven, WSL2 Maven, or jar on PATH.");
+        throw new Error("The desktop build requires jar on PATH.");
     }
 
     console.log("Building desktop archive with javac fallback.");
@@ -357,9 +309,7 @@ await withReleaseOperationLock(() => {
     assertDesktopTargetDirectory(targetDir, "desktop target directory");
     verifyRuntimeDependencies();
     removeVersionedTargetArtifacts();
-    if (!tryNativeMaven() && !tryWslMaven()) {
-        buildWithJavacFallback();
-    }
+    buildWithJdk();
 
     console.log(`Built ${relative(rootDir, stableJarPath)}`);
     console.log(`Built ${relative(rootDir, stableZipPath)}`);

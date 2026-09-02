@@ -1,10 +1,12 @@
-# Jackal Desktop
+# Jackal Java Reference Implementation
 
-This directory contains the preserved, Maven-buildable Java desktop version of SlickJackal.
+This directory contains the maintained Java/Slick2D reference implementation of Jackal. The Java gameplay code is the primary behavioral reference for the TypeScript browser port and is also built into the downloadable desktop distribution.
 
-The source and resource tree under `desktop/src` intentionally preserves the Java desktop code layout. The Maven files and launch scripts are packaging support only; they are not part of the TypeScript web port and should not be used to infer new gameplay behavior.
+The source and resource layout under `desktop/src` intentionally stays close to the original game instead of being reorganized around a particular IDE or build system. Current builds use the JDK tools directly; no separate build-system or IDE-specific project metadata is required.
 
 ## Build
+
+Use JDK 21 LTS for current development and release validation. The build requires `javac` and `jar` on `PATH` and emits Java 8-compatible bytecode for the legacy Slick2D/LWJGL runtime.
 
 From the repository root:
 
@@ -12,15 +14,9 @@ From the repository root:
 npm run build:desktop
 ```
 
-Or from this directory with Maven installed:
+On Windows, `npm.cmd run build:desktop` is equivalent. The repository build script owns the compile classpath, resource copying, manifest generation, runtime/native packaging, license/source-material checks, and final ZIP construction. Do not maintain a separate Java build description alongside it.
 
-```sh
-mvn package
-```
-
-Direct `mvn package` is a developer build path. Public desktop releases should be produced through the repository-level npm release tooling, which verifies the expected runtime artifacts, dependency notices and source material, release metadata, launcher permissions, and final ZIP contents.
-
-`npm run build:desktop` tries native Maven first, then WSL2 Maven on Windows, then a `javac`/`jar` fallback. The fallback is present because modern Windows machines often have a JDK but not Maven on `PATH`.
+Public desktop releases should be produced through the repository-level release tooling so the generated ZIP is verified together with the rest of the release.
 
 ## Run
 
@@ -30,21 +26,10 @@ From the repository root:
 npm run run:desktop
 ```
 
-Or run the platform script in this directory:
-
-```sh
-run-windows.cmd
-```
-
-The launch scripts set the LWJGL 2 and JInput native-library paths and probe optional Java flags used by current JDKs. The packaged ZIP includes the 64-bit Windows, Linux, and macOS natives listed in `RUNTIME_DEPENDENCIES.md`.
+Or run the platform launcher from the generated desktop distribution. The launch scripts set the LWJGL 2 and JInput native-library paths and probe optional Java flags used by current JDKs.
 
 ## Compatibility Notes
 
-The Java code is compiled as Java 8 bytecode while keeping the original Java source intact. Java 21 LTS is the primary supported runtime for release smoke tests.
+The Java code is compiled as Java 8-compatible bytecode while keeping the gameplay source structurally close to the implementation used for browser parity work. Java 21 LTS is the primary supported build and smoke-test JDK.
 
-Initial desktop support should be advertised only for OS/JVM combinations that have launched the generated ZIP successfully:
-
-- Windows 11 x86-64, Java 21
-- Linux x86-64, Java 21
-
-The ZIP contains macOS x86-era LWJGL/JInput natives, but macOS should not be listed as supported until the packaged artifact is smoke-tested on the exact architecture and JVM combination being advertised.
+Only advertise an OS/JVM combination after launching the actual generated ZIP on that exact combination. See `RUNTIME_DEPENDENCIES.md` for the vendored runtime jars, natives, licenses, and corresponding-source material.
