@@ -5,22 +5,13 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 import { clearStoredGameState, hasCurrentStoredGameState } from "../jackal/persistence/GameStateStorage.js";
 import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
-import {
-    DEFAULT_SCALING_PREFERENCE,
-    DEFAULT_VOLUME,
-    clampVolume,
-    clearPreferences,
-    readScalingPreference,
-    readVolume,
-    writeScalingPreference,
-    writeVolume,
-    type JackalScalingPreference
-} from "./AppPreferences.js";
+import { DEFAULT_SCALING_PREFERENCE, DEFAULT_VOLUME, clampVolume, readScalingPreference, readVolume, type JackalScalingPreference } from "./AppPreferences.js";
 import { GameViewportController } from "./GameViewportController.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
+import { clearPersistedPwaState, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
 import { PersistenceWarningController } from "./PersistenceWarningController.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
@@ -124,10 +115,15 @@ export class JackalWebApp {
             volumeValue.textContent = String(percent);
             volumeIcon.innerHTML = volumeIconSvg(this.volume);
         };
+        const commitVolume = (): void => {
+            this.setAudioVolume(Number(volumeInput.value) / 100);
+            persistVolumePreference(this.volume, this.persistenceWarnings);
+        };
         volumeInput.addEventListener("input", () => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
             updateVolumeUi();
         });
+        volumeInput.addEventListener("change", commitVolume);
         updateVolumeUi();
         bindScalingPicker(
             menu,
@@ -137,11 +133,11 @@ export class JackalWebApp {
 
         menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
             this.clearStoredGameState();
-            this.setAudioVolume(Number(volumeInput.value) / 100);
+            commitVolume();
             void this.startGame(false);
         });
         menu.querySelector<HTMLButtonElement>("#continue-button")?.addEventListener("click", () => {
-            this.setAudioVolume(Number(volumeInput.value) / 100);
+            commitVolume();
             if (this.hasLiveSuspendedGame()) {
                 this.resumeLiveGameFromMenu();
                 return;
@@ -153,7 +149,7 @@ export class JackalWebApp {
 
     private setScalingPreference(value: JackalScalingPreference): void {
         this.scalingPreference = value;
-        writeScalingPreference(value);
+        persistScalingPreference(value, this.persistenceWarnings);
         if (this.runtimeLoader.preparedRuntime !== null) {
             this.viewport.setScalingMode(bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick, this.scalingPreference));
         }
@@ -170,11 +166,8 @@ export class JackalWebApp {
     }
 
     private clearPwaStorage(): void {
-        const cleared = clearPreferences() && clearStoredGameState() && this.inputMappingStore.clear();
+        clearPersistedPwaState(this.inputMappingStore, this.persistenceWarnings);
         this.gameStateStore = null;
-        if (!cleared) {
-            this.persistenceWarnings.report("Some saved Jackal settings could not be cleared.");
-        }
     }
 
     private hasLiveSuspendedGame(): boolean {
@@ -572,7 +565,6 @@ export class JackalWebApp {
 
     private setAudioVolume(value: number): void {
         this.volume = clampVolume(value, this.volume);
-        writeVolume(this.volume);
         this.applyAudioVolume(this.volume);
     }
 

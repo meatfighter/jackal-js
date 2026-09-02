@@ -55,7 +55,7 @@ Selecting **Options** opens another menu with:
 
 I originally ported _Jackal_ to Java in 2013 using the [Slick2D](https://github.com/nguillaumin/slick2d-maven) and [JInput](https://jinput.github.io/jinput/) libraries. I studied _Jackal_ in the [FCEUX](https://fceux.com/) NES emulator and recreated its stages and mechanics through observation.
 
-I released the port as a Java applet that ran in a web page and as a downloadable desktop version. As technology evolved, both options became increasingly impractical. Browsers abandoned Java applets, while the desktop version required players to download and run an executable and install Java—something many people understandably avoided because of the hassle and security concerns. The game also relied on platform-specific native libraries that modern operating systems no longer support.
+I released the port as a Java applet that ran in a web page and as a downloadable desktop version. As technology evolved, both options became increasingly impractical. Browsers abandoned Java applets, while the desktop version required players to download and run an executable and install Java—something many people understandably avoided because of the hassle and security concerns. The game also relied on platform-specific native libraries that became increasingly difficult to run reliably on modern systems.
 
 In 2026, I rewrote the port in TypeScript and adapted it to modern web browsers. The new version once again lets visitors launch the game directly from a web page and adds a few modern features, including save-state support. The game itself remains fundamentally the port I created in 2013.
 
@@ -89,13 +89,9 @@ This port is a reimplementation, not an emulation. It does not run or include th
 
 The source code for the project is available in the [meatfighter/jackal-js repository](__REPO_URL__).
 
-The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
+The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). The supported and tested desktop target is **Windows x64 with Java 21**. Download and extract the ZIP, then run `run-windows.cmd` or `run-windows.ps1`.
 
-- Windows: `run-windows.cmd`
-- Linux: `run-linux.sh`
-- macOS: `run-macos.sh`
-
-Java 21 or newer is required.
+The archive also includes Linux x64 and macOS launchers for compatibility testing, but those combinations are not advertised as supported until the generated ZIP has been tested on those platforms.
 
 # Acknowledgements
 

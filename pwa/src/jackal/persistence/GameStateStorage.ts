@@ -1,14 +1,14 @@
 import { DeploymentStorageEntry } from "../../app/DeploymentStorage.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
-import { GAME_STATE_STORAGE_KEY, isFutureGameStateSnapshot } from "./GameStateSchema.js";
+import { GAME_STATE_STORAGE_KEY, shouldPreserveUnsupportedGameStateSnapshot } from "./GameStateSchema.js";
 import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
 
 const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jackal saved game state");
 
 export type StoredGameStateInspection =
-    { readonly status: "unavailable" | "missing" | "invalid" | "future" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
+    { readonly status: "unavailable" | "missing" | "invalid" | "preserved" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
 
-/** Reads and validates the one current schema. Malformed and obsolete saves are discarded; future saves are preserved. */
+/** Reads the current schema, discarding only malformed or pre-public data. Unsupported public versions are preserved. */
 export function inspectStoredGameState(): StoredGameStateInspection {
     const stored = gameStateStorage.read();
     if (!stored.available) {
@@ -29,8 +29,8 @@ export function inspectStoredGameState(): StoredGameStateInspection {
     if (isSupportedGameStateSnapshot(snapshot)) {
         return { status: "current", snapshot };
     }
-    if (isFutureGameStateSnapshot(snapshot)) {
-        return { status: "future" };
+    if (shouldPreserveUnsupportedGameStateSnapshot(snapshot)) {
+        return { status: "preserved" };
     }
 
     gameStateStorage.remove();

@@ -225,8 +225,18 @@ function verifyRuntimeDependencies() {
 }
 
 function copyRuntimeToTarget() {
-    copyDirectoryContents(libDir, targetLibDir);
-    copyDirectoryContents(nativeDir, targetNativeDir);
+    cleanDesktopTargetDirectory(targetLibDir, "desktop target runtime library directory");
+    for (const jar of runtimeJars) {
+        copyFileSync(join(libDir, jar), assertDesktopTargetPath("desktop target runtime jar", join(targetLibDir, jar)));
+    }
+
+    cleanDesktopTargetDirectory(targetNativeDir, "desktop target native directory");
+    for (const [platform, files] of Object.entries(requiredNatives)) {
+        const platformTargetDir = ensureDesktopTargetDirectory(join(targetNativeDir, platform), `${platform} target native directory`);
+        for (const name of files) {
+            copyFileSync(join(nativeDir, platform, name), assertDesktopTargetPath(`${platform} target native library`, join(platformTargetDir, name)));
+        }
+    }
 }
 
 function removeVersionedTargetArtifacts() {

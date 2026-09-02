@@ -42,7 +42,6 @@ export function readScalingPreference(): JackalScalingPreference {
     if (isScalingPreference(result.value)) {
         return result.value;
     }
-    scalingStorage.write(DEFAULT_SCALING_PREFERENCE);
     return DEFAULT_SCALING_PREFERENCE;
 }
 

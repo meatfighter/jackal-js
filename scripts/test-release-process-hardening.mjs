@@ -1245,7 +1245,10 @@ test("desktop ZIP verifier checks launch script modes and rejects outer manifest
     assert.doesNotThrow(() => verifyDesktopZipEntries(entries));
     assert.throws(() => verifyDesktopZipEntries(modeAwareRequiredEntries({ "jackal-desktop/run-linux.sh": 0o644 })), /run-linux\.sh.*0755/);
     assert.throws(() => verifyDesktopZipEntries([...entries, { name: "jackal-desktop/META-INF/MANIFEST.MF", unixMode: 0o644 }]), /outer manifest/);
-    assert.doesNotThrow(() => verifyDesktopZipEntries([...entries, { name: "jackal-desktop/natives/windows/META-INF/MANIFEST.MF", unixMode: 0o644 }]));
+    assert.throws(
+        () => verifyDesktopZipEntries([...entries, { name: "jackal-desktop/natives/windows/META-INF/MANIFEST.MF", unixMode: 0o644 }]),
+        /unsupported native files/
+    );
 });
 
 test("desktop launchers probe JVM compatibility flags independently", () => {

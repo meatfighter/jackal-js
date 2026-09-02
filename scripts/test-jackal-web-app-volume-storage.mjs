@@ -94,5 +94,5 @@ test("web app scaling preference storage is isolated by deployment path", async 
 
     storage.set(productionKey, "unsupported");
     assert.equal(preferences.readScalingPreference(), "smooth");
-    assert.equal(storage.get(productionKey), "smooth");
+    assert.equal(storage.get(productionKey), "unsupported");
 });

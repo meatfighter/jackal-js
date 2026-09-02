@@ -32,4 +32,4 @@ Or run the platform launcher from the generated desktop distribution. The launch
 
 The Java code is compiled as Java 8-compatible bytecode while keeping the gameplay source structurally close to the implementation used for browser parity work. Java 21 LTS is the primary supported build and smoke-test JDK.
 
-Only advertise an OS/JVM combination after launching the actual generated ZIP on that exact combination. See `RUNTIME_DEPENDENCIES.md` for the vendored runtime jars, natives, licenses, and corresponding-source material.
+The current supported and tested desktop target is Windows x64 with Java 21. Linux x64 and macOS launchers remain in the distribution for compatibility testing, but they are not advertised as supported until the actual generated ZIP has been exercised on those combinations. See `RUNTIME_DEPENDENCIES.md` for the vendored runtime jars, natives, licenses, and corresponding-source material.

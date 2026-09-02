@@ -2,6 +2,15 @@
     "name": "jackal-js",
     "version": "1.0.0",
     "private": true,
+    "description": "A TypeScript/WebGL browser port of Jackal with a maintained Java/Slick2D reference implementation.",
+    "homepage": "https://meatfighter.com/jackal/",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/meatfighter/jackal-js.git"
+    },
+    "bugs": {
+        "url": "https://github.com/meatfighter/jackal-js/issues"
+    },
     "license": "GPL-3.0-or-later",
     "type": "module",
     "engines": {

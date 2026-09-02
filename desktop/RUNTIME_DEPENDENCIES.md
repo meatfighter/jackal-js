@@ -10,20 +10,13 @@ The desktop Java archive vendors the runtime files that shipped with the origina
 
 These jars are placed on the desktop application runtime classpath.
 
-Native libraries are unpacked from the original native jars into:
+The repository retains the historical native sets under `desktop/natives/` for reference. The generated public desktop ZIP deliberately packages only the 64-bit native files used by its current Windows, Linux, and macOS launchers:
 
-- `natives/windows`
-- `natives/linux`
-- `natives/macosx`
-- `natives/solaris`
-
-The release verifier requires the 64-bit natives used by the packaged launchers:
-
-- Windows: `lwjgl64.dll`, `OpenAL64.dll`, `jinput-dx8_64.dll`, `jinput-raw_64.dll`
-- Linux: `liblwjgl64.so`, `libopenal64.so`, `libjinput-linux64.so`
+- Windows x64: `lwjgl64.dll`, `OpenAL64.dll`, `jinput-dx8_64.dll`, `jinput-raw_64.dll`
+- Linux x64: `liblwjgl64.so`, `libopenal64.so`, `libjinput-linux64.so`
 - macOS: `liblwjgl.jnilib`, `openal.dylib`, `libjinput-osx.jnilib`
 
-The Windows folder also contains 32-bit natives from the original runtime set, but the initial release target is 64-bit Java.
+The current supported and tested desktop target is Windows x64 with Java 21. Linux x64 and macOS launchers are included for compatibility testing but are not advertised as supported until the generated ZIP has been tested on those platforms. Solaris and 32-bit native files retained in the repository are not copied into the public desktop ZIP.
 
 The original `jorbis.jar` contains both `com.jcraft.jorbis` and `com.jcraft.jogg`, so this project does not split it into separate JOrbis/Jogg dependency jars.
 

@@ -22,6 +22,7 @@ interface JackalInputMappingSnapshot {
 
 export class JackalInputMappingStore {
     private static readonly SNAPSHOT_VERSION = 2;
+    private static readonly FIRST_PUBLIC_SNAPSHOT_VERSION = 2;
     private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
 
     public save(buttonMapping: ButtonMapping): boolean {
@@ -91,7 +92,9 @@ export class JackalInputMappingStore {
 
         const snapshot: unknown = JSON.parse(stored.value);
         if (!this.isSupportedSnapshot(snapshot)) {
-            this.clear();
+            if (!this.shouldPreserveUnsupportedSnapshot(snapshot)) {
+                this.clear();
+            }
             return null;
         }
 
@@ -116,6 +119,19 @@ export class JackalInputMappingStore {
             this.isBinding(snapshot.controllerGrenade) &&
             this.isBinding(snapshot.controllerGun) &&
             this.isBinding(snapshot.controllerStart)
+        );
+    }
+
+    private shouldPreserveUnsupportedSnapshot(snapshot: unknown): boolean {
+        if (!this.isRecord(snapshot)) {
+            return false;
+        }
+        const version = snapshot.version;
+        return (
+            typeof version === "number" &&
+            Number.isInteger(version) &&
+            version >= JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION &&
+            version !== JackalInputMappingStore.SNAPSHOT_VERSION
         );
     }
 

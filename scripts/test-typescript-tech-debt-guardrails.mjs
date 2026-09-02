@@ -75,7 +75,7 @@ test("browser code does not retain dead Java desktop compatibility theater", () 
     assert.match(resources, /ResourceLoader\.getResourceAsStream\(ref\)/);
 });
 
-test("save-state persistence stays modular, shared, current-only, and cast-safe", () => {
+test("save-state persistence stays modular, shared, current-schema, public-version-preserving, and cast-safe", () => {
     const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
     const serializerLineCount = serializer.split(/\r?\n/).length;
     assert.ok(serializerLineCount < 800, `Serializer has regrown into a monolith (${serializerLineCount} lines).`);
@@ -113,6 +113,7 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
         "JackalRuntimeLoader.js",
         "JackalScreens.js",
         "PageLifecycleMonitor.js",
+        "PersistenceActions.js",
         "PersistenceWarningController.js",
         "ScalingPicker.js"
     ]) {

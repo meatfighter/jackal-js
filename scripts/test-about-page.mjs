@@ -15,13 +15,9 @@ const themeScript = readFileSync(join(aboutDir, "theme.js"), "utf8");
 const buildAboutSource = readFileSync(new URL("./build-about.mjs", import.meta.url), "utf8");
 const temporaryOutputDir = join(rootDir, ".release-test-about-images");
 
-const desktopZipProse = `The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
+const desktopZipProse = `The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). The supported and tested desktop target is **Windows x64 with Java 21**. Download and extract the ZIP, then run \`run-windows.cmd\` or \`run-windows.ps1\`.
 
-- Windows: \`run-windows.cmd\`
-- Linux: \`run-linux.sh\`
-- macOS: \`run-macos.sh\`
-
-Java 21 or newer is required.`;
+The archive also includes Linux x64 and macOS launchers for compatibility testing, but those combinations are not advertised as supported until the generated ZIP has been tested on those platforms.`;
 
 function renderedAboutFixture() {
     return renderAboutMarkdown(

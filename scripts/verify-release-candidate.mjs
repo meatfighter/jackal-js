@@ -19,6 +19,7 @@ const requiredNativeEntries = [
     "natives/macosx/openal.dylib",
     "natives/macosx/libjinput-osx.jnilib"
 ];
+const allowedNativeEntries = new Set(requiredNativeEntries.map((entry) => `${distributionName}/${entry}`));
 const requiredLicenseEntries = ["licenses/SLICK2D.txt", "licenses/LWJGL-2.txt", "licenses/JINPUT.txt", "licenses/LGPL-2.0.txt", "licenses/JORBIS-NOTICE.txt"];
 const requiredSourceEntries = ["sources/jorbis-0.0.17-sources.jar"];
 const requiredRootEntries = [
@@ -84,6 +85,13 @@ export function verifyDesktopZipEntries(entries) {
     const missing = requiredDesktopZipEntries().filter((entry) => !entrySet.has(entry));
     if (missing.length > 0) {
         throw new Error(`Desktop ZIP is missing required entries: ${missing.join(", ")}`);
+    }
+
+    const unexpectedNatives = normalizedEntries
+        .filter((entry) => entry.name.startsWith(`${distributionName}/natives/`) && !entry.name.endsWith("/") && !allowedNativeEntries.has(entry.name))
+        .map((entry) => entry.name);
+    if (unexpectedNatives.length > 0) {
+        throw new Error(`Desktop ZIP contains unsupported native files: ${unexpectedNatives.join(", ")}`);
     }
 
     const outerManifests = normalizedEntries.filter((entry) => forbiddenOuterManifestEntries.has(entry.name)).map((entry) => entry.name);

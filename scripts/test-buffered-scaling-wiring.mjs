@@ -56,7 +56,8 @@ test("Jackal PWA reset clears persisted state and restores menu defaults", () =>
         webAppSource,
         /private resetPwaState\(\): void \{\s*this\.destroyGame\(\);\s*this\.clearPwaStorage\(\);\s*this\.volume = DEFAULT_VOLUME;\s*this\.scalingPreference = DEFAULT_SCALING_PREFERENCE;[\s\S]*?this\.renderMenu\(this\.root, false, null, false\);/
     );
-    assert.match(webAppSource, /const cleared\s*=\s*clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)\s*&&\s*this\.inputMappingStore\.clear\(\);/);
+    assert.match(webAppSource, /clearPersistedPwaState\(this\.inputMappingStore, this\.persistenceWarnings\)/);
+    assert.doesNotMatch(webAppSource, /clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)/);
     assert.match(webAppSource, /this\.gameStateStore = null;/);
     assert.match(stylesSource, /\.reset-button\s*\{/);
 });
@@ -94,5 +95,5 @@ test("Jackal requires a compatible slick2d-ts release", () => {
     assert.equal(lockedVersion[0], 1, "Jackal currently targets slick2d-ts 1.x");
     assert.ok(compareVersions(requestedVersion, minimumSlickVersion) >= 0, `slick2d-ts dependency ${dependencyMatch[1]} is older than required 1.5.3`);
     assert.ok(compareVersions(lockedVersion, minimumSlickVersion) >= 0, `locked slick2d-ts ${lockedSlick.version} is older than required 1.5.3`);
-    assert.match(lockedSlick.resolved, /^git\+(?:https:\/\/github\.com\/|ssh:\/\/git@github\.com\/)meatfighter\/slick2d-ts\.git#[0-9a-f]{40}$/);
+    assert.match(lockedSlick.resolved, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#[0-9a-f]{40}$/);
 });

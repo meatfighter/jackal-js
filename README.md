@@ -191,7 +191,7 @@ Production provenance depends on Git. The normal production build requires a cle
 | `about/`                      | Source template/assets for the about page.                                                                      |
 | `pwa/`                        | TypeScript browser/PWA implementation.                                                                          |
 | `pwa/src/app/`                | Browser shell, lifecycle, input/settings persistence, resource inventory, service-worker integration.           |
-| `pwa/src/jackal/`             | Game port port.                                                                                                 |
+| `pwa/src/jackal/`             | Game port.                                                                                                      |
 | `pwa/src/jackal/persistence/` | Save-state schema, snapshot, stable entity registry, serializer, and browser store.                             |
 | `pwa/src/java/`               | Compatibility helpers used to preserve selected Java semantics.                                                 |
 | `pwa/public/`                 | Manifest, service-worker source, notices, icons, and game resources.                                            |
@@ -304,6 +304,10 @@ Important pieces are:
 - `JackalGameStateStore.ts` — local-storage persistence/validation.
 
 The stable entity registry is deliberate. Renaming, reordering, or minifying classes must not silently reinterpret an older save as a different game object type.
+
+#### Public persistence compatibility
+
+Game-state schema 8 is the first public save format, and input-mapping schema 2 is the first public mapping format. Pre-public obsolete formats may be discarded. From this public baseline onward, an unsupported public-version snapshot must be preserved unless the current build can migrate it; rolling back or upgrading must not silently destroy a user's saved progress or mappings.
 
 ### `desktop/` — Java/Slick2D reference implementation
 

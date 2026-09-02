@@ -12,7 +12,8 @@ test("game-state schema constants have one current-version runtime source", () =
     assert.match(schemaSource, /export const GAME_STATE_VERSION = \d+ as const;/);
     assert.match(schemaSource, /export type SupportedGameStateVersion = typeof GAME_STATE_VERSION;/);
     assert.match(schemaSource, /return value === GAME_STATE_VERSION;/);
-    assert.match(schemaSource, /export function isFutureGameStateSnapshot/);
+    assert.match(schemaSource, /export const FIRST_PUBLIC_GAME_STATE_VERSION = \d+ as const;/);
+    assert.match(schemaSource, /export function shouldPreserveUnsupportedGameStateSnapshot/);
     assert.match(schemaSource, /export const GAME_STATE_STORAGE_KEY = "jackal\.game-state";/);
     assert.doesNotMatch(schemaSource, /MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(snapshotSource, /export \{ GAME_STATE_VERSION \} from "\.\/GameStateSchema\.js";/);
@@ -28,5 +29,5 @@ test("PWA shell and store share the same game-state storage gateway", () => {
     assert.match(storeSource, /clearStoredGameState/);
     assert.match(storageSource, /GAME_STATE_STORAGE_KEY/);
     assert.match(storageSource, /isSupportedGameStateSnapshot/);
-    assert.match(storageSource, /isFutureGameStateSnapshot/);
+    assert.match(storageSource, /shouldPreserveUnsupportedGameStateSnapshot/);
 });

@@ -94,6 +94,18 @@ test("obsolete version-one mappings are discarded instead of migrated", async ()
     assert.equal(storage.has(storageKey("jackal.input-mapping", href)), false);
 });
 
+test("future public input mappings are preserved for rollback", async () => {
+    storage.clear();
+    const href = "https://example.test/stage/pwa/?v=old";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+    storage.set(key, JSON.stringify({ version: 3, futureShape: true }));
+
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), true);
+});
+
 test("input mappings are isolated by deployment path and stable across cache-bust queries", async () => {
     storage.clear();
     const { JackalInputMappingStore } = await loadStore();
