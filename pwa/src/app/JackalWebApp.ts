@@ -28,7 +28,7 @@ import { APP_VERSION, BUILD_STAMP } from "./BuildInfo.js";
 const GAME_DISPLAY_WIDTH = MainConstants.DISPLAY_WIDTH;
 const GAME_DISPLAY_HEIGHT = MainConstants.DISPLAY_HEIGHT;
 const HIGH_DPI_ENABLED = true;
-const MAX_DEVICE_PIXEL_RATIO = 2;
+const MAX_DEVICE_PIXEL_RATIO = 4;
 
 type SlickRuntimeModule = typeof import("slick2d-ts");
 export class JackalWebApp {
@@ -346,11 +346,6 @@ export class JackalWebApp {
                 return true;
             };
         }
-        appContainer.setAlwaysRender(true);
-        appContainer.setVSync(true);
-        appContainer.setSmoothDeltas(false);
-        appContainer.setShowFPS(false);
-        appContainer.setClearEachFrame(true);
         await Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false));
         if (!this.isCurrentGameSession(session)) {
             this.disposeStaleLaunch(mainGame, appContainer);
