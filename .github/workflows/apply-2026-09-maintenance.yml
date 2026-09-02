@@ -92,11 +92,40 @@ jobs:
                       raise SystemExit('Unexpected ScalingPicker import in JackalWebApp.')
                   web = web.replace(old_import, new_import, 1)
                   web = web.replace('this.getBufferedScalingMode(', 'bufferedScalingModeForPreference(')
+                  web = web.replace('bufferedScalingModeForPreference(runtime.slick)', 'bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)')
+                  web = web.replace('bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick)', 'bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick, this.scalingPreference)')
                   method = re.compile(r'\n    private getBufferedScalingMode\(slick: SlickRuntimeModule\): BufferedScalingMode \{[\s\S]*?\n    \}\n\n    private resetPwaState')
                   web, count = method.subn('\n    private resetPwaState', web, count=1)
                   if count != 1:
                       raise SystemExit('Unable to extract buffered scaling mapping from JackalWebApp.')
                   web_path.write_text(web)
+
+                  scaling_test_path = Path('scripts/test-buffered-scaling-wiring.mjs')
+                  scaling_test = scaling_test_path.read_text()
+                  scaling_test = scaling_test.replace(
+                      r'scalingMode: this\.getBufferedScalingMode\(runtime\.slick\)',
+                      r'scalingMode: bufferedScalingModeForPreference\(runtime\.slick, this\.scalingPreference\)'
+                  )
+                  scaling_test = scaling_test.replace('assert.match(webAppSource, /case "crisp":', 'assert.match(pickerSource, /case "crisp":')
+                  scaling_test = scaling_test.replace('assert.match(webAppSource, /case "pixel-perfect":', 'assert.match(pickerSource, /case "pixel-perfect":')
+                  scaling_test = scaling_test.replace('assert.match(webAppSource, /case "smooth":', 'assert.match(pickerSource, /case "smooth":')
+                  scaling_test = scaling_test.replace(
+                      r'this\.viewport\.setScalingMode\(this\.getBufferedScalingMode\(this\.runtimeLoader\.preparedRuntime\.slick\)\);',
+                      r'this\.viewport\.setScalingMode\(bufferedScalingModeForPreference\(this\.runtimeLoader\.preparedRuntime\.slick, this\.scalingPreference\)\);'
+                  )
+                  scaling_test = scaling_test.replace(
+                      r'/const cleared = clearPreferences\(\) && clearStoredGameState\(\) && this\.inputMappingStore\.clear\(\);/',
+                      r'/const cleared\s*=\s*clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)\s*&&\s*this\.inputMappingStore\.clear\(\);/'
+                  )
+                  scaling_test_path.write_text(scaling_test)
+
+                  debt_path = Path('scripts/test-typescript-tech-debt-guardrails.mjs')
+                  debt = debt_path.read_text()
+                  debt = debt.replace(
+                      r'assert.match(runtimeLoader, /ResourceLoader\.setCacheBust\(BUILD_STAMP\)/);',
+                      r'assert.match(runtimeLoader, /ResourceLoader\.setCacheVersionResolver\(/);'
+                  )
+                  debt_path.write_text(debt)
                   PY
 
             - name: Synchronize dependencies and generated parity metadata
