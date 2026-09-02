@@ -44,17 +44,19 @@ jobs:
             - name: Check patch
               run: git diff --check
 
-            - name: Verify release build
-              run: npm run build
-
-            - name: Verify real browser
-              run: npm run verify:browser
-
-            - name: Commit validated changes
+            - name: Prepare candidate commit
               shell: bash
               run: |
                   git add -A
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   git commit -m "Modernize Java desktop build"
-                  git push
+
+            - name: Verify release build
+              run: npm run build
+
+            - name: Verify real browser
+              run: npm run verify:browser
+
+            - name: Publish validated candidate
+              run: git push
