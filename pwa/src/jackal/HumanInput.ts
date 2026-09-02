@@ -3,7 +3,6 @@ import { ButtonMapping } from "./ButtonMapping.js";
 import type { IInput } from "./IInput.js";
 
 export class HumanInput implements IInput {
-    private static readonly CONTROLLER_INDEX_LIMIT = 16;
     private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET = 4;
     private static readonly GAMEPAD_BUTTON_INDEX_LIMIT = 100;
 
@@ -46,14 +45,7 @@ export class HumanInput implements IInput {
     }
 
     private isAnyControllerButtonDown(button: number): boolean {
-        if (button < 0) {
-            return false;
-        }
-        try {
-            return this.input.isButtonPressed(button, Input.ANY_CONTROLLER);
-        } catch {
-            return false;
-        }
+        return button >= 0 && this.input.isButtonPressed(button, Input.ANY_CONTROLLER);
     }
 
     private isControllerBindingPressed(button: number): boolean {
@@ -62,8 +54,9 @@ export class HumanInput implements IInput {
         }
         let pressed = false;
         const control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
-            pressed = this.isControlPressed(control, controller) || pressed;
+        const controllerCount = this.input.getControllerCount();
+        for (let controller = 0; controller < controllerCount; controller++) {
+            pressed = this.input.isControlPressed(control, controller) || pressed;
         }
         return pressed;
     }
@@ -76,10 +69,11 @@ export class HumanInput implements IInput {
 
     private isAnyNonDirectionalControllerButtonPressed(): boolean {
         let pressed = false;
-        for (let controller = 0; controller < HumanInput.CONTROLLER_INDEX_LIMIT; controller++) {
+        const controllerCount = this.input.getControllerCount();
+        for (let controller = 0; controller < controllerCount; controller++) {
             for (let button = 0; button < HumanInput.GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
                 if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
-                    pressed = this.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
+                    pressed = this.input.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
                 }
             }
         }
@@ -97,14 +91,6 @@ export class HumanInput implements IInput {
 
     private isDirectionalGamepadButton(button: number): boolean {
         return button >= ButtonMapping.DEFAULT_CONTROLLER_UP && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-    }
-
-    private isControlPressed(control: number, controller: number): boolean {
-        try {
-            return this.input.isControlPressed(control, controller);
-        } catch {
-            return false;
-        }
     }
 
     public reset(): void {}
