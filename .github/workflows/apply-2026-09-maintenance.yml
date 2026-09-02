@@ -51,6 +51,8 @@ jobs:
                   text = text.replace('GAME_STATE_VERSION = 7 as const/);', 'GAME_STATE_VERSION = 7 as const;/);')
                   text = text.replace('GAME_STATE_VERSION = \\\\d+ as const/);', 'GAME_STATE_VERSION = \\\\d+ as const;/);')
                   text = text.replace("replace_count(web_path, 'this.showPendingPersistenceWarning();', 'this.persistenceWarnings.showPending();', 2)", "replace_count(web_path, 'this.showPendingPersistenceWarning();', 'this.persistenceWarnings.showPending();', 3)")
+                  text = text.replace("replace_once(\n    lock_path,\n    '    rmSync(detachedDir, { recursive: true, force: true });',", "replace_count(\n    lock_path,\n    '    rmSync(detachedDir, { recursive: true, force: true });',")
+                  text = text.replace("'    rmSync(detachedDir, { recursive: true, force: true, maxRetries: cleanupRetryCount, retryDelay: cleanupRetryDelayMs });',\n)\nreplace_once(lock_path", "'    rmSync(detachedDir, { recursive: true, force: true, maxRetries: cleanupRetryCount, retryDelay: cleanupRetryDelayMs });',\n    2,\n)\nreplace_once(lock_path")
                   path.write_text(text)
                   PY
 
