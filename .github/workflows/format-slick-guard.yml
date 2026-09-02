@@ -1,0 +1,34 @@
+name: Format Slick dependency guard
+
+on:
+    push:
+        paths:
+            - ".github/workflows/format-slick-guard.yml"
+
+permissions:
+    contents: write
+
+jobs:
+    format:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 22.13.0
+                  cache: npm
+
+            - run: npm ci
+
+            - name: Format and commit
+              shell: bash
+              run: |
+                  npx prettier scripts/test-buffered-scaling-wiring.mjs --write
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git rm .github/workflows/format-slick-guard.yml
+                  git add scripts/test-buffered-scaling-wiring.mjs
+                  git diff --cached --check
+                  git commit -m "Format Slick dependency guard"
+                  git push
