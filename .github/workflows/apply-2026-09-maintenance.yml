@@ -35,7 +35,7 @@ jobs:
             - name: Install current dependencies
               run: npm ci
 
-            - name: Harden migration inputs
+            - name: Normalize migration inputs
               run: python .github/scripts/apply-2026-09-preflight.py
 
             - name: Apply maintenance
