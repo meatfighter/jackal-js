@@ -59,6 +59,46 @@ jobs:
             - name: Apply validation fixups
               run: python .github/scripts/apply-2026-09-fixups.py
 
+            - name: Finalize lock cleanup and scaling ownership
+              run: |
+                  python - <<'PY'
+                  from pathlib import Path
+                  import re
+
+                  lock_path = Path('scripts/release-lock-utils.mjs')
+                  lock = lock_path.read_text()
+                  old = '''    markOwnerReleased(lockDir, owner);\n    const detachedDir = await detachLockDirectoryWithRetry(lockDir, "released");\n    if (detachedDir === null || detachedDir === false) {\n        return;\n    }\n'''
+                  new = '''    const detachedDir = await detachLockDirectoryWithRetry(lockDir, "released");\n    if (detachedDir === null) {\n        return;\n    }\n    if (detachedDir === false) {\n        const currentOwner = readOwner(lockDir);\n        if (currentOwner.status === "valid" && currentOwner.token === token) {\n            markOwnerReleased(lockDir, currentOwner);\n        }\n        return;\n    }\n'''
+                  if lock.count(old) != 1:
+                      raise SystemExit('Unexpected owned-lock cleanup block.')
+                  lock_path.write_text(lock.replace(old, new, 1))
+
+                  picker_path = Path('pwa/src/app/ScalingPicker.ts')
+                  picker = picker_path.read_text()
+                  picker = 'import type { BufferedScalingMode } from "slick2d-ts";\n' + picker
+                  anchor = '''export function bindScalingPicker(\n'''
+                  helper = '''export function bufferedScalingModeForPreference(\n    slick: typeof import("slick2d-ts"),\n    preference: JackalScalingPreference\n): BufferedScalingMode {\n    switch (preference) {\n        case "crisp":\n            return slick.BufferedScalingMode.Nearest;\n        case "pixel-perfect":\n            return slick.BufferedScalingMode.Integer;\n        case "smooth":\n        default:\n            return slick.BufferedScalingMode.Linear;\n    }\n}\n\n'''
+                  if picker.count(anchor) != 1:
+                      raise SystemExit('Unexpected ScalingPicker bind anchor.')
+                  picker_path.write_text(picker.replace(anchor, helper + anchor, 1))
+
+                  web_path = Path('pwa/src/app/JackalWebApp.ts')
+                  web = web_path.read_text()
+                  web = web.replace('import type { BufferedScalingMode } from "slick2d-ts";\n', '')
+                  web = web.replace('type SlickRuntimeModule = typeof import("slick2d-ts");\n', '')
+                  old_import = 'import { bindScalingPicker, scalingPickerHtml } from "./ScalingPicker.js";'
+                  new_import = 'import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";'
+                  if web.count(old_import) != 1:
+                      raise SystemExit('Unexpected ScalingPicker import in JackalWebApp.')
+                  web = web.replace(old_import, new_import, 1)
+                  web = web.replace('this.getBufferedScalingMode(', 'bufferedScalingModeForPreference(')
+                  method = re.compile(r'\n    private getBufferedScalingMode\(slick: SlickRuntimeModule\): BufferedScalingMode \{[\s\S]*?\n    \}\n\n    private resetPwaState')
+                  web, count = method.subn('\n    private resetPwaState', web, count=1)
+                  if count != 1:
+                      raise SystemExit('Unable to extract buffered scaling mapping from JackalWebApp.')
+                  web_path.write_text(web)
+                  PY
+
             - name: Synchronize dependencies and generated parity metadata
               run: |
                   npm install --ignore-scripts
