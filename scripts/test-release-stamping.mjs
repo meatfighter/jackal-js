@@ -22,7 +22,10 @@ const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", impo
 
 function embeddedServiceWorkerCacheName(buildStamp) {
     const header = serviceWorkerSource.slice(0, serviceWorkerSource.indexOf("const APP_ROOT"));
-    const source = header.replaceAll("__APP_VERSION__", versionJson.version).replaceAll("__BUILD_STAMP__", buildStamp);
+    const source = header
+        .replaceAll("__APP_VERSION__", versionJson.version)
+        .replaceAll("__BUILD_STAMP__", buildStamp)
+        .replaceAll("__RESOURCE_VERSIONS__", "{}");
     const context = {
         URL,
         self: {
@@ -107,7 +110,7 @@ test("successive standalone PWA releases produce different service-worker cache 
 test("browser runtime uses the Vite-injected release identity everywhere", () => {
     assert.match(buildInfoSource, /export const APP_VERSION(?:: string)? = __APP_VERSION__/);
     assert.match(buildInfoSource, /export const BUILD_STAMP(?:: string)? = __BUILD_STAMP__/);
-    assert.match(runtimeLoaderSource, /ResourceLoader\.setCacheBust\(BUILD_STAMP\)/);
+    assert.match(runtimeLoaderSource, /ResourceLoader\.setCacheVersionResolver\(/);
     assert.match(webAppSource, /registerServiceWorker\(BUILD_STAMP\)/);
     assert.match(webAppSource, /new runtime\.JackalGameStateStore\(APP_VERSION\)/);
     assert.doesNotMatch(runtimeLoaderSource + webAppSource, /version\.json/);

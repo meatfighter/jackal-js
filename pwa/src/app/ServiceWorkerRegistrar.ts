@@ -10,14 +10,9 @@ export function registerServiceWorker(buildStamp: string): void {
     }
     window.addEventListener("load", () => {
         const serviceWorkerUrl = new URL(`./sw.js?v=${encodeURIComponent(buildStamp)}`, window.location.href);
-        void navigator.serviceWorker
-            .register(serviceWorkerUrl, { scope: "./" })
-            .then((registration) => {
-                void registration.update();
-            })
-            .catch((error: unknown) => {
-                console.warn("Unable to register Jackal service worker.", error);
-            });
+        void navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./" }).catch((error: unknown) => {
+            console.warn("Unable to register Jackal service worker.", error);
+        });
     });
 }
 

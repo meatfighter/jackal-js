@@ -92,16 +92,13 @@ export const BUTTON_MAPPING_FIELD_NAMES = fieldsOf<ButtonMapping>()(
     "keyGrenade",
     "keyGun",
     "keyStart",
-    "controller",
-    "controllerIndex",
     "controllerUp",
     "controllerDown",
     "controllerLeft",
     "controllerRight",
     "controllerGrenade",
     "controllerGun",
-    "controllerStart",
-    "gunKeyMapped"
+    "controllerStart"
 );
 
 export const INTRO_MODE_FIELD_NAMES = fieldsOf<IntroMode>()(

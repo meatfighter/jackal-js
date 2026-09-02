@@ -5,7 +5,7 @@ import org.newdawn.slick.*;
 
 public class ButtonMapping {
 
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
   public static final int NO_BINDING = -1;
   public static final int ACTION_UP = 0;
@@ -39,9 +39,6 @@ public class ButtonMapping {
   public int keyGrenade = DEFAULT_KEY_GRENADE;
   public int keyGun = DEFAULT_KEY_GUN;
   public int keyStart = DEFAULT_KEY_START;
-  
-  public boolean controller = true;
-  public int controllerIndex;  
   public int controllerUp = DEFAULT_CONTROLLER_UP;
   public int controllerDown = DEFAULT_CONTROLLER_DOWN;
   public int controllerLeft = DEFAULT_CONTROLLER_LEFT;
@@ -49,9 +46,6 @@ public class ButtonMapping {
   public int controllerGrenade = DEFAULT_CONTROLLER_GRENADE;
   public int controllerGun = DEFAULT_CONTROLLER_GUN;
   public int controllerStart = DEFAULT_CONTROLLER_START;
-  
-  public boolean gunKeyMapped = true;
-
   public static ButtonMapping load() {
     ButtonMapping mapping = new ButtonMapping();
     try {
@@ -66,8 +60,6 @@ public class ButtonMapping {
       mapping.keyGrenade = prefs.getInt("keyGrenade", DEFAULT_KEY_GRENADE);
       mapping.keyGun = prefs.getInt("keyGun", DEFAULT_KEY_GUN);
       mapping.keyStart = prefs.getInt("keyStart", DEFAULT_KEY_START);
-      mapping.controller = prefs.getBoolean("controller", true);
-      mapping.controllerIndex = prefs.getInt("controllerIndex", 0);
       mapping.controllerUp = prefs.getInt(
           "controllerUp", DEFAULT_CONTROLLER_UP);
       mapping.controllerDown = prefs.getInt(
@@ -82,7 +74,6 @@ public class ButtonMapping {
           "controllerGun", DEFAULT_CONTROLLER_GUN);
       mapping.controllerStart = prefs.getInt(
           "controllerStart", DEFAULT_CONTROLLER_START);
-      mapping.gunKeyMapped = prefs.getBoolean("gunKeyMapped", true);
     } catch(Throwable t) {
     }
     return mapping;
@@ -99,8 +90,6 @@ public class ButtonMapping {
       prefs.putInt("keyGrenade", keyGrenade);
       prefs.putInt("keyGun", keyGun);
       prefs.putInt("keyStart", keyStart);
-      prefs.putBoolean("controller", controller);
-      prefs.putInt("controllerIndex", controllerIndex);
       prefs.putInt("controllerUp", controllerUp);
       prefs.putInt("controllerDown", controllerDown);
       prefs.putInt("controllerLeft", controllerLeft);
@@ -108,7 +97,6 @@ public class ButtonMapping {
       prefs.putInt("controllerGrenade", controllerGrenade);
       prefs.putInt("controllerGun", controllerGun);
       prefs.putInt("controllerStart", controllerStart);
-      prefs.putBoolean("gunKeyMapped", gunKeyMapped);
       prefs.flush();
     } catch(Throwable t) {
     }
@@ -122,8 +110,6 @@ public class ButtonMapping {
     keyGrenade = DEFAULT_KEY_GRENADE;
     keyGun = DEFAULT_KEY_GUN;
     keyStart = DEFAULT_KEY_START;
-    controller = true;
-    controllerIndex = 0;
     controllerUp = DEFAULT_CONTROLLER_UP;
     controllerDown = DEFAULT_CONTROLLER_DOWN;
     controllerLeft = DEFAULT_CONTROLLER_LEFT;
@@ -131,7 +117,6 @@ public class ButtonMapping {
     controllerGrenade = DEFAULT_CONTROLLER_GRENADE;
     controllerGun = DEFAULT_CONTROLLER_GUN;
     controllerStart = DEFAULT_CONTROLLER_START;
-    gunKeyMapped = true;
   }
 
   public static boolean isReservedKey(int key) {

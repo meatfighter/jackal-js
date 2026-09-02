@@ -11,8 +11,6 @@ interface JackalInputMappingSnapshot {
     keyGrenade: number;
     keyGun: number;
     keyStart: number;
-    controller: boolean;
-    controllerIndex: number;
     controllerUp: number;
     controllerDown: number;
     controllerLeft: number;
@@ -20,11 +18,10 @@ interface JackalInputMappingSnapshot {
     controllerGrenade: number;
     controllerGun: number;
     controllerStart: number;
-    gunKeyMapped: boolean;
 }
 
 export class JackalInputMappingStore {
-    private static readonly SNAPSHOT_VERSION = 1;
+    private static readonly SNAPSHOT_VERSION = 2;
     private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
 
     public save(buttonMapping: ButtonMapping): boolean {
@@ -39,16 +36,13 @@ export class JackalInputMappingStore {
                     keyGrenade: buttonMapping.keyGrenade,
                     keyGun: buttonMapping.keyGun,
                     keyStart: buttonMapping.keyStart,
-                    controller: buttonMapping.controller,
-                    controllerIndex: buttonMapping.controllerIndex,
                     controllerUp: buttonMapping.controllerUp,
                     controllerDown: buttonMapping.controllerDown,
                     controllerLeft: buttonMapping.controllerLeft,
                     controllerRight: buttonMapping.controllerRight,
                     controllerGrenade: buttonMapping.controllerGrenade,
                     controllerGun: buttonMapping.controllerGun,
-                    controllerStart: buttonMapping.controllerStart,
-                    gunKeyMapped: buttonMapping.gunKeyMapped
+                    controllerStart: buttonMapping.controllerStart
                 } satisfies JackalInputMappingSnapshot)
             );
         } catch (error) {
@@ -70,8 +64,6 @@ export class JackalInputMappingStore {
             buttonMapping.keyGrenade = snapshot.keyGrenade;
             buttonMapping.keyGun = snapshot.keyGun;
             buttonMapping.keyStart = snapshot.keyStart;
-            buttonMapping.controller = snapshot.controller;
-            buttonMapping.controllerIndex = snapshot.controllerIndex;
             buttonMapping.controllerUp = snapshot.controllerUp;
             buttonMapping.controllerDown = snapshot.controllerDown;
             buttonMapping.controllerLeft = snapshot.controllerLeft;
@@ -79,7 +71,6 @@ export class JackalInputMappingStore {
             buttonMapping.controllerGrenade = snapshot.controllerGrenade;
             buttonMapping.controllerGun = snapshot.controllerGun;
             buttonMapping.controllerStart = snapshot.controllerStart;
-            buttonMapping.gunKeyMapped = snapshot.gunKeyMapped;
             return true;
         } catch (error) {
             console.warn("Unable to restore Jackal input mapping.", error);
@@ -88,8 +79,8 @@ export class JackalInputMappingStore {
         }
     }
 
-    public clear(): void {
-        this.storage.remove();
+    public clear(): boolean {
+        return this.storage.remove();
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
@@ -118,16 +109,13 @@ export class JackalInputMappingStore {
             this.isBinding(snapshot.keyGrenade) &&
             this.isBinding(snapshot.keyGun) &&
             this.isBinding(snapshot.keyStart) &&
-            typeof snapshot.controller === "boolean" &&
-            this.isInteger(snapshot.controllerIndex) &&
             this.isBinding(snapshot.controllerUp) &&
             this.isBinding(snapshot.controllerDown) &&
             this.isBinding(snapshot.controllerLeft) &&
             this.isBinding(snapshot.controllerRight) &&
             this.isBinding(snapshot.controllerGrenade) &&
             this.isBinding(snapshot.controllerGun) &&
-            this.isBinding(snapshot.controllerStart) &&
-            typeof snapshot.gunKeyMapped === "boolean"
+            this.isBinding(snapshot.controllerStart)
         );
     }
 

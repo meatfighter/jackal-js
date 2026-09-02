@@ -1,10 +1,12 @@
 const APP_VERSION = "__APP_VERSION__";
 const BUILD_STAMP = "__BUILD_STAMP__";
+const RESOURCE_VERSIONS = __RESOURCE_VERSIONS__;
 const SCOPE_CACHE_ID = encodeURIComponent(new URL(self.registration.scope).pathname);
 const CACHE_PREFIX = `jackal|${SCOPE_CACHE_ID}|`;
 const CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}-${BUILD_STAMP}`;
 const APP_ROOT = appUrl("./");
 const APP_INDEX = appUrl("index.html");
+const RESOURCE_ROOT = new URL(appUrl("resources/"));
 const APP_STATIC_RESOURCES = [
     "./",
     "./index.html",
@@ -70,18 +72,28 @@ async function cacheFirst(request) {
         return cached;
     }
 
-    const response = await fetchOnce(request);
-    return response;
+    return fetchOnce(request);
 }
 
 function appUrl(path) {
     return new URL(path, self.registration.scope).href;
 }
 
+function cacheVersionForUrl(url) {
+    if (url.origin === RESOURCE_ROOT.origin && url.pathname.startsWith(RESOURCE_ROOT.pathname)) {
+        const ref = decodeURIComponent(url.pathname.slice(RESOURCE_ROOT.pathname.length));
+        const contentVersion = RESOURCE_VERSIONS[ref];
+        if (typeof contentVersion === "string") {
+            return contentVersion;
+        }
+    }
+    return BUILD_STAMP;
+}
+
 function createCacheUrl(requestOrUrl) {
     const url = new URL(typeof requestOrUrl === "string" ? requestOrUrl : requestOrUrl.url, self.registration.scope);
     if (url.origin === self.location.origin && url.href.startsWith(self.registration.scope) && !url.searchParams.has("v")) {
-        url.searchParams.set("v", BUILD_STAMP);
+        url.searchParams.set("v", cacheVersionForUrl(url));
     }
     url.hash = "";
     return url.href;

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, relative, resolve } from "node:path";
@@ -8,9 +9,11 @@ import versionFileInfo from "../version.json";
 const APP_VERSION_TOKEN = "__APP_VERSION__";
 const BUILD_STAMP_TOKEN = "__BUILD_STAMP__";
 const BASE_URL_TOKEN = "__BASE_URL__";
+const RESOURCE_VERSIONS_TOKEN = "__RESOURCE_VERSIONS__";
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const pwaOutDir = process.env.JACKAL_PWA_OUT_DIR ?? "../.release-components/pwa";
 const buildVersionEnv = "JACKAL_BUILD_VERSION_JSON";
+const resourceRoot = join(rootDir, "public", "resources");
 
 function readBuildVersionInfo(): typeof versionFileInfo {
     const override = process.env[buildVersionEnv];
@@ -34,11 +37,40 @@ function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
 }
 
+function collectResourceVersions(dir: string, baseDir = dir): Record<string, string> {
+    const rootStat = lstatSync(dir);
+    if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+        throw new Error(`PWA resource root must be a real directory: ${dir}`);
+    }
+
+    const versions: Record<string, string> = {};
+    for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
+        const path = join(dir, entry);
+        const stat = lstatSync(path);
+        if (stat.isSymbolicLink()) {
+            throw new Error(`PWA resource entry must not be a symlink or junction: ${path}`);
+        }
+        if (stat.isDirectory()) {
+            Object.assign(versions, collectResourceVersions(path, baseDir));
+            continue;
+        }
+        if (!stat.isFile()) {
+            throw new Error(`PWA resource entry must be a regular file or directory: ${path}`);
+        }
+        const ref = relative(baseDir, path).replaceAll("\\", "/");
+        versions[ref] = createHash("sha256").update(readFileSync(path)).digest("hex");
+    }
+    return versions;
+}
+
+const resourceVersions = collectResourceVersions(resourceRoot);
+
 function applyBuildTokens(content: string, baseUrl: string): string {
     return content
         .replaceAll(APP_VERSION_TOKEN, versionInfo.version)
         .replaceAll(BUILD_STAMP_TOKEN, versionInfo.buildStamp)
-        .replaceAll(BASE_URL_TOKEN, normalizeBaseUrl(baseUrl));
+        .replaceAll(BASE_URL_TOKEN, normalizeBaseUrl(baseUrl))
+        .replaceAll(RESOURCE_VERSIONS_TOKEN, JSON.stringify(resourceVersions));
 }
 
 function collectPrecacheResources(dir: string, baseDir = dir): string[] {
@@ -147,7 +179,8 @@ export default defineConfig(({ command }) => ({
     plugins: [versionedStaticAssets()],
     define: {
         __APP_VERSION__: JSON.stringify(versionInfo.version),
-        __BUILD_STAMP__: JSON.stringify(versionInfo.buildStamp)
+        __BUILD_STAMP__: JSON.stringify(versionInfo.buildStamp),
+        __RESOURCE_VERSIONS__: JSON.stringify(resourceVersions)
     },
     build: {
         outDir: pwaOutDir,

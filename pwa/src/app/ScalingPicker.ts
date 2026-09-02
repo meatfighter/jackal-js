@@ -1,3 +1,4 @@
+import type { BufferedScalingMode } from "slick2d-ts";
 import {
     SCALING_MODE_DEFINITIONS,
     getScalingDefinition,
@@ -23,6 +24,18 @@ export function scalingPickerHtml(preference: JackalScalingPreference): string {
                 </div>
             </div>
         </div>`;
+}
+
+export function bufferedScalingModeForPreference(slick: typeof import("slick2d-ts"), preference: JackalScalingPreference): BufferedScalingMode {
+    switch (preference) {
+        case "crisp":
+            return slick.BufferedScalingMode.Nearest;
+        case "pixel-perfect":
+            return slick.BufferedScalingMode.Integer;
+        case "smooth":
+        default:
+            return slick.BufferedScalingMode.Linear;
+    }
 }
 
 export function bindScalingPicker(

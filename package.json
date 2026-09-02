@@ -43,10 +43,11 @@
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint .",
-        "typecheck": "tsc --project pwa/tsconfig.json --noEmit"
+        "typecheck": "tsc --project pwa/tsconfig.json --noEmit",
+        "verify:browser": "node scripts/run-browser-verification.mjs"
     },
     "dependencies": {
-        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.5.2"
+        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#semver:^1.5.3"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

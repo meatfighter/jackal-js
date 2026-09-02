@@ -1,5 +1,4 @@
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
-import type { BufferedScalingMode } from "slick2d-ts";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { MainConstants } from "../java/MainConstants.js";
@@ -22,7 +21,8 @@ import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
-import { bindScalingPicker, scalingPickerHtml } from "./ScalingPicker.js";
+import { PersistenceWarningController } from "./PersistenceWarningController.js";
+import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
 import { APP_VERSION, BUILD_STAMP } from "./BuildInfo.js";
 const GAME_DISPLAY_WIDTH = MainConstants.DISPLAY_WIDTH;
@@ -30,7 +30,6 @@ const GAME_DISPLAY_HEIGHT = MainConstants.DISPLAY_HEIGHT;
 const HIGH_DPI_ENABLED = true;
 const MAX_DEVICE_PIXEL_RATIO = 4;
 
-type SlickRuntimeModule = typeof import("slick2d-ts");
 export class JackalWebApp {
     private readonly root: HTMLElement;
     private readonly inputMappingStore = new JackalInputMappingStore();
@@ -38,6 +37,7 @@ export class JackalWebApp {
     private readonly runtimeLoader = new JackalRuntimeLoader(() => this.refreshVisibleLoadingProgress());
     private readonly pageLifecycle = new PageLifecycleMonitor(() => this.applyCurrentGameLifecycleSuspension());
     private readonly viewport: GameViewportController;
+    private readonly persistenceWarnings: PersistenceWarningController;
     private backgroundPreparationScheduled = false;
     private container: AppGameContainer | null = null;
     private game: Main | null = null;
@@ -60,6 +60,12 @@ export class JackalWebApp {
                 this.showError("Unable to resize the game. Reload the page and try again.");
             }
         });
+        this.persistenceWarnings = new PersistenceWarningController(
+            root,
+            () => this.viewport.gameShell,
+            () => this.liveMenuOpen,
+            () => this.pageLifecycle.suspended
+        );
         registerServiceWorker(BUILD_STAMP);
     }
 
@@ -93,6 +99,7 @@ export class JackalWebApp {
                 </div>
                 <button id="reset-button" class="reset-button" type="button">Reset</button>
                 ${errorMessage ? `<p class="error-message">${escapeHtml(errorMessage)}</p>` : ""}
+                ${this.persistenceWarnings.takePendingHtml()}
             </section>
         `;
         if (!overlay) {
@@ -148,19 +155,7 @@ export class JackalWebApp {
         this.scalingPreference = value;
         writeScalingPreference(value);
         if (this.runtimeLoader.preparedRuntime !== null) {
-            this.viewport.setScalingMode(this.getBufferedScalingMode(this.runtimeLoader.preparedRuntime.slick));
-        }
-    }
-
-    private getBufferedScalingMode(slick: SlickRuntimeModule): BufferedScalingMode {
-        switch (this.scalingPreference) {
-            case "crisp":
-                return slick.BufferedScalingMode.Nearest;
-            case "pixel-perfect":
-                return slick.BufferedScalingMode.Integer;
-            case "smooth":
-            default:
-                return slick.BufferedScalingMode.Linear;
+            this.viewport.setScalingMode(bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick, this.scalingPreference));
         }
     }
 
@@ -175,10 +170,11 @@ export class JackalWebApp {
     }
 
     private clearPwaStorage(): void {
-        clearPreferences();
-        clearStoredGameState();
-        this.inputMappingStore.clear();
+        const cleared = clearPreferences() && clearStoredGameState() && this.inputMappingStore.clear();
         this.gameStateStore = null;
+        if (!cleared) {
+            this.persistenceWarnings.report("Some saved Jackal settings could not be cleared.");
+        }
     }
 
     private hasLiveSuspendedGame(): boolean {
@@ -232,7 +228,7 @@ export class JackalWebApp {
     }
 
     private async startGame(restoreSavedGame: boolean): Promise<void> {
-        this.destroyGame();
+        this.destroyGameSession();
         const session = this.gameSessionGeneration;
         const audioUnlockPromise = this.unlockAudio().then(
             () => ({ ok: true as const }),
@@ -305,7 +301,7 @@ export class JackalWebApp {
 
         const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
             maintainAspect: true,
-            scalingMode: this.getBufferedScalingMode(runtime.slick)
+            scalingMode: bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)
         });
         const displayMode = this.viewport.getWindowedDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
@@ -378,6 +374,7 @@ export class JackalWebApp {
         this.viewport.focusCanvas();
         mainGame.clearInputPressedRecords();
         this.syncCurrentGameLifecycleSuspension();
+        this.persistenceWarnings.showPending();
     }
 
     private returnToMenu(): void {
@@ -392,17 +389,20 @@ export class JackalWebApp {
     }
 
     private saveCurrentGameState(): boolean {
-        if (this.game === null || this.runtimeLoader.preparedRuntime === null) {
+        if (this.game === null || this.runtimeLoader.preparedRuntime === null || !this.game.isStateSaveReady()) {
             return false;
         }
-        if (!this.game.isStateSaveReady()) {
-            return false;
+        const saved = this.getGameStateStore(this.runtimeLoader.preparedRuntime).save(this.game);
+        if (!saved) {
+            this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
         }
-        return this.getGameStateStore(this.runtimeLoader.preparedRuntime).save(this.game);
+        return saved;
     }
 
     private clearStoredGameState(): void {
-        clearStoredGameState();
+        if (!clearStoredGameState()) {
+            this.persistenceWarnings.report("The previous saved game could not be cleared.");
+        }
         this.gameStateStore = null;
     }
 
@@ -410,7 +410,11 @@ export class JackalWebApp {
         if (this.game === null) {
             return false;
         }
-        return this.inputMappingStore.save(this.game.buttonMapping);
+        const saved = this.inputMappingStore.save(this.game.buttonMapping);
+        if (!saved) {
+            this.persistenceWarnings.report("Control changes could not be saved.");
+        }
+        return saved;
     }
 
     private renderLoading(progress: number): void {
@@ -462,8 +466,12 @@ export class JackalWebApp {
     }
 
     private destroyGame(): void {
-        this.gameSessionGeneration++;
         this.runtimeLoader.cancelPreparation();
+        this.destroyGameSession();
+    }
+
+    private destroyGameSession(): void {
+        this.gameSessionGeneration++;
         this.removeMenuOverlay();
         this.saveCurrentInputMapping();
         this.resetLifecycleSuspension();
@@ -479,6 +487,7 @@ export class JackalWebApp {
             SoundStore.get().stopAllPlayback();
         }
         this.game = null;
+        this.persistenceWarnings.clearToast();
         this.viewport.clear();
         this.runtimeLoader.preparedRuntime?.slick.Display.setParent(null);
     }
@@ -550,6 +559,7 @@ export class JackalWebApp {
         }
         this.game.setBrowserSuspended(false);
         this.container?.setLoopSuspended(false);
+        this.persistenceWarnings.showPending();
     }
 
     private resetLifecycleSuspension(): void {

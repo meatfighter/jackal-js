@@ -54,9 +54,6 @@
         "HumanInput.nonDirectionalButtonWasDown": {
             "reason": "Browser input edge tracking is implemented by the Slick2D TypeScript input layer."
         },
-        "InputMode.DEFAULT_CONTROLLER_INDEX": {
-            "reason": "The browser chooses connected gamepads dynamically."
-        },
         "InputMode.controllerButtonDown": {
             "reason": "Browser gamepad state is read through the TypeScript input layer."
         },

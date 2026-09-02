@@ -13,6 +13,7 @@ const PREFIX_CHILD_SCOPE = "https://example.test/a/pwa/-stage/pwa/";
 function loadServiceWorker({
     appVersion = "1.0.0",
     buildStamp = "current",
+    resourceVersions = {},
     cacheBackend = createCacheBackend(),
     fetchHandler = async () => createResponse("network"),
     scope = SCOPE,
@@ -44,7 +45,9 @@ function loadServiceWorker({
         fetch: fetchHandler,
         self
     };
-    const source = SERVICE_WORKER_SOURCE.replaceAll("__APP_VERSION__", appVersion).replaceAll("__BUILD_STAMP__", buildStamp);
+    const source = SERVICE_WORKER_SOURCE.replaceAll("__APP_VERSION__", appVersion)
+        .replaceAll("__BUILD_STAMP__", buildStamp)
+        .replaceAll("__RESOURCE_VERSIONS__", JSON.stringify(resourceVersions));
 
     vm.runInNewContext(`${source}\nglobalThis.__worker = { APP_STATIC_RESOURCES, CACHE_NAME, CACHE_PREFIX, createCacheUrl };`, context);
 
@@ -164,6 +167,16 @@ test("service worker cache keys add the current build stamp when v is absent", (
     assert.equal(worker.createCacheUrl("./resources/images/map.dat"), `${SCOPE}resources/images/map.dat?v=current`);
     assert.equal(worker.createCacheUrl("./resources/images/map.dat?palette=blue"), `${SCOPE}resources/images/map.dat?palette=blue&v=current`);
     assert.notEqual(worker.createCacheUrl("./resources/images/map.dat"), worker.createCacheUrl("./resources/images/map.dat?palette=blue"));
+});
+
+test("service worker cache keys use stable content versions for known game resources", () => {
+    const worker = loadServiceWorker({
+        buildStamp: "current",
+        resourceVersions: { "images/map.dat": "content-map" }
+    });
+
+    assert.equal(worker.createCacheUrl("./resources/images/map.dat"), `${SCOPE}resources/images/map.dat?v=content-map`);
+    assert.equal(worker.createCacheUrl("./resources/images/unknown.dat"), `${SCOPE}resources/images/unknown.dat?v=current`);
 });
 
 test("service worker cache keys preserve explicit deployment versions", () => {

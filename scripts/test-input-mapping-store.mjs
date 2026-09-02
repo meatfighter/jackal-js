@@ -18,19 +18,12 @@ globalThis.localStorage = {
 };
 
 function setLocation(href) {
-    Object.defineProperty(globalThis, "location", {
-        value: new URL(href),
-        configurable: true,
-        writable: true
-    });
+    Object.defineProperty(globalThis, "location", { value: new URL(href), configurable: true, writable: true });
 }
 
 function compileModule(source) {
     const compiled = ts.transpileModule(source, {
-        compilerOptions: {
-            module: ts.ModuleKind.ESNext,
-            target: ts.ScriptTarget.ES2022
-        }
+        compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 }
     }).outputText;
     return `data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`;
 }
@@ -63,8 +56,6 @@ function createMapping(overrides = {}) {
         keyGrenade: 45,
         keyGun: 44,
         keyStart: 28,
-        controller: true,
-        controllerIndex: 0,
         controllerUp: 12,
         controllerDown: 13,
         controllerLeft: 14,
@@ -72,7 +63,6 @@ function createMapping(overrides = {}) {
         controllerGrenade: 0,
         controllerGun: 2,
         controllerStart: 9,
-        gunKeyMapped: true,
         ...overrides
     };
 }
@@ -82,11 +72,7 @@ test("input mappings with unbound controls survive save and restore", async () =
     setLocation("https://example.test/stage/pwa/?v=old");
     const { JackalInputMappingStore } = await loadStore();
     const store = new JackalInputMappingStore();
-    const saved = createMapping({
-        keyGun: -1,
-        controllerLeft: -1,
-        controllerGun: -1
-    });
+    const saved = createMapping({ keyGun: -1, controllerLeft: -1, controllerGun: -1 });
     const restored = createMapping();
 
     assert.equal(store.save(saved), true);
@@ -94,21 +80,17 @@ test("input mappings with unbound controls survive save and restore", async () =
     assert.deepEqual(restored, saved);
 });
 
-test("negative controller indexes are still rejected", async () => {
+test("obsolete version-one mappings are discarded instead of migrated", async () => {
     storage.clear();
     const href = "https://example.test/stage/pwa/?v=old";
     setLocation(href);
     const { JackalInputMappingStore } = await loadStore();
-    const store = new JackalInputMappingStore();
     storage.set(
         storageKey("jackal.input-mapping", href),
-        JSON.stringify({
-            version: 1,
-            ...createMapping({ controllerIndex: -1 })
-        })
+        JSON.stringify({ version: 1, ...createMapping(), controller: true, controllerIndex: 0, gunKeyMapped: true })
     );
 
-    assert.equal(store.restore(createMapping()), false);
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
     assert.equal(storage.has(storageKey("jackal.input-mapping", href)), false);
 });
 
@@ -136,7 +118,7 @@ test("input mappings are isolated by deployment path and stable across cache-bus
     assert.deepEqual(productionRestored, productionSaved);
 });
 
-test("corrupted staging input mapping cleanup preserves production mapping", async () => {
+test("corrupted staging mapping cleanup preserves production mapping", async () => {
     storage.clear();
     const { JackalInputMappingStore } = await loadStore();
     const stageHref = "https://example.test/stage/pwa/?v=old";
@@ -146,13 +128,7 @@ test("corrupted staging input mapping cleanup preserves production mapping", asy
     setLocation(productionHref);
     assert.equal(new JackalInputMappingStore().save(createMapping({ keyGun: -1 })), true);
 
-    storage.set(
-        storageKey("jackal.input-mapping", stageHref),
-        JSON.stringify({
-            version: 1,
-            ...createMapping({ controllerIndex: -1 })
-        })
-    );
+    storage.set(storageKey("jackal.input-mapping", stageHref), JSON.stringify({ version: 2, ...createMapping(), controllerGun: -2 }));
 
     setLocation(stageHref);
     assert.equal(new JackalInputMappingStore().restore(createMapping()), false);

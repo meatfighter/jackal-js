@@ -1,3 +1,5 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { extname, isAbsolute, join, relative, resolve } from "node:path";
@@ -65,6 +67,34 @@ function parseStaticResources(source) {
         throw new Error("APP_STATIC_RESOURCES must be an array of strings.");
     }
     return resources;
+}
+
+function parseResourceVersions(source) {
+    const match = /const RESOURCE_VERSIONS = (\{[\s\S]*?\});/.exec(source);
+    if (match === null) {
+        throw new Error(`Unable to find RESOURCE_VERSIONS in ${pwaDistLabel}/sw.js.`);
+    }
+    const versions = JSON.parse(match[1]);
+    if (versions === null || typeof versions !== "object" || Array.isArray(versions)) {
+        throw new Error("RESOURCE_VERSIONS must be an object.");
+    }
+    return versions;
+}
+
+function collectExpectedResourceVersions(dir, baseDir = dir) {
+    assertRealDirectory(dir, "PWA versioned resource directory");
+    const versions = {};
+    for (const entry of readdirSync(dir).sort((a, b) => a.localeCompare(b))) {
+        const path = join(dir, entry);
+        const stat = assertRealFileOrDirectory(path, "PWA versioned resource entry");
+        if (stat.isDirectory()) {
+            Object.assign(versions, collectExpectedResourceVersions(path, baseDir));
+            continue;
+        }
+        const ref = relative(baseDir, path).replaceAll("\\", "/");
+        versions[ref] = createHash("sha256").update(readFileSync(path)).digest("hex");
+    }
+    return versions;
 }
 
 function findDuplicates(values) {
@@ -273,7 +303,9 @@ assertRealFile(serviceWorkerPath, "PWA service worker");
 assertRealFile(indexPath, "PWA index");
 assertRealFile(manifestPath, "PWA manifest");
 
-const listedResources = parseStaticResources(readFileSync(serviceWorkerPath, "utf8"));
+const serviceWorkerSource = readFileSync(serviceWorkerPath, "utf8");
+const listedResources = parseStaticResources(serviceWorkerSource);
+const resourceVersions = parseResourceVersions(serviceWorkerSource);
 const generatedFiles = collectFiles(pwaDistDir);
 const expectedResources = ["./", ...collectPrecacheResources(pwaDistDir)];
 const duplicateResources = findDuplicates(listedResources);
@@ -294,6 +326,8 @@ if (extraResources.length > 0) {
 
 const indexHtml = readFileSync(indexPath, "utf8");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+const expectedResourceVersions = collectExpectedResourceVersions(join(pwaDistDir, "resources"));
+assert.deepEqual(resourceVersions, expectedResourceVersions, "Built PWA resource fingerprints must exactly match emitted resource bytes.");
 verifyNoHardCodedRuntimePaths(generatedFiles);
 verifyRelocatableUrls(indexHtml, manifest, listedResources);
 verifyBuiltServiceWorkerRegistration(generatedFiles);

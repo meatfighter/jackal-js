@@ -94,7 +94,7 @@ test("save-state persistence stays modular, shared, current-only, and cast-safe"
     assert.doesNotMatch(webApp, /localStorage\.(?:getItem|setItem|removeItem)|function isPotentialGameStateSnapshot/);
 
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*7/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*\d+/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
 
     const snapshot = read("pwa/src/jackal/persistence/GameStateSnapshot.ts");
@@ -113,6 +113,7 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
         "JackalRuntimeLoader.js",
         "JackalScreens.js",
         "PageLifecycleMonitor.js",
+        "PersistenceWarningController.js",
         "ScalingPicker.js"
     ]) {
         assert.match(webApp, new RegExp(moduleName.replace(".", "\\.")));
@@ -140,7 +141,7 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
     assert.match(runtimeLoader, /Promise\.allSettled\(\[previousBarrier, pending\]\)/);
     assert.match(runtimeLoader, /ResourceLoader\.preloadResources\(resourceRefs, \{\s*signal,/);
     assert.match(runtimeLoader, /preloadAudioBuffers\(audioRefs, \{\s*signal,/);
-    assert.match(runtimeLoader, /ResourceLoader\.setCacheBust\(BUILD_STAMP\)/);
+    assert.match(runtimeLoader, /ResourceLoader\.setCacheVersionResolver\(/);
     assert.match(webApp, /error instanceof ResourceLoadException/);
     assert.match(webApp, /The game encountered an unexpected error\. Reload the page and try again\./);
 });

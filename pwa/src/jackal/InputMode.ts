@@ -167,26 +167,26 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.listeningForInput = false;
     }
 
-    public controllerLeftPressed(controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT, controllerIndex);
+    public controllerLeftPressed(_controllerIndex: number): void {
+        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT);
     }
 
     public controllerLeftReleased(i: number): void {}
 
-    public controllerRightPressed(controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT, controllerIndex);
+    public controllerRightPressed(_controllerIndex: number): void {
+        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
     }
 
     public controllerRightReleased(controllerIndex: number): void {}
 
-    public controllerUpPressed(controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP, controllerIndex);
+    public controllerUpPressed(_controllerIndex: number): void {
+        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP);
     }
 
     public controllerUpReleased(controllerIndex: number): void {}
 
-    public controllerDownPressed(controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN, controllerIndex);
+    public controllerDownPressed(_controllerIndex: number): void {
+        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN);
     }
 
     public controllerDownReleased(controllerIndex: number): void {}
@@ -203,7 +203,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
 
     public inputStarted(): void {}
 
-    public controllerButtonPressed(controllerIndex: number, buttonIndex: number): void {
+    public controllerButtonPressed(_controllerIndex: number, buttonIndex: number): void {
         if (this.state !== InputMode.STATE_READING) {
             return;
         }
@@ -213,7 +213,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
             return;
         }
 
-        if (!this.bindDraftControllerButton(buttonIndex, controllerIndex)) {
+        if (!this.bindDraftControllerButton(buttonIndex)) {
             this.message = "ALREADY USED";
             return;
         }
@@ -221,12 +221,12 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.advance();
     }
 
-    private bindControllerDirection(buttonIndex: number, controllerIndex: number): void {
+    private bindControllerDirection(buttonIndex: number): void {
         if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
             return;
         }
 
-        if (!this.bindDraftControllerButton(buttonIndex, controllerIndex)) {
+        if (!this.bindDraftControllerButton(buttonIndex)) {
             this.message = "ALREADY USED";
             return;
         }
@@ -275,7 +275,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                 this.draftButtonMapping.keyGrenade = i;
                 break;
             case ButtonMapping.ACTION_GUN:
-                this.draftButtonMapping.gunKeyMapped = true;
                 this.draftButtonMapping.keyGun = i;
                 break;
             case ButtonMapping.ACTION_START:
@@ -286,13 +285,11 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return true;
     }
 
-    private bindDraftControllerButton(buttonIndex: number, controllerIndex: number): boolean {
+    private bindDraftControllerButton(buttonIndex: number): boolean {
         if (this.assignedControllerButtons.has(buttonIndex)) {
             return false;
         }
         this.clearDraftControllerButton(buttonIndex);
-        this.draftButtonMapping.controller = true;
-        this.draftButtonMapping.controllerIndex = controllerIndex;
         switch (this.getCurrentAction()) {
             case ButtonMapping.ACTION_UP:
                 this.draftButtonMapping.controllerUp = buttonIndex;
@@ -329,8 +326,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         copy.keyGrenade = source.keyGrenade;
         copy.keyGun = source.keyGun;
         copy.keyStart = source.keyStart;
-        copy.controller = source.controller;
-        copy.controllerIndex = source.controllerIndex;
         copy.controllerUp = source.controllerUp;
         copy.controllerDown = source.controllerDown;
         copy.controllerLeft = source.controllerLeft;
@@ -338,7 +333,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         copy.controllerGrenade = source.controllerGrenade;
         copy.controllerGun = source.controllerGun;
         copy.controllerStart = source.controllerStart;
-        copy.gunKeyMapped = source.gunKeyMapped;
         return copy;
     }
 
@@ -398,8 +392,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.buttonMapping.keyGrenade = this.draftButtonMapping.keyGrenade;
         this.buttonMapping.keyGun = this.draftButtonMapping.keyGun;
         this.buttonMapping.keyStart = this.draftButtonMapping.keyStart;
-        this.buttonMapping.controller = this.draftButtonMapping.controller;
-        this.buttonMapping.controllerIndex = this.draftButtonMapping.controllerIndex;
         this.buttonMapping.controllerUp = this.draftButtonMapping.controllerUp;
         this.buttonMapping.controllerDown = this.draftButtonMapping.controllerDown;
         this.buttonMapping.controllerLeft = this.draftButtonMapping.controllerLeft;
@@ -407,7 +399,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.buttonMapping.controllerGrenade = this.draftButtonMapping.controllerGrenade;
         this.buttonMapping.controllerGun = this.draftButtonMapping.controllerGun;
         this.buttonMapping.controllerStart = this.draftButtonMapping.controllerStart;
-        this.buttonMapping.gunKeyMapped = this.draftButtonMapping.gunKeyMapped;
         this.draftButtonMapping = null!;
         this.refreshInputMappingLines();
     }

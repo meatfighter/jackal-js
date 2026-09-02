@@ -24,7 +24,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   public static final float I_FADE_TIME = 1f / FADE_TIME;
   public static final int DONE_DELAY = 30;
   public static final int ARM_DELAY = 8;
-  public static final int DEFAULT_CONTROLLER_INDEX = 0;
 
   public static final String INPUT_TITLE = "INPUT";
   public static final float INPUT_TITLE_X
@@ -198,12 +197,12 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   public void inputStarted() {
   }
 
-  private void bindControllerDirection(int buttonIndex, int controllerIndex) {
+  private void bindControllerDirection(int buttonIndex) {
     if (state != STATE_READING || isActionStep()) {
       return;
     }
 
-    if (!bindDraftControllerButton(buttonIndex, controllerIndex)) {
+    if (!bindDraftControllerButton(buttonIndex)) {
       message = "ALREADY USED";
       return;
     }
@@ -256,7 +255,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
         draftButtonMapping.keyGrenade = i;
         break;
       case ButtonMapping.ACTION_GUN:
-        draftButtonMapping.gunKeyMapped = true;
         draftButtonMapping.keyGun = i;
         break;
       case ButtonMapping.ACTION_START:
@@ -267,14 +265,11 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     return true;
   }
 
-  private boolean bindDraftControllerButton(int buttonIndex,
-      int controllerIndex) {
+  private boolean bindDraftControllerButton(int buttonIndex) {
     if (assignedControllerButtons.contains(buttonIndex)) {
       return false;
     }
     clearDraftControllerButton(buttonIndex);
-    draftButtonMapping.controller = true;
-    draftButtonMapping.controllerIndex = controllerIndex;
     switch(getCurrentAction()) {
       case ButtonMapping.ACTION_UP:
         draftButtonMapping.controllerUp = buttonIndex;
@@ -311,8 +306,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     copy.keyGrenade = source.keyGrenade;
     copy.keyGun = source.keyGun;
     copy.keyStart = source.keyStart;
-    copy.controller = source.controller;
-    copy.controllerIndex = source.controllerIndex;
     copy.controllerUp = source.controllerUp;
     copy.controllerDown = source.controllerDown;
     copy.controllerLeft = source.controllerLeft;
@@ -320,7 +313,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     copy.controllerGrenade = source.controllerGrenade;
     copy.controllerGun = source.controllerGun;
     copy.controllerStart = source.controllerStart;
-    copy.gunKeyMapped = source.gunKeyMapped;
     return copy;
   }
 
@@ -380,8 +372,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     buttonMapping.keyGrenade = draftButtonMapping.keyGrenade;
     buttonMapping.keyGun = draftButtonMapping.keyGun;
     buttonMapping.keyStart = draftButtonMapping.keyStart;
-    buttonMapping.controller = draftButtonMapping.controller;
-    buttonMapping.controllerIndex = draftButtonMapping.controllerIndex;
     buttonMapping.controllerUp = draftButtonMapping.controllerUp;
     buttonMapping.controllerDown = draftButtonMapping.controllerDown;
     buttonMapping.controllerLeft = draftButtonMapping.controllerLeft;
@@ -389,7 +379,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     buttonMapping.controllerGrenade = draftButtonMapping.controllerGrenade;
     buttonMapping.controllerGun = draftButtonMapping.controllerGun;
     buttonMapping.controllerStart = draftButtonMapping.controllerStart;
-    buttonMapping.gunKeyMapped = draftButtonMapping.gunKeyMapped;
     draftButtonMapping = null;
   }
 
@@ -408,13 +397,13 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
 
     int direction = getPressedControllerDirection();
     if (direction != ButtonMapping.NO_BINDING && !isActionStep()) {
-      bindControllerDirection(direction, DEFAULT_CONTROLLER_INDEX);
+      bindControllerDirection(direction);
       return;
     }
 
     int button = getPressedNonDirectionalControllerButton();
     if (button != ButtonMapping.NO_BINDING) {
-      if (!bindDraftControllerButton(button, DEFAULT_CONTROLLER_INDEX)) {
+      if (!bindDraftControllerButton(button)) {
         message = "ALREADY USED";
         return;
       }

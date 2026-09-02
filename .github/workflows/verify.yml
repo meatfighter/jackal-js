@@ -5,6 +5,10 @@ on:
     pull_request:
     workflow_dispatch:
 
+concurrency:
+    group: verify-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     verify:
         runs-on: ubuntu-latest
@@ -31,3 +35,6 @@ jobs:
 
             - name: Build
               run: npm run build
+
+            - name: Verify real browser
+              run: npm run verify:browser

@@ -12,6 +12,8 @@ export const lockTokenEnv = "JACKAL_RELEASE_OPERATION_LOCK_TOKEN";
 const ownerFileName = "owner.json";
 const holdersDirName = "holders";
 const ownerlessStaleMs = 10_000;
+const cleanupRetryCount = 10;
+const cleanupRetryDelayMs = 10;
 const registrationRetryCode = "JACKAL_RELEASE_LOCK_REGISTRATION_RETRY";
 const holderRegistrations = new Map();
 
@@ -326,6 +328,19 @@ function detachLockDirectory(lockDir, reason) {
     }
 }
 
+async function detachLockDirectoryWithRetry(lockDir, reason) {
+    for (let attempt = 0; attempt <= cleanupRetryCount; attempt++) {
+        const detached = detachLockDirectory(lockDir, reason);
+        if (detached !== false) {
+            return detached;
+        }
+        if (attempt < cleanupRetryCount) {
+            await delay(cleanupRetryDelayMs);
+        }
+    }
+    return false;
+}
+
 function removeStaleLock(lockDir, message = null) {
     const detachedDir = detachLockDirectory(lockDir, "stale");
     if (detachedDir === null) {
@@ -340,7 +355,7 @@ function removeStaleLock(lockDir, message = null) {
     }
 
     try {
-        rmSync(detachedDir, { recursive: true, force: true });
+        rmSync(detachedDir, { recursive: true, force: true, maxRetries: cleanupRetryCount, retryDelay: cleanupRetryDelayMs });
     } catch (error) {
         if (isMissingPathError(error)) {
             return true;
@@ -353,7 +368,7 @@ function removeStaleLock(lockDir, message = null) {
     return true;
 }
 
-function removeOwnedLock(lockDir, token) {
+async function removeOwnedLock(lockDir, token) {
     let owner;
     try {
         assertRealLockDirectory(lockDir);
@@ -383,8 +398,15 @@ function removeOwnedLock(lockDir, token) {
         return;
     }
 
-    const detachedDir = detachLockDirectory(lockDir, "released");
-    if (detachedDir === null || detachedDir === false) {
+    const detachedDir = await detachLockDirectoryWithRetry(lockDir, "released");
+    if (detachedDir === null) {
+        return;
+    }
+    if (detachedDir === false) {
+        const currentOwner = readOwner(lockDir);
+        if (currentOwner.status === "valid" && currentOwner.token === token) {
+            markOwnerReleased(lockDir, currentOwner);
+        }
         return;
     }
 
@@ -392,7 +414,7 @@ function removeOwnedLock(lockDir, token) {
     if (detachedOwner.status !== "valid" || detachedOwner.token !== token) {
         throw new Error(`Detached release operation lock owner changed before cleanup: ${detachedDir}`);
     }
-    rmSync(detachedDir, { recursive: true, force: true });
+    rmSync(detachedDir, { recursive: true, force: true, maxRetries: cleanupRetryCount, retryDelay: cleanupRetryDelayMs });
 }
 
 function hasLiveLockState(lockDir) {
@@ -636,7 +658,7 @@ export async function withReleaseOperationLock(
                 process.env[lockTokenEnv] = previousToken;
             }
 
-            removeOwnedLock(resolvedLockDir, ownerToken);
+            await removeOwnedLock(resolvedLockDir, ownerToken);
         }
     }
 }

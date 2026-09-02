@@ -32,9 +32,6 @@ export class ButtonMapping {
     public keyGrenade: number = ButtonMapping.DEFAULT_KEY_GRENADE;
     public keyGun: number = ButtonMapping.DEFAULT_KEY_GUN;
     public keyStart: number = ButtonMapping.DEFAULT_KEY_START;
-
-    public controller: boolean = true;
-    public controllerIndex: number = 0;
     public controllerUp: number = ButtonMapping.DEFAULT_CONTROLLER_UP;
     public controllerDown: number = ButtonMapping.DEFAULT_CONTROLLER_DOWN;
     public controllerLeft: number = ButtonMapping.DEFAULT_CONTROLLER_LEFT;
@@ -42,9 +39,6 @@ export class ButtonMapping {
     public controllerGrenade: number = ButtonMapping.DEFAULT_CONTROLLER_GRENADE;
     public controllerGun: number = ButtonMapping.DEFAULT_CONTROLLER_GUN;
     public controllerStart: number = ButtonMapping.DEFAULT_CONTROLLER_START;
-
-    public gunKeyMapped: boolean = true;
-
     public resetToDefaults(): void {
         this.keyUp = ButtonMapping.DEFAULT_KEY_UP;
         this.keyDown = ButtonMapping.DEFAULT_KEY_DOWN;
@@ -53,8 +47,6 @@ export class ButtonMapping {
         this.keyGrenade = ButtonMapping.DEFAULT_KEY_GRENADE;
         this.keyGun = ButtonMapping.DEFAULT_KEY_GUN;
         this.keyStart = ButtonMapping.DEFAULT_KEY_START;
-        this.controller = true;
-        this.controllerIndex = 0;
         this.controllerUp = ButtonMapping.DEFAULT_CONTROLLER_UP;
         this.controllerDown = ButtonMapping.DEFAULT_CONTROLLER_DOWN;
         this.controllerLeft = ButtonMapping.DEFAULT_CONTROLLER_LEFT;
@@ -62,7 +54,6 @@ export class ButtonMapping {
         this.controllerGrenade = ButtonMapping.DEFAULT_CONTROLLER_GRENADE;
         this.controllerGun = ButtonMapping.DEFAULT_CONTROLLER_GUN;
         this.controllerStart = ButtonMapping.DEFAULT_CONTROLLER_START;
-        this.gunKeyMapped = true;
     }
 
     public static isReservedKey(key: number): boolean {

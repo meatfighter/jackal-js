@@ -1,9 +1,12 @@
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { BUILD_STAMP } from "./BuildInfo.js";
+import { RESOURCE_VERSIONS } from "./ResourceVersions.js";
 
 const RESOURCE_CACHE_RETRY_COUNT = 5;
 const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
+const RESOURCE_PRELOAD_CONCURRENCY = 8;
+const AUDIO_PRELOAD_CONCURRENCY = 3;
 
 type SlickRuntimeModule = typeof import("slick2d-ts");
 type MainConstructor = typeof import("../jackal/Main.js").Main;
@@ -143,6 +146,7 @@ export class JackalRuntimeLoader {
         const settled = await Promise.allSettled([
             ResourceLoader.preloadResources(resourceRefs, {
                 signal,
+                concurrency: RESOURCE_PRELOAD_CONCURRENCY,
                 onProgress: (progress: ResourceLoadProgress) => {
                     loadedResources = progress.loaded;
                     updateProgress();
@@ -150,6 +154,7 @@ export class JackalRuntimeLoader {
             }),
             SoundStore.get().preloadAudioBuffers(audioRefs, {
                 signal,
+                concurrency: AUDIO_PRELOAD_CONCURRENCY,
                 onProgress: (progress: ResourceLoadProgress) => {
                     loadedAudio = progress.loaded;
                     updateProgress();
@@ -167,7 +172,7 @@ export class JackalRuntimeLoader {
     private configureResourceLoader(): void {
         ResourceLoader.removeAllResourceLocations();
         ResourceLoader.addResourceLocation(getAppUrl("resources/"));
-        ResourceLoader.setCacheBust(BUILD_STAMP);
+        ResourceLoader.setCacheVersionResolver((ref) => RESOURCE_VERSIONS[ref] ?? BUILD_STAMP);
         ResourceLoader.setRetryOptions(RESOURCE_CACHE_RETRY_COUNT, RESOURCE_CACHE_RETRY_DELAY_MS);
     }
 
