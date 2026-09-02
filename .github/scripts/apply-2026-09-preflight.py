@@ -72,4 +72,37 @@ audio_call = '''replace_once(
 '''
 if script.count(resource_call) != 1 or script.count(audio_call) != 1:
     raise SystemExit("Expected preload migration calls were not found exactly once.")
-script_path.write_text(script.replace(resource_call, "").replace(audio_call, ""))
+script = script.replace(resource_call, "").replace(audio_call, "")
+
+# Existing desktop Java sources contain intentional/legacy CRLF and trailing
+# whitespace. Preserve their byte-level newline style while changing only the
+# requested fields and statements, so the maintenance commit stays reviewable.
+old_helper = '''def replace_once(path: str, old: str, new: str) -> None:
+    file = Path(path)
+    text = file.read_text()
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"Expected exactly one match in {path}, found {count}: {old[:100]!r}")
+    file.write_text(text.replace(old, new, 1))
+'''
+new_helper = '''def replace_once(path: str, old: str, new: str) -> None:
+    file = Path(path)
+    with file.open("r", encoding="utf-8", newline="") as stream:
+        text = stream.read()
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"Expected exactly one match in {path}, found {count}: {old[:100]!r}")
+    with file.open("w", encoding="utf-8", newline="") as stream:
+        stream.write(text.replace(old, new, 1))
+'''
+if script.count(old_helper) != 1:
+    raise SystemExit("Expected migration helper was not found exactly once.")
+script = script.replace(old_helper, new_helper, 1)
+old_java_read = '    text = Path(path).read_text()\n'
+new_java_read = '    with Path(path).open("r", encoding="utf-8", newline="") as stream:\n        text = stream.read()\n'
+old_java_write = '    Path(path).write_text(text)\n'
+new_java_write = '    with Path(path).open("w", encoding="utf-8", newline="") as stream:\n        stream.write(text)\n'
+if script.count(old_java_read) != 1 or script.count(old_java_write) != 1:
+    raise SystemExit("Expected Java source read/write sites were not found exactly once.")
+script = script.replace(old_java_read, new_java_read, 1).replace(old_java_write, new_java_write, 1)
+script_path.write_text(script)
