@@ -35,6 +35,9 @@ jobs:
             - name: Install current dependencies
               run: npm ci
 
+            - name: Harden migration inputs
+              run: python .github/scripts/apply-2026-09-preflight.py
+
             - name: Apply maintenance
               run: python .github/scripts/apply-2026-09-maintenance.py
 
@@ -63,6 +66,6 @@ jobs:
             - name: Publish maintenance commit
               shell: bash
               run: |
-                  git rm .github/workflows/apply-2026-09-maintenance.yml .github/scripts/apply-2026-09-maintenance.py
+                  git rm .github/workflows/apply-2026-09-maintenance.yml .github/scripts/apply-2026-09-maintenance.py .github/scripts/apply-2026-09-preflight.py
                   git commit --amend --no-edit
                   git push
