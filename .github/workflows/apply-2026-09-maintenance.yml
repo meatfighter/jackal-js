@@ -41,6 +41,9 @@ jobs:
             - name: Apply maintenance
               run: python .github/scripts/apply-2026-09-maintenance.py
 
+            - name: Apply validation fixups
+              run: python .github/scripts/apply-2026-09-fixups.py
+
             - name: Synchronize dependencies and generated parity metadata
               run: |
                   npm install --ignore-scripts
@@ -66,6 +69,6 @@ jobs:
             - name: Publish maintenance commit
               shell: bash
               run: |
-                  git rm .github/workflows/apply-2026-09-maintenance.yml .github/scripts/apply-2026-09-maintenance.py .github/scripts/apply-2026-09-preflight.py
+                  git rm .github/workflows/apply-2026-09-maintenance.yml .github/scripts/apply-2026-09-maintenance.py .github/scripts/apply-2026-09-preflight.py .github/scripts/apply-2026-09-fixups.py
                   git commit --amend --no-edit
                   git push
