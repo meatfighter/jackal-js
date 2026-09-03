@@ -101,18 +101,22 @@ test("restore exceptions preserve the current stored game-state snapshot", async
     });
 });
 
-test("shared game-state preflight preserves future saves and storage read failures", async () => {
+test("shared game-state preflight preserves future saves, blocks overwrite, and protects storage read failures", async () => {
     await withMutedConsoleWarn(async () => {
         resetStorage();
         const { gameStorage } = await loadPersistenceModules();
         const key = gameStateStorageKey();
-        storage.set(key, JSON.stringify({ version: currentGameStateVersion + 1, kind: "game", futureShape: true }));
+        const futureSnapshot = JSON.stringify({ version: currentGameStateVersion + 1, kind: "game", futureShape: true });
+        storage.set(key, futureSnapshot);
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
-        assert.equal(storage.has(key), true);
+        assert.equal(storage.get(key), futureSnapshot);
+        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.equal(storage.get(key), futureSnapshot);
 
         throwOnGet = true;
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
-        assert.equal(storage.has(key), true);
+        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.equal(storage.get(key), futureSnapshot);
     });
 });
 

@@ -22,6 +22,15 @@ test("schema 8 is explicitly the first public saved-game format", () => {
     assert.match(schema, /version >= FIRST_PUBLIC_GAME_STATE_VERSION/);
 });
 
+test("input-mapping schema 2 is explicitly the first public mapping format", () => {
+    const mappingStore = read("pwa/src/app/JackalInputMappingStore.ts");
+    assert.match(mappingStore, /SNAPSHOT_VERSION = 2/);
+    assert.match(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION = 2/);
+    assert.match(mappingStore, /version >= JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
+    assert.match(mappingStore, /version !== JackalInputMappingStore\.SNAPSHOT_VERSION/);
+    assert.match(mappingStore, /hasProtectedStoredSnapshot/);
+});
+
 test("PWA manifest has a dedicated maskable application icon", () => {
     const manifest = read("pwa/public/manifest.webmanifest");
     assert.match(manifest, /512x512-maskable\.png/);

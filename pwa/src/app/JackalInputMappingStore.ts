@@ -27,6 +27,9 @@ export class JackalInputMappingStore {
 
     public save(buttonMapping: ButtonMapping): boolean {
         try {
+            if (this.hasProtectedStoredSnapshot()) {
+                return false;
+            }
             return this.storage.write(
                 JSON.stringify({
                     version: JackalInputMappingStore.SNAPSHOT_VERSION,
@@ -75,7 +78,6 @@ export class JackalInputMappingStore {
             return true;
         } catch (error) {
             console.warn("Unable to restore Jackal input mapping.", error);
-            this.clear();
             return false;
         }
     }
@@ -90,7 +92,14 @@ export class JackalInputMappingStore {
             return null;
         }
 
-        const snapshot: unknown = JSON.parse(stored.value);
+        let snapshot: unknown;
+        try {
+            snapshot = JSON.parse(stored.value);
+        } catch {
+            this.clear();
+            return null;
+        }
+
         if (!this.isSupportedSnapshot(snapshot)) {
             if (!this.shouldPreserveUnsupportedSnapshot(snapshot)) {
                 this.clear();
@@ -99,6 +108,22 @@ export class JackalInputMappingStore {
         }
 
         return snapshot;
+    }
+
+    private hasProtectedStoredSnapshot(): boolean {
+        const stored = this.storage.read();
+        if (!stored.available) {
+            return true;
+        }
+        if (stored.value === null) {
+            return false;
+        }
+
+        try {
+            return this.shouldPreserveUnsupportedSnapshot(JSON.parse(stored.value) as unknown);
+        } catch {
+            return false;
+        }
     }
 
     private isSupportedSnapshot(snapshot: unknown): snapshot is JackalInputMappingSnapshot {

@@ -8,7 +8,7 @@ const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jac
 export type StoredGameStateInspection =
     { readonly status: "unavailable" | "missing" | "invalid" | "preserved" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
 
-/** Reads the current schema, discarding only malformed or pre-public data. Unsupported public versions are preserved. */
+/** Reads the current schema, discarding malformed or obsolete data while preserving future versions. */
 export function inspectStoredGameState(): StoredGameStateInspection {
     const stored = gameStateStorage.read();
     if (!stored.available) {
@@ -42,6 +42,11 @@ export function hasCurrentStoredGameState(): boolean {
 }
 
 export function writeStoredGameState(snapshot: JackalGameStateSnapshot): boolean {
+    const stored = inspectStoredGameState();
+    if (stored.status === "preserved" || stored.status === "unavailable") {
+        return false;
+    }
+
     try {
         return gameStateStorage.write(JSON.stringify(snapshot));
     } catch (error) {
