@@ -28,9 +28,11 @@
         "build:desktop": "node scripts/build-desktop.mjs",
         "_assemble": "node scripts/assemble.mjs .release-components/web",
         "verify": "npm test && npm run format:check && npm run lint && npm run typecheck && npm run check:ts-nocheck && npm run check:explicit-any && npm run check:java-float-parity",
+        "verify:dependencies": "npm audit --audit-level=high",
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
-        "release:web": "npm run build:web",
+        "release": "npm run verify:dependencies && npm run build",
+        "release:web": "npm run verify:dependencies && npm run build:web",
         "release:desktop": "node scripts/release-desktop.mjs",
         "run:desktop": "node scripts/run-desktop.mjs",
         "preview": "npm run preview:pwa",
@@ -53,7 +55,7 @@
         "format:check": "prettier . --check",
         "lint": "eslint .",
         "typecheck": "tsc --project pwa/tsconfig.json --noEmit",
-        "verify:browser": "node scripts/run-browser-verification.mjs"
+        "verify:browser": "node scripts/run-browser-verification.mjs && node scripts/run-offline-verification.mjs"
     },
     "dependencies": {
         "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#39689c01a336c7620a7e80f992fe33558ef9652a"

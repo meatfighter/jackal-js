@@ -1,22 +1,20 @@
-name: Sync Slick2D
+name: Promote Slick2D
 
 on:
-    schedule:
-        - cron: "17 10 * * *"
     workflow_dispatch:
 
 permissions:
     contents: write
 
 concurrency:
-    group: sync-slick2d
+    group: promote-slick2d
     cancel-in-progress: false
 
 jobs:
     sync:
         if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
-        timeout-minutes: 25
+        timeout-minutes: 30
 
         steps:
             - name: Checkout
@@ -83,7 +81,7 @@ jobs:
                   npx prettier package.json package-lock.json --write
                   unexpected="$(git diff --name-only | grep -v -E '^(package.json|package-lock.json)$' || true)"
                   if [[ -n "$unexpected" ]]; then
-                      echo "Slick sync changed unexpected tracked files:" >&2
+                      echo "Slick promotion changed unexpected tracked files:" >&2
                       echo "$unexpected" >&2
                       exit 1
                   fi
@@ -102,11 +100,15 @@ jobs:
               if: steps.slick.outputs.needs_update == 'true'
               run: npm ci
 
+            - name: Dependency audit
+              if: steps.slick.outputs.needs_update == 'true'
+              run: npm run verify:dependencies
+
             - name: Build and verify
               if: steps.slick.outputs.needs_update == 'true'
               run: npm run build
 
-            - name: Verify real browser
+            - name: Verify real browser and offline PWA
               if: steps.slick.outputs.needs_update == 'true'
               run: npm run verify:browser
 
