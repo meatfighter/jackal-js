@@ -6,6 +6,7 @@ const host = document.querySelector<HTMLElement>("#game-host");
 if (result === null || host === null) {
     throw new Error("Browser verification fixture is missing required elements.");
 }
+const gameHost = host;
 
 function assert(condition: unknown, message: string): asserts condition {
     if (!condition) {
@@ -20,8 +21,8 @@ interface MountedGame {
 }
 
 async function mountGame(runtime: PreparedRuntime, restore: boolean): Promise<MountedGame> {
-    host.replaceChildren();
-    runtime.slick.Display.setParent(host);
+    gameHost.replaceChildren();
+    runtime.slick.Display.setParent(gameHost);
 
     const main = new runtime.Main();
     main.reserveBrowserRuntime();
