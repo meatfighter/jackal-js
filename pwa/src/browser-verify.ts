@@ -1,15 +1,5 @@
-import {
-    AppGameContainer,
-    BasicGame,
-    BufferedScalableGame,
-    BufferedScalingMode,
-    Display,
-    ResourceLoader,
-    XMLPackedSheet,
-    type GameContainer,
-    type Graphics,
-    type Image
-} from "slick2d-ts";
+import { JackalRuntimeLoader, type PreparedRuntime } from "./app/JackalRuntimeLoader.js";
+import { Modes } from "./jackal/Modes.js";
 
 const result = document.querySelector<HTMLElement>("#result");
 const host = document.querySelector<HTMLElement>("#game-host");
@@ -23,82 +13,92 @@ function assert(condition: unknown, message: string): asserts condition {
     }
 }
 
-class AtlasSmokeGame extends BasicGame {
-    public rendered = false;
-
-    public constructor(
-        private readonly first: Image,
-        private readonly second: Image,
-        private readonly flipped: Image
-    ) {
-        super("Jackal browser verification");
-    }
-
-    public init(_gc: GameContainer): void {}
-
-    public update(_gc: GameContainer, _delta: number): void {}
-
-    public render(_gc: GameContainer, g: Graphics): void {
-        g.drawImage(this.first, 32, 32);
-        g.drawImage(this.second, 128, 32);
-        g.drawImage(this.flipped, 224, 32);
-        this.rendered = true;
-    }
+interface MountedGame {
+    main: InstanceType<PreparedRuntime["Main"]>;
+    buffered: InstanceType<PreparedRuntime["slick"]["BufferedScalableGame"]>;
+    container: InstanceType<PreparedRuntime["slick"]["AppGameContainer"]>;
 }
 
-async function waitForRender(game: AtlasSmokeGame): Promise<void> {
-    const deadline = performance.now() + 5000;
-    while (!game.rendered && performance.now() < deadline) {
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+async function mountGame(runtime: PreparedRuntime, restore: boolean): Promise<MountedGame> {
+    host.replaceChildren();
+    runtime.slick.Display.setParent(host);
+
+    const main = new runtime.Main();
+    main.reserveBrowserRuntime();
+    const buffered = new runtime.slick.BufferedScalableGame(main, runtime.Main.DISPLAY_WIDTH, runtime.Main.DISPLAY_HEIGHT, {
+        maintainAspect: true,
+        scalingMode: runtime.slick.BufferedScalingMode.Nearest
+    });
+    const container = new runtime.slick.AppGameContainer(buffered, 1024, 960, false);
+    container.setPreserveAudioCacheOnDestroy(true);
+    container.setLoopSuspended(false);
+    container.setHighDpiEnabled(true);
+    container.setMaxDevicePixelRatio(2);
+    if (restore) {
+        const store = new runtime.JackalGameStateStore("browser-verification");
+        main.loadingCompleteHandler = (gc) => store.restore(main, gc);
     }
-    assert(game.rendered, "Buffered Jackal fixture did not render a browser frame.");
+
+    await Promise.resolve(container.setDisplayMode(1024, 960, false));
+    await container.start();
+    await runtime.slick.ResourceLoader.waitForAll();
+    assert(main.isStateSaveReady(), "Real Jackal Main did not become save-state ready.");
+    assert(buffered.getPresentationInfo().physicalWidth > 0, "Buffered presentation did not acquire a physical width.");
+    return { main, buffered, container };
+}
+
+function destroyMounted(runtime: PreparedRuntime, mounted: MountedGame | null): void {
+    if (mounted === null) {
+        return;
+    }
+    mounted.main.stopAllSounds();
+    mounted.main.disposeBrowserRuntime();
+    mounted.container.destroy();
+    runtime.slick.Display.setParent(null);
 }
 
 async function verify(): Promise<void> {
-    ResourceLoader.clearCache();
-    ResourceLoader.removeAllResourceLocations();
-    ResourceLoader.addResourceLocation(new URL("./resources/", window.location.href));
-    ResourceLoader.setCacheBust(null);
-    await ResourceLoader.preloadResources(["images/sprites-1.png", "images/sprites-1.xml"], { concurrency: 2 });
+    localStorage.clear();
+    const loader = new JackalRuntimeLoader(() => undefined);
+    const runtime = await loader.ensurePrepared(false);
+    const store = new runtime.JackalGameStateStore("browser-verification");
+    let first: MountedGame | null = null;
+    let second: MountedGame | null = null;
 
-    const pack = new XMLPackedSheet("images/sprites-1.png", "images/sprites-1.xml");
-    const first = pack.getSprite("player-green-0.png");
-    const second = pack.getSprite("explosion-0.png");
-    assert(first !== null && second !== null, "Expected Jackal atlas sprites are missing.");
-    const flipped = first.getFlippedCopy(true, false);
-
-    await ResourceLoader.waitForAll();
-
-    const firstTextureWidth = first.getTextureWidth();
-    const firstTextureHeight = first.getTextureHeight();
-    assert(Math.abs(firstTextureWidth) > 0 && Math.abs(firstTextureWidth) < 1, "Atlas child unexpectedly spans the full texture width.");
-    assert(Math.abs(firstTextureHeight) > 0 && Math.abs(firstTextureHeight) < 1, "Atlas child unexpectedly spans the full texture height.");
-    assert(
-        first.getTextureOffsetX() !== second.getTextureOffsetX() || first.getTextureOffsetY() !== second.getTextureOffsetY(),
-        "Distinct Jackal atlas children resolved to the same source origin."
-    );
-    assert(Math.abs(flipped.getTextureWidth() + firstTextureWidth) < 1e-12, "Flipped atlas child did not reverse its texture-width sign.");
-
-    Display.setParent(host);
-    const game = new AtlasSmokeGame(first, second, flipped);
-    const buffered = new BufferedScalableGame(game, 320, 240, { maintainAspect: true, scalingMode: BufferedScalingMode.Nearest });
-    const container = new AppGameContainer(buffered, 640, 480, false);
-    container.setLoopSuspended(false);
     try {
-        await container.start();
-        await waitForRender(game);
-        buffered.setScalingMode(BufferedScalingMode.Linear);
-        buffered.setScalingMode(BufferedScalingMode.Integer);
+        first = await mountGame(runtime, false);
+        first.main.requestMode(Modes.GAME, first.container);
+        first.main.score = 123450;
+        first.main.scoreStr = "123450";
+        first.main.extraLives = 3;
+        first.main.extraLivesStr = "3";
+        assert(first.main.mode === runtime.Main.gameMode, "Real Jackal Main did not enter GameMode before save.");
+        assert(store.save(first.main), "Real Jackal browser Main did not save successfully.");
+        assert(store.hasValidSave(), "Saved real Jackal browser state did not validate.");
+        first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Linear);
+        first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Integer);
+        first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Nearest);
+
+        destroyMounted(runtime, first);
+        first = null;
+
+        second = await mountGame(runtime, true);
+        assert(second.main.mode === runtime.Main.gameMode, "Fresh Jackal Main did not restore GameMode.");
+        assert(second.main.score === 123450 && second.main.scoreStr === "123450", "Fresh Jackal Main did not restore score state.");
+        assert(second.main.extraLives === 3 && second.main.extraLivesStr === "3", "Fresh Jackal Main did not restore life state.");
+        assert(second.main.isBrowserRuntimeActive(), "Restored Jackal Main is not the active browser runtime.");
     } finally {
-        container.destroy();
-        Display.setParent(null);
+        destroyMounted(runtime, first);
+        destroyMounted(runtime, second);
+        store.clear();
+        localStorage.clear();
     }
 }
 
 void verify().then(
     () => {
         result.dataset.status = "passed";
-        result.textContent = "Jackal browser verification passed.";
+        result.textContent = "Real Jackal browser boot/gameplay save/restore verification passed.";
     },
     (error: unknown) => {
         console.error(error);
