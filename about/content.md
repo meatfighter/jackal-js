@@ -89,9 +89,13 @@ This port is a reimplementation, not an emulation. It does not run or include th
 
 The source code for the project is available in the [meatfighter/jackal-js repository](__REPO_URL__).
 
-The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). The supported and tested desktop target is **Windows x64 with Java 21**. Download and extract the ZIP, then run `run-windows.cmd` or `run-windows.ps1`.
+The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
 
-The archive also includes Linux x64 and macOS launchers for compatibility testing, but those combinations are not advertised as supported until the generated ZIP has been tested on those platforms.
+- Windows: `run-windows.cmd`
+- Linux: `run-linux.sh`
+- macOS: `run-macos.sh`
+
+Java 21 or newer is required.
 
 # Acknowledgements
 
