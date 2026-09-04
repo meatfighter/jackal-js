@@ -101,6 +101,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /\.license-icons/);
     assert.match(styles, /width: 18px;/);
     assert.match(styles, /\.site-footer \{\s+margin-top: auto;\s+background: transparent;\s+\}/);
+    assert.match(styles, /\.site-footer__inner \{[\s\S]*padding: 0\.85rem 0 2rem;\s+border-top: 1px solid var\(--border\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*border-top: 1px solid var\(--border\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*color: var\(--text\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*font-family: var\(--font-ui\);\s+line-height: 1\.6;/);
