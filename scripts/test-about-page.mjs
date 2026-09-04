@@ -105,7 +105,7 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /\.site-footer__inner \{[\s\S]*color: var\(--text\);/);
     assert.match(styles, /\.site-footer__inner \{[\s\S]*font-family: var\(--font-ui\);\s+line-height: 1\.6;/);
     assert.match(styles, /\.site-footer__left \{\s+font-size: 0\.95rem;\s+\}/);
-    assert.match(styles, /\.site-footer__left p \+ p \{\s+margin-top: 0\.08rem;\s+\}/);
+    assert.match(styles, /\.site-footer__left p \+ p \{\s+margin-top: 0\.12rem;\s+\}/);
     assert.match(styles, /\.site-footer__links \{[\s\S]*font-weight: 600;\s+line-height: 1\.6;/);
     assert.doesNotMatch(styles, /\.site-footer__links \{[^}]*font-size:/);
     assert.match(styles, /@media \(max-width: 720px\) \{[\s\S]*\.site-footer__links \{\s+margin-top: 0\.65rem;\s+text-align: center;\s+\}/);
