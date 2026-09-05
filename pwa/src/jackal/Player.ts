@@ -4,14 +4,7 @@ import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { TILE_TYPE_CONVEYOR, TILE_TYPE_SWAMP } from "./GameTileTypes.js";
-import {
-    PLAYER_ANGLE_STEPS,
-    PLAYER_ANGLE_VELOCITY,
-    PLAYER_RUMBLE,
-    PLAYER_RUMBLE_STEPS,
-    PLAYER_SPEED,
-    playerRumblePhase
-} from "./PlayerMotionConstants.js";
+import { PLAYER_ANGLE_STEPS, PLAYER_ANGLE_VELOCITY, PLAYER_RUMBLE, PLAYER_RUMBLE_STEPS, PLAYER_SPEED, playerRumblePhase } from "./PlayerMotionConstants.js";
 import type { GameMode } from "./GameMode.js";
 import { Grenade } from "./Grenade.js";
 import { requireMainRuntime, requireMainRuntimeGameMode } from "./MainRuntimeState.js";
