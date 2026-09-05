@@ -273,7 +273,9 @@ try {
     const summary = summarize(samples);
     console.log(`Post-GC heap median: ${(summary.firstHeap / MIB).toFixed(2)} MiB -> ${(summary.lastHeap / MIB).toFixed(2)} MiB`);
     console.log(`Heap trend: ${(summary.heapSlope / 1024).toFixed(1)} KiB/cycle`);
-    console.log(`Event listeners median: ${summary.firstListeners.toFixed(0)} -> ${summary.lastListeners.toFixed(0)} (${summary.listenerSlope.toFixed(2)}/cycle)`);
+    console.log(
+        `Event listeners median: ${summary.firstListeners.toFixed(0)} -> ${summary.lastListeners.toFixed(0)} (${summary.listenerSlope.toFixed(2)}/cycle)`
+    );
     console.log(`DOM nodes median: ${summary.firstNodes.toFixed(0)} -> ${summary.lastNodes.toFixed(0)}`);
     console.log(`Documents median: ${summary.firstDocuments.toFixed(0)} -> ${summary.lastDocuments.toFixed(0)}`);
 
