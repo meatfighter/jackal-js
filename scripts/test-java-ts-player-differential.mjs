@@ -93,17 +93,13 @@ function runJava(workDir) {
     assert.equal(
         compile.status,
         0,
-        `javac failed:
-${compile.stdout}
-${compile.stderr}`
+        `javac failed:\n${compile.stdout}\n${compile.stderr}`
     );
     const run = spawnSync("java", ["-cp", classRoot, "jackal.PlayerHarness"], { encoding: "utf8" });
     assert.equal(
         run.status,
         0,
-        `Java Player harness failed:
-${run.stdout}
-${run.stderr}`
+        `Java Player harness failed:\n${run.stdout}\n${run.stderr}`
     );
     return run.stdout.trim().split(/\r?\n/).filter(Boolean);
 }
@@ -118,7 +114,7 @@ const javaFloat=Math.fround; const javaInt=(v)=>v<0?Math.ceil(v):Math.floor(v); 
 class ArrayList { constructor(){this.values=[];} add(v){this.values.push(v);return true;} get(i){return this.values[i];} size(){return this.values.length;} }
 class Point2D { static Float=class { constructor(x,y){this.x=x;this.y=y;} }; }
 function rotatePointLikeJava(x,y,angle){x=javaFloat(x);y=javaFloat(y);angle=javaFloat(angle);const cos=javaFloat(Math.cos(angle)),sin=javaFloat(Math.sin(angle));return new Point2D.Float(javaFloat(javaFloat(x*cos)-javaFloat(y*sin)),javaFloat(javaFloat(x*sin)+javaFloat(y*cos)));}
-const TILE_TYPE_EMPTY=1,TILE_TYPE_SWAMP=4,TILE_TYPE_CONVEYOR=5; const PLAYER_SPEED=2.5,PLAYER_ANGLE_STEPS=8,PLAYER_ANGLE_VELOCITY=Math.fround(45/8),PLAYER_RUMBLE=Array(17).fill(0);
+const TILE_TYPE_EMPTY=1,TILE_TYPE_SWAMP=4,TILE_TYPE_CONVEYOR=5; const PLAYER_SPEED=2.5,PLAYER_ANGLE_STEPS=8,PLAYER_ANGLE_VELOCITY=Math.fround(45/8),PLAYER_RUMBLE_STEPS=85,PLAYER_RUMBLE=Array(PLAYER_RUMBLE_STEPS).fill(0); const playerRumblePhase=(index)=>Math.fround((12*Math.PI*index)/PLAYER_RUMBLE_STEPS);
 let runtimeMain=null,runtimeMode=null; const requireMainRuntime=()=>runtimeMain; const requireMainRuntimeGameMode=()=>runtimeMode;
 class FriendlySoldierType { static WEAPON_CARRIER_WANDERER=0; static WANDERER=1; }
 class FriendlySoldier { static count=0; static resetCount(){this.count=0;} static wandering(){this.count++; return new FriendlySoldier();} }
