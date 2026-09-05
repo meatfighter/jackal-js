@@ -68,7 +68,7 @@ test("Jackal pins slick2d-ts to a reproducible public HTTPS revision", () => {
     const lockedSlick = packageLock.packages["node_modules/slick2d-ts"];
 
     assert.equal(dependency, lockedDependency);
-    assert.match(dependency, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#[0-9a-f]{40}$/);
+    assert.match(dependency, /^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/);
     assert.equal(lockedSlick.resolved, dependency);
     assert.match(lockedSlick.version, /^\d+\.\d+\.\d+$/);
 });
