@@ -108,6 +108,9 @@
         },
         "Main.scalableGame": {
             "reason": "Browser native-resolution buffering and scaling are owned by JackalWebApp."
+        },
+        "Player.RUMBLE_STEPS": {
+            "reason": "The browser keeps this cycle-safe shared constant in PlayerMotionConstants as PLAYER_RUMBLE_STEPS."
         }
     },
     "methodExceptions": {
@@ -166,7 +169,7 @@
             "reason": "Browser binding validation is implemented with the browser mapping model."
         },
         "InputMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
+            "reason": "Browser gamepad binding uses browser input events/state."
         },
         "InputMode.syncControllerInputState": {
             "reason": "Browser gamepad edge tracking is implemented in the input runtime."
