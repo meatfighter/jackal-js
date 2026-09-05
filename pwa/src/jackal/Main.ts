@@ -2026,11 +2026,11 @@ export class Main extends BasicGame {
             case 41:
                 let loadingHandled = false;
                 if (this.loadingCompleteHandler !== null) {
-                    loadingHandled = this.loadingCompleteHandler(this.gc) === true;
+                    this.loadingCompleteHandler(this.gc);
                 }
                 this.notifyLoadingFinished();
                 if (!loadingHandled) {
-                    this.requestMode(Modes.INTRO, this.gc);
+                    this.requestMode(Modes.SUNSET, this.gc);
                 }
                 break;
         }
