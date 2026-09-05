@@ -145,10 +145,11 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         entityIds.add(entitySnapshot.id);
     }
 
-    if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds)) {
+    const mainFields = snapshot.mainFields;
+    if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
         return false;
     }
-    if (gameMode.fields.stageIndex !== snapshot.mainFields.stageIndex) {
+    if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
         return false;
     }
     for (const entitySnapshot of gameMode.entities) {
