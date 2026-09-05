@@ -8,8 +8,9 @@ const storage = new Map();
 let throwOnGet = false;
 const gameStateSchemaSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateSchema.ts", import.meta.url), "utf8");
 const currentGameStateVersion = Number(/GAME_STATE_VERSION\s*=\s*(\d+)/.exec(gameStateSchemaSource)?.[1]);
-if (!Number.isInteger(currentGameStateVersion)) {
-    throw new Error("Unable to determine the current Jackal game-state schema version.");
+const maxGameStateTextLength = Number((/MAX_GAME_STATE_TEXT_LENGTH\s*=\s*([\d_]+)/.exec(gameStateSchemaSource)?.[1] ?? "").replaceAll("_", ""));
+if (!Number.isInteger(currentGameStateVersion) || !Number.isInteger(maxGameStateTextLength)) {
+    throw new Error("Unable to determine the current Jackal game-state schema limits.");
 }
 
 globalThis.localStorage = {
@@ -101,7 +102,7 @@ test("restore exceptions preserve the current stored game-state snapshot", async
     });
 });
 
-test("shared game-state preflight preserves future saves, blocks overwrite, and protects storage read failures", async () => {
+test("shared game-state preflight preserves future and oversized saves and blocks overwrite", async () => {
     await withMutedConsoleWarn(async () => {
         resetStorage();
         const { gameStorage } = await loadPersistenceModules();
@@ -113,10 +114,17 @@ test("shared game-state preflight preserves future saves, blocks overwrite, and 
         assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
         assert.equal(storage.get(key), futureSnapshot);
 
+        const oversizedSnapshot = "x".repeat(maxGameStateTextLength + 1);
+        storage.set(key, oversizedSnapshot);
+        assert.equal(gameStorage.hasCurrentStoredGameState(), false);
+        assert.equal(storage.get(key), oversizedSnapshot);
+        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.equal(storage.get(key), oversizedSnapshot);
+
         throwOnGet = true;
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
         assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
-        assert.equal(storage.get(key), futureSnapshot);
+        assert.equal(storage.get(key), oversizedSnapshot);
     });
 });
 

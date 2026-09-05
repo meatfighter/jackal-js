@@ -1,7 +1,8 @@
-export const GAME_STATE_VERSION = 10 as const;
-export const FIRST_PUBLIC_GAME_STATE_VERSION = 10 as const;
+export const GAME_STATE_VERSION = 11 as const;
+export const FIRST_PUBLIC_GAME_STATE_VERSION = 11 as const;
 export type SupportedGameStateVersion = typeof GAME_STATE_VERSION;
 export const GAME_STATE_STORAGE_KEY = "jackal.game-state";
+export const MAX_GAME_STATE_TEXT_LENGTH = 2_000_000;
 
 export function isSupportedGameStateVersion(value: unknown): value is SupportedGameStateVersion {
     return value === GAME_STATE_VERSION;

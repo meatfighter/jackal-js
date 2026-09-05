@@ -27,16 +27,60 @@ import {
     isSongId,
     isStandaloneModeId,
     modeFieldsForModeId,
+    parseMusicId,
     type StandaloneModeId
 } from "./GameStateFields.js";
 
 type UnknownRecord = Record<string, unknown>;
 
+const BASE_SNAPSHOT_FIELDS = [
+    "version",
+    "appVersion",
+    "savedAt",
+    "kind",
+    "mainFields",
+    "konamiCodeFields",
+    "random",
+    "friendlySoldierCount",
+    "requestedSongId",
+    "currentSongState",
+    "audioState"
+] as const;
+const GAME_SNAPSHOT_FIELDS = [...BASE_SNAPSHOT_FIELDS, "gameMode", "playerFields"] as const;
+const MODE_SNAPSHOT_FIELDS = [...BASE_SNAPSHOT_FIELDS, "modeId", "modeFields", "modeExtra"] as const;
+const GAME_MODE_SNAPSHOT_FIELDS = ["fields", "elements", "entities"] as const;
+const ENTITY_SNAPSHOT_FIELDS = ["id", "type", "fields", "runtimeFields"] as const;
+const MENU_SNAPSHOT_FIELDS = ["fields"] as const;
+const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerButtons"] as const;
+const JEEP_YEAH_EXTRA_FIELDS = ["explosion", "leftPlane", "rightPlane", "fireLeft", "fireRight", "bullets"] as const;
+const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
+const AUDIO_STATE_FIELDS = ["musicOn", "soundOn"] as const;
+const SONG_FIELDS = ["id", "playing", "playedIntro2", "activeMusic"] as const;
+const MUSIC_FIELDS = ["id", "position", "volume"] as const;
+
+const MAX_APP_VERSION_LENGTH = 128;
+const MAX_SAVED_AT_LENGTH = 64;
+const MAX_ENTITY_COUNT = 4096;
+const MAX_ENCODED_DEPTH = 64;
+const MAX_ENCODED_ARRAY_LENGTH = 8192;
+const MAX_ENCODED_RECORD_FIELDS = 512;
+const MAX_ENCODED_STRING_LENGTH = 4096;
+const MAX_BIGINT_DIGITS = 128;
+const MAX_INPUT_ASSIGNMENTS = 64;
+const MAX_INPUT_CODE = 65_535;
+const MAX_JEEP_YEAH_BULLETS = 4096;
+const MAX_FRIENDLY_SOLDIER_COUNT = 4096;
+const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
+const MAX_POSITION_MAGNITUDE = 1_000_000;
+const MAX_VELOCITY_MAGNITUDE = 10_000;
+const MAX_MUSIC_POSITION_SECONDS = 86_400;
+const JAVA_INT_MAX = 2_147_483_647;
+
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
     if (!isRecord(snapshot) || !isSupportedGameStateVersion(snapshot.version) || (snapshot.kind !== "game" && snapshot.kind !== "mode")) {
         return false;
     }
-    if (!isBaseSnapshot(snapshot)) {
+    if (!hasExactFields(snapshot, snapshot.kind === "game" ? GAME_SNAPSHOT_FIELDS : MODE_SNAPSHOT_FIELDS) || !isBaseSnapshot(snapshot)) {
         return false;
     }
     return snapshot.kind === "game" ? isGameStateSnapshot(snapshot) : isStandaloneStateSnapshot(snapshot);
@@ -44,17 +88,21 @@ export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is Jac
 
 function isBaseSnapshot(snapshot: UnknownRecord): boolean {
     const mainFields = snapshot.mainFields;
-    if (!isEncodedRecord(mainFields, new Set<number>())) {
+    if (!isEncodedRecord(mainFields, new Set<number>()) || !hasExactFields(mainFields, MAIN_FIELD_NAMES)) {
         return false;
     }
     return (
         typeof snapshot.appVersion === "string" &&
+        snapshot.appVersion.length > 0 &&
+        snapshot.appVersion.length <= MAX_APP_VERSION_LENGTH &&
         typeof snapshot.savedAt === "string" &&
-        hasEncodedFields(mainFields, MAIN_FIELD_NAMES, new Set<number>()) &&
+        snapshot.savedAt.length > 0 &&
+        snapshot.savedAt.length <= MAX_SAVED_AT_LENGTH &&
+        Number.isFinite(Date.parse(snapshot.savedAt)) &&
         isRestorableMainFields(mainFields) &&
         (snapshot.konamiCodeFields === null || isEncodedRecord(snapshot.konamiCodeFields, new Set<number>())) &&
         isRandomSnapshot(snapshot.random) &&
-        isNonNegativeInteger(snapshot.friendlySoldierCount) &&
+        isIntegerInRange(snapshot.friendlySoldierCount, 0, MAX_FRIENDLY_SOLDIER_COUNT) &&
         isNullableSongId(snapshot.requestedSongId) &&
         isSongSnapshot(snapshot.currentSongState) &&
         isAudioStateSnapshot(snapshot.audioState)
@@ -66,10 +114,20 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         return false;
     }
     const gameMode = snapshot.gameMode;
-    if (!isRecord(gameMode) || !isEncodedRecord(gameMode.fields) || !hasEncodedFields(gameMode.fields, GAME_MODE_FIELD_NAMES)) {
+    if (
+        !isRecord(gameMode) ||
+        !hasExactFields(gameMode, GAME_MODE_SNAPSHOT_FIELDS) ||
+        !isEncodedRecord(gameMode.fields) ||
+        !hasExactFields(gameMode.fields, GAME_MODE_FIELD_NAMES)
+    ) {
         return false;
     }
-    if (!Array.isArray(gameMode.entities) || !Array.isArray(gameMode.elements) || !isEncodedRecord(snapshot.playerFields)) {
+    if (
+        !Array.isArray(gameMode.entities) ||
+        gameMode.entities.length > MAX_ENTITY_COUNT ||
+        !Array.isArray(gameMode.elements) ||
+        !isEncodedRecord(snapshot.playerFields)
+    ) {
         return false;
     }
 
@@ -77,7 +135,8 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     for (const entitySnapshot of gameMode.entities) {
         if (
             !isRecord(entitySnapshot) ||
-            !isNonNegativeInteger(entitySnapshot.id) ||
+            !hasExactFields(entitySnapshot, ENTITY_SNAPSHOT_FIELDS) ||
+            !isIntegerInRange(entitySnapshot.id, 0, MAX_ENTITY_COUNT - 1) ||
             entityIds.has(entitySnapshot.id) ||
             !isGameElementTypeId(entitySnapshot.type)
         ) {
@@ -86,7 +145,11 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         entityIds.add(entitySnapshot.id);
     }
 
-    if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds)) {
+    const mainFields = snapshot.mainFields;
+    if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
+        return false;
+    }
+    if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
         return false;
     }
     for (const entitySnapshot of gameMode.entities) {
@@ -106,7 +169,7 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
     if (!isStandaloneModeId(snapshot.modeId) || !isEncodedRecord(snapshot.modeFields, new Set<number>())) {
         return false;
     }
-    if (!hasEncodedFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId), new Set<number>())) {
+    if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId))) {
         return false;
     }
     return isModeExtraSnapshot(snapshot.modeId, snapshot.modeExtra);
@@ -114,9 +177,12 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
 
 function isRestorableMainFields(fields: EncodedRecord): boolean {
     return (
-        isNonNegativeInteger(fields.loadIndex) &&
-        fields.loadIndex >= 42 &&
+        isIntegerInRange(fields.loadIndex, 42, 1_000_000) &&
         isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) &&
+        isIntegerInRange(fields.score, 0, JAVA_INT_MAX) &&
+        isIntegerInRange(fields.extraLives, 0, 1_000_000) &&
+        isIntegerInRange(fields.missilePower, 0, 1_000_000) &&
+        isIntegerInRange(fields.friendlySoldiersPickedUp, 0, 1_000_000) &&
         typeof fields.hardMode === "boolean"
     );
 }
@@ -127,7 +193,7 @@ function isElementLayers(value: unknown, entityIds: Set<number>): boolean {
     }
     const layerRefs = new Set<number>();
     for (const layer of value) {
-        if (!Array.isArray(layer)) {
+        if (!Array.isArray(layer) || layer.length > MAX_ENTITY_COUNT) {
             return false;
         }
         for (const id of layer) {
@@ -162,16 +228,29 @@ function isExactObject(value: unknown, key: string): value is UnknownRecord {
 }
 
 function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
-    return value === null || (isRecord(value) && hasEncodedFields(value.fields, MENU_FIELD_NAMES, new Set<number>()));
+    return (
+        value === null ||
+        (isRecord(value) &&
+            hasExactFields(value, MENU_SNAPSHOT_FIELDS) &&
+            isEncodedRecord(value.fields, new Set<number>()) &&
+            hasExactFields(value.fields, MENU_FIELD_NAMES))
+    );
 }
 
 function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot | null {
-    return value === null || (isRecord(value) && hasEncodedFields(value.fields, BUTTON_MAPPING_FIELD_NAMES, new Set<number>()));
+    return (
+        value === null ||
+        (isRecord(value) &&
+            hasExactFields(value, MENU_SNAPSHOT_FIELDS) &&
+            isEncodedRecord(value.fields, new Set<number>()) &&
+            hasExactFields(value.fields, BUTTON_MAPPING_FIELD_NAMES))
+    );
 }
 
 function isInputModeExtraSnapshot(value: unknown): value is InputModeExtraSnapshot {
     return (
         isRecord(value) &&
+        hasExactFields(value, INPUT_MODE_EXTRA_FIELDS) &&
         isMenuSnapshot(value.menu) &&
         isButtonMappingSnapshot(value.draftButtonMapping) &&
         isIntegerArray(value.assignedKeys) &&
@@ -180,7 +259,7 @@ function isInputModeExtraSnapshot(value: unknown): value is InputModeExtraSnapsh
 }
 
 function isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtraSnapshot {
-    if (!isRecord(value) || !Array.isArray(value.bullets)) {
+    if (!isRecord(value) || !hasExactFields(value, JEEP_YEAH_EXTRA_FIELDS) || !Array.isArray(value.bullets) || value.bullets.length > MAX_JEEP_YEAH_BULLETS) {
         return false;
     }
     if (
@@ -199,20 +278,25 @@ function isNullableEncodedRecord(value: unknown): value is EncodedRecord | null 
     return value === null || isEncodedRecord(value, new Set<number>());
 }
 
-function hasEncodedFields(value: unknown, fields: readonly string[], entityIds?: Set<number>): boolean {
-    return isEncodedRecord(value, entityIds) && fields.every((field) => Object.hasOwn(value, field));
+function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth: number = 0): value is EncodedRecord {
+    if (!isRecord(value) || depth > MAX_ENCODED_DEPTH || Object.keys(value).length > MAX_ENCODED_RECORD_FIELDS) {
+        return false;
+    }
+    return Object.entries(value).every(([key, entry]) => isEncodedValue(entry, entityIds, depth + 1, key));
 }
 
-function isEncodedRecord(value: unknown, entityIds?: Set<number>): value is EncodedRecord {
-    return isRecord(value) && Object.values(value).every((entry) => isEncodedValue(entry, entityIds));
-}
-
-function isEncodedValue(value: unknown, entityIds?: Set<number>): value is EncodedValue {
-    if (value === null || typeof value === "string" || typeof value === "boolean") {
+function isEncodedValue(value: unknown, entityIds: Set<number> | undefined, depth: number, fieldName: string): value is EncodedValue {
+    if (depth > MAX_ENCODED_DEPTH) {
+        return false;
+    }
+    if (value === null || typeof value === "boolean") {
         return true;
     }
+    if (typeof value === "string") {
+        return value.length <= MAX_ENCODED_STRING_LENGTH;
+    }
     if (typeof value === "number") {
-        return Number.isFinite(value);
+        return isReasonableFiniteNumber(value, fieldName);
     }
     if (!isRecord(value) || typeof value.kind !== "string") {
         return false;
@@ -220,26 +304,62 @@ function isEncodedValue(value: unknown, entityIds?: Set<number>): value is Encod
 
     switch (value.kind) {
         case "nonFiniteNumber":
-            return value.value === "NaN" || value.value === "Infinity" || value.value === "-Infinity";
+            return hasExactFields(value, ["kind", "value"]) && (value.value === "NaN" || value.value === "Infinity" || value.value === "-Infinity");
         case "bigint":
-            return typeof value.value === "string" && /^-?\d+$/.test(value.value);
+            return (
+                hasExactFields(value, ["kind", "value"]) &&
+                typeof value.value === "string" &&
+                value.value.length <= MAX_BIGINT_DIGITS + 1 &&
+                /^-?\d+$/.test(value.value)
+            );
         case "array":
         case "arrayList":
-            return Array.isArray(value.items) && value.items.every((item) => isEncodedValue(item, entityIds));
+            return (
+                hasExactFields(value, ["kind", "items"]) &&
+                Array.isArray(value.items) &&
+                value.items.length <= MAX_ENCODED_ARRAY_LENGTH &&
+                value.items.every((item) => isEncodedValue(item, entityIds, depth + 1, fieldName))
+            );
         case "entityRef":
-            return isNonNegativeInteger(value.id) && (typeof entityIds === "undefined" || entityIds.has(value.id));
+            return (
+                hasExactFields(value, ["kind", "id"]) &&
+                isIntegerInRange(value.id, 0, MAX_ENTITY_COUNT - 1) &&
+                (typeof entityIds === "undefined" || entityIds.has(value.id))
+            );
         case "playerRef":
         case "mainRef":
         case "gameModeRef":
         case "nullRef":
-            return true;
+            return hasExactFields(value, ["kind"]);
         default:
             return false;
     }
 }
 
+function isReasonableFiniteNumber(value: number, fieldName: string): boolean {
+    if (!Number.isFinite(value)) {
+        return false;
+    }
+    if (fieldName === "score") {
+        return Number.isInteger(value) && value >= 0 && value <= JAVA_INT_MAX;
+    }
+    if (fieldName === "vx" || fieldName === "vy") {
+        return Math.abs(value) <= MAX_VELOCITY_MAGNITUDE;
+    }
+    if (fieldName === "x" || fieldName === "y" || fieldName.endsWith("X") || fieldName.endsWith("Y")) {
+        return Math.abs(value) <= MAX_POSITION_MAGNITUDE;
+    }
+    return Math.abs(value) <= MAX_GENERAL_NUMBER_MAGNITUDE;
+}
+
 function isRandomSnapshot(value: unknown): value is RandomSnapshot {
-    return isRecord(value) && isJavaRandomSeedLimb(value.seed0) && isJavaRandomSeedLimb(value.seed1) && isJavaRandomSeedLimb(value.seed2);
+    return (
+        isRecord(value) &&
+        hasExactFields(value, RANDOM_FIELDS) &&
+        isJavaRandomSeedLimb(value.seed0) &&
+        isJavaRandomSeedLimb(value.seed1) &&
+        isJavaRandomSeedLimb(value.seed2)
+    );
 }
 
 function isJavaRandomSeedLimb(value: unknown): value is number {
@@ -247,22 +367,45 @@ function isJavaRandomSeedLimb(value: unknown): value is number {
 }
 
 function isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
-    return isRecord(value) && typeof value.musicOn === "boolean" && typeof value.soundOn === "boolean";
+    return isRecord(value) && hasExactFields(value, AUDIO_STATE_FIELDS) && typeof value.musicOn === "boolean" && typeof value.soundOn === "boolean";
 }
 
 function isSongSnapshot(value: unknown): value is SongSnapshot | null {
-    return (
-        value === null ||
-        (isRecord(value) &&
-            isSongId(value.id) &&
-            typeof value.playing === "boolean" &&
-            typeof value.playedIntro2 === "boolean" &&
-            isMusicSnapshot(value.activeMusic))
-    );
+    if (value === null) {
+        return true;
+    }
+    if (
+        !isRecord(value) ||
+        !hasExactFields(value, SONG_FIELDS) ||
+        !isSongId(value.id) ||
+        typeof value.playing !== "boolean" ||
+        typeof value.playedIntro2 !== "boolean" ||
+        !isMusicSnapshot(value.activeMusic)
+    ) {
+        return false;
+    }
+    if (value.activeMusic === null) {
+        return true;
+    }
+    const parsed = parseMusicId(value.activeMusic.id);
+    return parsed !== null && parsed.songId === value.id;
 }
 
 function isMusicSnapshot(value: unknown): value is MusicSnapshot | null {
-    return value === null || (isRecord(value) && isMusicId(value.id) && Number.isFinite(value.position) && Number.isFinite(value.volume));
+    return (
+        value === null ||
+        (isRecord(value) &&
+            hasExactFields(value, MUSIC_FIELDS) &&
+            isMusicId(value.id) &&
+            typeof value.position === "number" &&
+            Number.isFinite(value.position) &&
+            value.position >= 0 &&
+            value.position <= MAX_MUSIC_POSITION_SECONDS &&
+            typeof value.volume === "number" &&
+            Number.isFinite(value.volume) &&
+            value.volume >= 0 &&
+            value.volume <= 1)
+    );
 }
 
 function isNullableSongId(value: unknown): boolean {
@@ -270,7 +413,7 @@ function isNullableSongId(value: unknown): boolean {
 }
 
 function isIntegerArray(value: unknown): value is number[] {
-    return Array.isArray(value) && value.every((entry) => isNonNegativeInteger(entry));
+    return Array.isArray(value) && value.length <= MAX_INPUT_ASSIGNMENTS && value.every((entry) => isIntegerInRange(entry, 0, MAX_INPUT_CODE));
 }
 
 function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
@@ -279,6 +422,11 @@ function isIntegerInRange(value: unknown, minimum: number, maximum: number): val
 
 function isNonNegativeInteger(value: unknown): value is number {
     return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function hasExactFields(value: object, fields: readonly string[]): boolean {
+    const keys = Object.keys(value);
+    return keys.length === fields.length && fields.every((field) => Object.hasOwn(value, field));
 }
 
 function isRecord(value: unknown): value is UnknownRecord {

@@ -1,6 +1,6 @@
 import { DeploymentStorageEntry } from "../../app/DeploymentStorage.js";
 import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
-import { GAME_STATE_STORAGE_KEY, shouldPreserveUnsupportedGameStateSnapshot } from "./GameStateSchema.js";
+import { GAME_STATE_STORAGE_KEY, MAX_GAME_STATE_TEXT_LENGTH, shouldPreserveUnsupportedGameStateSnapshot } from "./GameStateSchema.js";
 import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
 
 const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jackal saved game state");
@@ -8,7 +8,7 @@ const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jac
 export type StoredGameStateInspection =
     { readonly status: "unavailable" | "missing" | "invalid" | "preserved" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
 
-/** Reads the current schema, discarding malformed or obsolete data while preserving future versions. */
+/** Reads the current schema, discarding malformed or obsolete data while preserving future/unknown data that an older build must not destroy. */
 export function inspectStoredGameState(): StoredGameStateInspection {
     const stored = gameStateStorage.read();
     if (!stored.available) {
@@ -16,6 +16,9 @@ export function inspectStoredGameState(): StoredGameStateInspection {
     }
     if (stored.value === null) {
         return { status: "missing" };
+    }
+    if (stored.value.length > MAX_GAME_STATE_TEXT_LENGTH) {
+        return { status: "preserved" };
     }
 
     let snapshot: unknown;
@@ -48,7 +51,12 @@ export function writeStoredGameState(snapshot: JackalGameStateSnapshot): boolean
     }
 
     try {
-        return gameStateStorage.write(JSON.stringify(snapshot));
+        const text = JSON.stringify(snapshot);
+        if (text.length > MAX_GAME_STATE_TEXT_LENGTH) {
+            console.warn("Unable to save Jackal game state because the snapshot is unexpectedly large.");
+            return false;
+        }
+        return gameStateStorage.write(text);
     } catch (error) {
         console.warn("Unable to encode Jackal saved game state.", error);
         return false;
