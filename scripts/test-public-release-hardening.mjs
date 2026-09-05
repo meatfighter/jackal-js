@@ -38,7 +38,10 @@ test("PWA manifest has a dedicated maskable application icon", () => {
     const manifest = read("pwa/public/manifest.webmanifest");
     assert.match(manifest, /512x512-maskable\.png/);
     assert.match(manifest, /"purpose": "maskable"/);
-    assert.equal(existsSync(join(rootDir, "pwa", "public", "resources", "icons", "512x512-maskable.png")), true);
+    assert.equal(
+        existsSync(join(rootDir, "pwa", "public", "resources", "icons", "512x512-maskable.png")),
+        true
+    );
 });
 
 test("desktop public package excludes unsupported native trees", () => {
