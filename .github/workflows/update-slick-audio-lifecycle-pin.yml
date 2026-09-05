@@ -1,0 +1,52 @@
+name: Update Slick audio lifecycle pin
+
+on:
+  push:
+    paths:
+      - .github/workflows/update-slick-audio-lifecycle-pin.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Update immutable Slick pin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          old = '39689c01a336c7620a7e80f992fe33558ef9652a'
+          new = 'da6028a6c80c0a8acd0922531163d4b8f120632d'
+          for name in ('package.json', 'package-lock.json'):
+              p = Path(name)
+              text = p.read_text()
+              count = text.count(old)
+              if count == 0:
+                  raise SystemExit(f'{name}: old Slick pin not found')
+              text = text.replace(old, new)
+              if old in text:
+                  raise SystemExit(f'{name}: old Slick pin remains')
+              p.write_text(text)
+          PY
+
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+          const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
+          const expected = "git+https://github.com/meatfighter/slick2d-ts.git#da6028a6c80c0a8acd0922531163d4b8f120632d";
+          if (pkg.dependencies?.["slick2d-ts"] !== expected) throw new Error("package.json pin mismatch");
+          if (lock.packages?.[""]?.dependencies?.["slick2d-ts"] !== expected) throw new Error("package-lock root pin mismatch");
+          if (lock.packages?.["node_modules/slick2d-ts"]?.resolved !== expected) throw new Error("package-lock resolved pin mismatch");
+          NODE
+
+      - name: Commit pin update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "Update Slick Web Audio lifecycle fix"
+          git push
