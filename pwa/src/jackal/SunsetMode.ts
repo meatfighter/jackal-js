@@ -48,16 +48,20 @@ export class SunsetMode implements IMode, IFadeListener {
     public static readonly I_SHADE_TIME: number = javaFloat(1 / SunsetMode.SHADE_TIME);
 
     public static readonly SUN_HEIGHT: number = 92;
+    public static readonly SUN_PHASE_SUBDIVISIONS: number = 10;
+    public static readonly SUN_PHASE_STEPS: number = SunsetMode.SUN_HEIGHT * SunsetMode.SUN_PHASE_SUBDIVISIONS;
+    public static readonly SUN_ROW_PHASE_STRIDE: number = SunsetMode.SUN_PHASE_SUBDIVISIONS;
+    public static readonly SUN_PHASE_ADVANCE: number = 3;
     public static readonly SUN_AMPLITUDE: number = 2;
     public static readonly SUN_WAVES: number = 3;
     public static readonly WAVES_HEIGHT: number = 32;
 
-    public static readonly sunOffsets: number[] = javaArray(SunsetMode.SUN_HEIGHT, 0);
+    public static readonly sunOffsets: number[] = javaArray(SunsetMode.SUN_PHASE_STEPS, 0);
 
     static {
-        let PERCENT = javaFloat((javaFloat(SunsetMode.SUN_WAVES * 2) * Math.PI) / SunsetMode.SUN_HEIGHT);
+        let PERCENT = javaFloat((javaFloat(SunsetMode.SUN_WAVES * 2) * Math.PI) / SunsetMode.SUN_PHASE_STEPS);
 
-        for (let i = 0; i < SunsetMode.SUN_HEIGHT; i++) {
+        for (let i = 0; i < SunsetMode.SUN_PHASE_STEPS; i++) {
             SunsetMode.sunOffsets[i] = javaFloat(SunsetMode.SUN_AMPLITUDE * javaFloat(Math.sin(javaFloat(i * PERCENT))));
         }
     }
@@ -84,8 +88,7 @@ export class SunsetMode implements IMode, IFadeListener {
 
     public main: Main = null!;
     public gc: GameContainer = null!;
-    public sunOffset: number = 0;
-    public sunOffsetCounter: number = 0;
+    public sunPhase: number = 0;
     public rotorAngle: number = 0;
     public helicopterX: number = javaFloat(SunsetMode.HELICOPTER_X0);
     public helicopterY: number = javaFloat(SunsetMode.HELICOPTER_Y0);
@@ -188,6 +191,13 @@ export class SunsetMode implements IMode, IFadeListener {
                 }
                 break;
         }
+
+        if (this.state < SunsetMode.STATE_PAUSED_2) {
+            this.sunPhase += SunsetMode.SUN_PHASE_ADVANCE;
+            if (this.sunPhase >= SunsetMode.SUN_PHASE_STEPS) {
+                this.sunPhase -= SunsetMode.SUN_PHASE_STEPS;
+            }
+        }
     }
 
     public fadeCompleted(): void {
@@ -239,13 +249,6 @@ export class SunsetMode implements IMode, IFadeListener {
         }
 
         if (this.state < SunsetMode.STATE_PAUSED_2) {
-            if (++this.sunOffsetCounter === 2) {
-                this.sunOffsetCounter = 0;
-                if (++this.sunOffset === SunsetMode.SUN_HEIGHT) {
-                    this.sunOffset = 0;
-                }
-            }
-
             this.rotorAngle -= 30;
             if (this.rotorAngle === -90) {
                 this.rotorAngle = 0;
@@ -254,17 +257,19 @@ export class SunsetMode implements IMode, IFadeListener {
 
         this.main.sunset.draw(0, 0);
 
-        for (let i = 0, j = this.sunOffset; i < SunsetMode.SUN_HEIGHT; i++) {
+        for (let i = 0, j = this.sunPhase; i < SunsetMode.SUN_HEIGHT; i++) {
             this.main.drawImage(this.main.suns[i], 428 + SunsetMode.sunOffsets[j], 356 + i);
-            if (++j === SunsetMode.SUN_HEIGHT) {
-                j = 0;
+            j += SunsetMode.SUN_ROW_PHASE_STRIDE;
+            if (j >= SunsetMode.SUN_PHASE_STEPS) {
+                j -= SunsetMode.SUN_PHASE_STEPS;
             }
         }
 
-        for (let i = 0, j = this.sunOffset; i < SunsetMode.WAVES_HEIGHT; i++) {
+        for (let i = 0, j = this.sunPhase; i < SunsetMode.WAVES_HEIGHT; i++) {
             this.main.drawImage(this.main.waves[i], 428 + SunsetMode.sunOffsets[j], 448 + i);
-            if (++j === SunsetMode.SUN_HEIGHT) {
-                j = 0;
+            j += SunsetMode.SUN_ROW_PHASE_STRIDE;
+            if (j >= SunsetMode.SUN_PHASE_STEPS) {
+                j -= SunsetMode.SUN_PHASE_STEPS;
             }
         }
 

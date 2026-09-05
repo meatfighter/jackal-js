@@ -44,16 +44,20 @@ public class SunsetMode implements IMode, IFadeListener {
   public static final float I_SHADE_TIME = 1f / SHADE_TIME;
   
   public static final int SUN_HEIGHT = 92;
+  public static final int SUN_PHASE_SUBDIVISIONS = 10;
+  public static final int SUN_PHASE_STEPS = SUN_HEIGHT * SUN_PHASE_SUBDIVISIONS;
+  public static final int SUN_ROW_PHASE_STRIDE = SUN_PHASE_SUBDIVISIONS;
+  public static final int SUN_PHASE_ADVANCE = 3;
   public static final float SUN_AMPLITUDE = 2f;
   public static final float SUN_WAVES = 3f;
   public static final int WAVES_HEIGHT = 32;
           
-  public static final float[] sunOffsets = new float[SUN_HEIGHT];
+  public static final float[] sunOffsets = new float[SUN_PHASE_STEPS];
   
   static {    
-    final float PERCENT = (float)(SUN_WAVES * 2 * Math.PI / SUN_HEIGHT);
+    final float PERCENT = (float)(SUN_WAVES * 2 * Math.PI / SUN_PHASE_STEPS);
     
-    for(int i = 0; i < SUN_HEIGHT; i++) {
+    for(int i = 0; i < SUN_PHASE_STEPS; i++) {
       sunOffsets[i] = SUN_AMPLITUDE * (float)Math.sin(i * PERCENT);
     }
   }  
@@ -99,8 +103,7 @@ public class SunsetMode implements IMode, IFadeListener {
   
   public Main main;
   public GameContainer gc;  
-  public int sunOffset;
-  public int sunOffsetCounter;
+  public int sunPhase;
   public float rotorAngle;
   public float helicopterX = HELICOPTER_X0;
   public float helicopterY = HELICOPTER_Y0;
@@ -205,6 +208,13 @@ public class SunsetMode implements IMode, IFadeListener {
         }
         break;
     }    
+    
+    if (state < STATE_PAUSED_2) {
+      sunPhase += SUN_PHASE_ADVANCE;
+      if (sunPhase >= SUN_PHASE_STEPS) {
+        sunPhase -= SUN_PHASE_STEPS;
+      }
+    }
   }
   
   @Override
@@ -262,12 +272,6 @@ public class SunsetMode implements IMode, IFadeListener {
 
     if (state < STATE_PAUSED_2) {
 
-      if (++sunOffsetCounter == 2) {
-        sunOffsetCounter = 0;
-        if (++sunOffset == SUN_HEIGHT) {
-          sunOffset = 0;
-        }
-      }
       
       rotorAngle -= 30;
       if (rotorAngle == -90) {
@@ -277,17 +281,19 @@ public class SunsetMode implements IMode, IFadeListener {
     
     main.sunset.draw(0, 0);
     
-    for(int i = 0, j = sunOffset; i < SUN_HEIGHT; i++) {
+    for(int i = 0, j = sunPhase; i < SUN_HEIGHT; i++) {
       main.draw(main.suns[i], 428 + sunOffsets[j], 356 + i);
-      if (++j == SUN_HEIGHT) {
-        j = 0;
+      j += SUN_ROW_PHASE_STRIDE;
+      if (j >= SUN_PHASE_STEPS) {
+        j -= SUN_PHASE_STEPS;
       }
     }
     
-    for(int i = 0, j = sunOffset; i < WAVES_HEIGHT; i++) {
+    for(int i = 0, j = sunPhase; i < WAVES_HEIGHT; i++) {
       main.draw(main.waves[i], 428 + sunOffsets[j], 448 + i);
-      if (++j == SUN_HEIGHT) {
-        j = 0;
+      j += SUN_ROW_PHASE_STRIDE;
+      if (j >= SUN_PHASE_STEPS) {
+        j -= SUN_PHASE_STEPS;
       }
     }
     

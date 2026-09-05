@@ -144,8 +144,7 @@ export const JEEP_YEAH_FIRE_FIELD_NAMES = fieldsOf<JeepYeahFireLeft>()("scale", 
 export const JEEP_YEAH_BULLET_FIELD_NAMES = fieldsOf<JeepYeahBullet>()("x", "y", "vx", "vy", "angle", "remove", "scale");
 
 export const SUNSET_MODE_FIELD_NAMES = fieldsOf<SunsetMode>()(
-    "sunOffset",
-    "sunOffsetCounter",
+    "sunPhase",
     "rotorAngle",
     "helicopterX",
     "helicopterY",

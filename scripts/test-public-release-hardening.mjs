@@ -15,10 +15,10 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
     assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^git\+https:\/\/github\.com\/meatfighter\/slick2d-ts\.git#[0-9a-f]{40}$/);
 });
 
-test("schema 9 is explicitly the first public saved-game format", () => {
+test("schema 10 is explicitly the first public saved-game format", () => {
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION = 9 as const/);
-    assert.match(schema, /FIRST_PUBLIC_GAME_STATE_VERSION = 9 as const/);
+    assert.match(schema, /GAME_STATE_VERSION = 10 as const/);
+    assert.match(schema, /FIRST_PUBLIC_GAME_STATE_VERSION = 10 as const/);
     assert.match(schema, /version >= FIRST_PUBLIC_GAME_STATE_VERSION/);
 });
 
