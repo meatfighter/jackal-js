@@ -4,7 +4,14 @@ import { Explosion } from "./Explosion.js";
 import { FriendlySoldier } from "./FriendlySoldier.js";
 import { FriendlySoldierType } from "./FriendlySoldierType.js";
 import { TILE_TYPE_CONVEYOR, TILE_TYPE_SWAMP } from "./GameTileTypes.js";
-import { PLAYER_ANGLE_STEPS, PLAYER_ANGLE_VELOCITY, PLAYER_RUMBLE, PLAYER_SPEED } from "./PlayerMotionConstants.js";
+import {
+    PLAYER_ANGLE_STEPS,
+    PLAYER_ANGLE_VELOCITY,
+    PLAYER_RUMBLE,
+    PLAYER_RUMBLE_STEPS,
+    PLAYER_SPEED,
+    playerRumblePhase
+} from "./PlayerMotionConstants.js";
 import type { GameMode } from "./GameMode.js";
 import { Grenade } from "./Grenade.js";
 import { requireMainRuntime, requireMainRuntimeGameMode } from "./MainRuntimeState.js";
@@ -41,13 +48,13 @@ export class Player {
     public static SENSOR_D_Y2: number = 0;
 
     public static readonly RUMBLE: number[] = PLAYER_RUMBLE;
-    public static readonly WAKE_ALPHAS: number[] = javaArray(17, 0);
+    public static readonly WAKE_ALPHAS: number[] = javaArray(PLAYER_RUMBLE_STEPS, 0);
 
     static {
         let angle = 0;
-        for (let i = 0; i < 17; i++) {
+        for (let i = 0; i < PLAYER_RUMBLE_STEPS; i++) {
+            angle = javaFloat(playerRumblePhase(i));
             Player.WAKE_ALPHAS[i] = javaFloat(0.5 + javaFloat(0.5 * javaFloat(Math.sin(angle))));
-            angle = javaFloat(angle + javaFloat(0.74));
         }
 
         let p0 = rotatePointLikeJava(javaFloat(Player.SENSOR_X + Player.SPEED), 0, javaFloat(Math.PI / 4));
@@ -440,6 +447,17 @@ export class Player {
             }
         }
 
+        if (
+            this.targetAngle !== -1 &&
+            !this.gameMode.bossCameraPan &&
+            !this.gameMode.endingCameraPan &&
+            this.gameMode.playing &&
+            !this.gameMode.paused &&
+            ++this.rumble === PLAYER_RUMBLE_STEPS
+        ) {
+            this.rumble = 0;
+        }
+
         if (this.invincible > 0) {
             this.invincible--;
         }
@@ -499,17 +517,6 @@ export class Player {
     public render(): void {
         if (this.respawning !== 0) {
             return;
-        }
-
-        if (
-            this.targetAngle !== -1 &&
-            !this.gameMode.bossCameraPan &&
-            !this.gameMode.endingCameraPan &&
-            this.gameMode.playing &&
-            !this.gameMode.paused &&
-            ++this.rumble === 17
-        ) {
-            this.rumble = 0;
         }
 
         if (this.invincible > 0) {
