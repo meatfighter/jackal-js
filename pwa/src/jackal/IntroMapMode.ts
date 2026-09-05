@@ -32,8 +32,6 @@ export class IntroMapMode implements IMode, IFadeListener {
         } else {
             this.state = IntroMapMode.STATE_DONE;
             this.main.startPlayer();
-            // Temporary wake-animation test: start on the fourth playable stage.
-            this.main.stageIndex = 3;
             this.main.requestMode(Modes.GAME, this.gc);
         }
     }
