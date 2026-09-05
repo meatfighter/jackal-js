@@ -4,7 +4,6 @@ import { MainConstants } from "../java/MainConstants.js";
 import { HardEndingMode } from "./HardEndingMode.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMode } from "./IMode.js";
-import { Modes } from "./Modes.js";
 import type { Main } from "./Main.js";
 export class IntroMapMode implements IMode, IFadeListener {
     public static readonly STATE_FADE_IN: number = 0;
