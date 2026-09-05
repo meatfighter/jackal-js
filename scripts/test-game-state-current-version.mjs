@@ -45,7 +45,15 @@ function baseSnapshot(fields, version) {
         appVersion: "test",
         savedAt: "2026-08-31T00:00:00.000Z",
         kind: "mode",
-        mainFields: encodedFields(fields.MAIN_FIELD_NAMES, { loadIndex: 42, stageIndex: 0, hardMode: false }),
+        mainFields: encodedFields(fields.MAIN_FIELD_NAMES, {
+            loadIndex: 42,
+            stageIndex: 0,
+            score: 0,
+            extraLives: 0,
+            missilePower: 0,
+            friendlySoldiersPickedUp: 0,
+            hardMode: false
+        }),
         konamiCodeFields: null,
         random: { seed0: 1, seed1: 2, seed2: 3 },
         friendlySoldierCount: 0,
@@ -61,6 +69,22 @@ function modeSnapshot(fields, version) {
         modeId: "INTRO_MAP",
         modeFields: encodedFields(fields.INTRO_MAP_MODE_FIELD_NAMES),
         modeExtra: null
+    };
+}
+
+function inputModeSnapshot(fields, version) {
+    return {
+        ...baseSnapshot(fields, version),
+        modeId: "INPUT",
+        modeFields: encodedFields(fields.INPUT_MODE_FIELD_NAMES),
+        modeExtra: {
+            input: {
+                menu: null,
+                draftButtonMapping: null,
+                assignedKeys: [],
+                assignedControllerButtons: []
+            }
+        }
     };
 }
 
@@ -87,6 +111,60 @@ test("save-state validator accepts only the current schema", async () => {
     const invalidSeed = modeSnapshot(fields, currentVersion);
     invalidSeed.random.seed2 = 65536;
     assert.equal(validator.isSupportedGameStateSnapshot(invalidSeed), false);
+});
+
+test("save-state validator rejects corrupt but superficially shaped state", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    const currentVersion = schema.GAME_STATE_VERSION;
+
+    const extraTopLevelField = modeSnapshot(fields, currentVersion);
+    extraTopLevelField.unexpected = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(extraTopLevelField), false);
+
+    const badTimestamp = modeSnapshot(fields, currentVersion);
+    badTimestamp.savedAt = "not-a-date";
+    assert.equal(validator.isSupportedGameStateSnapshot(badTimestamp), false);
+
+    const badAudioShape = modeSnapshot(fields, currentVersion);
+    badAudioShape.audioState.extra = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(badAudioShape), false);
+
+    const oversizedBigint = modeSnapshot(fields, currentVersion);
+    oversizedBigint.konamiCodeFields = { value: { kind: "bigint", value: "1".repeat(200) } };
+    assert.equal(validator.isSupportedGameStateSnapshot(oversizedBigint), false);
+
+    const oversizedArray = modeSnapshot(fields, currentVersion);
+    oversizedArray.konamiCodeFields = { value: { kind: "array", items: new Array(8193).fill(0) } };
+    assert.equal(validator.isSupportedGameStateSnapshot(oversizedArray), false);
+
+    const invalidVolume = modeSnapshot(fields, currentVersion);
+    invalidVolume.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: true,
+        activeMusic: { id: "stageSong0.loop", position: 0, volume: 2 }
+    };
+    assert.equal(validator.isSupportedGameStateSnapshot(invalidVolume), false);
+
+    const mismatchedMusic = modeSnapshot(fields, currentVersion);
+    mismatchedMusic.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: true,
+        activeMusic: { id: "bossSong.loop", position: 0, volume: 1 }
+    };
+    assert.equal(validator.isSupportedGameStateSnapshot(mismatchedMusic), false);
+
+    const impossibleInput = inputModeSnapshot(fields, currentVersion);
+    impossibleInput.modeExtra.input.assignedKeys = new Array(65).fill(1);
+    assert.equal(validator.isSupportedGameStateSnapshot(impossibleInput), false);
+
+    const unsafeVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
+    assert.equal(validator.isSupportedGameStateSnapshot(unsafeVelocity), false);
+
+    const mismatchedStage = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    mismatchedStage.gameMode.fields.stageIndex = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(mismatchedStage), false);
 });
 
 test("current entity runtime descriptors are required and exact", async () => {
