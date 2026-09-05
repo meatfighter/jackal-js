@@ -169,7 +169,7 @@
             "reason": "Browser binding validation is implemented with the browser mapping model."
         },
         "InputMode.shouldRefreshControllers": {
-            "reason": "Browser gamepad binding uses browser input events/state."
+            "reason": "Browser controller refresh is handled by the input runtime."
         },
         "InputMode.syncControllerInputState": {
             "reason": "Browser gamepad edge tracking is implemented in the input runtime."
