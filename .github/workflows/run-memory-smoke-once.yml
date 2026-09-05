@@ -1,0 +1,29 @@
+name: Run memory smoke once
+
+on:
+  push:
+    paths:
+      - .github/workflows/run-memory-smoke-once.yml
+
+jobs:
+  memory-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run memory smoke
+        run: npm run memory:smoke
