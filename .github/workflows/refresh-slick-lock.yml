@@ -18,6 +18,37 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Switch Slick dependency to immutable HTTPS archive
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          old = "git+https://github.com/meatfighter/slick2d-ts.git#0bad1eb9f2b8ded61d4d6b82b9a4282c4a62b9ee"
+          new = "https://codeload.github.com/meatfighter/slick2d-ts/tar.gz/0bad1eb9f2b8ded61d4d6b82b9a4282c4a62b9ee"
+
+          package = Path("package.json")
+          text = package.read_text()
+          if text.count(old) != 1:
+              raise SystemExit(f"Expected one old Slick dependency in package.json, found {text.count(old)}")
+          package.write_text(text.replace(old, new))
+
+          replacements = {
+              "scripts/test-buffered-scaling-wiring.mjs": (
+                  r"^git\\+https:\\/\\/github\\.com\\/meatfighter\\/slick2d-ts\\.git#[0-9a-f]{40}$",
+                  r"^https:\\/\\/codeload\\.github\\.com\\/meatfighter\\/slick2d-ts\\/tar\\.gz\\/[0-9a-f]{40}$",
+              ),
+              "scripts/test-public-release-hardening.mjs": (
+                  r"^git\\+https:\\/\\/github\\.com\\/meatfighter\\/slick2d-ts\\.git#[0-9a-f]{40}$",
+                  r"^https:\\/\\/codeload\\.github\\.com\\/meatfighter\\/slick2d-ts\\/tar\\.gz\\/[0-9a-f]{40}$",
+              ),
+          }
+          for path, (before, after) in replacements.items():
+              file = Path(path)
+              source = file.read_text()
+              if source.count(before) != 1:
+                  raise SystemExit(f"Expected one dependency regex in {path}, found {source.count(before)}")
+              file.write_text(source.replace(before, after))
+          PY
       - run: npm install --package-lock-only --ignore-scripts
       - name: Validate canonical Slick lock metadata
         run: |
@@ -31,13 +62,18 @@ jobs:
           if (root !== expected || resolved !== expected) {
             throw new Error(`Unexpected Slick lock metadata: expected ${expected}, root=${root}, resolved=${resolved}`);
           }
+          if (!/^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/.test(expected)) {
+            throw new Error(`Unexpected Slick archive URL: ${expected}`);
+          }
           EOF
-      - name: Commit refreshed lock and remove helper
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Commit archive pin, refreshed lock, and remove helper
         run: |
           rm .github/workflows/refresh-slick-lock.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json .github/workflows/refresh-slick-lock.yml
+          git add package.json package-lock.json scripts/test-buffered-scaling-wiring.mjs scripts/test-public-release-hardening.mjs .github/workflows/refresh-slick-lock.yml
           git diff --cached --check
-          git commit -m "Refresh slick2d-ts lock metadata"
+          git commit -m "Pin slick2d-ts via immutable HTTPS archive"
           git push
