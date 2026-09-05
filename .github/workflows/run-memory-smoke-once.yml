@@ -1,14 +1,16 @@
-name: Run memory smoke once
+name: Format memory smoke diagnostic
 
 on:
   push:
     paths:
       - .github/workflows/run-memory-smoke-once.yml
 
+permissions:
+  contents: write
+
 jobs:
-  memory-smoke:
+  format:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -22,8 +24,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Format memory smoke diagnostic
+        run: npx prettier scripts/run-memory-smoke.mjs --write
 
-      - name: Run memory smoke
-        run: npm run memory:smoke
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/run-memory-smoke.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Format memory smoke diagnostic"
+          git push
