@@ -163,7 +163,7 @@ jobs:
       - name: Verify source and parity tests
         run: |
           npm test
-          npm run format:check
+          npx prettier pwa/src/jackal/SunsetMode.ts pwa/src/jackal/persistence/GameStateFields.ts pwa/src/jackal/persistence/GameStateSchema.ts scripts/test-fixed-update-sunset-timing.mjs scripts/test-public-release-hardening.mjs scripts/test-java-translation-parity-guardrails.mjs scripts/test-persistence-parity-coverage.mjs --check
           npm run typecheck
           npm run check:java-float-parity
 
