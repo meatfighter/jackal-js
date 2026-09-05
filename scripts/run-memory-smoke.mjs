@@ -44,6 +44,83 @@ function slope(values) {
     return denominator === 0 ? 0 : numerator / denominator;
 }
 
+async function installListenerTracker(page) {
+    const expression = `(() => {
+        if (globalThis.__jackalListenerTracker) return true;
+        const originalAdd = EventTarget.prototype.addEventListener;
+        const originalRemove = EventTarget.prototype.removeEventListener;
+        const records = [];
+        const captureOf = (options) => typeof options === "boolean" ? options : Boolean(options?.capture);
+        const compact = () => {
+            for (let i = records.length - 1; i >= 0; i--) {
+                if (!records[i].target.deref() || !records[i].listener.deref()) records.splice(i, 1);
+            }
+        };
+        const targetName = (target) => {
+            if (target === window) return "Window";
+            if (target === document) return "Document";
+            if (target === window.visualViewport) return "VisualViewport";
+            return target?.constructor?.name ?? "EventTarget";
+        };
+        EventTarget.prototype.addEventListener = function(type, listener, options) {
+            if (listener) {
+                compact();
+                const capture = captureOf(options);
+                const exists = records.some((record) =>
+                    record.target.deref() === this && record.listener.deref() === listener && record.type === String(type) && record.capture === capture
+                );
+                if (!exists) {
+                    const stack = new Error().stack?.split("\\n").slice(2, 5).map((line) => line.trim()).join(" <- ") ?? "";
+                    records.push({ target: new WeakRef(this), listener: new WeakRef(listener), type: String(type), capture, stack });
+                }
+            }
+            return originalAdd.call(this, type, listener, options);
+        };
+        EventTarget.prototype.removeEventListener = function(type, listener, options) {
+            if (listener) {
+                const capture = captureOf(options);
+                for (let i = records.length - 1; i >= 0; i--) {
+                    const record = records[i];
+                    if (record.target.deref() === this && record.listener.deref() === listener && record.type === String(type) && record.capture === capture) {
+                        records.splice(i, 1);
+                    }
+                }
+            }
+            return originalRemove.call(this, type, listener, options);
+        };
+        globalThis.__jackalListenerTracker = {
+            summary() {
+                compact();
+                const groups = {};
+                for (const record of records) {
+                    const target = record.target.deref();
+                    const listener = record.listener.deref();
+                    if (!target || !listener) continue;
+                    const key = targetName(target) + ":" + record.type + " @ " + record.stack;
+                    groups[key] = (groups[key] ?? 0) + 1;
+                }
+                return { total: Object.values(groups).reduce((sum, count) => sum + count, 0), groups };
+            }
+        };
+        return true;
+    })()`;
+    const evaluation = await page.call("Runtime.evaluate", { expression, returnByValue: true });
+    if (evaluation.exceptionDetails) {
+        throw new Error(`Listener tracker installation failed: ${JSON.stringify(evaluation.exceptionDetails)}`);
+    }
+}
+
+async function readListenerTracker(page) {
+    const evaluation = await page.call("Runtime.evaluate", {
+        expression: "globalThis.__jackalListenerTracker.summary()",
+        returnByValue: true
+    });
+    if (evaluation.exceptionDetails) {
+        throw new Error(`Listener tracker read failed: ${JSON.stringify(evaluation.exceptionDetails)}`);
+    }
+    return evaluation.result?.value ?? { total: 0, groups: {} };
+}
+
 async function startCycle(page, index) {
     const expression = `(() => {
         globalThis.__jackalMemorySmokeCycle = { done: false, error: null };
@@ -81,6 +158,7 @@ async function collectSample(page, cycle) {
     await page.call("HeapProfiler.collectGarbage");
     const heap = await page.call("Runtime.getHeapUsage");
     const dom = await page.call("Memory.getDOMCounters");
+    const trackedListeners = await readListenerTracker(page);
     return {
         cycle,
         usedHeap: heap.usedSize,
@@ -88,8 +166,18 @@ async function collectSample(page, cycle) {
         backingStorage: heap.backingStorageSize ?? 0,
         documents: dom.documents,
         nodes: dom.nodes,
-        listeners: dom.jsEventListeners
+        listeners: dom.jsEventListeners,
+        trackedListeners
     };
+}
+
+function growingListenerGroups(samples) {
+    const first = samples[0]?.trackedListeners.groups ?? {};
+    const last = samples.at(-1)?.trackedListeners.groups ?? {};
+    return Object.entries(last)
+        .map(([key, count]) => ({ key, growth: count - (first[key] ?? 0), count }))
+        .filter((entry) => entry.growth > 0)
+        .sort((a, b) => b.growth - a.growth || b.count - a.count);
 }
 
 function summarize(samples) {
@@ -121,8 +209,8 @@ function summarize(samples) {
     if (heapGrowth > heapGrowthLimit && heapSlope > 256 * 1024) {
         findings.push(`post-GC JS heap grew ${(heapGrowth / MIB).toFixed(2)} MiB with a ${(heapSlope / 1024).toFixed(1)} KiB/cycle slope`);
     }
-    if (listenerGrowth > 20 && listenerSlope > 0.5) {
-        findings.push(`DOM listener count grew ${listenerGrowth.toFixed(0)} with a ${listenerSlope.toFixed(2)}/cycle slope`);
+    if (listenerGrowth >= Math.max(5, measuredCycles * 0.5) && listenerSlope > 0.5) {
+        findings.push(`event listener count grew ${listenerGrowth.toFixed(0)} with a ${listenerSlope.toFixed(2)}/cycle slope`);
     }
     if (nodeGrowth > 200 && nodeSlope > 5) {
         findings.push(`DOM node count grew ${nodeGrowth.toFixed(0)} with a ${nodeSlope.toFixed(2)}/cycle slope`);
@@ -132,13 +220,12 @@ function summarize(samples) {
     }
 
     return {
-        windowSize,
         firstHeap,
         lastHeap,
-        heapGrowth,
         heapSlope,
         firstListeners,
         lastListeners,
+        listenerSlope,
         firstNodes,
         lastNodes,
         firstDocuments,
@@ -160,6 +247,7 @@ try {
         '(() => { const element = document.querySelector("#result"); if (element?.dataset.status === "failed") throw new Error(element.textContent || "Memory smoke fixture failed."); return element?.dataset.status === "ready"; })()',
         60_000
     );
+    await installListenerTracker(browser.page);
 
     console.log(`Warming up ${warmupCycles} Jackal browser sessions...`);
     for (let cycle = 0; cycle < warmupCycles; cycle++) {
@@ -177,21 +265,30 @@ try {
         samples.push(sample);
         console.log(
             `  ${String(cycle + 1).padStart(2, " ")}: heap ${(sample.usedHeap / MIB).toFixed(2)} MiB, ` +
-                `embedder ${(sample.embedderHeap / MIB).toFixed(2)} MiB, nodes ${sample.nodes}, listeners ${sample.listeners}`
+                `embedder ${(sample.embedderHeap / MIB).toFixed(2)} MiB, nodes ${sample.nodes}, listeners ${sample.listeners}, ` +
+                `tracked ${sample.trackedListeners.total}`
         );
     }
 
     const summary = summarize(samples);
     console.log(`Post-GC heap median: ${(summary.firstHeap / MIB).toFixed(2)} MiB -> ${(summary.lastHeap / MIB).toFixed(2)} MiB`);
     console.log(`Heap trend: ${(summary.heapSlope / 1024).toFixed(1)} KiB/cycle`);
-    console.log(`DOM listeners median: ${summary.firstListeners.toFixed(0)} -> ${summary.lastListeners.toFixed(0)}`);
+    console.log(`Event listeners median: ${summary.firstListeners.toFixed(0)} -> ${summary.lastListeners.toFixed(0)} (${summary.listenerSlope.toFixed(2)}/cycle)`);
     console.log(`DOM nodes median: ${summary.firstNodes.toFixed(0)} -> ${summary.lastNodes.toFixed(0)}`);
     console.log(`Documents median: ${summary.firstDocuments.toFixed(0)} -> ${summary.lastDocuments.toFixed(0)}`);
+
+    const growingGroups = growingListenerGroups(samples);
+    if (growingGroups.length > 0) {
+        console.log("Growing listener registrations observed by the weak listener tracker:");
+        for (const entry of growingGroups.slice(0, 10)) {
+            console.log(`  +${entry.growth} (${entry.count} active): ${entry.key}`);
+        }
+    }
 
     if (summary.findings.length > 0) {
         throw new Error(`Memory smoke test found clear sustained growth:\n- ${summary.findings.join("\n- ")}`);
     }
-    console.log("Jackal memory smoke test passed: no clear sustained post-destroy heap/DOM growth detected.");
+    console.log("Jackal memory smoke test passed: no clear sustained post-destroy heap/DOM/listener growth detected.");
 } finally {
     if (browser !== null) {
         try {
