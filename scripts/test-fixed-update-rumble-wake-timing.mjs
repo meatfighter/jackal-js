@@ -44,6 +44,16 @@ test("100 TPS rumble table preserves the original 60 Hz two-wave timing", async 
     }
 });
 
+test("Java and TypeScript use the same 85-step rumble and wake waveform", () => {
+    const player = read("desktop/src/jackal/Player.java");
+    assert.match(player, /public static final int RUMBLE_STEPS = 85;/);
+    assert.match(player, /RUMBLE = new float\[RUMBLE_STEPS\]/);
+    assert.match(player, /WAKE_ALPHAS = new float\[RUMBLE_STEPS\]/);
+    assert.match(player, /float angle = \(float\)\(\(12 \* Math\.PI \* i\) \/ RUMBLE_STEPS\);/);
+    assert.match(player, /WAKE_ALPHAS\[i\] = 0\.5f \+ 0\.5f \* \(float\)Math\.sin\(angle\);/);
+    assert.match(player, /RUMBLE\[i\] = 1\.6f \* \(float\)Math\.sin\(angle\);/);
+});
+
 test("player rumble and wake share the fixed-update phase", () => {
     const player = read("pwa/src/jackal/Player.ts");
     assert.match(player, /WAKE_ALPHAS: number\[\] = javaArray\(PLAYER_RUMBLE_STEPS, 0\)/);
@@ -56,6 +66,14 @@ test("player rumble and wake share the fixed-update phase", () => {
     assert.doesNotMatch(render, /\+\+this\.rumble/);
     assert.match(render, /WAKE_ALPHAS\[this\.rumble\]/);
     assert.match(render, /RUMBLE\[this\.rumble\]/);
+
+    const javaPlayer = read("desktop/src/jackal/Player.java");
+    const javaUpdate = methodBody(javaPlayer, "public void update()", "public void render()");
+    const javaRender = methodBody(javaPlayer, "public void render()", null);
+    assert.match(javaUpdate, /\+\+rumble == RUMBLE_STEPS/);
+    assert.doesNotMatch(javaRender, /\+\+rumble/);
+    assert.match(javaRender, /WAKE_ALPHAS\[rumble\]/);
+    assert.match(javaRender, /RUMBLE\[rumble\]/);
 });
 
 test("hard-ending jeep advances the shared rumble phase in update only", () => {
@@ -65,4 +83,11 @@ test("hard-ending jeep advances the shared rumble phase in update only", () => {
     assert.match(update, /\+\+this\.rumble === PLAYER_RUMBLE_STEPS/);
     assert.doesNotMatch(render, /\+\+this\.rumble/);
     assert.match(render, /PLAYER_RUMBLE\[this\.rumble\]/);
+
+    const javaEnding = read("desktop/src/jackal/HardEndingMode.java");
+    const javaUpdate = methodBody(javaEnding, "private void updateFinalScoreJeep()", "private void updateFinalScore()");
+    const javaRender = methodBody(javaEnding, "public void render(GameContainer gc, Graphics g) throws SlickException", null);
+    assert.match(javaUpdate, /\+\+rumble == Player\.RUMBLE_STEPS/);
+    assert.doesNotMatch(javaRender, /\+\+rumble/);
+    assert.match(javaRender, /Player\.RUMBLE\[rumble\]/);
 });
