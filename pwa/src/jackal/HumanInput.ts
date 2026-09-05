@@ -4,7 +4,6 @@ import type { IInput } from "./IInput.js";
 
 export class HumanInput implements IInput {
     private static readonly GAMEPAD_BUTTON_CONTROL_OFFSET = 4;
-    private static readonly GAMEPAD_BUTTON_INDEX_LIMIT = 100;
 
     private buttonMapping: ButtonMapping;
     private input: Input;
@@ -71,7 +70,8 @@ export class HumanInput implements IInput {
         let pressed = false;
         const controllerCount = this.input.getControllerCount();
         for (let controller = 0; controller < controllerCount; controller++) {
-            for (let button = 0; button < HumanInput.GAMEPAD_BUTTON_INDEX_LIMIT; button++) {
+            const buttonCount = this.input.getButtonCount(controller);
+            for (let button = 0; button < buttonCount; button++) {
                 if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
                     pressed = this.input.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
                 }
