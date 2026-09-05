@@ -65,7 +65,7 @@ function javaSources(workDir) {
     );
     write(
         join(sourceRoot, "PlayerHarness.java"),
-        `package jackal; public final class PlayerHarness { static String bits(float v){return Integer.toUnsignedString(Float.floatToIntBits(v));} static void row(String s,int t,Player p){System.out.println(s+"|"+t+"|"+bits(p.x)+"|"+bits(p.y)+"|"+p.angle+"|"+p.nextAngle+"|"+bits(p.displayAngle)+"|"+bits(p.angleVelocity)+"|"+p.angleSteps+"|"+p.diagonalDelay+"|"+p.fireAngle+"|"+p.inSwamp+"|"+Grenade.count+"|"+PlayerMissile.count+"|"+PlayerBullet.count+"|"+p.gunArmed); } static Player reset(InputStub in,GameMode mode){Main.main=new Main();Main.gameMode=mode;Main.main.input=in;Grenade.count=PlayerMissile.count=PlayerBullet.count=0;return new Player();} static void run(String name,InputStub in,GameMode mode,int ticks){Player p=reset(in,mode);row(name,0,p);for(int t=1;t<=ticks;t++){p.update();row(name,t,p);}} public static void main(String[] args){InputStub in=new InputStub();GameMode mode=new GameMode();in.right=true;run("R",in,mode,20);in=new InputStub();mode=new GameMode();in.down=true;in.right=true;run("D",in,mode,12);in=new InputStub();mode=new GameMode();mode.tileType=GameMode.TYPE_SWAMP;in.right=true;run("S",in,mode,10);in=new InputStub();mode=new GameMode();mode.tileType=GameMode.TYPE_CONVEYOR;run("C",in,mode,5);in=new InputStub();mode=new GameMode();Player p=reset(in,mode);p.update();in.fire=true;row("F",0,p);p.update();row("F",1,p);in.fire=false;p.update();row("F",2,p);in=new InputStub();mode=new GameMode();p=reset(in,mode);p.update();in.shoot=true;row("G",0,p);for(int t=1;t<=50;t++){p.update();row("G",t,p);} } }`
+        `package jackal; public final class PlayerHarness { static String bits(float v){return Integer.toUnsignedString(Float.floatToIntBits(v));} static void row(String s,int t,Player p){System.out.println(s+"|"+t+"|"+bits(p.x)+"|"+bits(p.y)+"|"+p.angle+"|"+p.nextAngle+"|"+bits(p.displayAngle)+"|"+bits(p.angleVelocity)+"|"+p.angleSteps+"|"+p.diagonalDelay+"|"+p.fireAngle+"|"+p.inSwamp+"|"+Grenade.count+"|"+PlayerMissile.count+"|"+PlayerBullet.count+"|"+p.gunArmed+"|"+p.rumble); } static Player reset(InputStub in,GameMode mode){Main.main=new Main();Main.gameMode=mode;Main.main.input=in;Grenade.count=PlayerMissile.count=PlayerBullet.count=0;return new Player();} static void run(String name,InputStub in,GameMode mode,int ticks){Player p=reset(in,mode);row(name,0,p);for(int t=1;t<=ticks;t++){p.update();row(name,t,p);}} public static void main(String[] args){InputStub in=new InputStub();GameMode mode=new GameMode();in.right=true;run("R",in,mode,20);in=new InputStub();mode=new GameMode();in.down=true;in.right=true;run("D",in,mode,12);in=new InputStub();mode=new GameMode();mode.tileType=GameMode.TYPE_SWAMP;in.right=true;run("S",in,mode,10);in=new InputStub();mode=new GameMode();mode.tileType=GameMode.TYPE_CONVEYOR;run("C",in,mode,5);in=new InputStub();mode=new GameMode();Player p=reset(in,mode);p.update();in.fire=true;row("F",0,p);p.update();row("F",1,p);in.fire=false;p.update();row("F",2,p);in=new InputStub();mode=new GameMode();p=reset(in,mode);p.update();in.shoot=true;row("G",0,p);for(int t=1;t<=50;t++){p.update();row("G",t,p);} } }`
     );
     return { sourceRoot, classRoot };
 }
@@ -93,17 +93,13 @@ function runJava(workDir) {
     assert.equal(
         compile.status,
         0,
-        `javac failed:
-${compile.stdout}
-${compile.stderr}`
+        `javac failed:\n${compile.stdout}\n${compile.stderr}`
     );
     const run = spawnSync("java", ["-cp", classRoot, "jackal.PlayerHarness"], { encoding: "utf8" });
     assert.equal(
         run.status,
         0,
-        `Java Player harness failed:
-${run.stdout}
-${run.stderr}`
+        `Java Player harness failed:\n${run.stdout}\n${run.stderr}`
     );
     return run.stdout.trim().split(/\r?\n/).filter(Boolean);
 }
@@ -138,7 +134,7 @@ class Modes { static CONTINUE=0; }
     }).outputText;
     output += `
 function bits(v){const b=new ArrayBuffer(4),d=new DataView(b);d.setFloat32(0,v,false);return String(d.getUint32(0,false));}
-function row(s,t,p){return s+"|"+t+"|"+bits(p.x)+"|"+bits(p.y)+"|"+p.angle+"|"+p.nextAngle+"|"+bits(p.displayAngle)+"|"+bits(p.angleVelocity)+"|"+p.angleSteps+"|"+p.diagonalDelay+"|"+p.fireAngle+"|"+p.inSwamp+"|"+Grenade.count+"|"+PlayerMissile.count+"|"+PlayerBullet.count+"|"+p.gunArmed;}
+function row(s,t,p){return s+"|"+t+"|"+bits(p.x)+"|"+bits(p.y)+"|"+p.angle+"|"+p.nextAngle+"|"+bits(p.displayAngle)+"|"+bits(p.angleVelocity)+"|"+p.angleSteps+"|"+p.diagonalDelay+"|"+p.fireAngle+"|"+p.inSwamp+"|"+Grenade.count+"|"+PlayerMissile.count+"|"+PlayerBullet.count+"|"+p.gunArmed+"|"+p.rumble;}
 class InputStub {up=false;down=false;left=false;right=false;fire=false;shoot=false;isUp(){return this.up;}isDown(){return this.down;}isLeft(){return this.left;}isRight(){return this.right;}isFire(){return this.fire;}isShoot(){return this.shoot;}}
 class ModeStub {constructor(){this.mines=new ArrayList();this.stageCompletedFlag=false;this.bossCameraPan=false;this.endingCameraPan=false;this.playing=true;this.paused=false;this.maxCameraY=4096;this.conveyorDelta=1;this.tileType=TILE_TYPE_EMPTY;this.gc={};}getTileType(){return this.tileType;}isDriveable(){return true;}}
 function reset(input,mode){runtimeMode=mode;runtimeMain={input,hasMissiles:false,missilePower:0,extraLives:4,konamiCode:{enabled:false},random:{nextInt(){return 0;}},pickupSound:{},weaponUpgradeSound:{},playerExplodeSound:{},playerWakes:Array(6),players:Array.from({length:4},()=>Array(5)),upgradeWeapon(){},playSound(){},stopAllSongs(){},requestMode(){},loseLife(){this.extraLives--;},drawImageAlpha(){},drawRotatedAlpha(){},drawVehicle(){}};Grenade.count=PlayerMissile.count=PlayerBullet.count=0;return new Player();}
