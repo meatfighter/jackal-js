@@ -61,17 +61,17 @@ The input-mapping format is stored separately from game state and has its own co
 
 ## Repository layout
 
-| Path                        | Purpose                                                                    |
-| --------------------------- | -------------------------------------------------------------------------- |
-| `pwa/`                      | TypeScript browser/PWA implementation and static resources                 |
-| `pwa/src/jackal/`           | Java-shaped TypeScript gameplay port                                       |
+| Path                          | Purpose                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| `pwa/`                        | TypeScript browser/PWA implementation and static resources               |
+| `pwa/src/jackal/`             | Java-shaped TypeScript gameplay port                                     |
 | `pwa/src/jackal/persistence/` | Save-state schema, validation, serialization, and restoration            |
-| `pwa/src/app/`              | Browser shell, preferences, lifecycle, storage, and viewport integration   |
-| `desktop/`                  | Maintained Java/Slick2D reference implementation and desktop packaging     |
-| `about/`                    | Source for the public project/about page                                   |
-| `scripts/`                  | Build, verification, packaging, benchmarks, and release tooling            |
-| `version.json`              | Application version/build-stamp source                                     |
-| `THIRD_PARTY_NOTICES.md`    | Third-party notices and attribution                                        |
+| `pwa/src/app/`                | Browser shell, preferences, lifecycle, storage, and viewport integration |
+| `desktop/`                    | Maintained Java/Slick2D reference implementation and desktop packaging   |
+| `about/`                      | Source for the public project/about page                                 |
+| `scripts/`                    | Build, verification, packaging, benchmarks, and release tooling          |
+| `version.json`                | Application version/build-stamp source                                   |
+| `THIRD_PARTY_NOTICES.md`      | Third-party notices and attribution                                      |
 
 Generated output such as `node_modules/`, `dist/`, `.release-components/`, and desktop build output is not source and should not be edited manually.
 
