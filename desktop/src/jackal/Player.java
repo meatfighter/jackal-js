@@ -22,15 +22,15 @@ public class Player {
   public static final int SENSOR_D_Y1;
   public static final int SENSOR_D_Y2;
   
-  public static final float[] RUMBLE = new float[17];
-  public static final float[] WAKE_ALPHAS = new float[17];
+  public static final int RUMBLE_STEPS = 85;
+  public static final float[] RUMBLE = new float[RUMBLE_STEPS];
+  public static final float[] WAKE_ALPHAS = new float[RUMBLE_STEPS];
   
   static {
-    float angle = 0;
-    for(int i = 0; i < 17; i++) {
+    for(int i = 0; i < RUMBLE_STEPS; i++) {
+      float angle = (float)((12 * Math.PI * i) / RUMBLE_STEPS);
       WAKE_ALPHAS[i] = 0.5f + 0.5f * (float)Math.sin(angle);
       RUMBLE[i] = 1.6f * (float)Math.sin(angle);
-      angle += 0.74f;
     }
     
     Point2D.Float p0 = Main.rotate(
@@ -393,6 +393,13 @@ public class Player {
       }
     } 
     
+    if (targetAngle != -1 && !gameMode.bossCameraPan
+        && !gameMode.endingCameraPan && gameMode.playing 
+        && !gameMode.paused
+        && ++rumble == RUMBLE_STEPS) {
+      rumble = 0;
+    }
+    
     if (invincible > 0) {
       invincible--;
     }
@@ -453,13 +460,6 @@ public class Player {
     if (respawning != 0) {
       return;
     }
-    
-    if (targetAngle != -1 && !gameMode.bossCameraPan
-        && !gameMode.endingCameraPan && gameMode.playing 
-        && !gameMode.paused
-        && ++rumble == 17) {
-      rumble = 0;
-    }    
     
     if (invincible > 0) {
       if (!gameMode.paused && ++invincibleColor == 4) {
