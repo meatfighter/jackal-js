@@ -12,10 +12,7 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
     assert.equal(packageJson.homepage, "https://meatfighter.com/jackal/");
     assert.equal(packageJson.repository.url, "git+https://github.com/meatfighter/jackal-js.git");
     assert.equal(packageJson.bugs.url, "https://github.com/meatfighter/jackal-js/issues");
-    assert.match(
-        packageLock.packages["node_modules/slick2d-ts"].resolved,
-        /^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/
-    );
+    assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/);
 });
 
 test("schema 10 is explicitly the first public saved-game format", () => {
@@ -38,10 +35,7 @@ test("PWA manifest has a dedicated maskable application icon", () => {
     const manifest = read("pwa/public/manifest.webmanifest");
     assert.match(manifest, /512x512-maskable\.png/);
     assert.match(manifest, /"purpose": "maskable"/);
-    assert.equal(
-        existsSync(join(rootDir, "pwa", "public", "resources", "icons", "512x512-maskable.png")),
-        true
-    );
+    assert.equal(existsSync(join(rootDir, "pwa", "public", "resources", "icons", "512x512-maskable.png")), true);
 });
 
 test("desktop public package excludes unsupported native trees", () => {
