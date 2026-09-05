@@ -1,9 +1,9 @@
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 
 import { MainConstants } from "../java/MainConstants.js";
-import { HardEndingMode } from "./HardEndingMode.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMode } from "./IMode.js";
+import { Modes } from "./Modes.js";
 import type { Main } from "./Main.js";
 export class IntroMapMode implements IMode, IFadeListener {
     public static readonly STATE_FADE_IN: number = 0;
@@ -32,13 +32,7 @@ export class IntroMapMode implements IMode, IFadeListener {
         } else {
             this.state = IntroMapMode.STATE_DONE;
             this.main.startPlayer();
-            this.main.stopAllSongs();
-            this.main.requestSong(this.main.endingSong);
-
-            // Temporary hard-ending rumble test: jump directly to the final-score jeep sequence.
-            const hardEnding = new HardEndingMode();
-            hardEnding.state = HardEndingMode.STATE_FINAL_SCORE_JEEP;
-            this.main.setMode(hardEnding, this.gc);
+            this.main.requestMode(Modes.GAME, this.gc);
         }
     }
 
