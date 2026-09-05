@@ -2112,7 +2112,7 @@ public class Main extends BasicGame {
         loadStages(stages);        
         break;        
       case 41:        
-        requestMode(Modes.SUNSET, gc);
+        requestMode(Modes.INTRO, gc);
         break;
     }
     
