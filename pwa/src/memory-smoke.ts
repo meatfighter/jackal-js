@@ -6,6 +6,7 @@ const host = document.querySelector<HTMLElement>("#game-host");
 if (result === null || host === null) {
     throw new Error("Memory smoke fixture is missing required elements.");
 }
+const resultElement = result;
 const gameHost = host;
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -52,8 +53,8 @@ async function initialize(): Promise<void> {
     const loader = new JackalRuntimeLoader(() => undefined);
     runtime = await loader.ensurePrepared(false);
     store = new runtime.JackalGameStateStore("memory-smoke");
-    result.dataset.status = "ready";
-    result.textContent = "Memory smoke fixture is ready.";
+    resultElement.dataset.status = "ready";
+    resultElement.textContent = "Memory smoke fixture is ready.";
 }
 
 async function runCycle(index: number): Promise<void> {
@@ -112,8 +113,8 @@ function cleanup(): void {
     store = null;
     runtime = null;
     localStorage.clear();
-    result.dataset.status = "cleaned";
-    result.textContent = "Memory smoke fixture cleaned up.";
+    resultElement.dataset.status = "cleaned";
+    resultElement.textContent = "Memory smoke fixture cleaned up.";
 }
 
 const memorySmokeGlobal = globalThis as typeof globalThis & { __jackalMemorySmoke?: MemorySmokeApi };
@@ -121,6 +122,6 @@ memorySmokeGlobal.__jackalMemorySmoke = { initialize, runCycle, destroyCycle, cl
 
 void initialize().catch((error: unknown) => {
     console.error(error);
-    result.dataset.status = "failed";
-    result.textContent = error instanceof Error ? (error.stack ?? error.message) : String(error);
+    resultElement.dataset.status = "failed";
+    resultElement.textContent = error instanceof Error ? (error.stack ?? error.message) : String(error);
 });
