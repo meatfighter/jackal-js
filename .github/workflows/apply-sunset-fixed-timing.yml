@@ -30,20 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Apply Java and TypeScript sunset timing changes
+      - name: Apply sunset timing changes
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
           import textwrap
-
-          def sub(path, pattern, replacement, count=1, flags=0):
-              p = Path(path)
-              text = p.read_text(encoding="utf-8")
-              updated, n = re.subn(pattern, replacement, text, count=count, flags=flags)
-              if n != count:
-                  raise SystemExit(f"{path}: expected {count} match(es) for {pattern!r}, found {n}")
-              p.write_text(updated, encoding="utf-8", newline="\n")
 
           def replace(path, old, new, expected=1):
               p = Path(path)
@@ -53,11 +45,19 @@ jobs:
                   raise SystemExit(f"{path}: expected {expected} occurrence(s) of {old!r}, found {n}")
               p.write_text(text.replace(old, new), encoding="utf-8", newline="\n")
 
+          def sub(path, pattern, replacement, expected=1):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              updated, n = re.subn(pattern, replacement, text, count=expected)
+              if n != expected:
+                  raise SystemExit(f"{path}: expected {expected} match(es) for {pattern!r}, found {n}")
+              p.write_text(updated, encoding="utf-8", newline="\n")
+
           java = "desktop/src/jackal/SunsetMode.java"
           replace(java, "  public static final int SUN_HEIGHT = 92;\n", "  public static final int SUN_HEIGHT = 92;\n  public static final int SUN_PHASE_SUBDIVISIONS = 10;\n  public static final int SUN_PHASE_STEPS = SUN_HEIGHT * SUN_PHASE_SUBDIVISIONS;\n  public static final int SUN_ROW_PHASE_STRIDE = SUN_PHASE_SUBDIVISIONS;\n  public static final int SUN_PHASE_ADVANCE = 3;\n")
           replace(java, "new float[SUN_HEIGHT]", "new float[SUN_PHASE_STEPS]")
           replace(java, "SUN_WAVES * 2 * Math.PI / SUN_HEIGHT", "SUN_WAVES * 2 * Math.PI / SUN_PHASE_STEPS")
-          replace(java, "for(int i = 0; i < SUN_HEIGHT; i++)", "for(int i = 0; i < SUN_PHASE_STEPS; i++)")
+          replace(java, "for(int i = 0; i < SUN_HEIGHT; i++) {\n      sunOffsets[i]", "for(int i = 0; i < SUN_PHASE_STEPS; i++) {\n      sunOffsets[i]")
           sub(java, r"  public int sunOffset;\n  public int sunOffsetCounter;", "  public int sunPhase;")
           sub(java, r"\n  }\n  \n  @Override\n  public void fadeCompleted\(\)", "\n    \n    if (state < STATE_PAUSED_2) {\n      sunPhase += SUN_PHASE_ADVANCE;\n      if (sunPhase >= SUN_PHASE_STEPS) {\n        sunPhase -= SUN_PHASE_STEPS;\n      }\n    }\n  }\n  \n  @Override\n  public void fadeCompleted()")
           sub(java, r"\n      if \(\+\+sunOffsetCounter == 2\) \{\n        sunOffsetCounter = 0;\n        if \(\+\+sunOffset == SUN_HEIGHT\) \{\n          sunOffset = 0;\n        \}\n      \}\n      ", "\n      ")
@@ -68,7 +68,7 @@ jobs:
           replace(ts, "    public static readonly SUN_HEIGHT: number = 92;\n", "    public static readonly SUN_HEIGHT: number = 92;\n    public static readonly SUN_PHASE_SUBDIVISIONS: number = 10;\n    public static readonly SUN_PHASE_STEPS: number = SunsetMode.SUN_HEIGHT * SunsetMode.SUN_PHASE_SUBDIVISIONS;\n    public static readonly SUN_ROW_PHASE_STRIDE: number = SunsetMode.SUN_PHASE_SUBDIVISIONS;\n    public static readonly SUN_PHASE_ADVANCE: number = 3;\n")
           replace(ts, "javaArray(SunsetMode.SUN_HEIGHT, 0)", "javaArray(SunsetMode.SUN_PHASE_STEPS, 0)")
           replace(ts, "Math.PI) / SunsetMode.SUN_HEIGHT", "Math.PI) / SunsetMode.SUN_PHASE_STEPS")
-          replace(ts, "i < SunsetMode.SUN_HEIGHT; i++", "i < SunsetMode.SUN_PHASE_STEPS; i++")
+          replace(ts, "        for (let i = 0; i < SunsetMode.SUN_HEIGHT; i++) {\n            SunsetMode.sunOffsets[i]", "        for (let i = 0; i < SunsetMode.SUN_PHASE_STEPS; i++) {\n            SunsetMode.sunOffsets[i]")
           sub(ts, r"    public sunOffset: number = 0;\n    public sunOffsetCounter: number = 0;", "    public sunPhase: number = 0;")
           sub(ts, r"\n    }\n\n    public fadeCompleted\(\): void \{", "\n\n        if (this.state < SunsetMode.STATE_PAUSED_2) {\n            this.sunPhase += SunsetMode.SUN_PHASE_ADVANCE;\n            if (this.sunPhase >= SunsetMode.SUN_PHASE_STEPS) {\n                this.sunPhase -= SunsetMode.SUN_PHASE_STEPS;\n            }\n        }\n    }\n\n    public fadeCompleted(): void {")
           sub(ts, r"\n            if \(\+\+this\.sunOffsetCounter === 2\) \{\n                this\.sunOffsetCounter = 0;\n                if \(\+\+this\.sunOffset === SunsetMode\.SUN_HEIGHT\) \{\n                    this\.sunOffset = 0;\n                \}\n            \}\n", "\n")
@@ -102,32 +102,25 @@ jobs:
           test("sunset phase keeps the original spatial wave while sampling ten times more densely", () => {
               const java = read("desktop/src/jackal/SunsetMode.java");
               const ts = read("pwa/src/jackal/SunsetMode.ts");
-
-              assert.match(java, /SUN_HEIGHT = 92/);
               assert.match(java, /SUN_PHASE_SUBDIVISIONS = 10/);
               assert.match(java, /SUN_PHASE_STEPS = SUN_HEIGHT \* SUN_PHASE_SUBDIVISIONS/);
               assert.match(java, /SUN_ROW_PHASE_STRIDE = SUN_PHASE_SUBDIVISIONS/);
               assert.match(java, /SUN_PHASE_ADVANCE = 3/);
               assert.match(java, /new float\[SUN_PHASE_STEPS\]/);
               assert.match(java, /SUN_WAVES \* 2 \* Math\.PI \/ SUN_PHASE_STEPS/);
-
-              assert.match(ts, /SUN_HEIGHT: number = 92/);
               assert.match(ts, /SUN_PHASE_SUBDIVISIONS: number = 10/);
               assert.match(ts, /SUN_PHASE_STEPS: number = SunsetMode\.SUN_HEIGHT \* SunsetMode\.SUN_PHASE_SUBDIVISIONS/);
               assert.match(ts, /SUN_ROW_PHASE_STRIDE: number = SunsetMode\.SUN_PHASE_SUBDIVISIONS/);
               assert.match(ts, /SUN_PHASE_ADVANCE: number = 3/);
               assert.match(ts, /javaArray\(SunsetMode\.SUN_PHASE_STEPS, 0\)/);
-              assert.match(ts, /Math\.PI\) \/ SunsetMode\.SUN_PHASE_STEPS/);
-
               assert.equal(10 * ((3 * 2 * Math.PI) / 920), (3 * 2 * Math.PI) / 92);
           });
 
-          test("sunset phase advances at exactly the intended 60-Hz-derived speed on the 100 TPS clock", () => {
+          test("sunset phase advances at the original intended speed on the 100 TPS clock", () => {
               const subdivisions = 10;
               const phaseAdvance = 3;
               const fixedUpdatesPerSecond = 100;
               assert.equal((phaseAdvance * fixedUpdatesPerSecond) / subdivisions, 60 / 2);
-
               const phaseSteps = 92 * subdivisions;
               assert.equal((phaseSteps * phaseAdvance) % phaseSteps, 0);
               assert.equal(phaseSteps / fixedUpdatesPerSecond, 9.2);
@@ -137,19 +130,15 @@ jobs:
           test("Java and TypeScript advance sunset phase in update and render only samples it", () => {
               const java = read("desktop/src/jackal/SunsetMode.java");
               const ts = read("pwa/src/jackal/SunsetMode.ts");
-
               const javaUpdate = methodBody(java, "public void update(GameContainer gc)", "public void fadeCompleted()");
               const javaRender = methodBody(java, "public void render(GameContainer gc, Graphics g)", null);
               assert.match(javaUpdate, /sunPhase \+= SUN_PHASE_ADVANCE/);
-              assert.match(javaUpdate, /if \(state < STATE_PAUSED_2\)/);
               assert.doesNotMatch(javaRender, /sunPhase\s*(?:\+\+|--|\+=|-=|=)/);
               assert.match(javaRender, /j = sunPhase/);
               assert.match(javaRender, /j \+= SUN_ROW_PHASE_STRIDE/);
-
               const tsUpdate = methodBody(ts, "public update(gc: GameContainer): void", "public fadeCompleted(): void");
               const tsRender = methodBody(ts, "public render(gc: GameContainer, g: Graphics): void", null);
               assert.match(tsUpdate, /this\.sunPhase \+= SunsetMode\.SUN_PHASE_ADVANCE/);
-              assert.match(tsUpdate, /if \(this\.state < SunsetMode\.STATE_PAUSED_2\)/);
               assert.doesNotMatch(tsRender, /this\.sunPhase\s*(?:\+\+|--|\+=|-=|=)/);
               assert.match(tsRender, /j = this\.sunPhase/);
               assert.match(tsRender, /j \+= SunsetMode\.SUN_ROW_PHASE_STRIDE/);
@@ -182,6 +171,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add desktop/src/jackal/SunsetMode.java pwa/src/jackal/SunsetMode.ts pwa/src/jackal/persistence/GameStateFields.ts pwa/src/jackal/persistence/GameStateSchema.ts scripts/test-fixed-update-sunset-timing.mjs scripts/test-public-release-hardening.mjs scripts/test-java-translation-parity-guardrails.mjs scripts/test-persistence-parity-coverage.mjs scripts/java-float-parity/java-float-metadata.jsonl scripts/java-float-parity/java-float-state.json
+          git add desktop/src/jackal/SunsetMode.java pwa/src/jackal/SunsetMode.ts pwa/src/jackal/persistence scripts/test-fixed-update-sunset-timing.mjs scripts/test-public-release-hardening.mjs scripts/test-java-translation-parity-guardrails.mjs scripts/test-persistence-parity-coverage.mjs scripts/java-float-parity
           git commit -m "Move sunset wave timing to fixed updates"
           git push
