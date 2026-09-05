@@ -135,11 +135,7 @@ public class FriendlyHelicopter extends GameElement {
   @Override
   public void update() {
     
-    if (slowRotor) {
-      rotorAngle -= rotorSpeed;
-    } else {
-      rotorAngle -= rotorSpeed;
-    }
+    rotorAngle -= rotorSpeed;
     if (rotorAngle <= -360) {
       rotorAngle += 360;
     }

@@ -157,11 +157,7 @@ export class FriendlyHelicopter extends GameElement {
     }
 
     public update(): void {
-        if (this.slowRotor) {
-            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);
-        } else {
-            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);
-        }
+        this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);
         if (this.rotorAngle <= -360) {
             this.rotorAngle = javaFloat(this.rotorAngle + 360);
         }
