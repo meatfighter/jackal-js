@@ -93,13 +93,17 @@ function runJava(workDir) {
     assert.equal(
         compile.status,
         0,
-        `javac failed:\n${compile.stdout}\n${compile.stderr}`
+        `javac failed:
+${compile.stdout}
+${compile.stderr}`
     );
     const run = spawnSync("java", ["-cp", classRoot, "jackal.PlayerHarness"], { encoding: "utf8" });
     assert.equal(
         run.status,
         0,
-        `Java Player harness failed:\n${run.stdout}\n${run.stderr}`
+        `Java Player harness failed:
+${run.stdout}
+${run.stderr}`
     );
     return run.stdout.trim().split(/\r?\n/).filter(Boolean);
 }
