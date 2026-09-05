@@ -59,7 +59,7 @@
         "memory:smoke": "node scripts/run-memory-smoke.mjs"
     },
     "dependencies": {
-        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#39689c01a336c7620a7e80f992fe33558ef9652a"
+        "slick2d-ts": "git+https://github.com/meatfighter/slick2d-ts.git#da6028a6c80c0a8acd0922531163d4b8f120632d"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
