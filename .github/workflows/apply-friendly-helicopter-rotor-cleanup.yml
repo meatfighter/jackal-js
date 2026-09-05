@@ -1,0 +1,51 @@
+name: Apply friendly helicopter rotor cleanup
+
+on:
+  push:
+    paths:
+      - .github/workflows/apply-friendly-helicopter-rotor-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Apply Java and TypeScript cleanup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = [
+              (
+                  "desktop/src/jackal/FriendlyHelicopter.java",
+                  b"    if (slowRotor) {\r\n      rotorAngle -= rotorSpeed;\r\n    } else {\r\n      rotorAngle -= rotorSpeed;\r\n    }\r\n",
+                  b"    rotorAngle -= rotorSpeed;\r\n",
+              ),
+              (
+                  "pwa/src/jackal/FriendlyHelicopter.ts",
+                  b"        if (this.slowRotor) {\n            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);\n        } else {\n            this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);\n        }\n",
+                  b"        this.rotorAngle = javaFloat(this.rotorAngle - this.rotorSpeed);\n",
+              ),
+          ]
+
+          for path, old, new in replacements:
+              p = Path(path)
+              data = p.read_bytes()
+              count = data.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one redundant rotor branch, found {count}")
+              p.write_bytes(data.replace(old, new))
+          PY
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add desktop/src/jackal/FriendlyHelicopter.java pwa/src/jackal/FriendlyHelicopter.ts
+          git commit -m "Remove redundant friendly helicopter rotor branch"
+          git push
