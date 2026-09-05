@@ -205,6 +205,9 @@ public class HardEndingMode implements IMode, IFadeListener {
   
   private void updateFinalScoreJeep() {
     if (jeepX < Main.DISPLAY_WIDTH + 50) {
+      if (++rumble == Player.RUMBLE_STEPS) {
+        rumble = 0;
+      }
       jeepX += Player.SPEED;
     } else {
       state = STATE_FINAL_SCORE;
@@ -285,9 +288,6 @@ public class HardEndingMode implements IMode, IFadeListener {
           g.clearWorldClip();
         }
         
-        if (++rumble == 17) {
-          rumble = 0;
-        }
         main.drawVehicle(main.players[0], 
             jeepX, 512 + Player.RUMBLE[rumble], 0);
       }            
@@ -332,4 +332,3 @@ public class HardEndingMode implements IMode, IFadeListener {
     }
   }
 }
-
