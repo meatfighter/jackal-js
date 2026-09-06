@@ -32,6 +32,8 @@
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
         "release": "npm run verify:dependencies && npm run build",
+        "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && node scripts/assert-clean-git.mjs",
+        "qualify:browsers": "npm run verify:production-browser",
         "release:web": "npm run verify:dependencies && npm run build:web",
         "release:desktop": "node scripts/release-desktop.mjs",
         "run:desktop": "node scripts/run-desktop.mjs",
