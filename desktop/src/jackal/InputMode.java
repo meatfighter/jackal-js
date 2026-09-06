@@ -479,7 +479,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   }
 
   private void syncControllerInputState() {
-    ControllerSupport.refreshControllersIfNeeded();
+
     controllerUpDown = ControllerSupport.isUpDown();
     controllerDownDown = ControllerSupport.isDownDown();
     controllerLeftDown = ControllerSupport.isLeftDown();
@@ -498,11 +498,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     message = "";
     state = STATE_READ_FADE;
     delay = FADE_TIME;
-  }
-
-  @Override
-  public boolean shouldRefreshControllers() {
-    return state == STATE_MENU || state == STATE_READING;
   }
 
   @Override

@@ -20,13 +20,11 @@ public class HumanInput implements IInput {
   public HumanInput(ButtonMapping buttonMapping, GameContainer gc) {
     this.buttonMapping = buttonMapping;
     this.input = gc.getInput();
+    ControllerSupport.initialize();
     syncControllerPressedRecord();
   }
 
   public void snap() {
-    if (ControllerSupport.refreshControllersIfNeeded()) {
-      syncControllerPressedRecord();
-    }
     mappedStartWasDown = mappedStartDown;
     nonDirectionalButtonWasDown = nonDirectionalButtonDown;
 
@@ -134,7 +132,7 @@ public class HumanInput implements IInput {
   }
 
   private void syncControllerPressedRecord() {
-    ControllerSupport.refreshControllersIfNeeded();
+
     mappedStartDown = ControllerSupport.isButtonDown(
         buttonMapping.controllerStart);
     mappedStartWasDown = mappedStartDown;

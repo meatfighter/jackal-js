@@ -120,15 +120,6 @@
         "ButtonMapping.save": {
             "reason": "Browser persistence is handled by JackalInputMappingStore."
         },
-        "ContinueMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
-        },
-        "DifficultyMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
-        },
-        "GameMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
-        },
         "HumanInput.isKeyDown": {
             "reason": "Browser keyboard state is read through the TypeScript input layer."
         },
@@ -140,9 +131,6 @@
         },
         "HumanInput.syncControllerPressedRecord": {
             "reason": "Browser gamepad edge tracking is implemented in the input runtime."
-        },
-        "IMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
         },
         "InputMode.bindControllerInputPressed": {
             "reason": "Browser gamepad binding uses browser input events/state."
@@ -168,14 +156,8 @@
         "InputMode.isDraftDirectionButton": {
             "reason": "Browser binding validation is implemented with the browser mapping model."
         },
-        "InputMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
-        },
         "InputMode.syncControllerInputState": {
             "reason": "Browser gamepad edge tracking is implemented in the input runtime."
-        },
-        "IntroMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
         },
         "Main.describe": {
             "reason": "Desktop display mode diagnostics have no browser equivalent."
@@ -212,9 +194,6 @@
         },
         "Main.updateControllerRefreshPolicy": {
             "reason": "Browser gamepad discovery is managed by the input runtime."
-        },
-        "OptionsMode.shouldRefreshControllers": {
-            "reason": "Browser controller refresh is handled by the input runtime."
         },
         "Main.loadClasses": {
             "reason": "ES module evaluation initializes imported class tables; the browser does not need Java Class.forName calls."

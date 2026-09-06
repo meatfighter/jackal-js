@@ -61,11 +61,6 @@ public class OptionsMode implements IMode, IFadeListener, IMenuListener {
   }  
   
   @Override
-  public boolean shouldRefreshControllers() {
-    return state == STATE_MENU;
-  }
-
-  @Override
   public void update(GameContainer gc) throws SlickException {
     menu.update();
     

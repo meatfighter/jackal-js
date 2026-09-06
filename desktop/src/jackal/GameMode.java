@@ -819,11 +819,6 @@ public class GameMode implements IMode, IFadeListener {
   }  
   
   @Override
-  public boolean shouldRefreshControllers() {
-    return paused;
-  }
-
-  @Override
   public void update(GameContainer gc) throws SlickException {  
     
     if (paused) {
