@@ -88,6 +88,9 @@ export class FriendlyHelicopter extends GameElement {
     public static readonly STATE_FLYING_AWAY: number = 5;
     public static readonly STATE_FLYING_TOWARD: number = 6;
 
+    private static readonly Z_GROUND: number = 1;
+    private static readonly Z_SKY: number = 0;
+
     private static readonly Y0: number = 128;
     private static readonly Y1: number = 116;
     private static readonly K1: number = javaFloat(FriendlyHelicopter.Y1 / FriendlyHelicopter.Y0);
