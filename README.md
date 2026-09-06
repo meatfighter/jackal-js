@@ -1,164 +1,81 @@
 # Jackal
 
-This repository contains the maintained **Jackal** project: the original Java/Slick2D recreation, the TypeScript Progressive Web App (PWA) port, the public project page, desktop packaging, and the tooling used to build and verify releases.
+**[Project page: meatfighter.com/jackal/](https://meatfighter.com/jackal/)** — background, gameplay, controls, and downloads.
 
-I originally recreated Konami's _Jackal_ in Java in 2013. In 2026 I translated the game to TypeScript and adapted it to modern browsers using [`slick2d-ts`](https://github.com/meatfighter/slick2d-ts). The Java source remains in the repository as the behavioral and structural reference for the browser port and as the source for downloadable desktop builds.
-
-This project is a reimplementation, not an emulator, and does not contain or run the original NES ROM.
-
-## Game
-
-_Jackal_ is an overhead run-and-gun game in which the player drives a jeep through six hostile territories, destroys enemy forces, rescues prisoners of war, and fights a boss at the end of each stage. The jeep starts with a machine gun and grenades; rescued prisoners can upgrade the grenades into increasingly powerful missiles.
-
-The recreation keeps the original game structure while adding enhanced graphics and animation, including smooth vehicle and turret rotation, transformed and semitransparent effects, animated cutscenes, smoother water and conveyor motion, helicopter shadows and rotor effects, and other details that take advantage of modern hardware.
-
-A separate **Hard Mode** uses the same six maps with substantially more aggressive enemy pressure and an extended ending.
-
-## Controls
-
-Jackal supports keyboard and gamepad input. The default mappings are:
-
-| Action            | Keyboard    | Gamepad     |
-| ----------------- | ----------- | ----------- |
-| Up                | Up Arrow    | D-pad Up    |
-| Down              | Down Arrow  | D-pad Down  |
-| Left              | Left Arrow  | D-pad Left  |
-| Right             | Right Arrow | D-pad Right |
-| Grenade / Missile | X           | A           |
-| Gun               | Z           | X           |
-| Start / Pause     | Enter       | Menu        |
-
-Mappings can be changed from **Options → Input** in the game.
-
-Two browser controls are reserved and cannot be remapped:
-
-| Key   | Action            |
-| ----- | ----------------- |
-| Space | Toggle fullscreen |
-| Esc   | Exit fullscreen   |
-
-## Browser version
-
-The PWA opens with a browser menu offering **New Game** and **Continue**. Save-ready state is stored in deployment-scoped browser storage so a game can be resumed after closing the tab or browser.
-
-During windowed play, the hamburger button opens the browser menu as a live overlay when the current state can safely be suspended. The game also suspends when the page loses focus or becomes hidden.
-
-The browser presentation supports:
-
-- **Smooth** — linear filtering.
-- **Crisp** — nearest-neighbor scaling.
-- **Pixel Perfect** — integer nearest-neighbor scaling with letterboxing when necessary.
-
-Rendering uses the native-resolution framebuffer support in `slick2d-ts`; gameplay continues to use Jackal's original logical coordinate system.
-
-## Save-state compatibility
-
-Browser saves use an explicit, versioned format with stable entity identifiers, exact runtime descriptors, reference validation, and conservative corruption bounds.
-
-Save schema **11** is the first public game-state format. Earlier schemas were development-only and are intentionally discarded. If an older build encounters a future public format, it leaves that save untouched rather than silently rewriting or deleting it. Oversized unknown stored state is likewise preserved rather than parsed by an older build.
-
-The input-mapping format is stored separately from game state and has its own compatibility version.
+This README covers development and maintenance of the Java and TypeScript implementations.
 
 ## Repository layout
 
-| Path                          | Purpose                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `pwa/`                        | TypeScript browser/PWA implementation and static resources               |
-| `pwa/src/jackal/`             | Java-shaped TypeScript gameplay port                                     |
-| `pwa/src/jackal/persistence/` | Save-state schema, validation, serialization, and restoration            |
-| `pwa/src/app/`                | Browser shell, preferences, lifecycle, storage, and viewport integration |
-| `desktop/`                    | Maintained Java/Slick2D reference implementation and desktop packaging   |
-| `about/`                      | Source for the public project/about page                                 |
-| `scripts/`                    | Build, verification, packaging, benchmarks, and release tooling          |
-| `version.json`                | Application version/build-stamp source                                   |
-| `THIRD_PARTY_NOTICES.md`      | Third-party notices and attribution                                      |
+| Path                                | Purpose                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `about/content.md`                  | Project-page prose; edit this to update the public article         |
+| `about/index.html`, `about/assets/` | Page template, SEO metadata placeholders, and artwork              |
+| `desktop/src/`                      | Maintained Java gameplay reference and resources                   |
+| `desktop/`                          | Desktop build, runtime libraries, and platform-specific packaging  |
+| `pwa/src/jackal/`                   | TypeScript gameplay port                                           |
+| `pwa/src/jackal/persistence/`       | Save schema, validation, serialization, and restoration            |
+| `pwa/src/app/`                      | Browser shell, preferences, session ownership, and lifecycle       |
+| `pwa/public/`                       | Static game resources and service worker                           |
+| `scripts/`                          | Build tools, local checks, generated metadata, and release tooling |
+| `version.json`                      | Version and build-stamp source                                     |
 
-Generated output such as `node_modules/`, `dist/`, `.release-components/`, and desktop build output is not source and should not be edited manually.
+Generated output belongs in `dist/`, `.release-components/`, and desktop build directories. Do not edit generated bundles or release metadata by hand.
 
-## Requirements
+## Getting started
 
-Use a Node.js version accepted by `package.json`:
+Use Node.js 24 and Git. Other supported Node versions are listed in [package.json](package.json). Desktop builds and checks that compile Java require JDK 21, with `javac` and `jar` on `PATH`.
 
-```text
-^20.19.0 || ^22.13.0 || >=24
-```
-
-Install JavaScript dependencies from the lockfile:
+Run commands from the repository root:
 
 ```sh
 npm ci
-```
-
-The maintained desktop build uses JDK 21.
-
-## Development
-
-Start the browser development server:
-
-```sh
 npm run dev
 ```
 
-Run the primary source verification gate:
+The commands also work in Windows PowerShell; use `npm.cmd` if PowerShell blocks `npm.ps1`.
 
-```sh
-npm run verify
-```
+## Common tasks
 
-Run the production dependency audit separately:
+| Task                                   | Command                                         | Output / notes                                                            |
+| -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| Run browser development server         | `npm run dev`                                   | Local URL printed by Vite                                                 |
+| Build PWA                              | `npm run build:pwa`                             | `.release-components/pwa/`                                                |
+| Build about page                       | `npm run build:about`                           | `.release-components/web/`                                                |
+| Preview about page                     | `npm run preview:about`                         | Run after `build:about`                                                   |
+| Build web distribution                 | `npm run build:web`                             | `.release-components/web/`; verifies source and includes desktop download |
+| Build / run desktop client             | `npm run build:desktop` / `npm run run:desktop` | See [desktop/README.md](desktop/README.md)                                |
+| Verify source                          | `npm run verify`                                | Tests, formatting, lint, TypeScript, and parity checks                    |
+| Check browser and offline behavior     | `npm run verify:browser`                        | See browser prerequisites below                                           |
+| Audit dependencies                     | `npm run verify:dependencies`                   | Queries current npm advisories                                            |
+| Verify and build complete distribution | `npm run build`                                 | `dist/`; clean-source release build                                       |
+| Audit, verify, and build release       | `npm run release`                               | `dist/`                                                                   |
+| Preview complete distribution          | `npm run preview:dist`                          | Run after building `dist/`                                                |
 
-```sh
-npm run verify:dependencies
-```
+Component builds use isolated output directories; building a component does not refresh the complete `dist/` distribution. Use the public scripts above rather than invoking internal `_build:*` steps directly.
 
-Run real-browser and offline-PWA verification:
+Browser fixtures use a locally installed Chrome, Chromium, or Edge. Set `CHROMIUM_PATH` to the executable if automatic discovery fails. Offline verification also needs a built PWA; consult [scripts/run-offline-verification.mjs](scripts/run-offline-verification.mjs) for its output-directory selection.
 
-```sh
-npm run verify:browser
-```
+For the separate Chromium/Firefox/WebKit qualification, install the browser engines locally with `npx playwright install chromium firefox webkit`, then run `npm run verify:production-browser` against an already built `dist/pwa/`. Set `PWA_ROOT` to use another built PWA directory. Linux also needs the Playwright system dependencies and a graphical display or Xvfb. See [RELEASING.md](RELEASING.md) for coverage limits and device checks. Run checks locally; GitHub Actions is not required for development.
 
-Build the complete release output:
+## Maintenance principles
 
-```sh
-npm run build
-```
+- Compare gameplay changes with the corresponding Java source. Preserve useful structural correspondence, fixed-step timing, Java numeric behavior, and random-state behavior.
+- Keep browser storage, networking, presentation, and lifecycle concerns in the browser-support layer where practical.
+- Avoid unnecessary temporary objects and repeated computation in update and render loops. Use the focused tests and available benchmarks in [package.json](package.json).
+- Preserve unsupported public saves and input mappings. Update schema validation and restoration together; never discard an unfamiliar public format merely to simplify an upgrade.
+- Regenerate affected resource or parity metadata through the repository scripts and check it before committing.
+- The [slick2d-ts](https://github.com/meatfighter/slick2d-ts) dependency is pinned to an immutable HTTPS commit archive. Update `package.json` and `package-lock.json` together, then verify gameplay and browser behavior against that engine revision.
 
-Useful focused checks are also exposed through the individual `test:*`, parity, formatting, linting, type-checking, and benchmark scripts in `package.json`.
+## Project page and deployment
 
-## Java/TypeScript parity
+Edit the article in [about/content.md](about/content.md); layout and SEO wiring live in [about/index.html](about/index.html) and [scripts/build-about.mjs](scripts/build-about.mjs).
 
-The TypeScript gameplay source intentionally retains much of the organization and numeric behavior of the Java implementation. Java-shaped structure is therefore not automatically technical debt.
+The canonical URL and Open Graph page URL identify `https://meatfighter.com/jackal/`. Play, download, and page-asset links are relative so the assembled site can be tested beneath a staging directory. Keep production canonical URLs during staging and configure a staging-only `X-Robots-Tag: noindex` response header at the host. That header is a hosting requirement, not something the current build adds.
 
-Dedicated tests cover structural parity, Java `float` behavior, fixed-step timing, player and mechanics differentials, save-state coverage, controller behavior, rendering/scaling integration, release integrity, and browser lifecycle behavior.
+## Further documentation
 
-When changing gameplay code, compare the corresponding Java implementation before replacing Java-shaped logic with a more idiomatic TypeScript design. Browser-only concerns such as storage, responsive presentation, service workers, lifecycle handling, and save/continue should remain outside the gameplay port where practical.
-
-## `slick2d-ts`
-
-The browser project depends on an exact immutable HTTPS archive of a qualified `slick2d-ts` commit. `package.json` and `package-lock.json` must agree on that revision. Treat engine updates as behavioral changes and qualify them against Jackal rather than repinning casually.
-
-## License and attribution
-
-The project source is licensed under **GPL-3.0-or-later**. See `LICENSE`.
-
-Third-party licenses, desktop runtime components, and attribution are documented in `THIRD_PARTY_NOTICES.md` and the desktop runtime documentation.
-
-Jackal is an unofficial fan-made recreation and is not affiliated with, sponsored by, or endorsed by Konami or Nintendo. Original game graphics, music, sound effects, characters, and other copyrighted material remain the property of their respective rights holders.
-
-The project is provided free of charge, contains no advertising, and generates no revenue.
-
-## Production readiness
-
-See [RELEASING.md](RELEASING.md) for browser qualification, reproducible source
-identification, build archives and checksums, artifact retention, and rollback.
-
-The PWA permits one writable game session per deployment path. Another tab can
-request **Continue here**; the current owner saves and closes its game before the
-new tab starts. Unresponsive owners are not forcibly displaced. This requires a
-secure context (HTTPS or localhost), Web Locks, and BroadcastChannel. Close legacy
-tabs during the first rollout so every open client uses the ownership protocol.
-
-Resource requests have a 30-second deadline covering response bodies as well as
-headers. Audio activation waits at most three seconds before allowing silent play.
-Unknown public save versions and oversized saves are preserved; **New Game** and
-**Reset** are the explicit paths for replacing protected saves.
+- [RELEASING.md](RELEASING.md): qualification, archives and checksums, retention, rollout, and rollback.
+- [desktop/README.md](desktop/README.md): Java build and runtime details.
+- [releases/README.md](releases/README.md): release tooling and local release state.
+- [LICENSE](LICENSE): source-code license, GPL-3.0-or-later.
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): third-party licenses and redistributed components.
