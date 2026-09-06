@@ -25,7 +25,6 @@ import {
     javaArray,
     javaByte,
     javaFloat,
-    javaInt,
     javaIntDiv
 } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";

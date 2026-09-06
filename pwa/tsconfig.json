@@ -16,6 +16,7 @@
         "isolatedModules": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitOverride": true,
+        "noUnusedLocals": true,
         "verbatimModuleSyntax": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
