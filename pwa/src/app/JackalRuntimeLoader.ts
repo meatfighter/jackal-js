@@ -78,15 +78,19 @@ export class JackalRuntimeLoader {
                         throw createAbortError();
                     }
                     this.prepared = runtime;
+                    Reflect.set(window, "__gameResourcesPrepared", true);
                     this.failure = null;
                     this.setProgress(1);
                     return runtime;
                 })
                 .catch((error) => {
-                    if (!isAbortFailure(error)) {
-                        this.failure = error;
+                    if (controller.signal.aborted) {
+                        throw createAbortError();
                     }
-                    throw error;
+                    // A resource deadline aborts its fetch, not this preparation.
+                    // Only cancellation requested by this loader may suppress Retry.
+                    this.failure = isAbortFailure(error) ? new Error("Resource loading timed out or was interrupted.", { cause: error }) : error;
+                    throw this.failure;
                 })
                 .finally(() => {
                     if (this.pending === preparation) {

@@ -1,3 +1,4 @@
+import { unlockGameAudio } from "./AudioUnlock.js";
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
@@ -458,6 +459,11 @@ export class JackalWebApp {
         appContainer.destroy();
     }
 
+    public releaseSession(): void {
+        this.saveCurrentGameState();
+        this.destroyGame();
+    }
+
     private destroyGame(): void {
         this.runtimeLoader.cancelPreparation();
         this.destroyGameSession();
@@ -560,7 +566,7 @@ export class JackalWebApp {
     }
 
     private async unlockAudio(): Promise<void> {
-        await SoundStore.get().unlock();
+        await unlockGameAudio();
     }
 
     private setAudioVolume(value: number): void {

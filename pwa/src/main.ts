@@ -1,4 +1,5 @@
 import "./styles.css";
+import { GameSessionOwnership } from "./app/GameSessionOwnership.js";
 import { JackalWebApp } from "./app/JackalWebApp.js";
 declare global {
     interface Window {
@@ -11,5 +12,13 @@ if (!(root instanceof HTMLElement)) {
     throw new Error("Jackal application root is missing.");
 }
 
-new JackalWebApp(root).showMenu();
-window.__jackalBooted = true;
+const app = new JackalWebApp(root);
+const ownership = new GameSessionOwnership(
+    root,
+    () => {
+        app.showMenu();
+        window.__jackalBooted = true;
+    },
+    () => app.releaseSession()
+);
+ownership.start();
