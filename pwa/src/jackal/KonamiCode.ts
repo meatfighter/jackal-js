@@ -1,58 +1,87 @@
-import type { GameContainer, Graphics, Input } from "slick2d-ts";
 import type { IInput } from "./IInput.js";
 import type { Main } from "./Main.js";
-
+export enum KonamiCodeKeys {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    GRENADE,
+    GUN
+}
 export class KonamiCode {
-    private static readonly SEQUENCE = [38, 38, 40, 40, 37, 39, 37, 39, 90, 88];
-
-    private readonly main: Main;
-    private sequenceIndex = 0;
-    private keyReleased = true;
-    private enabled = false;
-
     public constructor(main: Main) {
         this.main = main;
+        this.input = main.input;
     }
 
-    public update(_gc: GameContainer, input: IInput): void {
-        if (!this.keyReleased) {
-            this.keyReleased = !input.isUp() && !input.isDown() && !input.isLeft() && !input.isRight() && !input.isFire() && !input.isShoot();
+    // Try the following sequence on the title screen :)
+
+    private static readonly SEQUENCE: KonamiCodeKeys[] = [
+        KonamiCodeKeys.UP,
+        KonamiCodeKeys.UP,
+        KonamiCodeKeys.DOWN,
+        KonamiCodeKeys.DOWN,
+        KonamiCodeKeys.LEFT,
+        KonamiCodeKeys.RIGHT,
+        KonamiCodeKeys.LEFT,
+        KonamiCodeKeys.RIGHT,
+        KonamiCodeKeys.GUN,
+        KonamiCodeKeys.GRENADE
+    ];
+
+    public enabled: boolean = false;
+    public keyReleased: boolean = false;
+    public main: Main = null!;
+    public input: IInput = null!;
+    public sequenceIndex: number = 0;
+
+    public gettingClose(): boolean {
+        return (
+            !this.enabled &&
+            (KonamiCode.SEQUENCE[this.sequenceIndex] === KonamiCodeKeys.GRENADE || KonamiCode.SEQUENCE[this.sequenceIndex] === KonamiCodeKeys.GUN)
+        );
+    }
+
+    public update(): void {
+        if (!(this.input.isDown() || this.input.isUp() || this.input.isLeft() || this.input.isRight() || this.input.isShoot() || this.input.isFire())) {
+            this.keyReleased = true;
+        }
+
+        if (this.enabled) {
             return;
         }
 
-        let key = 0;
-        if (input.isUp()) {
-            key = 38;
-        } else if (input.isDown()) {
-            key = 40;
-        } else if (input.isLeft()) {
-            key = 37;
-        } else if (input.isRight()) {
-            key = 39;
-        } else if (input.isShoot()) {
-            key = 90;
-        } else if (input.isFire()) {
-            key = 88;
-        }
-
-        if (key === 0) {
-            return;
-        }
-
-        this.keyReleased = false;
-        if (key === KonamiCode.SEQUENCE[this.sequenceIndex]) {
-            this.sequenceIndex++;
-            if (this.sequenceIndex === KonamiCode.SEQUENCE.length) {
-                input.clearKeyPressedRecord();
-                this.main.playSoundAlways(this.main.weaponUpgradeSound);
-                this.enabled = true;
+        if (this.keyReleased) {
+            let key = null;
+            if (this.input.isUp()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.UP;
+            } else if (this.input.isDown()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.DOWN;
+            } else if (this.input.isLeft()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.LEFT;
+            } else if (this.input.isRight()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.RIGHT;
+            } else if (this.input.isFire()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.GRENADE;
+            } else if (this.input.isShoot()) {
+                this.keyReleased = false;
+                key = KonamiCodeKeys.GUN;
             }
-        } else {
-            this.sequenceIndex = key === KonamiCode.SEQUENCE[0] ? 1 : 0;
-        }
-    }
 
-    public isEnabled(): boolean {
-        return this.enabled;
+            if (key === KonamiCode.SEQUENCE[this.sequenceIndex]) {
+                if (++this.sequenceIndex === KonamiCode.SEQUENCE.length) {
+                    this.input.clearKeyPressedRecord();
+                    this.main.playSoundAlways(this.main.weaponUpgradeSound);
+                    this.enabled = true;
+                }
+            } else if (key !== null) {
+                this.sequenceIndex = 0;
+            }
+        }
     }
 }
