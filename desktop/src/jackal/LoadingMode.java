@@ -12,12 +12,9 @@ public class LoadingMode implements IMode {
   public void init(Main main, GameContainer gc) throws SlickException {
     this.main = main;
     this.gc = gc;
-    try {
-      main.hardMode = java.util.prefs.Preferences
-          .userNodeForPackage(Main.class)
-          .getBoolean("jackal-difficulty", false);
-    } catch(Throwable t) {
-    }
+    main.hardMode = java.util.prefs.Preferences
+        .userNodeForPackage(Main.class)
+        .getBoolean("jackal-difficulty", false);
   }
 
   @Override
