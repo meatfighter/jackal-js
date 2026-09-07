@@ -68,6 +68,10 @@ test("completing the Konami code consumes the final buffered press", async () =>
     };
     const konamiCode = new KonamiCode(main);
 
+    // The real title screen gets idle update frames before the first button press,
+    // which arms the detector by observing that all controls are released.
+    konamiCode.update();
+
     for (const control of ["up", "up", "down", "down", "left", "right", "left", "right", "shoot"]) {
         pressAndRelease(konamiCode, state, control);
     }
