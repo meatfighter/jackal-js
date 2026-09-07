@@ -36,6 +36,13 @@ public class DifficultyMode implements IMode, IFadeListener, IMenuListener {
     } else if (state == STATE_FADE_OUT) {
       state = STATE_DONE;
       main.hardMode = (selectedIndex == 1);
+      try {
+        java.util.prefs.Preferences prefs =
+            java.util.prefs.Preferences.userNodeForPackage(Main.class);
+        prefs.putBoolean("jackal-difficulty", main.hardMode);
+        prefs.flush();
+      } catch(Throwable t) {
+      }
       main.requestMode(Modes.INTRO, gc);
     }
   }  

@@ -1,5 +1,6 @@
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 
+import { writeDifficultyPreference } from "../app/AppPreferences.js";
 import { MainConstants } from "../java/MainConstants.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMenuListener } from "./IMenuListener.js";
@@ -38,6 +39,7 @@ export class DifficultyMode implements IMode, IFadeListener, IMenuListener {
         } else if (this.state === DifficultyMode.STATE_FADE_OUT) {
             this.state = DifficultyMode.STATE_DONE;
             this.main.hardMode = this.selectedIndex === 1;
+            writeDifficultyPreference(this.main.hardMode);
             this.main.requestMode(Modes.INTRO, this.gc);
         }
     }

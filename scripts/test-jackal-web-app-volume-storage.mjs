@@ -96,3 +96,50 @@ test("web app scaling preference storage is isolated by deployment path", async 
     assert.equal(preferences.readScalingPreference(), "smooth");
     assert.equal(storage.get(productionKey), "unsupported");
 });
+
+test("web app difficulty preference storage is isolated by deployment path", async () => {
+    storage.clear();
+    const preferences = await loadPreferences();
+    const stagingHref = "https://example.test/stage/pwa/?v=old";
+    const stagingUpdatedHref = "https://example.test/stage/pwa/?v=new";
+    const productionHref = "https://example.test/production/pwa/?v=old";
+    const stagingKey = storageKey(preferences.DIFFICULTY_STORAGE_KEY, stagingHref);
+    const productionKey = storageKey(preferences.DIFFICULTY_STORAGE_KEY, productionHref);
+
+    storage.set(productionKey, "normal");
+    setLocation(stagingHref);
+    assert.equal(preferences.readDifficultyPreference(), false);
+    assert.equal(preferences.writeDifficultyPreference(true), true);
+    assert.equal(storage.get(stagingKey), "hard");
+    assert.equal(storage.get(productionKey), "normal");
+
+    setLocation(stagingUpdatedHref);
+    assert.equal(preferences.readDifficultyPreference(), true);
+
+    setLocation(productionHref);
+    assert.equal(preferences.readDifficultyPreference(), false);
+    assert.equal(preferences.writeDifficultyPreference(true), true);
+    assert.equal(storage.get(productionKey), "hard");
+
+    storage.set(productionKey, "unsupported");
+    assert.equal(preferences.readDifficultyPreference(), false);
+    assert.equal(storage.get(productionKey), "unsupported");
+});
+
+test("clearing preferences resets difficulty without touching another deployment", async () => {
+    storage.clear();
+    const preferences = await loadPreferences();
+    const stagingHref = "https://example.test/stage/pwa/";
+    const productionHref = "https://example.test/production/pwa/";
+    const stagingDifficultyKey = storageKey(preferences.DIFFICULTY_STORAGE_KEY, stagingHref);
+    const productionDifficultyKey = storageKey(preferences.DIFFICULTY_STORAGE_KEY, productionHref);
+
+    storage.set(stagingDifficultyKey, "hard");
+    storage.set(productionDifficultyKey, "hard");
+    setLocation(stagingHref);
+
+    assert.equal(preferences.clearPreferences(), true);
+    assert.equal(preferences.readDifficultyPreference(), false);
+    assert.equal(storage.has(stagingDifficultyKey), false);
+    assert.equal(storage.get(productionDifficultyKey), "hard");
+});

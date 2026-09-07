@@ -2,8 +2,10 @@ import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 
 export const VOLUME_STORAGE_KEY = "jackal-volume";
 export const SCALING_STORAGE_KEY = "jackal-scaling";
+export const DIFFICULTY_STORAGE_KEY = "jackal-difficulty";
 export const DEFAULT_VOLUME = 0.1;
 export const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";
+export const DEFAULT_HARD_MODE = false;
 
 export const SCALING_MODE_DEFINITIONS = [
     { value: "smooth", label: "Smooth" },
@@ -16,6 +18,7 @@ export type JackalScalingPreference = ScalingModeDefinition["value"];
 
 const volumeStorage = new DeploymentStorageEntry(VOLUME_STORAGE_KEY, "Jackal volume preference");
 const scalingStorage = new DeploymentStorageEntry(SCALING_STORAGE_KEY, "Jackal scaling preference");
+const difficultyStorage = new DeploymentStorageEntry(DIFFICULTY_STORAGE_KEY, "Jackal difficulty preference");
 
 export function readVolume(): number {
     const result = volumeStorage.read();
@@ -53,10 +56,33 @@ function clearScalingPreference(): boolean {
     return scalingStorage.remove();
 }
 
+export function readDifficultyPreference(): boolean {
+    const result = difficultyStorage.read();
+    if (!result.available || result.value === null) {
+        return DEFAULT_HARD_MODE;
+    }
+    if (result.value === "hard") {
+        return true;
+    }
+    if (result.value === "normal") {
+        return false;
+    }
+    return DEFAULT_HARD_MODE;
+}
+
+export function writeDifficultyPreference(hardMode: boolean): boolean {
+    return difficultyStorage.write(hardMode ? "hard" : "normal");
+}
+
+function clearDifficultyPreference(): boolean {
+    return difficultyStorage.remove();
+}
+
 export function clearPreferences(): boolean {
     const volumeCleared = clearVolume();
     const scalingCleared = clearScalingPreference();
-    return volumeCleared && scalingCleared;
+    const difficultyCleared = clearDifficultyPreference();
+    return volumeCleared && scalingCleared && difficultyCleared;
 }
 
 export function isScalingPreference(value: unknown): value is JackalScalingPreference {
