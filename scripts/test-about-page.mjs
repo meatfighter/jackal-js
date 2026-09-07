@@ -15,14 +15,6 @@ const themeScript = readFileSync(join(aboutDir, "theme.js"), "utf8");
 const buildAboutSource = readFileSync(new URL("./build-about.mjs", import.meta.url), "utf8");
 const temporaryOutputDir = join(rootDir, ".release-test-about-images");
 
-const desktopZipProse = `The Java desktop version is available as a [ZIP file](__DESKTOP_ZIP__). Download and extract the ZIP, then run the launcher for your operating system:
-
-- Windows: \`run-windows.cmd\`
-- Linux: \`run-linux.sh\`
-- macOS: \`run-macos.sh\`
-
-Java 21 or newer is required.`;
-
 function renderedAboutFixture() {
     return renderAboutMarkdown(
         contentMarkdown
@@ -35,7 +27,12 @@ function renderedAboutFixture() {
 test("about Markdown content is the user-facing source of truth", () => {
     assert.match(contentMarkdown, /\[Play\]\(__PWA_URL__\)/);
     assert.match(contentMarkdown, /\[meatfighter\/jackal-js repository\]\(__REPO_URL__\)/);
-    assert.ok(contentMarkdown.includes(desktopZipProse));
+    assert.match(contentMarkdown, /\[ZIP file\]\(__DESKTOP_ZIP__\)/);
+    assert.match(contentMarkdown, /To use a gamepad with the Java version, connect and enable it before starting the game\./);
+    assert.match(contentMarkdown, /- Windows: `run-windows\.cmd`/);
+    assert.match(contentMarkdown, /- Linux: `run-linux\.sh`/);
+    assert.match(contentMarkdown, /- macOS: `run-macos\.sh`/);
+    assert.match(contentMarkdown, /Java 21 or newer is required\./);
     assert.doesNotMatch(contentMarkdown, /!\[Screenshot of Jackal gameplay\]/);
     assert.doesNotMatch(contentMarkdown, /\*\*\[here\]\*\*/);
     assert.doesNotMatch(contentMarkdown, /\bTODO\b/i);
