@@ -10,6 +10,7 @@ const APP_VERSION_TOKEN = "__APP_VERSION__";
 const BUILD_STAMP_TOKEN = "__BUILD_STAMP__";
 const BASE_URL_TOKEN = "__BASE_URL__";
 const RESOURCE_VERSIONS_TOKEN = "__RESOURCE_VERSIONS__";
+const RESOURCE_VERSION_TOKEN_PATTERN = /__RESOURCE_VERSION__\(([^)]+)\)/g;
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const pwaOutDir = process.env.JACKAL_PWA_OUT_DIR ?? "../.release-components/pwa";
 const buildVersionEnv = "JACKAL_BUILD_VERSION_JSON";
@@ -65,12 +66,24 @@ function collectResourceVersions(dir: string, baseDir = dir): Record<string, str
 
 const resourceVersions = collectResourceVersions(resourceRoot);
 
+function applyResourceVersionTokens(content: string): string {
+    return content.replace(RESOURCE_VERSION_TOKEN_PATTERN, (_match, ref: string) => {
+        const version = resourceVersions[ref];
+        if (version === undefined) {
+            throw new Error(`Unknown PWA resource version token: ${ref}`);
+        }
+        return version;
+    });
+}
+
 function applyBuildTokens(content: string, baseUrl: string): string {
-    return content
-        .replaceAll(APP_VERSION_TOKEN, versionInfo.version)
-        .replaceAll(BUILD_STAMP_TOKEN, versionInfo.buildStamp)
-        .replaceAll(BASE_URL_TOKEN, normalizeBaseUrl(baseUrl))
-        .replaceAll(RESOURCE_VERSIONS_TOKEN, JSON.stringify(resourceVersions));
+    return applyResourceVersionTokens(
+        content
+            .replaceAll(APP_VERSION_TOKEN, versionInfo.version)
+            .replaceAll(BUILD_STAMP_TOKEN, versionInfo.buildStamp)
+            .replaceAll(BASE_URL_TOKEN, normalizeBaseUrl(baseUrl))
+            .replaceAll(RESOURCE_VERSIONS_TOKEN, JSON.stringify(resourceVersions))
+    );
 }
 
 function collectPrecacheResources(dir: string, baseDir = dir): string[] {
