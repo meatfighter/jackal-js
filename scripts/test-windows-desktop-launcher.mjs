@@ -20,10 +20,7 @@ test("Windows desktop launcher tolerates paths containing parentheses", () => {
     const instrumentedLauncher = launcher
         .replace("java --enable-native-access=ALL-UNNAMED -version >nul 2>nul", "ver >nul")
         .replace("java --sun-misc-unsafe-memory-access=allow -version >nul 2>nul", "ver >nul")
-        .replace(
-            /^java %MODERN_FLAGS% .* -jar "%JAR%"$/m,
-            '> "%JACKAL_TEST_JAVA_LOG%" echo JAR=%JAR%\n>> "%JACKAL_TEST_JAVA_LOG%" echo NATIVES=%NATIVES%'
-        );
+        .replace(/^java %MODERN_FLAGS% .* -jar "%JAR%"$/m, '> "%JACKAL_TEST_JAVA_LOG%" echo JAR=%JAR%\n>> "%JACKAL_TEST_JAVA_LOG%" echo NATIVES=%NATIVES%');
     assert.notEqual(instrumentedLauncher, launcher);
     assert.doesNotMatch(instrumentedLauncher, /^java\b/im, "Launcher regression test must replace Java invocations with deterministic local commands");
 
