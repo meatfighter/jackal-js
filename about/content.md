@@ -67,9 +67,9 @@ In 2026, I rewrote the port in TypeScript and adapted it to modern web browsers.
 
 I applied a pixel-art upscaling algorithm to the graphics. Then I manually enhanced them, adding detail not present in the low-rez NES artwork.
 
-I gave the player's jeep, enemy vehicles, aircraft, gun turrets, and bombs smooth rotational movement. Modern browsers can readily apply affine transformations to images, while the NES had to represent changing directions with a limited number of separately drawn sprites. I used those sprites as key frames and interpolated the orientations between them. I even blurred the spinning blades of helicopters.
+I gave the player's jeep, enemy vehicles, aircraft, gun turrets, and bombs smooth rotational movement. Modern browsers can readily apply affine transformations to images, while the NES had to represent changing directions with a limited number of separately drawn sprites. I used those sprites as keyframes and interpolated the orientations between them. I even blurred the spinning blades of helicopters.
 
-I used similar graphical transformations for other effects. Explosions billow and scale as they expand, while flames use semitransparency. Bosses erupt in more elaborate fire effects when attacked. Aircraft cast semitransparent shadows on the ground. When the rescue helicopter takes off, its shadow scales and falls away as the helicopter gains altitude. The same effect is used for the Chinook that drops off the player's jeep in the prologue.
+I used similar graphical transformations for other effects. Explosions billow and scale as they expand, while flames use semitransparency. Bosses erupt in elaborate bursts of fire when hit. Aircraft cast semitransparent shadows on the ground. When the rescue helicopter takes off, its shadow scales and falls away as the helicopter gains altitude. The same effect is used for the Chinook that drops off the player's jeep in the prologue.
 
 I also introduced many subtle graphical details. Gunboat turrets rotate as they aim. The doors covering underground guns slide smoothly open before the guns rotate and target the player. The bodies of defeated enemy soldiers gradually fade away.
 
@@ -77,11 +77,11 @@ I animated the cutscenes, which originally consisted of static images.
 
 I made many environmental animations smoother as well. Water waves and conveyor belts animate continuously, and the flashing lights surrounding the rescue helicopter pads fade in and out. Broken stone columns cylindrically roll along the ground before gradually coming to rest.
 
-This port is not simply _Jackal_ with an upscaling filter. I wanted to preserve the look and character of the original game while taking advantage of modern hardware to add detail, animation, and effects not possible on the NES.
+This port is not simply _Jackal_ run through an upscaling filter. I wanted to preserve the look and character of the original game while taking advantage of modern hardware to add detail, animation, and effects not possible on the NES.
 
 # Hard Mode
 
-After completing the NES version of _Jackal_, the game starts again from the first stage at a somewhat higher difficulty. This second loop contains more aggressive enemies, but the changes are relatively subtle.
+After completing the NES version of _Jackal_, the game begins again from the first stage at a slightly higher difficulty. This second loop contains more aggressive enemies, but the changes are relatively subtle.
 
 My version features a separate **Hard Mode** that can be selected directly from the in-game menu. It uses the same six maps as the original game, but I substantially increased the number of enemies and made the stages much more intense. It is intended to feel like a genuinely different challenge rather than a lightly modified replay of the game.
 
