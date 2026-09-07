@@ -48,7 +48,7 @@ function makeInput() {
     };
 }
 
-function pressAndRelease(konamiCode, state, input, control) {
+function pressAndRelease(konamiCode, state, control) {
     state[control] = true;
     konamiCode.update();
     state[control] = false;
@@ -69,7 +69,7 @@ test("completing the Konami code consumes the final buffered press", async () =>
     const konamiCode = new KonamiCode(main);
 
     for (const control of ["up", "up", "down", "down", "left", "right", "left", "right", "shoot"]) {
-        pressAndRelease(konamiCode, state, input, control);
+        pressAndRelease(konamiCode, state, control);
     }
 
     assert.equal(konamiCode.enabled, false);
