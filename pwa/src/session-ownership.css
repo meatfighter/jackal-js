@@ -1,0 +1,38 @@
+.session-ownership-screen {
+    align-items: center;
+    background: #000000;
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 24px;
+    position: fixed;
+}
+
+.session-ownership-panel {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: center;
+    width: min(520px, calc(100vw - 48px));
+}
+
+.session-ownership-message {
+    color: var(--plain-white);
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .session-ownership-panel {
+        width: min(100%, calc(100vw - 32px));
+    }
+}

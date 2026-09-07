@@ -182,6 +182,7 @@ function verifyNoHardCodedRuntimePaths(files) {
 function verifyRelocatableUrls(indexHtml, manifest, listedResources) {
     const pageResourceRefs = [...htmlAttributeValues(indexHtml, "script", "src"), ...htmlAttributeValues(indexHtml, "link", "href")];
     const manifestHref = htmlLinkHref(indexHtml, "manifest");
+    const identityUrls = new Set();
 
     for (const pwaRoot of deploymentRoots) {
         for (const ref of pageResourceRefs) {
@@ -189,9 +190,14 @@ function verifyRelocatableUrls(indexHtml, manifest, listedResources) {
         }
 
         const manifestUrl = assertInsidePwaRoot("manifest link", manifestHref, pwaRoot, pwaRoot);
-        assertInsidePwaRoot("manifest id", manifest.id, manifestUrl.href, pwaRoot);
         assertInsidePwaRoot("manifest scope", manifest.scope, manifestUrl.href, pwaRoot);
-        assertInsidePwaRoot("manifest start_url", manifest.start_url, manifestUrl.href, pwaRoot);
+        const startUrl = assertInsidePwaRoot("manifest start_url", manifest.start_url, manifestUrl.href, pwaRoot);
+        const identityUrl = new URL(manifest.id, `${startUrl.origin}/`).href;
+        const expectedIdentityUrl = `${startUrl.origin}/jackal`;
+        if (identityUrl !== expectedIdentityUrl) {
+            throw new Error(`Manifest id must resolve from the start_url origin to the Jackal game identity: ${manifest.id} -> ${identityUrl}`);
+        }
+        identityUrls.add(identityUrl);
         for (const icon of manifest.icons ?? []) {
             assertInsidePwaRoot("manifest icon", icon.src, manifestUrl.href, pwaRoot);
         }
@@ -202,6 +208,12 @@ function verifyRelocatableUrls(indexHtml, manifest, listedResources) {
             assertInsidePwaRoot("precache resource", resource, pwaRoot, pwaRoot);
         }
     }
+
+    assert.deepEqual(
+        [...identityUrls],
+        ["https://example.invalid/jackal"],
+        "Manifest id must remain the same game identity when identical PWA bytes are mounted at different paths."
+    );
 }
 
 function verifyBuiltServiceWorkerRegistration(files) {

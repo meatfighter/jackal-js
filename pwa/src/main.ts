@@ -1,4 +1,5 @@
 import "./styles.css";
+import "./session-ownership.css";
 import { GameSessionOwnership } from "./app/GameSessionOwnership.js";
 import { JackalWebApp } from "./app/JackalWebApp.js";
 declare global {
