@@ -6,6 +6,6 @@ const manifestPath = new URL("../pwa/public/manifest.webmanifest", import.meta.u
 
 test("Jackal PWA manifest has a stable game-specific identity", () => {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-    assert.equal(manifest.id, "./jackal/");
-    assert.equal(new URL(manifest.id, "https://example.invalid/").pathname, "/jackal/");
+    assert.equal(manifest.id, "jackal");
+    assert.equal(new URL(manifest.id, "https://example.invalid/").pathname, "/jackal");
 });
