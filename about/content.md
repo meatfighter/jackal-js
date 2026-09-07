@@ -37,7 +37,11 @@ _Jackal_ opens with a browser menu that provides **New Game** and **Continue** b
 
 While playing outside fullscreen mode, a hamburger button appears in the upper-left corner of the game. Pressing it pauses the game and returns you to the browser menu.
 
-The browser menu also provides a volume control.
+The browser menu also provides:
+
+- **Scaling** — Controls how the game is resized to fit the display.
+- **Volume** — Adjusts the game volume.
+- **Reset** — Erases saved state and restores settings to their defaults.
 
 _Jackal_ automatically pauses when the browser loses focus and resumes when the browser regains focus.
 
