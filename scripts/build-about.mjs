@@ -63,9 +63,7 @@ await withReleaseOperationLock(async () => {
     const themePath = assertComponentReleaseOutputPath("about theme output file", join(outputDir, "theme.js"));
 
     ensureDirectory(outputDir);
-    const indexHtml = finalizeAboutPageHtml(
-        renderCheckedTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), pageReplacements, "about index page")
-    );
+    const indexHtml = finalizeAboutPageHtml(renderCheckedTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), pageReplacements, "about index page"));
     writeFileAtomic(indexPath, indexHtml);
     writeFileAtomic(stylesPath, renderCheckedTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), pageReplacements, "about stylesheet"));
     writeFileAtomic(themePath, renderCheckedTemplate(readFileSync(join(aboutDir, "theme.js"), "utf8"), pageReplacements, "about script"));
