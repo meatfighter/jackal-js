@@ -1,7 +1,7 @@
 {
     "name": "Jackal",
     "short_name": "Jackal",
-    "id": "./jackal/",
+    "id": "jackal",
     "start_url": "__BASE_URL__?v=__BUILD_STAMP__",
     "scope": "__BASE_URL__",
     "display": "standalone",
