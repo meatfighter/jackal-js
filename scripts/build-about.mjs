@@ -1,5 +1,6 @@
 import { writeFileAtomic } from "./atomic-file-utils.mjs";
 import { generateAboutImageAssets, titleImageHeight, titleImageSizes, titleImageWidth } from "./about-image-assets.mjs";
+import { finalizeAboutPageHtml, prepareAboutArticleHtml } from "./about-html.mjs";
 import { renderAboutMarkdown } from "./about-markdown.mjs";
 import { assertComponentReleaseOutputPath, componentReleaseDir, copyDirectory, ensureDirectory, readVersion, renderTemplate, rootDir } from "./build-utils.mjs";
 import { readFileSync } from "node:fs";
@@ -41,7 +42,7 @@ await withReleaseOperationLock(async () => {
     const renderedMarkdown = renderAboutMarkdown(contentMarkdown);
     const pageReplacements = {
         __APP_VERSION__: version.version,
-        __ARTICLE_HTML__: renderedMarkdown.articleHtml,
+        __ARTICLE_HTML__: prepareAboutArticleHtml(renderedMarkdown),
         __BUILD_STAMP__: version.buildStamp,
         __BUILD_STAMP_ENCODED__: encodedBuildStamp,
         __CANONICAL_URL__: canonicalUrl,
@@ -62,7 +63,10 @@ await withReleaseOperationLock(async () => {
     const themePath = assertComponentReleaseOutputPath("about theme output file", join(outputDir, "theme.js"));
 
     ensureDirectory(outputDir);
-    writeFileAtomic(indexPath, renderCheckedTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), pageReplacements, "about index page"));
+    const indexHtml = finalizeAboutPageHtml(
+        renderCheckedTemplate(readFileSync(join(aboutDir, "index.html"), "utf8"), pageReplacements, "about index page")
+    );
+    writeFileAtomic(indexPath, indexHtml);
     writeFileAtomic(stylesPath, renderCheckedTemplate(readFileSync(join(aboutDir, "styles.css"), "utf8"), pageReplacements, "about stylesheet"));
     writeFileAtomic(themePath, renderCheckedTemplate(readFileSync(join(aboutDir, "theme.js"), "utf8"), pageReplacements, "about script"));
     copyDirectory(join(aboutDir, "assets"), join(outputDir, "assets"), { assertTargetPath: assertComponentReleaseOutputPath });
