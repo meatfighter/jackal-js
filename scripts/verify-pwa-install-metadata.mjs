@@ -3,18 +3,11 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { assertPwaReleaseTreePath, componentReleaseDir, rootDir } from "./build-utils.mjs";
 
-const pwaDistDir = assertPwaReleaseTreePath(
-    "PWA release output directory",
-    resolve(rootDir, process.argv[2] ?? join(componentReleaseDir, "pwa"))
-);
+const pwaDistDir = assertPwaReleaseTreePath("PWA release output directory", resolve(rootDir, process.argv[2] ?? join(componentReleaseDir, "pwa")));
 const manifest = JSON.parse(readFileSync(join(pwaDistDir, "manifest.webmanifest"), "utf8"));
 const serviceWorker = readFileSync(join(pwaDistDir, "sw.js"), "utf8");
 const resourceVersions = readResourceVersions(serviceWorker);
-const relocationScopes = [
-    "https://example.invalid/jackal/pwa/",
-    "https://example.invalid/jackal-staging/pwa/",
-    "https://example.invalid/foo/bar/baz/pwa/"
-];
+const relocationScopes = ["https://example.invalid/jackal/pwa/", "https://example.invalid/jackal-staging/pwa/", "https://example.invalid/foo/bar/baz/pwa/"];
 const identityUrls = new Set();
 
 for (const scopeUrl of relocationScopes) {
