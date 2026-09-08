@@ -15,6 +15,7 @@ await withReleaseOperationLock(async () => {
             }
         });
         runNodeScript("scripts/verify-pwa-precache.mjs", [pwaOutDir]);
+        runNodeScript("scripts/verify-pwa-install-metadata.mjs", [pwaOutDir]);
     });
 
     console.log(`Built component PWA release in ${displayPath(pwaOutDir)}`);
