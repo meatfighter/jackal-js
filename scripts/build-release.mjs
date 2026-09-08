@@ -25,6 +25,7 @@ await withReleaseOperationLock(async () => {
             }
         });
         runNodeScript("scripts/verify-pwa-precache.mjs", [pwaOutDir]);
+        runNodeScript("scripts/verify-pwa-install-metadata.mjs", [pwaOutDir]);
         runNodeScript("scripts/build-about.mjs", [candidateDir], { env: sourceEnv });
         runNpmScript("build:desktop");
         runNodeScript("scripts/assemble.mjs", [candidateDir]);
