@@ -231,7 +231,7 @@ export class JackalWebApp {
         this.gameLaunchInProgress = true;
         this.syncScreenWakeLock();
         const session = this.gameSessionGeneration;
-        const audioUnlockPromise = this.unlockAudio().then(
+        const audioUnlockPromise = unlockGameAudio().then(
             () => ({ ok: true as const }),
             (error: unknown) => ({ ok: false as const, error })
         );
@@ -578,10 +578,6 @@ export class JackalWebApp {
 
     private syncScreenWakeLock(): void {
         this.screenWakeLock.setDesired(!this.liveMenuOpen && (this.gameLaunchInProgress || this.container !== null));
-    }
-
-    private async unlockAudio(): Promise<void> {
-        await unlockGameAudio();
     }
 
     private setAudioVolume(value: number): void {
