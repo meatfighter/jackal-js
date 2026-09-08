@@ -14,6 +14,7 @@ import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg }
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
 import { clearPersistedPwaState, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
 import { PersistenceWarningController } from "./PersistenceWarningController.js";
+import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
 import { APP_VERSION, BUILD_STAMP } from "./BuildInfo.js";
@@ -28,9 +29,11 @@ export class JackalWebApp {
     private gameStateStore: JackalGameStateStore | null = null;
     private readonly runtimeLoader = new JackalRuntimeLoader(() => this.refreshVisibleLoadingProgress());
     private readonly pageLifecycle = new PageLifecycleMonitor(() => this.applyCurrentGameLifecycleSuspension());
+    private readonly screenWakeLock = new ScreenWakeLockManager();
     private readonly viewport: GameViewportController;
     private readonly persistenceWarnings: PersistenceWarningController;
     private backgroundPreparationScheduled = false;
+    private gameLaunchInProgress = false;
     private container: AppGameContainer | null = null;
     private game: Main | null = null;
     private gameSessionGeneration = 0;
@@ -183,6 +186,7 @@ export class JackalWebApp {
         }
         this.removeMenuOverlay();
         this.liveMenuOpen = true;
+        this.syncScreenWakeLock();
         this.saveCurrentInputMapping();
         if (!this.game.browserSuspended) {
             this.saveCurrentGameState();
@@ -203,6 +207,7 @@ export class JackalWebApp {
             return;
         }
         this.removeMenuOverlay();
+        this.syncScreenWakeLock();
         this.container.getInput().resume();
         this.game.clearInputPressedRecords();
         if (this.viewport.gameHost !== null) {
@@ -223,6 +228,8 @@ export class JackalWebApp {
 
     private async startGame(restoreSavedGame: boolean): Promise<void> {
         this.destroyGameSession();
+        this.gameLaunchInProgress = true;
+        this.syncScreenWakeLock();
         const session = this.gameSessionGeneration;
         const audioUnlockPromise = this.unlockAudio().then(
             () => ({ ok: true as const }),
@@ -369,6 +376,8 @@ export class JackalWebApp {
         mainGame.clearInputPressedRecords();
         this.syncCurrentGameLifecycleSuspension();
         this.persistenceWarnings.showPending();
+        this.gameLaunchInProgress = false;
+        this.syncScreenWakeLock();
     }
 
     private returnToMenu(): void {
@@ -471,6 +480,7 @@ export class JackalWebApp {
 
     private destroyGameSession(): void {
         this.gameSessionGeneration++;
+        this.gameLaunchInProgress = false;
         this.removeMenuOverlay();
         this.saveCurrentInputMapping();
         this.resetLifecycleSuspension();
@@ -489,6 +499,7 @@ export class JackalWebApp {
         this.persistenceWarnings.clearToast();
         this.viewport.clear();
         this.runtimeLoader.preparedRuntime?.slick.Display.setParent(null);
+        this.syncScreenWakeLock();
     }
 
     private scheduleBackgroundPreparation(): void {
@@ -563,6 +574,10 @@ export class JackalWebApp {
 
     private resetLifecycleSuspension(): void {
         this.pageLifecycle.reset();
+    }
+
+    private syncScreenWakeLock(): void {
+        this.screenWakeLock.setDesired(!this.liveMenuOpen && (this.gameLaunchInProgress || this.container !== null));
     }
 
     private async unlockAudio(): Promise<void> {
