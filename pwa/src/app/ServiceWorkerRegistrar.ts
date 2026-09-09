@@ -1,19 +1,63 @@
-export function registerServiceWorker(buildStamp: string): void {
-    if (!("serviceWorker" in navigator)) {
+const SERVICE_WORKER_STARTUP_TIMEOUT_MS = 3000;
+let readinessPromise: Promise<void> | null = null;
+
+export function registerServiceWorker(buildStamp: string): Promise<void> {
+    readinessPromise ??= registerServiceWorkerOnce(buildStamp);
+    return readinessPromise;
+}
+
+/** Lets resource preparation avoid racing the first service-worker install. */
+export async function waitForServiceWorkerReadiness(): Promise<void> {
+    await readinessPromise;
+}
+
+async function registerServiceWorkerOnce(buildStamp: string): Promise<void> {
+    if (!("serviceWorker" in navigator) || location.protocol === "file:") {
         return;
     }
     if (import.meta.env.DEV) {
-        void clearDevelopmentServiceWorkers().catch((error: unknown) => {
+        await clearDevelopmentServiceWorkers().catch((error: unknown) => {
             console.warn("Unable to clear Jackal development service workers.", error);
         });
         return;
     }
-    window.addEventListener("load", () => {
-        const serviceWorkerUrl = new URL(`./sw.js?v=${encodeURIComponent(buildStamp)}`, window.location.href);
-        void navigator.serviceWorker.register(serviceWorkerUrl, { scope: "./" }).catch((error: unknown) => {
-            console.warn("Unable to register Jackal service worker.", error);
-        });
-    });
+
+    const serviceWorkerUrl = new URL(`./sw.js?v=${encodeURIComponent(buildStamp)}`, window.location.href);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let removeControllerListener = () => {};
+    let expired = false;
+    try {
+        await Promise.race([
+            (async () => {
+                await navigator.serviceWorker.register(serviceWorkerUrl.href, { scope: "./" });
+                if (expired) return;
+                await navigator.serviceWorker.ready;
+                if (expired || navigator.serviceWorker.controller !== null) return;
+                await new Promise<void>((resolve) => {
+                    const controlled = () => resolve();
+                    removeControllerListener = () => {
+                        navigator.serviceWorker.removeEventListener("controllerchange", controlled);
+                        resolve();
+                    };
+                    navigator.serviceWorker.addEventListener("controllerchange", controlled);
+                    if (navigator.serviceWorker.controller !== null) resolve();
+                });
+            })(),
+            new Promise<void>((resolve) => {
+                timeout = setTimeout(() => {
+                    expired = true;
+                    console.warn("Offline installation is still pending; continuing online.");
+                    resolve();
+                }, SERVICE_WORKER_STARTUP_TIMEOUT_MS);
+            })
+        ]);
+    } catch (error) {
+        console.warn("Unable to register Jackal service worker.", error);
+    } finally {
+        expired = true;
+        clearTimeout(timeout);
+        removeControllerListener();
+    }
 }
 
 async function clearDevelopmentServiceWorkers(): Promise<void> {
