@@ -40,3 +40,13 @@ test("service worker registration does not immediately issue a redundant update 
     assert.match(source, /navigator\.serviceWorker\.register/);
     assert.doesNotMatch(source, /registration\.update\(\)/);
 });
+
+test("first-run service worker readiness is bounded before runtime resource preload", () => {
+    const registrar = read("pwa/src/app/ServiceWorkerRegistrar.ts");
+    const loader = read("pwa/src/app/JackalRuntimeLoader.ts");
+    assert.match(registrar, /SERVICE_WORKER_STARTUP_TIMEOUT_MS = 3000/);
+    assert.match(registrar, /navigator\.serviceWorker\.ready/);
+    assert.match(registrar, /controllerchange/);
+    assert.doesNotMatch(registrar, /window\.addEventListener\("load"/);
+    assert.match(loader, /await waitForServiceWorkerReadiness\(\);/);
+});
