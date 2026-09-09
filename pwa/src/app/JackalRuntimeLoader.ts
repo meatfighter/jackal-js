@@ -2,6 +2,7 @@ import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { BUILD_STAMP } from "./BuildInfo.js";
 import { RESOURCE_VERSIONS } from "./ResourceVersions.js";
+import { waitForServiceWorkerReadiness } from "./ServiceWorkerRegistrar.js";
 
 const RESOURCE_CACHE_RETRY_COUNT = 5;
 const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
@@ -107,6 +108,10 @@ export class JackalRuntimeLoader {
 
     private async prepareAfterCancellation(cancellationBarrier: Promise<void>, signal: AbortSignal): Promise<PreparedRuntime> {
         await cancellationBarrier;
+        throwIfAborted(signal);
+        // On a first visit, let the bounded service-worker install settle before
+        // runtime preload starts fetching the same release resources itself.
+        await waitForServiceWorkerReadiness();
         throwIfAborted(signal);
         ResourceLoader.clearFailures();
         this.configureResourceLoader();
