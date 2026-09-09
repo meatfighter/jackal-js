@@ -1,9 +1,8 @@
 const SERVICE_WORKER_STARTUP_TIMEOUT_MS = 3000;
 let readinessPromise: Promise<void> | null = null;
 
-export function registerServiceWorker(buildStamp: string): Promise<void> {
+export function registerServiceWorker(buildStamp: string): void {
     readinessPromise ??= registerServiceWorkerOnce(buildStamp);
-    return readinessPromise;
 }
 
 /** Lets resource preparation avoid racing the first service-worker install. */
