@@ -159,6 +159,9 @@ export class JackalWebApp {
         );
 
         menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
+            if (this.pwaSessionState !== "menu") {
+                return;
+            }
             this.clearStoredGameState();
             commitVolume();
             void this.startGame(false);
@@ -235,7 +238,10 @@ export class JackalWebApp {
         const liveHost = this.viewport.gameHost;
         this.pwaSessionState = "starting";
         const audioUnlockPromise = unlockGameAudio();
-        await audioUnlockPromise;
+        const audioActivation = await audioUnlockPromise;
+        if (audioActivation === "superseded") {
+            return;
+        }
         if (
             this.pwaSessionState !== "starting" ||
             this.game !== liveGame ||
@@ -286,18 +292,12 @@ export class JackalWebApp {
         this.gameLaunchInProgress = true;
         this.syncScreenWakeLock();
         const session = this.gameSessionGeneration;
-        const audioUnlockPromise = unlockGameAudio().then(
-            () => ({ ok: true as const }),
-            (error: unknown) => ({ ok: false as const, error })
-        );
+        const audioUnlockPromise = unlockGameAudio();
 
         try {
-            const audioUnlock = await audioUnlockPromise;
-            if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
+            const audioActivation = await audioUnlockPromise;
+            if (audioActivation === "superseded" || !this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
                 return;
-            }
-            if (!audioUnlock.ok) {
-                throw audioUnlock.error;
             }
             this.setAudioVolume(this.volume);
             await this.launchPreparedGame(runtime, restoreSavedGame, session);
@@ -532,6 +532,8 @@ export class JackalWebApp {
     }
 
     private destroyGameSession(): void {
+        this.pwaSessionState = "stopping";
+        this.syncScreenWakeLock();
         this.gameSessionGeneration++;
         this.gameLaunchInProgress = false;
         releaseGameAudio();
