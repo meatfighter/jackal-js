@@ -39,11 +39,13 @@ test("live-menu transition freezes gameplay before saving and retiring audio", (
     assert.ok(liveMenu.indexOf("this.saveCurrentGameState();") < liveMenu.indexOf("releaseGameAudio();"));
 });
 
-test("Jackal song recovery cannot skip the second intro", () => {
+test("Jackal Song recovery never chooses or starts a replacement music segment", () => {
     const source = read("pwa/src/jackal/Song.ts");
     const resume = source.slice(source.indexOf("public resumeAfterBrowserSuspension"), source.indexOf("private resumeMusicPart"));
-    assert.match(resume, /if \(!this\.playedIntro2 && this\.intro2 !== null\) \{/);
-    assert.ok(resume.indexOf("this.intro2.play();") < resume.indexOf("this.loop.loop();"));
+    assert.match(resume, /this\.resumeMusicPart\(this\.intro\)/);
+    assert.match(resume, /this\.resumeMusicPart\(this\.intro2\)/);
+    assert.match(resume, /this\.resumeMusicPart\(this\.loop\)/);
+    assert.doesNotMatch(resume, /\.play\(|\.loop\(/);
 });
 
 test("obsolete controller selection flags do not survive in shared mappings", () => {
