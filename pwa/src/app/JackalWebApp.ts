@@ -215,9 +215,7 @@ export class JackalWebApp {
         this.container.setLoopSuspended(true);
         this.container.getInput().pause();
         this.saveCurrentInputMapping();
-        if (!this.game.browserSuspended || !this.saveCurrentGameState()) {
-            // browserSuspended is deliberately true here; save uses logical game state.
-        }
+        this.saveCurrentGameState();
         this.viewport.stopHamburgerVisibilityMonitor();
         this.viewport.hideHamburger();
         this.viewport.stopCursorAutoHide();
