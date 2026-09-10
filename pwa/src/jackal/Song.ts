@@ -100,6 +100,11 @@ export class Song {
         if (this.resumeMusicPart(this.loop)) {
             return;
         }
+        if (!this.playedIntro2 && this.intro2 !== null) {
+            this.playedIntro2 = true;
+            this.intro2.play();
+            return;
+        }
         if (this.loop !== null) {
             this.loop.loop();
         }
