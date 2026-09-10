@@ -1,11 +1,11 @@
 import { Music } from "slick2d-ts";
+
+/** Game-level sequencing only. Slick owns physical playback generations. */
 export class Song {
     private constructor() {}
 
     public static fromIntroPath(intro: string): Song {
-        const song = new Song();
-        song.intro = new Music(intro, Song.STREAMING);
-        return song;
+        return Song.fromIntroMusic(new Music(intro, Song.STREAMING));
     }
 
     public static fromIntroMusic(intro: Music): Song {
@@ -15,12 +15,7 @@ export class Song {
     }
 
     public static fromIntroAndLoopPaths(intro: string | null, loop: string): Song {
-        const song = new Song();
-        if (intro !== null) {
-            song.intro = new Music(intro, Song.STREAMING);
-        }
-        song.loop = new Music(loop, Song.STREAMING);
-        return song;
+        return Song.fromIntroAndLoopMusic(intro === null ? null : new Music(intro, Song.STREAMING), new Music(loop, Song.STREAMING));
     }
 
     public static fromIntroAndLoopMusic(intro: Music | null, loop: Music): Song {
@@ -31,15 +26,11 @@ export class Song {
     }
 
     public static fromTwoIntrosAndLoopPaths(intro: string | null, intro2: string | null, loop: string): Song {
-        const song = new Song();
-        if (intro !== null) {
-            song.intro = new Music(intro, Song.STREAMING);
-        }
-        if (intro2 !== null) {
-            song.intro2 = new Music(intro2, Song.STREAMING);
-        }
-        song.loop = new Music(loop, Song.STREAMING);
-        return song;
+        return Song.fromTwoIntrosAndLoopMusic(
+            intro === null ? null : new Music(intro, Song.STREAMING),
+            intro2 === null ? null : new Music(intro2, Song.STREAMING),
+            new Music(loop, Song.STREAMING)
+        );
     }
 
     public static fromTwoIntrosAndLoopMusic(intro: Music | null, intro2: Music | null, loop: Music): Song {
@@ -50,23 +41,18 @@ export class Song {
         return song;
     }
 
-    public static readonly STREAMING: boolean = false;
-
+    public static readonly STREAMING = false;
     public intro: Music | null = null;
     public intro2: Music | null = null;
     public loop: Music | null = null;
-    public playing: boolean = false;
-    public playedIntro2: boolean = false;
+    public playing = false;
+    public playedIntro2 = false;
 
     public stop(): void {
-        if (this.intro !== null && this.intro.playing()) {
-            this.intro.stop();
-        }
-        if (this.intro2 !== null && this.intro2.playing()) {
-            this.intro2.stop();
-        }
-        if (this.loop !== null && this.loop.playing()) {
-            this.loop.stop();
+        for (const music of [this.intro, this.intro2, this.loop]) {
+            if (music !== null && music.getTransportState() !== "stopped") {
+                music.stop();
+            }
         }
         this.playing = false;
         this.playedIntro2 = false;
@@ -77,55 +63,38 @@ export class Song {
             return;
         }
         this.stop();
-        if (this.intro === null && this.intro2 === null) {
-            this.loop!.loop();
-        } else if (this.intro === null) {
-            this.intro2!.play();
-        } else {
-            this.intro!.play();
-        }
         this.playing = true;
-    }
-
-    /**
-     * Compatibility hook for the retained game-level suspension API. Slick owns
-     * playback-generation reconstruction; this method may only nudge an already
-     * logically active Music part and must never choose or start a replacement.
-     */
-    public resumeAfterBrowserSuspension(): void {
-        if (!this.playing) {
-            return;
+        if (this.intro !== null) {
+            this.intro.play();
+        } else if (this.intro2 !== null) {
+            // A two-intro song with no first intro starts its second intro once.
+            this.playedIntro2 = true;
+            this.intro2.play();
+        } else if (this.loop !== null) {
+            this.loop.loop();
+        } else {
+            this.playing = false;
         }
-        if (this.resumeMusicPart(this.intro)) {
-            return;
-        }
-        if (this.resumeMusicPart(this.intro2)) {
-            return;
-        }
-        this.resumeMusicPart(this.loop);
-    }
-
-    private resumeMusicPart(music: Music | null): boolean {
-        if (music === null || !music.playing()) {
-            return false;
-        }
-        music.resume();
-        return true;
     }
 
     public update(): void {
-        if (this.playing) {
-            if (this.intro === null || !this.intro.playing()) {
-                if (!(this.intro2 === null || this.playedIntro2)) {
-                    this.playedIntro2 = true;
-                    this.intro2.play();
-                } else if ((this.intro2 === null || !this.intro2.playing()) && this.loop !== null && !this.loop.playing()) {
-                    this.loop.loop();
-                }
+        if (!this.playing || this.intro?.isTransportActive()) {
+            return;
+        }
+        if (this.intro2 !== null && !this.playedIntro2) {
+            this.playedIntro2 = true;
+            this.intro2.play();
+            return;
+        }
+        if (this.intro2?.isTransportActive()) {
+            return;
+        }
+        if (this.loop !== null) {
+            if (!this.loop.isTransportActive()) {
+                this.loop.loop();
             }
-            if (this.loop === null && !this.intro!.playing() && (this.intro2 === null || !this.intro2.playing())) {
-                this.stop();
-            }
+        } else {
+            this.stop();
         }
     }
 }
