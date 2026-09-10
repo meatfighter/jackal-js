@@ -14,7 +14,7 @@ test("starting a game requires boot-prepared runtime before fresh audio activati
     assert.ok(startGame.indexOf("this.destroyGameSession();") > startGame.indexOf("const runtime = this.runtimeLoader.preparedRuntime;"));
     assert.ok(startGame.indexOf("this.destroyGameSession();") < startGame.indexOf("const audioUnlockPromise = unlockGameAudio()"));
     assert.doesNotMatch(startGame, /ensurePrepared|renderLoading/);
-    assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\.ensurePrepared/);
+    assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\s*\.ensurePrepared/);
     assert.match(source, /private destroyGame\(\): void \{\s*this\.runtimeLoader\.cancelPreparation\(\);\s*this\.destroyGameSession\(\);/);
 });
 
