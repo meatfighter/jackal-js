@@ -1,55 +1,31 @@
-/** Tracks browser focus/visibility independently of the active Jackal game object. */
+/**
+ * Reports loss of page control to the PWA shell.
+ *
+ * Focus/visibility return is intentionally not reported: only an explicit
+ * New Game/Continue activation may return the application to gameplay.
+ */
 export class PageLifecycleMonitor {
-    private focusLost = false;
-    private visibilityLost = false;
-
     public constructor(private readonly changed: () => void) {
-        window.addEventListener("pagehide", () => this.handlePageHide());
-        window.addEventListener("pageshow", () => this.sync(true));
-        window.addEventListener("blur", () => this.handleBlur());
-        window.addEventListener("focus", () => this.handleFocus());
-        document.addEventListener("visibilitychange", () => this.handleVisibilityChange());
+        window.addEventListener("pagehide", this.changed);
+        window.addEventListener("blur", this.changed);
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                this.changed();
+            }
+        });
     }
 
     public get suspended(): boolean {
-        return this.focusLost || this.visibilityLost;
+        return document.visibilityState !== "visible" || !document.hasFocus();
     }
 
+    /** Re-check the current page state after a game has finished starting. */
     public sync(active: boolean): void {
-        if (!active) {
-            this.reset();
-            return;
+        if (active && this.suspended) {
+            this.changed();
         }
-        this.visibilityLost = document.visibilityState !== "visible";
-        this.focusLost = !document.hasFocus();
-        this.changed();
     }
 
-    public reset(): void {
-        this.focusLost = false;
-        this.visibilityLost = false;
-    }
-
-    private handlePageHide(): void {
-        this.visibilityLost = true;
-        this.changed();
-    }
-
-    private handleBlur(): void {
-        this.focusLost = true;
-        this.changed();
-    }
-
-    private handleFocus(): void {
-        this.focusLost = false;
-        this.changed();
-    }
-
-    private handleVisibilityChange(): void {
-        this.visibilityLost = document.visibilityState !== "visible";
-        if (!this.visibilityLost) {
-            this.focusLost = !document.hasFocus();
-        }
-        this.changed();
-    }
+    /** Compatibility no-op: return events no longer mutate lifecycle state. */
+    public reset(): void {}
 }
