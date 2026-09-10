@@ -1,3 +1,4 @@
+import type { MusicPlaybackSnapshot } from "slick2d-ts";
 import type { GameElementTypeId } from "./GameElementTypeIds.js";
 import type { MusicId, SongId, StandaloneModeId } from "./GameStateFields.js";
 import type { SupportedGameStateVersion } from "./GameStateSchema.js";
@@ -14,8 +15,7 @@ export type RandomSnapshot = {
 
 export type MusicSnapshot = {
     id: MusicId;
-    position: number;
-    volume: number;
+    playback: MusicPlaybackSnapshot;
 };
 
 export type SongSnapshot = {
