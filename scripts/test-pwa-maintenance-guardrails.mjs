@@ -6,11 +6,24 @@ import { join } from "node:path";
 
 const read = (path) => readFileSync(join(rootDir, path), "utf8");
 
-test("starting a game reuses any menu background preparation", () => {
+test("starting a game reuses boot-prepared runtime resources", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     assert.match(source, /private async startGame[\s\S]*?this\.destroyGameSession\(\);/);
+    assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\.ensurePrepared/);
     assert.match(source, /private destroyGame\(\): void \{\s*this\.runtimeLoader\.cancelPreparation\(\);\s*this\.destroyGameSession\(\);/);
     assert.doesNotMatch(source, /private async startGame[\s\S]{0,300}?this\.runtimeLoader\.cancelPreparation/);
+});
+
+test("page lifecycle is one-way into the PWA menu", () => {
+    const app = read("pwa/src/app/JackalWebApp.ts");
+    const lifecycle = read("pwa/src/app/PageLifecycleMonitor.ts");
+    assert.match(app, /new PageLifecycleMonitor\(\(\) => this\.requestPwaMenu\("page-lifecycle"\)\)/);
+    assert.match(app, /releaseGameAudio\(\);[\s\S]*this\.menuOverlay = this\.renderMenu/);
+    assert.match(lifecycle, /window\.addEventListener\("pagehide", this\.changed\)/);
+    assert.match(lifecycle, /window\.addEventListener\("blur", this\.changed\)/);
+    assert.match(lifecycle, /document\.visibilityState === "hidden"/);
+    assert.doesNotMatch(lifecycle, /window\.addEventListener\("focus"/);
+    assert.doesNotMatch(lifecycle, /window\.addEventListener\("pageshow"/);
 });
 
 test("obsolete controller selection flags do not survive in shared mappings", () => {
