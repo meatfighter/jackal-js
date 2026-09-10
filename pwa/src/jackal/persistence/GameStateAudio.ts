@@ -1,19 +1,13 @@
-import type { GameContainer, Music } from "slick2d-ts";
+import { Music, SoundStore, type GameContainer } from "slick2d-ts";
 import type { Main } from "../Main.js";
 import type { Song } from "../Song.js";
 import { SONG_IDS, parseMusicId, type MusicId, type SongId } from "./GameStateFields.js";
 import type { AudioStateSnapshot, JackalGameStateSnapshot, MusicSnapshot, SongSnapshot } from "./GameStateSnapshot.js";
 
-export function captureAudioStateSnapshot(main: Main): AudioStateSnapshot {
-    if (main.browserSuspended) {
-        return {
-            musicOn: main.browserSuspendedMusicOn,
-            soundOn: main.browserSuspendedSoundOn
-        };
-    }
+export function captureAudioStateSnapshot(_main: Main): AudioStateSnapshot {
     return {
-        musicOn: main.gc === null ? true : main.gc.isMusicOn(),
-        soundOn: main.gc === null ? true : main.gc.isSoundOn()
+        musicOn: SoundStore.get().musicOn(),
+        soundOn: SoundStore.get().soundsOn()
     };
 }
 
@@ -35,80 +29,65 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
     }
     const id = songIdFor(main, song);
     if (id === null) {
-        return null;
+        throw new Error("Unable to identify the current Jackal song.");
     }
     return {
         id,
         playing: song.playing,
         playedIntro2: song.playedIntro2,
-        activeMusic: captureActiveSongMusic(main, song)
+        activeMusic: captureActiveSongMusic(id, song)
     };
 }
 
+/**
+ * Restore is an atomic logical operation, not a sequence of play/seek/unmute
+ * callbacks. The shell commits its fresh generation after the entire game state
+ * is installed. Current and requested songs may intentionally differ mid-change.
+ */
 export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
-    const currentSongState = snapshot.currentSongState;
-    const currentSong = currentSongState === null ? null : songById(main, currentSongState.id);
-    const requestedSong = songById(main, snapshot.requestedSongId);
-    main.currentSong = currentSong;
-    main.requestedSong = requestedSong;
-
-    if (currentSongState === null || currentSong === null || currentSong !== requestedSong) {
-        restoreAudioEnabled(main, gc, snapshot.audioState);
+    if (!main.isBrowserRuntimeActive()) {
         return;
     }
-
-    currentSong.playing = currentSongState.playing;
-    currentSong.playedIntro2 = currentSongState.playedIntro2;
-    if (currentSongState.activeMusic !== null && currentSongState.playing) {
-        restoreActiveMusic(main, gc, snapshot.audioState, currentSongState.activeMusic);
-    } else {
-        restoreAudioEnabled(main, gc, snapshot.audioState);
+    main.stopAllSounds();
+    Music.resetPlaybackState();
+    gc.setMusicOn(snapshot.audioState.musicOn);
+    gc.setSoundOn(snapshot.audioState.soundOn);
+    const state = snapshot.currentSongState;
+    const currentSong = state === null ? null : songById(main, state.id);
+    main.currentSong = currentSong;
+    main.requestedSong = songById(main, snapshot.requestedSongId);
+    if (currentSong === null || state === null) {
+        return;
+    }
+    currentSong.playing = state.playing;
+    currentSong.playedIntro2 = state.playedIntro2;
+    if (state.activeMusic !== null) {
+        const music = musicById(main, state.activeMusic.id);
+        if (music === null) {
+            throw new Error(`Saved Jackal music part is unavailable: ${state.activeMusic.id}`);
+        }
+        music.restorePlaybackState(state.activeMusic.playback);
     }
 }
 
-function captureActiveSongMusic(main: Main, song: Song): MusicSnapshot | null {
-    if (song.intro !== null && song.intro.playing()) {
-        return captureMusic(main, song.intro);
-    }
-    if (song.intro2 !== null && song.intro2.playing()) {
-        return captureMusic(main, song.intro2);
-    }
-    if (song.loop !== null && song.loop.playing()) {
-        return captureMusic(main, song.loop);
+function captureActiveSongMusic(songId: SongId, song: Song): MusicSnapshot | null {
+    const parts = [
+        ["intro", song.intro],
+        ["intro2", song.intro2],
+        ["loop", song.loop]
+    ] as const;
+    for (const [suffix, music] of parts) {
+        if (music !== null && music.getTransportState() !== "stopped") {
+            // Some songs share Music objects. Identify the part through the
+            // current Song rather than the first globally matching alias.
+            return { id: `${songId}.${suffix}` as MusicId, playback: music.capturePlaybackState() };
+        }
     }
     return null;
-}
-
-function captureMusic(main: Main, music: Music): MusicSnapshot {
-    const id = musicIdForMusic(main, music);
-    if (id === null) {
-        throw new Error("Unable to identify music for game-state save.");
-    }
-    return {
-        id,
-        position: sanitizeMusicPosition(music.getPosition()),
-        volume: sanitizeMusicVolume(music.getVolume())
-    };
 }
 
 function songById(main: Main, id: SongId | null): Song | null {
     return id === null ? null : main[id];
-}
-
-function musicIdForMusic(main: Main, music: Music): MusicId | null {
-    for (const songId of SONG_IDS) {
-        const song = main[songId];
-        if (song.intro === music) {
-            return `${songId}.intro`;
-        }
-        if (song.intro2 === music) {
-            return `${songId}.intro2`;
-        }
-        if (song.loop === music) {
-            return `${songId}.loop`;
-        }
-    }
-    return null;
 }
 
 function musicById(main: Main, id: MusicId): Music | null {
@@ -125,70 +104,4 @@ function musicById(main: Main, id: MusicId): Music | null {
         case "loop":
             return song.loop;
     }
-}
-
-function restoreActiveMusic(main: Main, gc: GameContainer, audioState: AudioStateSnapshot, snapshot: MusicSnapshot): void {
-    const music = musicById(main, snapshot.id);
-    if (music === null || !main.isBrowserRuntimeActive()) {
-        restoreAudioEnabled(main, gc, audioState);
-        return;
-    }
-
-    const position = sanitizeMusicPosition(snapshot.position);
-    const volume = sanitizeMusicVolume(snapshot.volume);
-    const parts = parseMusicId(snapshot.id);
-    if (parts === null) {
-        restoreAudioEnabled(main, gc, audioState);
-        return;
-    }
-
-    gc.setMusicOn(false);
-    music.setVolume(volume);
-    music.setPosition(position);
-    if (parts.suffix === "loop") {
-        music.loop(1, volume);
-    } else {
-        music.play(1, volume);
-    }
-
-    void music
-        .ready()
-        .then(() => {
-            globalThis.setTimeout(() => {
-                if (!main.isBrowserRuntimeActive()) {
-                    return;
-                }
-                music.setPosition(position);
-                music.setVolume(volume);
-                restoreAudioEnabled(main, gc, audioState);
-            }, 0);
-        })
-        .catch(() => {
-            if (main.isBrowserRuntimeActive()) {
-                restoreAudioEnabled(main, gc, audioState);
-            }
-        });
-}
-
-function restoreAudioEnabled(main: Main, gc: GameContainer, audioState: AudioStateSnapshot): void {
-    if (!main.isBrowserRuntimeActive()) {
-        return;
-    }
-    if (main.browserSuspended) {
-        main.browserSuspendedMusicOn = audioState.musicOn;
-        main.browserSuspendedSoundOn = audioState.soundOn;
-        gc.setMusicOn(false);
-        gc.setSoundOn(false);
-        return;
-    }
-    gc.setMusicOn(audioState.musicOn);
-    gc.setSoundOn(audioState.soundOn);
-}
-
-function sanitizeMusicPosition(position: number): number {
-    return Number.isFinite(position) ? Math.max(0, position) : 0;
-}
-
-function sanitizeMusicVolume(volume: number): number {
-    return Number.isFinite(volume) ? Math.max(0, volume) : 1;
 }
