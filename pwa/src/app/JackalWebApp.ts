@@ -210,14 +210,14 @@ export class JackalWebApp {
         this.removeMenuOverlay();
         this.liveMenuOpen = true;
         this.syncScreenWakeLock();
-        this.saveCurrentInputMapping();
-        if (!this.game.browserSuspended) {
-            this.saveCurrentGameState();
-        }
         this.game.setBrowserSuspended(true);
         this.container.stopSoundEffects();
         this.container.setLoopSuspended(true);
         this.container.getInput().pause();
+        this.saveCurrentInputMapping();
+        if (!this.game.browserSuspended || !this.saveCurrentGameState()) {
+            // browserSuspended is deliberately true here; save uses logical game state.
+        }
         this.viewport.stopHamburgerVisibilityMonitor();
         this.viewport.hideHamburger();
         this.viewport.stopCursorAutoHide();
@@ -278,6 +278,11 @@ export class JackalWebApp {
         if (this.pwaSessionState !== "menu") {
             return;
         }
+        const runtime = this.runtimeLoader.preparedRuntime;
+        if (runtime === null) {
+            this.showMenu();
+            return;
+        }
         this.destroyGameSession();
         this.pwaSessionState = "starting";
         this.gameLaunchInProgress = true;
@@ -288,26 +293,7 @@ export class JackalWebApp {
             (error: unknown) => ({ ok: false as const, error })
         );
 
-        if (this.runtimeLoader.preparedRuntime === null) {
-            this.renderLoading(this.runtimeLoader.progress);
-        }
-
-        let runtime: PreparedRuntime;
         try {
-            runtime = await this.runtimeLoader.ensurePrepared(this.runtimeLoader.error !== null);
-        } catch (error) {
-            if (!this.isCurrentGameSession(session) || isRuntimePreparationAbort(error)) {
-                return;
-            }
-            console.error(error);
-            this.showResourceLoadError(error, restoreSavedGame);
-            return;
-        }
-
-        try {
-            if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
-                return;
-            }
             const audioUnlock = await audioUnlockPromise;
             if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
                 return;
@@ -323,16 +309,14 @@ export class JackalWebApp {
             }
             console.error(error);
             if (error instanceof ResourceLoadException) {
-                this.showResourceLoadError(error, restoreSavedGame);
+                this.showResourceLoadError(error);
                 return;
             }
             if (restoreSavedGame) {
                 this.showMenu("Unable to restore the saved game. Start a new game and try again.");
                 return;
             }
-            this.showLoadError("Unable to start.", "The game encountered an unexpected startup error. Reload the page and try again.", () => {
-                void this.startGame(false);
-            });
+            this.showLoadError("Unable to start.", "The game encountered an unexpected startup error. Reload the page and try again.", () => this.showMenu());
         }
     }
 
@@ -443,10 +427,15 @@ export class JackalWebApp {
         if (this.pwaSessionState === "booting" || this.pwaSessionState === "menu" || this.pwaSessionState === "stopping") {
             return;
         }
-        if (this.pwaSessionState === "starting" && this.liveMenuOpen) {
-            releaseGameAudio();
-            this.pwaSessionState = "menu";
-            this.syncScreenWakeLock();
+        if (this.pwaSessionState === "starting") {
+            if (this.liveMenuOpen) {
+                releaseGameAudio();
+                this.pwaSessionState = "menu";
+                this.syncScreenWakeLock();
+                return;
+            }
+            this.saveCurrentGameState();
+            this.showMenu();
             return;
         }
         if (this.game !== null && this.container !== null && !this.game.isLoadingScreenActive()) {
@@ -500,7 +489,7 @@ export class JackalWebApp {
         this.showLoadError("Unable to start.", message, () => this.showMenu());
     }
 
-    private showResourceLoadError(error: unknown, restoreSavedGame: boolean): void {
+    private showResourceLoadError(error: unknown): void {
         let message = "A required game resource could not be loaded. Try again.";
         if (error instanceof ResourceLoadException) {
             if (error.kind === "network" || (error.kind === "http" && error.status !== null && error.status >= 500)) {
@@ -511,10 +500,7 @@ export class JackalWebApp {
                 message = "A game resource could not be decoded by this browser.";
             }
         }
-        this.showLoadError("Unable to load the game.", message, () => {
-            this.pwaSessionState = "menu";
-            void this.startGame(restoreSavedGame);
-        });
+        this.showLoadError("Unable to load the game.", message, () => this.showMenu());
     }
 
     private showLoadError(title: string, message: string, retryHandler: () => void): void {
