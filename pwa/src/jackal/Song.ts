@@ -87,6 +87,11 @@ export class Song {
         this.playing = true;
     }
 
+    /**
+     * Compatibility hook for the retained game-level suspension API. Slick owns
+     * playback-generation reconstruction; this method may only nudge an already
+     * logically active Music part and must never choose or start a replacement.
+     */
     public resumeAfterBrowserSuspension(): void {
         if (!this.playing) {
             return;
@@ -97,17 +102,7 @@ export class Song {
         if (this.resumeMusicPart(this.intro2)) {
             return;
         }
-        if (this.resumeMusicPart(this.loop)) {
-            return;
-        }
-        if (!this.playedIntro2 && this.intro2 !== null) {
-            this.playedIntro2 = true;
-            this.intro2.play();
-            return;
-        }
-        if (this.loop !== null) {
-            this.loop.loop();
-        }
+        this.resumeMusicPart(this.loop);
     }
 
     private resumeMusicPart(music: Music | null): boolean {
