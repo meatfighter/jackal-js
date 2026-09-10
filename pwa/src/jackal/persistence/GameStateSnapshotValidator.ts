@@ -1,3 +1,4 @@
+import { isMusicPlaybackSnapshot } from "slick2d-ts";
 import {
     type AudioStateSnapshot,
     type ButtonMappingSnapshot,
@@ -56,7 +57,7 @@ const JEEP_YEAH_EXTRA_FIELDS = ["explosion", "leftPlane", "rightPlane", "fireLef
 const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
 const AUDIO_STATE_FIELDS = ["musicOn", "soundOn"] as const;
 const SONG_FIELDS = ["id", "playing", "playedIntro2", "activeMusic"] as const;
-const MUSIC_FIELDS = ["id", "position", "volume"] as const;
+const MUSIC_FIELDS = ["id", "playback"] as const;
 
 const MAX_APP_VERSION_LENGTH = 128;
 const MAX_SAVED_AT_LENGTH = 64;
@@ -130,7 +131,6 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     ) {
         return false;
     }
-
     const entityIds = new Set<number>();
     for (const entitySnapshot of gameMode.entities) {
         if (
@@ -144,7 +144,6 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         }
         entityIds.add(entitySnapshot.id);
     }
-
     const mainFields = snapshot.mainFields;
     if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
         return false;
@@ -278,7 +277,7 @@ function isNullableEncodedRecord(value: unknown): value is EncodedRecord | null 
     return value === null || isEncodedRecord(value, new Set<number>());
 }
 
-function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth: number = 0): value is EncodedRecord {
+function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth = 0): value is EncodedRecord {
     if (!isRecord(value) || depth > MAX_ENCODED_DEPTH || Object.keys(value).length > MAX_ENCODED_RECORD_FIELDS) {
         return false;
     }
@@ -301,7 +300,6 @@ function isEncodedValue(value: unknown, entityIds: Set<number> | undefined, dept
     if (!isRecord(value) || typeof value.kind !== "string") {
         return false;
     }
-
     switch (value.kind) {
         case "nonFiniteNumber":
             return hasExactFields(value, ["kind", "value"]) && (value.value === "NaN" || value.value === "Infinity" || value.value === "-Infinity");
@@ -397,14 +395,9 @@ function isMusicSnapshot(value: unknown): value is MusicSnapshot | null {
         (isRecord(value) &&
             hasExactFields(value, MUSIC_FIELDS) &&
             isMusicId(value.id) &&
-            typeof value.position === "number" &&
-            Number.isFinite(value.position) &&
-            value.position >= 0 &&
-            value.position <= MAX_MUSIC_POSITION_SECONDS &&
-            typeof value.volume === "number" &&
-            Number.isFinite(value.volume) &&
-            value.volume >= 0 &&
-            value.volume <= 1)
+            isMusicPlaybackSnapshot(value.playback) &&
+            value.playback.transport !== "stopped" &&
+            value.playback.positionSeconds <= MAX_MUSIC_POSITION_SECONDS)
     );
 }
 
