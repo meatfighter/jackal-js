@@ -66,6 +66,7 @@ test("playback activation is attempt-scoped and stale Continue cleanup cannot ta
     assert.match(resume, /const audio = beginGameAudio\(\)/);
     assert.match(resume, /commitGameAudio\(audio\)/);
     assert.match(resume, /isGameAudioLatest\(audio\)/);
+    assert.equal((resume.match(/isGameAudioLatest\(audio\)/g) ?? []).length, 2, "Continue catch and finally must both reject stale attempts.");
     assert.match(resume, /isStartingGameSession\(session, audio\)/);
 });
 
