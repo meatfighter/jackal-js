@@ -102,7 +102,7 @@ test("restore exceptions preserve the current stored game-state snapshot", async
     });
 });
 
-test("shared game-state preflight preserves future and oversized saves and blocks overwrite", async () => {
+test("shared game-state preflight preserves incompatible saves and blocks overwrite", async () => {
     await withMutedConsoleWarn(async () => {
         resetStorage();
         const { gameStorage } = await loadPersistenceModules();
@@ -128,27 +128,22 @@ test("shared game-state preflight preserves future and oversized saves and block
     });
 });
 
-test("game-state storage clears malformed and obsolete formats while retaining future data", async () => {
+test("game-state inspection never deletes future, obsolete, unsupported, or malformed data", async () => {
     resetStorage();
     const { JackalGameStateStore } = await loadPersistenceModules();
     const store = new JackalGameStateStore("1.0.0");
     const key = gameStateStorageKey();
 
-    storage.set(key, JSON.stringify({ version: currentGameStateVersion + 1, kind: "mode", futureShape: true }));
-    assert.equal(store.hasValidSave(), false);
-    assert.equal(storage.has(key), true);
-
-    storage.set(key, JSON.stringify({ version: 5, kind: "game", supported: true }));
-    assert.equal(store.hasValidSave(), false);
-    assert.equal(storage.has(key), false);
-
-    storage.set(key, JSON.stringify({ version: currentGameStateVersion - 1, kind: "game", supported: false }));
-    assert.equal(store.hasValidSave(), false);
-    assert.equal(storage.has(key), false);
-
-    storage.set(key, "{");
-    assert.equal(store.hasValidSave(), false);
-    assert.equal(storage.has(key), false);
+    for (const value of [
+        JSON.stringify({ version: currentGameStateVersion + 1, kind: "mode", futureShape: true }),
+        JSON.stringify({ version: 5, kind: "game", supported: true }),
+        JSON.stringify({ version: currentGameStateVersion - 1, kind: "game", supported: false }),
+        "{"
+    ]) {
+        storage.set(key, value);
+        assert.equal(store.hasValidSave(), false);
+        assert.equal(storage.get(key), value);
+    }
 });
 
 test("game-state inspection preserves data when storage reads fail", async () => {
