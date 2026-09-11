@@ -39,6 +39,18 @@ function encodedFields(names, overrides = {}) {
     return Object.assign(Object.fromEntries(names.map((name) => [name, 0])), overrides);
 }
 
+function playback(overrides = {}) {
+    return {
+        transport: "playing",
+        looped: true,
+        playbackRate: 1,
+        positionSeconds: 0,
+        volume: 1,
+        fade: null,
+        ...overrides
+    };
+}
+
 function baseSnapshot(fields, version) {
     return {
         version,
@@ -142,7 +154,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
-        activeMusic: { id: "stageSong0.loop", position: 0, volume: 2 }
+        activeMusic: { id: "stageSong0.loop", playback: playback({ volume: 2 }) }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(invalidVolume), false);
 
@@ -151,7 +163,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
-        activeMusic: { id: "bossSong.loop", position: 0, volume: 1 }
+        activeMusic: { id: "bossSong.loop", playback: playback() }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedMusic), false);
 
