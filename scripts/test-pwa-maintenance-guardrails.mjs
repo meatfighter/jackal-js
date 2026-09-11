@@ -61,6 +61,12 @@ test("failed persistence keeps the initialized live game continuable", () => {
     assert.doesNotMatch(liveMenu, /destroyGame\(/);
 });
 
+test("ownership relinquishment performs the final save before destructive cleanup", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const release = source.slice(source.indexOf("public releaseSession"), source.indexOf("private destroyGame"));
+    assert.ok(release.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState());") < release.indexOf("this.destroyGame();"));
+});
+
 test("Jackal Song sequencing uses logical transport and has no browser recovery authority", () => {
     const source = read("pwa/src/jackal/Song.ts");
     assert.match(source, /getTransportState\(\) !== "stopped"/);
