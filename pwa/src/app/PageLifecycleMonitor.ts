@@ -25,7 +25,4 @@ export class PageLifecycleMonitor {
             this.changed();
         }
     }
-
-    /** Compatibility no-op: return events no longer mutate lifecycle state. */
-    public reset(): void {}
 }
