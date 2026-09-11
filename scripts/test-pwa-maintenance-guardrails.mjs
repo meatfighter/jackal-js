@@ -52,6 +52,14 @@ test("Jackal Song sequencing uses logical transport and has no browser recovery 
     assert.doesNotMatch(source, /resumeAfterBrowserSuspension|resumeMusicPart|browser/i);
 });
 
+test("Jackal Main owns game state, not browser audio recovery policy", () => {
+    const source = read("pwa/src/jackal/Main.ts");
+    assert.doesNotMatch(source, /BrowserAudioController|browserAudioController|browserSuspendedMusicOn|browserSuspendedSoundOn|resumeBrowserAudio|resumeAfterBrowserSuspension/);
+    assert.match(source, /public browserSuspended: boolean = false/);
+    assert.match(source, /reserveBrowserRuntime\(\)/);
+    assert.match(source, /disposeBrowserRuntime\(\)/);
+});
+
 test("playback activation is attempt-scoped and stale Continue cleanup cannot target a replacement", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const resume = source.slice(source.indexOf("private async resumeLiveGameFromMenu"), source.indexOf("private removeMenuOverlay"));
@@ -59,6 +67,15 @@ test("playback activation is attempt-scoped and stale Continue cleanup cannot ta
     assert.match(resume, /commitGameAudio\(audio\)/);
     assert.match(resume, /isGameAudioLatest\(audio\)/);
     assert.match(resume, /isStartingGameSession\(session, audio\)/);
+});
+
+test("stale launch cleanup withdraws ownership before independent teardown", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const stale = source.slice(source.indexOf("private disposeStaleLaunch"), source.indexOf("public releaseSession"));
+    assert.ok(stale.indexOf("this.container = null;") < stale.indexOf("this.sessionCleanup.run("));
+    assert.ok(stale.indexOf("this.game = null;") < stale.indexOf("this.sessionCleanup.run("));
+    assert.match(stale, /this\.sessionCleanup\.run\(\s*\(\) => mainGame\.disposeBrowserRuntime\(\),\s*\(\) => appContainer\.destroy\(\)/s);
+    assert.doesNotMatch(stale, /try\s*\{[\s\S]*mainGame\.disposeBrowserRuntime\(\)[\s\S]*finally/);
 });
 
 test("obsolete controller selection flags do not survive in shared mappings", () => {
