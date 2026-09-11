@@ -52,6 +52,15 @@ test("live-menu transition freezes and retires playback before serializing progr
     assert.match(suspend, /releaseGameAudio\(\)/);
 });
 
+test("failed persistence keeps the initialized live game continuable", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
+    assert.match(liveMenu, /const saved = this\.sessionCleanup\.trySave\(\(\) => this\.saveCurrentGameState\(\)\)/);
+    assert.match(liveMenu, /Progress could not be saved\. Continue still preserves this live game\./);
+    assert.match(liveMenu, /this\.pwaSessionState = "menu";/);
+    assert.doesNotMatch(liveMenu, /destroyGame\(/);
+});
+
 test("Jackal Song sequencing uses logical transport and has no browser recovery authority", () => {
     const source = read("pwa/src/jackal/Song.ts");
     assert.match(source, /getTransportState\(\) !== "stopped"/);
@@ -75,6 +84,21 @@ test("playback activation is attempt-scoped and stale Continue cleanup cannot ta
     assert.match(resume, /isGameAudioLatest\(audio\)/);
     assert.equal((resume.match(/isGameAudioLatest\(audio\)/g) ?? []).length, 2, "Continue catch and finally must both reject stale attempts.");
     assert.match(resume, /isStartingGameSession\(session, audio\)/);
+});
+
+test("synchronous post-commit UI hooks are rechecked before RUNNING", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
+    const launchFocus = launch.indexOf("this.viewport.focusCanvas();");
+    const launchGuard = launch.indexOf("if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)", launchFocus);
+    const launchRunning = launch.indexOf('this.pwaSessionState = "running";', launchFocus);
+    assert.ok(launchFocus >= 0 && launchGuard > launchFocus && launchRunning > launchGuard);
+
+    const resume = source.slice(source.indexOf("private async resumeLiveGameFromMenu"), source.indexOf("private removeMenuOverlay"));
+    const resumeFocus = resume.indexOf("this.viewport.focusCanvas();");
+    const resumeGuard = resume.indexOf("if (!this.isStartingGameSession(session, audio))", resumeFocus);
+    const resumeRunning = resume.indexOf('this.pwaSessionState = "running";', resumeFocus);
+    assert.ok(resumeFocus >= 0 && resumeGuard > resumeFocus && resumeRunning > resumeGuard);
 });
 
 test("stale launch cleanup withdraws ownership before independent teardown", () => {
