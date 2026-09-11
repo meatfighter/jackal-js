@@ -8,7 +8,7 @@ const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jac
 export type StoredGameStateInspection =
     { readonly status: "unavailable" | "missing" | "invalid" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
 
-/** Read only this development epoch; old epochs use different deployment-scoped keys. */
+/** Read only this development epoch; old/invalid data is never mutated by inspection. */
 export function inspectStoredGameState(): StoredGameStateInspection {
     const stored = gameStateStorage.read();
     if (!stored.available) {
@@ -18,21 +18,15 @@ export function inspectStoredGameState(): StoredGameStateInspection {
         return { status: "missing" };
     }
     if (stored.value.length > MAX_GAME_STATE_TEXT_LENGTH) {
-        gameStateStorage.remove();
         return { status: "invalid" };
     }
     let snapshot: unknown;
     try {
         snapshot = JSON.parse(stored.value) as unknown;
     } catch {
-        gameStateStorage.remove();
         return { status: "invalid" };
     }
-    if (isSupportedGameStateSnapshot(snapshot)) {
-        return { status: "current", snapshot };
-    }
-    gameStateStorage.remove();
-    return { status: "invalid" };
+    return isSupportedGameStateSnapshot(snapshot) ? { status: "current", snapshot } : { status: "invalid" };
 }
 
 export function hasCurrentStoredGameState(): boolean {
