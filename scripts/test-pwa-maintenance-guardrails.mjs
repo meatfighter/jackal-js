@@ -6,24 +6,26 @@ import { join } from "node:path";
 
 const read = (path) => readFileSync(join(rootDir, path), "utf8");
 
-test("starting a game requires boot-prepared runtime before fresh audio activation", () => {
+test("starting a game requires boot-prepared runtime before fresh playback activation", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const startGame = source.slice(source.indexOf("private async startGame"), source.indexOf("private async launchPreparedGame"));
     assert.match(startGame, /const runtime = this\.runtimeLoader\.preparedRuntime;/);
     assert.match(startGame, /if \(runtime === null\) \{\s*this\.showMenu\(\);\s*return;\s*\}/);
     assert.ok(startGame.indexOf("this.destroyGameSession();") > startGame.indexOf("const runtime = this.runtimeLoader.preparedRuntime;"));
-    assert.ok(startGame.indexOf("this.destroyGameSession();") < startGame.indexOf("const audioUnlockPromise = unlockGameAudio()"));
-    assert.doesNotMatch(startGame, /ensurePrepared|renderLoading/);
+    assert.ok(startGame.indexOf("this.destroyGameSession();") < startGame.indexOf("const audio = beginGameAudio();"));
+    assert.ok(startGame.indexOf('this.pwaSessionState = "starting";') < startGame.indexOf("const audio = beginGameAudio();"));
+    assert.match(startGame, /await audio\.ready/);
+    assert.doesNotMatch(startGame, /unlockGameAudio|ensurePrepared|renderLoading/);
     assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\s*\.ensurePrepared/);
-    assert.match(source, /private destroyGame\(\): void \{\s*this\.runtimeLoader\.cancelPreparation\(\);\s*this\.destroyGameSession\(\);/);
+    assert.match(source, /private destroyGame\(\): boolean \{\s*this\.menuRequestSerial\+\+;\s*this\.sessionCleanup\.run\(\(\) => this\.runtimeLoader\.cancelPreparation\(\)\);\s*return this\.destroyGameSession\(\);/);
 });
 
 test("page lifecycle is one-way into the PWA menu, including during STARTING", () => {
     const app = read("pwa/src/app/JackalWebApp.ts");
     const lifecycle = read("pwa/src/app/PageLifecycleMonitor.ts");
     assert.match(app, /new PageLifecycleMonitor\(\(\) => this\.requestPwaMenu\("page-lifecycle"\)\)/);
-    assert.match(app, /if \(this\.pwaSessionState === "starting"\) \{[\s\S]*this\.showMenu\(\);[\s\S]*return;/);
-    assert.match(app, /releaseGameAudio\(\);[\s\S]*this\.menuOverlay = this\.renderMenu/);
+    assert.match(app, /private requestPwaMenu[\s\S]*?this\.pwaSessionState = "stopping";/);
+    assert.match(app, /private suspendGameForMenu[\s\S]*?releaseGameAudio\(\)/);
     assert.match(lifecycle, /window\.addEventListener\("pagehide", this\.changed\)/);
     assert.match(lifecycle, /window\.addEventListener\("blur", this\.changed\)/);
     assert.match(lifecycle, /document\.visibilityState === "hidden"/);
@@ -31,21 +33,32 @@ test("page lifecycle is one-way into the PWA menu, including during STARTING", (
     assert.doesNotMatch(lifecycle, /window\.addEventListener\("pageshow"/);
 });
 
-test("live-menu transition freezes gameplay before saving and retiring audio", () => {
+test("live-menu transition freezes and retires playback before serializing progress", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
-    assert.ok(liveMenu.indexOf("this.game.setBrowserSuspended(true);") < liveMenu.indexOf("this.saveCurrentGameState();"));
-    assert.ok(liveMenu.indexOf("this.container.setLoopSuspended(true);") < liveMenu.indexOf("this.saveCurrentGameState();"));
-    assert.ok(liveMenu.indexOf("this.saveCurrentGameState();") < liveMenu.indexOf("releaseGameAudio();"));
+    assert.ok(liveMenu.indexOf("this.suspendGameForMenu();") < liveMenu.indexOf("this.saveCurrentInputMapping();"));
+    assert.ok(liveMenu.indexOf("this.suspendGameForMenu();") < liveMenu.indexOf("this.saveCurrentGameState();"));
+    const suspend = source.slice(source.indexOf("private suspendGameForMenu"), source.indexOf("private showCleanupFailure"));
+    assert.match(suspend, /setLoopSuspended\(true\)/);
+    assert.match(suspend, /setBrowserSuspended\(true\)/);
+    assert.match(suspend, /getInput\(\)\.pause\(\)/);
+    assert.match(suspend, /releaseGameAudio\(\)/);
 });
 
-test("Jackal Song recovery never chooses or starts a replacement music segment", () => {
+test("Jackal Song sequencing uses logical transport and has no browser recovery authority", () => {
     const source = read("pwa/src/jackal/Song.ts");
-    const resume = source.slice(source.indexOf("public resumeAfterBrowserSuspension"), source.indexOf("private resumeMusicPart"));
-    assert.match(resume, /this\.resumeMusicPart\(this\.intro\)/);
-    assert.match(resume, /this\.resumeMusicPart\(this\.intro2\)/);
-    assert.match(resume, /this\.resumeMusicPart\(this\.loop\)/);
-    assert.doesNotMatch(resume, /\.play\(|\.loop\(/);
+    assert.match(source, /getTransportState\(\) !== "stopped"/);
+    assert.match(source, /isTransportActive\(\)/);
+    assert.doesNotMatch(source, /resumeAfterBrowserSuspension|resumeMusicPart|browser/i);
+});
+
+test("playback activation is attempt-scoped and stale Continue cleanup cannot target a replacement", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const resume = source.slice(source.indexOf("private async resumeLiveGameFromMenu"), source.indexOf("private removeMenuOverlay"));
+    assert.match(resume, /const audio = beginGameAudio\(\)/);
+    assert.match(resume, /commitGameAudio\(audio\)/);
+    assert.match(resume, /isGameAudioLatest\(audio\)/);
+    assert.match(resume, /isStartingGameSession\(session, audio\)/);
 });
 
 test("obsolete controller selection flags do not survive in shared mappings", () => {
