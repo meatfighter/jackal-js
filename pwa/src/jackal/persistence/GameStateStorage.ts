@@ -8,7 +8,7 @@ const gameStateStorage = new DeploymentStorageEntry(GAME_STATE_STORAGE_KEY, "Jac
 export type StoredGameStateInspection =
     { readonly status: "unavailable" | "missing" | "invalid" } | { readonly status: "current"; readonly snapshot: JackalGameStateSnapshot };
 
-/** Read only this development epoch; old/invalid data is never mutated by inspection. */
+/** Read-only inspection. Incompatible data is retained until an explicitly owned clear/reset. */
 export function inspectStoredGameState(): StoredGameStateInspection {
     const stored = gameStateStorage.read();
     if (!stored.available) {
@@ -33,10 +33,18 @@ export function hasCurrentStoredGameState(): boolean {
     return inspectStoredGameState().status === "current";
 }
 
-/** A failed validation or write leaves the last successfully written snapshot intact. */
+/**
+ * A failed validation/write leaves the last successfully written snapshot intact.
+ * Unknown data is never overwritten opportunistically; an owned New Game/Reset path
+ * must explicitly clear it first.
+ */
 export function writeStoredGameState(snapshot: JackalGameStateSnapshot): boolean {
     try {
         if (!isSupportedGameStateSnapshot(snapshot)) {
+            return false;
+        }
+        const existing = inspectStoredGameState();
+        if (existing.status === "unavailable" || existing.status === "invalid") {
             return false;
         }
         const text = JSON.stringify(snapshot);
