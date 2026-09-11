@@ -319,8 +319,6 @@ export class Main extends BasicGame {
     public windowedDisplayModeProvider: (() => WindowedDisplayMode) | null = null;
     public browserFullscreenController: BrowserFullscreenController | null = null;
     public browserSuspended: boolean = false;
-    public browserSuspendedMusicOn: boolean = true;
-    public browserSuspendedSoundOn: boolean = true;
     private loadingFinishedNotified: boolean = false;
     private browserRuntimeActive: boolean = false;
 
@@ -2074,37 +2072,11 @@ export class Main extends BasicGame {
         this.browserFullscreenController = null;
     }
 
+    /** PWA suspension controls simulation/input, never logical audio preferences. */
     public setBrowserSuspended(suspended: boolean): void {
-        if (this.browserSuspended === suspended) {
-            return;
-        }
         this.browserSuspended = suspended;
-        if (suspended) {
-            this.browserSuspendedMusicOn = this.gc === null ? true : this.gc.isMusicOn();
-            this.browserSuspendedSoundOn = this.gc === null ? true : this.gc.isSoundOn();
-            if (this.gc !== null) {
-                this.gc.setMusicOn(false);
-                this.gc.setSoundOn(false);
-            }
-            this.clearInputPressedRecords();
-        } else {
-            if (this.gc !== null) {
-                this.gc.setMusicOn(this.browserSuspendedMusicOn);
-                this.gc.setSoundOn(this.browserSuspendedSoundOn);
-            }
-            this.resumeBrowserAudio();
-            this.clearInputPressedRecords();
-            this.resetNextFrameTime();
-        }
-    }
-
-    private resumeBrowserAudio(): void {
-        if (this.gc === null || !this.browserSuspendedMusicOn || !this.gc.isMusicOn()) {
-            return;
-        }
-        if (this.currentSong !== null) {
-            this.currentSong.resumeAfterBrowserSuspension();
-        }
+        this.clearInputPressedRecords();
+        this.resetNextFrameTime();
     }
 
     public stopAllSounds(): void {
