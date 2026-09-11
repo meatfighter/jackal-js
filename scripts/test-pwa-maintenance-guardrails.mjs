@@ -33,6 +33,13 @@ test("page lifecycle is one-way into the PWA menu, including during STARTING", (
     assert.doesNotMatch(lifecycle, /window\.addEventListener\("pageshow"/);
 });
 
+test("graphics lifecycle is exit-only and restoration never resumes gameplay", () => {
+    const source = read("pwa/src/app/JackalWebApp.ts");
+    const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
+    assert.match(launch, /setGraphicsLifecycleHandler\(\(state\) => \{[\s\S]*?state === "lost"[\s\S]*?requestPwaMenu\("graphics-context-lost"\)/);
+    assert.doesNotMatch(launch, /state === "restored"[\s\S]*?(?:setLoopSuspended\(false\)|setBrowserSuspended\(false\)|beginGameAudio\(|commitGameAudio\()/);
+});
+
 test("live-menu transition freezes and retires playback before serializing progress", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
