@@ -52,10 +52,22 @@ test("Jackal PWA exposes a persisted scaling menu with Smooth as the default", (
 test("Jackal PWA reset clears persisted state and restores menu defaults", () => {
     assert.match(webAppSource, /id="reset-button" class="reset-button" type="button">Reset<\/button>/);
     assert.match(webAppSource, /addEventListener\("click", \(\) => this\.resetPwaState\(\)\);/);
-    assert.match(
-        webAppSource,
-        /private resetPwaState\(\): void \{\s*this\.destroyGame\(\);\s*this\.clearPwaStorage\(\);\s*this\.volume = DEFAULT_VOLUME;\s*this\.scalingPreference = DEFAULT_SCALING_PREFERENCE;[\s\S]*?this\.renderMenu\(this\.root, false, null, false\);/
-    );
+
+    const start = webAppSource.indexOf("private resetPwaState(): void");
+    const end = webAppSource.indexOf("private clearPwaStorage(): void", start);
+    assert.ok(start >= 0 && end > start);
+    const reset = webAppSource.slice(start, end);
+
+    assert.match(reset, /if \(!this\.canActivateFromMenu\(\)\) \{\s*return;\s*\}/);
+    assert.match(reset, /if \(!this\.destroyGame\(\)\) \{\s*return;\s*\}/);
+
+    const destroy = reset.indexOf("if (!this.destroyGame())");
+    const clear = reset.indexOf("this.clearPwaStorage();");
+    const volume = reset.indexOf("this.volume = DEFAULT_VOLUME;");
+    const scaling = reset.indexOf("this.scalingPreference = DEFAULT_SCALING_PREFERENCE;");
+    const render = reset.indexOf("this.renderMenu(this.root, false, null, false);");
+    assert.ok(destroy >= 0 && clear > destroy && volume > clear && scaling > volume && render > scaling);
+
     assert.match(webAppSource, /clearPersistedPwaState\(this\.inputMappingStore, this\.persistenceWarnings\)/);
     assert.doesNotMatch(webAppSource, /clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)/);
     assert.match(webAppSource, /this\.gameStateStore = null;/);

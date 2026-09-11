@@ -13,9 +13,8 @@ if (!(root instanceof HTMLElement)) {
     throw new Error("Jackal application root is missing.");
 }
 
-let ownership: GameSessionOwnership;
 const app = new JackalWebApp(root, () => ownership);
-ownership = new GameSessionOwnership(
+const ownership = new GameSessionOwnership(
     root,
     () => {
         app.showMenu();

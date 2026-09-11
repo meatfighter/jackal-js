@@ -11,13 +11,16 @@ test("starting a game requires boot-prepared runtime before fresh playback activ
     const startGame = source.slice(source.indexOf("private async startGame"), source.indexOf("private async launchPreparedGame"));
     assert.match(startGame, /const runtime = this\.runtimeLoader\.preparedRuntime;/);
     assert.match(startGame, /if \(runtime === null\) \{\s*this\.showMenu\(\);\s*return;\s*\}/);
-    assert.ok(startGame.indexOf("this.destroyGameSession();") > startGame.indexOf("const runtime = this.runtimeLoader.preparedRuntime;"));
-    assert.ok(startGame.indexOf("this.destroyGameSession();") < startGame.indexOf("const audio = beginGameAudio();"));
+    assert.ok(startGame.indexOf("if (!this.destroyGameSession())") > startGame.indexOf("const runtime = this.runtimeLoader.preparedRuntime;"));
+    assert.ok(startGame.indexOf("if (!this.destroyGameSession())") < startGame.indexOf("const audio = beginGameAudio();"));
     assert.ok(startGame.indexOf('this.pwaSessionState = "starting";') < startGame.indexOf("const audio = beginGameAudio();"));
     assert.match(startGame, /await audio\.ready/);
     assert.doesNotMatch(startGame, /unlockGameAudio|ensurePrepared|renderLoading/);
     assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\s*\.ensurePrepared/);
-    assert.match(source, /private destroyGame\(\): boolean \{\s*this\.menuRequestSerial\+\+;\s*this\.sessionCleanup\.run\(\(\) => this\.runtimeLoader\.cancelPreparation\(\)\);\s*return this\.destroyGameSession\(\);/);
+    assert.match(
+        source,
+        /private destroyGame\(\): boolean \{\s*this\.menuRequestSerial\+\+;\s*this\.sessionCleanup\.run\(\(\) => this\.runtimeLoader\.cancelPreparation\(\)\);\s*return this\.destroyGameSession\(\);/
+    );
 });
 
 test("page lifecycle is one-way into the PWA menu, including during STARTING", () => {
@@ -43,8 +46,11 @@ test("graphics lifecycle is exit-only and restoration never resumes gameplay", (
 test("live-menu transition freezes and retires playback before serializing progress", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
-    assert.ok(liveMenu.indexOf("this.suspendGameForMenu();") < liveMenu.indexOf("this.saveCurrentInputMapping();"));
-    assert.ok(liveMenu.indexOf("this.suspendGameForMenu();") < liveMenu.indexOf("this.saveCurrentGameState();"));
+    const suspension = liveMenu.indexOf("this.suspendGameForMenu();");
+    const inputSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentInputMapping())");
+    const gameSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState())");
+    assert.ok(suspension >= 0 && inputSave > suspension);
+    assert.ok(suspension >= 0 && gameSave > suspension);
     const suspend = source.slice(source.indexOf("private suspendGameForMenu"), source.indexOf("private showCleanupFailure"));
     assert.match(suspend, /setLoopSuspended\(true\)/);
     assert.match(suspend, /setBrowserSuspended\(true\)/);
@@ -76,7 +82,10 @@ test("Jackal Song sequencing uses logical transport and has no browser recovery 
 
 test("Jackal Main owns game state, not browser audio recovery policy", () => {
     const source = read("pwa/src/jackal/Main.ts");
-    assert.doesNotMatch(source, /BrowserAudioController|browserAudioController|browserSuspendedMusicOn|browserSuspendedSoundOn|resumeBrowserAudio|resumeAfterBrowserSuspension/);
+    assert.doesNotMatch(
+        source,
+        /BrowserAudioController|browserAudioController|browserSuspendedMusicOn|browserSuspendedSoundOn|resumeBrowserAudio|resumeAfterBrowserSuspension/
+    );
     assert.match(source, /public browserSuspended: boolean = false/);
     assert.match(source, /reserveBrowserRuntime\(\)/);
     assert.match(source, /disposeBrowserRuntime\(\)/);
@@ -96,7 +105,10 @@ test("synchronous post-commit UI hooks are rechecked before RUNNING", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
     const launchFocus = launch.indexOf("this.viewport.focusCanvas();");
-    const launchGuard = launch.indexOf("if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)", launchFocus);
+    const launchGuard = launch.indexOf(
+        "if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)",
+        launchFocus
+    );
     const launchRunning = launch.indexOf('this.pwaSessionState = "running";', launchFocus);
     assert.ok(launchFocus >= 0 && launchGuard > launchFocus && launchRunning > launchGuard);
 

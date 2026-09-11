@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 
+const slickModuleUrl = import.meta.resolve("slick2d-ts");
+
 function compileModule(source) {
     const output = ts.transpileModule(source, {
         compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
@@ -21,6 +23,7 @@ async function loadPersistenceValidation() {
     const runtimeFieldsUrl = compileModule(source("EntityRuntimeFields.ts").replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`));
     const validatorUrl = compileModule(
         source("GameStateSnapshotValidator.ts")
+            .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "./GameStateSchema.js"`, `from "${schemaUrl}"`)
             .replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`)
             .replace(`from "./EntityRuntimeFields.js"`, `from "${runtimeFieldsUrl}"`)

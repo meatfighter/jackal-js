@@ -26,9 +26,11 @@ class Events {
         }
         listeners.add(callback);
     }
+
     removeEventListener(name, callback) {
         this.listeners.get(name)?.delete(callback);
     }
+
     emit(name, data = {}) {
         for (const callback of [...(this.listeners.get(name) ?? [])]) {
             callback({ type: name, target: this, currentTarget: this, ...data });
@@ -43,12 +45,15 @@ class Element extends Events {
         super();
         this.tag = tag;
     }
+
     append(...children) {
         this.children.push(...children);
     }
+
     replaceChildren(...children) {
         this.children = children;
     }
+
     setAttribute() {}
     click() {
         if (!this.disabled) {
@@ -157,12 +162,14 @@ function world() {
                         this.name = name;
                         channels.push(this);
                     }
+
                     removeEventListener(name, callback) {
                         if (env.failRemove) {
                             throw new Error("listener removal failed");
                         }
                         super.removeEventListener(name, callback);
                     }
+
                     postMessage(data) {
                         env.post?.();
                         for (const channel of channels) {
@@ -171,6 +178,7 @@ function world() {
                             }
                         }
                     }
+
                     close() {
                         this.closeCalls++;
                         if (env.failClose) {
@@ -190,7 +198,10 @@ function world() {
                 env,
                 log,
                 button: () => descendants(root).find((node) => node.tag === "button"),
-                text: () => descendants(root).map((node) => node.textContent).join(" ")
+                text: () =>
+                    descendants(root)
+                        .map((node) => node.textContent)
+                        .join(" ")
             };
         }
     };

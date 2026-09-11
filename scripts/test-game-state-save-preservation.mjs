@@ -3,13 +3,13 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 
-const gameStateBaseKey = "jackal.game-state";
 const storage = new Map();
 let throwOnGet = false;
 const gameStateSchemaSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateSchema.ts", import.meta.url), "utf8");
+const gameStateBaseKey = /GAME_STATE_STORAGE_KEY\s*=\s*"([^"]+)"/.exec(gameStateSchemaSource)?.[1];
 const currentGameStateVersion = Number(/GAME_STATE_VERSION\s*=\s*(\d+)/.exec(gameStateSchemaSource)?.[1]);
 const maxGameStateTextLength = Number((/MAX_GAME_STATE_TEXT_LENGTH\s*=\s*([\d_]+)/.exec(gameStateSchemaSource)?.[1] ?? "").replaceAll("_", ""));
-if (!Number.isInteger(currentGameStateVersion) || !Number.isInteger(maxGameStateTextLength)) {
+if (typeof gameStateBaseKey !== "string" || !Number.isInteger(currentGameStateVersion) || !Number.isInteger(maxGameStateTextLength)) {
     throw new Error("Unable to determine the current Jackal game-state schema limits.");
 }
 

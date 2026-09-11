@@ -15,13 +15,14 @@ function transpileModule(path, globals = {}) {
 }
 
 function loadPlaybackAdapter() {
-    let instance = null;
     let nextId = 0;
     let onBegin = null;
 
     class FakePlaybackSession {
+        static lastInstance = null;
+
         constructor() {
-            instance = this;
+            FakePlaybackSession.lastInstance = this;
             this.current = null;
             this.cancelCount = 0;
             this.commitCount = 0;
@@ -60,6 +61,7 @@ function loadPlaybackAdapter() {
             return { PlaybackSession: FakePlaybackSession };
         }
     });
+    const instance = FakePlaybackSession.lastInstance;
     assert.ok(instance, "adapter must construct exactly one engine PlaybackSession");
     return {
         api,
@@ -159,7 +161,10 @@ test("session cleanup attempts every essential step and keeps unsafe failure lat
     const failure = cleanup.failure;
     assert.notEqual(failure, null);
 
-    assert.equal(cleanup.run(() => calls.push("retry")), false);
+    assert.equal(
+        cleanup.run(() => calls.push("retry")),
+        false
+    );
     assert.equal(cleanup.failure, failure);
     assert.deepEqual(calls, ["first", "second", "third", "retry"]);
     assert.throws(() => cleanup.assertSafe());
@@ -171,7 +176,10 @@ test("save failure is recoverable and does not poison resource safety", () => {
     let warnings = 0;
     console.warn = () => warnings++;
     try {
-        assert.equal(cleanup.trySave(() => false), false);
+        assert.equal(
+            cleanup.trySave(() => false),
+            false
+        );
         assert.equal(
             cleanup.trySave(() => {
                 throw new Error("quota");

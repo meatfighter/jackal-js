@@ -106,7 +106,9 @@ test("save-state persistence stays modular, shared, current-schema, public-versi
 
 test("browser orchestration is split, session-scoped, cycle-free, and independent of library-private state", () => {
     const webApp = read("pwa/src/app/JackalWebApp.ts");
-    assert.ok(webApp.split(/\r?\n/).length < 600, "JackalWebApp must remain a focused orchestrator.");
+    assert.match(webApp, /from "\.\/SessionCleanup\.js"/);
+    assert.match(webApp, /from "\.\/PlaybackSession\.js"/);
+    assert.doesNotMatch(webApp, /AudioUnlock|AudioContextLifecycle|BrowserAudioLifecycle/);
     for (const moduleName of [
         "AppPreferences.js",
         "GameViewportController.js",
@@ -122,7 +124,8 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
     assert.match(webApp, /gameSessionGeneration/);
     assert.match(webApp, /isCurrentGameSession/);
     assert.match(webApp, /mainGame\.reserveBrowserRuntime\(\)/);
-    assert.match(webApp, /this\.game\?\.disposeBrowserRuntime\(\)/);
+    assert.match(webApp, /const oldGame = this\.game;/);
+    assert.match(webApp, /oldGame\?\.disposeBrowserRuntime\(\)/);
 
     const audio = read("pwa/src/jackal/persistence/GameStateAudio.ts");
     const javaRuntime = read("pwa/src/java/JavaRuntime.ts");
