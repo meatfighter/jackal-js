@@ -10,18 +10,17 @@ Press the **Play** button below to launch an enhanced-graphics desktop browser p
 
 _Jackal_ supports both keyboard and gamepad input. The default controls are:
 
-| Action            | Keyboard    | Gamepad     |
-| ----------------- | ----------- | ----------- |
-| Up                | Up Arrow    | D-pad Up    |
-| Down              | Down Arrow  | D-pad Down  |
-| Left              | Left Arrow  | D-pad Left  |
-| Right             | Right Arrow | D-pad Right |
-| Grenade / Missile | X           | A           |
-| Gun               | Z           | X           |
-| Start / Pause     | Enter       | Menu        |
-| Browser menu      | Esc         | —           |
+| Action        | Keyboard    | Gamepad     |
+| ------------- | ----------- | ----------- |
+| Up            | Up Arrow    | D-pad Up    |
+| Down          | Down Arrow  | D-pad Down  |
+| Left          | Left Arrow  | D-pad Left  |
+| Right         | Right Arrow | D-pad Right |
+| Grenade       | X           | A           |
+| Gun           | Z           | X           |
+| Start / Pause | Enter       | Menu        |
 
-You can change the button mapping by selecting **Options → Input** from the in-game menu. In the browser version, **Space** is available as a normal remappable keyboard key. **Esc** is reserved for returning to the browser menu and cannot be assigned to a gameplay action.
+You can change the button mapping by selecting **Options → Input** from the in-game menu.
 
 ## Browser Menu
 
@@ -29,16 +28,14 @@ _Jackal_ opens with a browser menu that provides **New Game** and **Continue** b
 
 **New Game** starts a new game. **Continue** resumes your previous game. _Jackal_ saves your progress so you can close the tab—or even close the browser entirely—and return later to continue playing.
 
-While playing, the hamburger button in the upper-left corner returns you to the browser menu. It remains available during fullscreen gameplay on touch-capable devices; on conventional desktop fullscreen, press **Esc** to return to the browser menu.
+While playing outside fullscreen mode, a hamburger button appears in the upper-left corner of the game. Pressing it pauses the game and returns you to the browser menu.
 
 The browser menu also provides:
 
-- **Fullscreen** — Runs gameplay in fullscreen mode when the browser supports it. This preference defaults to on. If the browser reports that fullscreen is unavailable, the switch remains visible but disabled. If fullscreen is unavailable or a fullscreen request is rejected, the game continues normally in the available browser area.
+- **Fullscreen** — Makes the game fill the entire screen when available.
 - **Scaling** — Controls how the game is resized to fit the display.
 - **Volume** — Adjusts the game volume.
 - **Reset** — Erases saved state and restores settings to their defaults.
-
-Leaving the game by switching tabs or apps, hiding the page, or otherwise interrupting the browser session returns the game to the browser menu. Select **Continue** to resume; gameplay does not automatically restart when focus returns.
 
 ## In-Game Menu
 
