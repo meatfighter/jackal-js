@@ -96,16 +96,27 @@ export class GameViewportController {
     }
 
     public clear(): void {
+        const mustHideUntilFullscreenExit = getBrowserFullscreenElement() !== null;
+        if (mustHideUntilFullscreenExit) {
+            this.root.style.visibility = "hidden";
+        }
+        const fullscreenExit = mustHideUntilFullscreenExit ? this.exitFullscreenForMenu() : Promise.resolve(true);
+
         this.stopHamburgerVisibilityMonitor();
         this.stopCursorAutoHide();
         this.stopResponsiveSizing();
         this.removeFullscreenChangeListener(this.handleFullscreenChange);
-        void this.exitFullscreen();
         this.shellWasFullscreen = false;
         this.shell = null;
         this.host = null;
         this.container = null;
         this.bufferedGame = null;
+
+        if (mustHideUntilFullscreenExit) {
+            void fullscreenExit.finally(() => {
+                this.root.style.visibility = "";
+            });
+        }
     }
 
     public focusCanvas(): void {
