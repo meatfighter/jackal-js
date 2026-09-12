@@ -215,13 +215,12 @@ async function qualifyUnknownMissingFullscreenMethod(browser, url) {
 }
 
 async function qualifyPendingColdStartDeparture(browser, url) {
-    const { context, errors, page } = await createHarnessPage(browser, url, "pending", false);
+    const { context, errors, page } = await createHarnessPage(browser, url, "pending-blur", false);
     try {
         const fullscreenSwitch = await waitForMenu(page);
         assert.equal(await fullscreenSwitch.isEnabled(), true);
         await page.locator("#new-game-button").click({ noWaitAfter: true });
         await page.waitForFunction(() => globalThis.__fullscreenHarness.requestCount() === 1);
-        await page.evaluate(() => window.dispatchEvent(new Event("blur")));
 
         // A merely pending request does not justify hiding the new cold menu. The
         // retired shell has no authority unless that old native request succeeds.
@@ -411,6 +410,10 @@ async function installFullscreenHarness(context, initialMode, touch) {
                 configurable: true,
                 get: () => (mode === "unknown-missing" ? undefined : mode !== "unavailable")
             });
+            Object.defineProperty(document, "webkitFullscreenEnabled", {
+                configurable: true,
+                get: () => (mode === "unknown-missing" ? undefined : mode !== "unavailable")
+            });
             Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => fullscreenElement });
             Object.defineProperty(document, "exitFullscreen", {
                 configurable: true,
@@ -437,7 +440,10 @@ async function installFullscreenHarness(context, initialMode, touch) {
                     if (mode === "reject") {
                         return Promise.reject(new DOMException("Synthetic fullscreen denial", "NotAllowedError"));
                     }
-                    if (mode === "pending") {
+                    if (mode === "pending" || mode === "pending-blur") {
+                        if (mode === "pending-blur") {
+                            window.dispatchEvent(new Event("blur"));
+                        }
                         return new Promise((resolve) => {
                             pendingResolve = () => {
                                 setSyntheticFullscreenElement(this);
