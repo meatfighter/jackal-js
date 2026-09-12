@@ -125,6 +125,12 @@ test("cleared shells retain no fullscreen authority and late entry is hidden and
     assert.match(retiredExit, /this\.root\.style\.visibility = ""/);
 });
 
+test("unauthorized or inactive late fullscreen entry is hidden until exact-shell exit", () => {
+    const handler = viewport.match(/private readonly handleFullscreenChange[\s\S]*?\n    \};/)?.[0] ?? "";
+    assert.match(handler, /if \(current && !this\.fullscreenEntryAuthorized\) \{\s*this\.hideRootUntilRetiredShellExits\(shell\)/);
+    assert.match(handler, /if \(current && !this\.callbacks\.isGameplayActive\(\)\) \{\s*this\.hideRootUntilRetiredShellExits\(shell\)/);
+});
+
 test("interrupted live Continue exits fullscreen before republishing the retained menu", () => {
     const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n    \}/)?.[0] ?? "";
     assert.match(requestMenu, /this\.menuOverlay !== null/);
