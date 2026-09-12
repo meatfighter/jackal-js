@@ -39,12 +39,18 @@ let browser = null;
 try {
     browser = await chromium.launch({ headless: false, args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
 
-    await qualifySupportedTouchFullscreen(browser, url);
+    await qualifySupportedTouchFullscreenAndContinue(browser, url);
+    await qualifyDesktopFullscreenExit(browser, url);
+    await qualifyPreferenceOffAndReset(browser, url);
     await qualifyRejectedFullscreen(browser, url);
-    await qualifyUnsupportedFullscreen(browser, url);
-    await qualifyPendingFullscreenDeparture(browser, url);
+    await qualifyExplicitUnavailableFullscreen(browser, url);
+    await qualifyUnknownMissingFullscreenMethod(browser, url);
+    await qualifyPendingColdStartDeparture(browser, url);
+    await qualifyPendingRetainedContinueDeparture(browser, url);
 
-    console.log("Fullscreen qualification passed: success, rejection, unsupported capability, and pending-request departure are fenced correctly.");
+    console.log(
+        "Fullscreen qualification passed: success/Continue, desktop exit, preference persistence, rejection, unavailable/unknown fallback, and pending-request departures are fenced correctly."
+    );
 } finally {
     if (browser !== null) {
         await browser.close();
@@ -52,45 +58,84 @@ try {
     await new Promise((resolveClose) => server.close(resolveClose));
 }
 
-async function qualifySupportedTouchFullscreen(browser, url) {
-    const context = await browser.newContext();
-    context.setDefaultTimeout(60_000);
-    await installFullscreenHarness(context, "success", true);
-    const errors = [];
-    const page = await context.newPage();
-    page.on("pageerror", (error) => errors.push(error.message));
+async function qualifySupportedTouchFullscreenAndContinue(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", true);
     try {
-        await page.goto(url);
         const fullscreenSwitch = await waitForMenu(page);
         assert.equal(await fullscreenSwitch.isEnabled(), true, "supported fullscreen switch is disabled");
         assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true", "fullscreen preference does not default on");
+
         await page.locator("#new-game-button").click();
-        await page.locator("canvas").waitFor({ state: "visible" });
-        await page.waitForFunction(() => document.fullscreenElement?.id === "game-shell");
-        await page.locator("#hamburger-button:not([hidden])").waitFor({ state: "visible" });
+        await waitForFullscreenRunning(page, true);
+        const originalCanvas = await page.locator("canvas").elementHandle();
+        assert.ok(originalCanvas, "missing initial game canvas");
         assert.equal(await page.evaluate(() => document.fullscreenElement?.id), "game-shell", "wrong fullscreen target");
         assert.equal(await page.locator("#game-shell .menu-screen").count(), 0, "PWA menu is inside the fullscreen shell");
 
         await page.locator("#hamburger-button").click();
-        await page.locator("#continue-button").waitFor({ state: "visible" });
-        await page.waitForFunction(() => document.fullscreenElement === null);
-        assert.equal(await page.locator("#fullscreen-switch-button").getAttribute("aria-pressed"), "true", "menu exit changed fullscreen preference");
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 1, "New Game did not issue exactly one fullscreen request");
+        await waitForLiveMenu(page);
+        assert.equal(await fullscreenSwitchState(page), "true", "menu exit changed fullscreen preference");
+
+        await page.locator("#continue-button").click();
+        await waitForFullscreenRunning(page, true);
+        assert.equal(await originalCanvas.evaluate((canvas) => canvas.isConnected), true, "live Continue replaced the retained game canvas");
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "New Game + live Continue did not issue exactly two requests");
         assert.deepEqual(errors, [], "supported fullscreen qualification produced uncaught browser errors");
     } finally {
         await context.close();
     }
 }
 
-async function qualifyRejectedFullscreen(browser, url) {
-    const context = await browser.newContext();
-    context.setDefaultTimeout(60_000);
-    await installFullscreenHarness(context, "reject", false);
-    const errors = [];
-    const page = await context.newPage();
-    page.on("pageerror", (error) => errors.push(error.message));
+async function qualifyDesktopFullscreenExit(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", false);
     try {
-        await page.goto(url);
+        await waitForMenu(page);
+        await page.locator("#new-game-button").click();
+        await waitForFullscreenRunning(page, false);
+        assert.equal(await page.locator("#hamburger-button").isHidden(), true, "desktop fullscreen should hide the hamburger");
+
+        await page.evaluate(() => globalThis.__fullscreenHarness.forceExit());
+        await page.locator("#continue-button").waitFor({ state: "visible" });
+        await page.waitForFunction(() => document.fullscreenElement === null);
+        assert.equal(await fullscreenSwitchState(page), "true", "browser fullscreen exit changed the preference");
+        assert.equal(await page.locator("canvas").count(), 1, "browser fullscreen exit should retain the live game");
+        assert.deepEqual(errors, [], "desktop fullscreen exit produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyPreferenceOffAndReset(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", false);
+    try {
+        let fullscreenSwitch = await waitForMenu(page);
+        await fullscreenSwitch.click();
+        assert.equal(await fullscreenSwitchState(page), "false");
+        await page.reload();
+        fullscreenSwitch = await waitForMenu(page);
+        assert.equal(await fullscreenSwitchState(page), "false", "Fullscreen OFF did not persist across reload");
+
+        await page.locator("#reset-button").click();
+        fullscreenSwitch = await waitForMenu(page);
+        assert.equal(await fullscreenSwitchState(page), "true", "Reset did not restore Fullscreen ON");
+
+        await fullscreenSwitch.click();
+        assert.equal(await fullscreenSwitchState(page), "false");
+        await page.locator("#new-game-button").click();
+        await waitForWindowedRunning(page);
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "Fullscreen OFF still issued a request");
+        await page.keyboard.press("Escape");
+        await page.locator("#continue-button").waitFor({ state: "visible" });
+        assert.equal(await fullscreenSwitchState(page), "false", "Esc changed the Fullscreen preference");
+        assert.deepEqual(errors, [], "Fullscreen preference qualification produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyRejectedFullscreen(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "reject", false);
+    try {
         const fullscreenSwitch = await waitForMenu(page);
         assert.equal(await fullscreenSwitch.isEnabled(), true, "rejecting fullscreen surface should still advertise capability");
         assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true");
@@ -101,7 +146,7 @@ async function qualifyRejectedFullscreen(browser, url) {
 
         await page.locator("#hamburger-button").click();
         await page.locator("#continue-button").waitFor({ state: "visible" });
-        assert.equal(await page.locator("#fullscreen-switch-button").getAttribute("aria-pressed"), "true", "rejection changed fullscreen preference");
+        assert.equal(await fullscreenSwitchState(page), "true", "rejection changed fullscreen preference");
         assert.equal(await page.locator(".error-message").count(), 0, "fullscreen rejection surfaced a user-facing error");
         assert.deepEqual(errors, [], "fullscreen rejection produced an uncaught browser error");
     } finally {
@@ -109,39 +154,45 @@ async function qualifyRejectedFullscreen(browser, url) {
     }
 }
 
-async function qualifyUnsupportedFullscreen(browser, url) {
-    const context = await browser.newContext();
-    context.setDefaultTimeout(60_000);
-    await installFullscreenHarness(context, "unsupported", false);
-    const errors = [];
-    const page = await context.newPage();
-    page.on("pageerror", (error) => errors.push(error.message));
+async function qualifyExplicitUnavailableFullscreen(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "unavailable", false);
     try {
-        await page.goto(url);
         const fullscreenSwitch = await waitForMenu(page);
-        assert.equal(await fullscreenSwitch.isEnabled(), false, "method-less fullscreen surface should disable the switch");
-        assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true", "disabled unsupported switch should preserve the default preference");
+        assert.equal(await fullscreenSwitch.isEnabled(), false, "explicitly unavailable fullscreen should disable the switch");
+        assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true", "disabled switch should preserve the default preference");
         await page.locator("#new-game-button").click();
         await waitForWindowedRunning(page);
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "unsupported browser made a fullscreen request");
-        assert.deepEqual(errors, [], "unsupported fullscreen qualification produced uncaught browser errors");
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "explicitly unavailable browser made a fullscreen request");
+        assert.deepEqual(errors, [], "explicit unavailable fallback produced uncaught browser errors");
     } finally {
         await context.close();
     }
 }
 
-async function qualifyPendingFullscreenDeparture(browser, url) {
-    const context = await browser.newContext();
-    context.setDefaultTimeout(60_000);
-    await installFullscreenHarness(context, "pending", false);
-    const errors = [];
-    const page = await context.newPage();
-    page.on("pageerror", (error) => errors.push(error.message));
+async function qualifyUnknownMissingFullscreenMethod(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "unknown-missing", false);
     try {
-        await page.goto(url);
+        const fullscreenSwitch = await waitForMenu(page);
+        assert.equal(await fullscreenSwitch.isEnabled(), true, "unknown capability must remain enabled");
+        assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true");
+        await page.locator("#new-game-button").click();
+        await waitForWindowedRunning(page);
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "missing request method should fall back without a native call");
+        await page.locator("#hamburger-button").click();
+        await page.locator("#continue-button").waitFor({ state: "visible" });
+        assert.equal(await fullscreenSwitchState(page), "true", "unknown/missing fallback changed the preference");
+        assert.equal(await page.locator(".error-message").count(), 0, "unknown/missing fallback showed a fullscreen error");
+        assert.deepEqual(errors, [], "unknown/missing fallback produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyPendingColdStartDeparture(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "pending", false);
+    try {
         const fullscreenSwitch = await waitForMenu(page);
         assert.equal(await fullscreenSwitch.isEnabled(), true);
-        assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true");
         await page.locator("#new-game-button").click({ noWaitAfter: true });
         await page.waitForFunction(() => globalThis.__fullscreenHarness.requestCount() === 1);
         await page.evaluate(() => window.dispatchEvent(new Event("blur")));
@@ -150,12 +201,51 @@ async function qualifyPendingFullscreenDeparture(browser, url) {
         await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
         await page.locator("#new-game-button").waitFor({ state: "visible" });
         await page.waitForFunction(() => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden");
-        assert.equal(await page.locator("#fullscreen-switch-button").getAttribute("aria-pressed"), "true", "pending-request cancellation changed the preference");
-        assert.equal(await page.locator("canvas").count(), 0, "pending-request departure left gameplay running behind the menu");
-        assert.deepEqual(errors, [], "pending fullscreen departure produced uncaught browser errors");
+        assert.equal(await fullscreenSwitchState(page), "true", "pending-request cancellation changed the preference");
+        assert.equal(await page.locator("canvas").count(), 0, "pending cold-start departure left gameplay running behind the menu");
+        assert.deepEqual(errors, [], "pending cold-start departure produced uncaught browser errors");
     } finally {
         await context.close();
     }
+}
+
+async function qualifyPendingRetainedContinueDeparture(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", true);
+    try {
+        await waitForMenu(page);
+        await page.locator("#new-game-button").click();
+        await waitForFullscreenRunning(page, true);
+        const retainedCanvas = await page.locator("canvas").elementHandle();
+        assert.ok(retainedCanvas);
+        await page.locator("#hamburger-button").click();
+        await waitForLiveMenu(page);
+
+        await page.evaluate(() => globalThis.__fullscreenHarness.setMode("pending"));
+        await page.locator("#continue-button").click({ noWaitAfter: true });
+        await page.waitForFunction(() => globalThis.__fullscreenHarness.requestCount() === 2);
+        await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+        await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
+
+        await page.locator("#continue-button").waitFor({ state: "visible" });
+        await page.waitForFunction(() => document.fullscreenElement === null);
+        assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "interrupted live Continue destroyed the retained canvas");
+        assert.equal(await page.locator("canvas").count(), 1);
+        assert.equal(await fullscreenSwitchState(page), "true");
+        assert.deepEqual(errors, [], "pending retained-Continue departure produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function createHarnessPage(browser, url, mode, touch) {
+    const context = await browser.newContext();
+    context.setDefaultTimeout(60_000);
+    await installFullscreenHarness(context, mode, touch);
+    const errors = [];
+    const page = await context.newPage();
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(url);
+    return { context, errors, page };
 }
 
 async function waitForMenu(page) {
@@ -165,21 +255,45 @@ async function waitForMenu(page) {
     return fullscreenSwitch;
 }
 
+async function waitForLiveMenu(page) {
+    await page.locator("#continue-button").waitFor({ state: "visible" });
+    await page.waitForFunction(() => document.fullscreenElement === null);
+    assert.equal(await page.locator("canvas").count(), 1, "live menu did not retain exactly one canvas");
+}
+
+async function waitForFullscreenRunning(page, expectHamburger) {
+    await page.locator("canvas").waitFor({ state: "visible" });
+    await page.waitForFunction(() => document.fullscreenElement?.id === "game-shell");
+    if (expectHamburger) {
+        await page.locator("#hamburger-button:not([hidden])").waitFor({ state: "visible" });
+    } else {
+        await page.waitForFunction(() => document.querySelector("#hamburger-button")?.hidden === true);
+    }
+}
+
 async function waitForWindowedRunning(page) {
     await page.locator("canvas").waitFor({ state: "visible" });
     await page.locator("#hamburger-button:not([hidden])").waitFor({ state: "visible" });
     assert.equal(await page.evaluate(() => document.fullscreenElement), null);
 }
 
-async function installFullscreenHarness(context, mode, touch) {
+async function fullscreenSwitchState(page) {
+    return page.locator("#fullscreen-switch-button").first().getAttribute("aria-pressed");
+}
+
+async function installFullscreenHarness(context, initialMode, touch) {
     await context.addInitScript(
-        ({ mode, touch }) => {
+        ({ initialMode, touch }) => {
+            let mode = initialMode;
             let fullscreenElement = null;
             let requestCount = 0;
             let pendingResolve = null;
 
             Object.defineProperty(navigator, "maxTouchPoints", { configurable: true, value: touch ? 1 : 0 });
-            Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => mode !== "unsupported" });
+            Object.defineProperty(document, "fullscreenEnabled", {
+                configurable: true,
+                get: () => (mode === "unknown-missing" ? undefined : mode !== "unavailable")
+            });
             Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => fullscreenElement });
             Object.defineProperty(document, "exitFullscreen", {
                 configurable: true,
@@ -192,21 +306,17 @@ async function installFullscreenHarness(context, mode, touch) {
             });
 
             Object.defineProperty(HTMLElement.prototype, "webkitRequestFullscreen", { configurable: true, value: undefined });
-            if (mode === "unsupported") {
-                Object.defineProperty(HTMLElement.prototype, "requestFullscreen", { configurable: true, value: undefined });
-            } else if (mode === "reject") {
-                Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
-                    configurable: true,
-                    value() {
-                        requestCount++;
+            Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
+                configurable: true,
+                value: function () {
+                    if (mode === "unknown-missing") {
+                        return undefined;
+                    }
+                    requestCount++;
+                    if (mode === "reject") {
                         return Promise.reject(new DOMException("Synthetic fullscreen denial", "NotAllowedError"));
                     }
-                });
-            } else if (mode === "pending") {
-                Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
-                    configurable: true,
-                    value() {
-                        requestCount++;
+                    if (mode === "pending") {
                         const target = this;
                         return new Promise((resolve) => {
                             pendingResolve = () => {
@@ -217,27 +327,32 @@ async function installFullscreenHarness(context, mode, touch) {
                             };
                         });
                     }
-                });
-            } else {
-                Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
-                    configurable: true,
-                    value() {
-                        requestCount++;
-                        fullscreenElement = this;
-                        document.dispatchEvent(new Event("fullscreenchange"));
-                        return Promise.resolve();
-                    }
-                });
+                    fullscreenElement = this;
+                    document.dispatchEvent(new Event("fullscreenchange"));
+                    return Promise.resolve();
+                }
+            });
+            if (initialMode === "unknown-missing") {
+                Object.defineProperty(HTMLElement.prototype, "requestFullscreen", { configurable: true, value: undefined });
             }
 
             Object.defineProperty(globalThis, "__fullscreenHarness", {
                 configurable: true,
                 value: {
                     requestCount: () => requestCount,
-                    resolvePending: () => pendingResolve?.()
+                    resolvePending: () => pendingResolve?.(),
+                    setMode: (nextMode) => {
+                        mode = nextMode;
+                    },
+                    forceExit: () => {
+                        if (fullscreenElement !== null) {
+                            fullscreenElement = null;
+                            document.dispatchEvent(new Event("fullscreenchange"));
+                        }
+                    }
                 }
             });
         },
-        { mode, touch }
+        { initialMode, touch }
     );
 }
