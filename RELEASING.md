@@ -53,22 +53,47 @@ and supported browser versions rather than claiming untested support.
 During active music, repeat the browser/app Home or background -> foreground cycle at
 least ten times. Include an immediate return, a return after several minutes in the
 background, a return with no input, and a return followed immediately by a real
-pointer/touch or keyboard gesture. After every return, confirm the existing game
-resumes, music becomes audible again without restarting the game, and a subsequent
-sound effect is audible. Exercise this in iOS Safari/browser mode and the installed
-PWA where available; also check Android browser/PWA behavior. Hamburger/Continue may
-be used as normal input, but audio recovery must not depend on destroying/reloading
-the game. On desktop, move the game between displays with different OS scaling and
-change browser zoom through several values; confirm the logical game size/aspect stays
-correct while the canvas backing resolution remains sharp after each device-pixel-ratio
-change.
+pointer/touch or keyboard gesture. Each departure must freeze gameplay, retire the
+physical playback generation, and return the application to the browser/PWA menu;
+foregrounding alone must not restart gameplay or audio. Select **Continue** explicitly
+after each return and confirm that the retained game resumes from the same state with
+a fresh audible playback generation and that a subsequent sound effect is audible.
+Exercise this in iOS Safari/browser mode and the installed PWA where available; also
+check Android browser/PWA behavior. On desktop, move the game between displays with
+different OS scaling and change browser zoom through several values; confirm the
+logical game size/aspect stays correct while the canvas backing resolution remains
+sharp after each device-pixel-ratio change.
+
+Qualify the browser **Fullscreen** preference separately from installed-PWA display
+mode. On a browser that supports arbitrary-element fullscreen, confirm that the switch
+defaults to on, appears immediately before **Scaling**, persists when changed, and is
+restored to on by **Reset**. With the switch on, both **New Game** and **Continue**
+should enter fullscreen when the request succeeds; with it off they must remain in the
+normal responsive browser area. Press **Esc** during windowed gameplay and confirm it
+returns to the browser menu. During fullscreen desktop gameplay, press **Esc** and
+confirm the browser exits fullscreen and the application returns to the windowed menu.
+On a touch-capable fullscreen device, confirm the hamburger remains visible and also
+returns to the windowed menu. Space must remain available to the game's input remapper
+and must not toggle fullscreen.
+
+Also exercise fullscreen failure and interruption cases. On a browser/device that
+clearly does not support arbitrary-element fullscreen, the **Fullscreen** control must
+remain visible but disabled while still reflecting the stored/default preference, and
+New Game/Continue must start normally in the responsive browser area. If a browser
+advertises support but rejects a fullscreen request, gameplay must still start without
+a user-facing fullscreen error and without changing the preference. While fullscreen
+entry is pending or immediately after it succeeds, trigger tab/app backgrounding or
+another lifecycle departure and confirm no PWA menu is ever presented inside Fullscreen
+API mode. Repeat this from a retained live **Continue** path; after the interruption the
+existing menu must be windowed and another explicit **Continue** must be required.
 
 On a real phone with a short auto-lock interval, confirm that user-initiated loading
 and the launched game keep the screen awake without screen input, including title or
 attract behavior and in-game Pause where applicable. Confirm browser/PWA menus allow
 normal auto-lock and that backgrounding releases the lock; returning to the game should
-reacquire it. Screen wake lock is best-effort, so record an OS/browser refusal under
-power-saving conditions rather than treating it as a game failure.
+reacquire it only after the user explicitly selects **Continue**. Screen wake lock is
+best-effort, so record an OS/browser refusal under power-saving conditions rather than
+treating it as a game failure.
 
 Use a separate browser profile for staging PWA installation and update tests. Staging
 and production intentionally resolve to the same manifest app identity for Jackal,
