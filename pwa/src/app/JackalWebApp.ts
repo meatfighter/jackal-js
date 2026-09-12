@@ -308,7 +308,7 @@ export class JackalWebApp {
             () => this.viewport.stopCursorAutoHide()
         );
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
             return;
         }
         if (!(await this.viewport.exitFullscreenForMenu())) {
@@ -322,7 +322,7 @@ export class JackalWebApp {
                 this.menuOverlay = this.renderMenu(this.root, true, saved ? null : "Progress could not be saved. Continue still preserves this live game.", true);
             })
         ) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
             return;
         }
         this.pwaSessionState = "menu";
@@ -368,6 +368,7 @@ export class JackalWebApp {
             ) {
                 return;
             }
+            this.viewport.reconcileDisplayModeNow();
             this.viewport.scheduleResize();
             this.viewport.focusCanvas();
             if (!this.isStartingGameSession(session, audio)) {
@@ -398,6 +399,10 @@ export class JackalWebApp {
             }
             liveGame.setBrowserSuspended(false);
             liveContainer.setLoopSuspended(false);
+            this.pageLifecycle.sync(true);
+            if (!this.isCurrentGameSession(session) || !isGameAudioCurrent(audio) || this.pwaSessionState !== "running") {
+                return;
+            }
             this.persistenceWarnings.showPending();
             this.syncScreenWakeLock();
         } catch (error) {
@@ -500,7 +505,7 @@ export class JackalWebApp {
             maintainAspect: true,
             scalingMode: bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)
         });
-        const displayMode = this.viewport.getWindowedDisplayMode();
+        const displayMode = this.viewport.getResponsiveDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
         appContainer.setPreserveAudioCacheOnDestroy(true);
         appContainer.setLoopSuspended(true);
@@ -519,7 +524,7 @@ export class JackalWebApp {
                 this.saveCurrentInputMapping();
             }
         };
-        mainGame.windowedDisplayModeProvider = () => this.viewport.getWindowedDisplayMode();
+        mainGame.windowedDisplayModeProvider = () => this.viewport.getResponsiveDisplayMode();
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
                 if (!this.isStartingGameSession(session, audio)) {
@@ -622,7 +627,7 @@ export class JackalWebApp {
         this.suspendGameForMenu();
         this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
             return;
         }
         if (retainExistingOverlay) {
@@ -758,7 +763,7 @@ export class JackalWebApp {
             () => appContainer.destroy()
         );
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
         }
     }
 
