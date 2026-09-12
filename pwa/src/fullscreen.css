@@ -18,3 +18,9 @@
     position: absolute;
     width: 100%;
 }
+
+.game-shell:fullscreen .hamburger-button,
+.game-shell:-webkit-full-screen .hamburger-button {
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    top: calc(14px + env(safe-area-inset-top, 0px));
+}
