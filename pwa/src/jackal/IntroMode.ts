@@ -53,9 +53,6 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         [304, 736]
     ];
 
-    public static readonly FULL_SCREEN_TEXT: string = "SPACE - FULL-SCREEN MODE";
-    public static readonly FULL_SCREEN_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.FULL_SCREEN_TEXT.length << 5)) / 2);
-    public static readonly FULL_SCREEN_TEXT_Y: number = 800;
     public static readonly COPYRIGHT_TEXT: string = "© 2013, 2026 MEATFIGHTER.COM";
     public static readonly COPYRIGHT_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.COPYRIGHT_TEXT.length << 5)) / 2);
     public static readonly COPYRIGHT_TEXT_Y: number = 860;
