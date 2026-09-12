@@ -19,8 +19,8 @@ test("Space is remappable while Escape remains browser-reserved", () => {
     assert.match(reservedKeyBody, /Input\.KEY_ESCAPE/);
     assert.doesNotMatch(reservedKeyBody, /Input\.KEY_SPACE/);
 
-    // Until the translated fullscreen skeleton is removed entirely, its browser
-    // input hooks must remain mechanically inert.
+    // The translated Java fullscreen skeleton remains mechanically inert until its
+    // larger translated Main block is removed in a dedicated parity-cleanup pass.
     assert.match(humanInput, /public isFullscreenTogglePressed\(\): boolean \{\s*return false;\s*\}/);
     assert.match(humanInput, /public isEscape\(\): boolean \{\s*return false;\s*\}/);
 
@@ -59,25 +59,49 @@ test("New Game and live Continue initiate audio before fullscreen and before the
     assert.ok(liveAudio >= 0 && liveFullscreen > liveAudio && liveAwait > liveFullscreen);
 });
 
-test("fullscreen requests and exits are fenced to one presentation generation", () => {
+test("fullscreen authority is fenced to one presentation and one active request", () => {
     assert.match(viewport, /private presentationGeneration = 0/);
-    assert.match(viewport, /type PendingFullscreenRequest = Readonly</);
-    assert.match(viewport, /pendingFullscreenRequests = new Set<PendingFullscreenRequest>/);
+    assert.match(viewport, /private fullscreenEntryAuthorized = false/);
+    assert.match(viewport, /private fullscreenSuppressedPresentation: number \| null = null/);
+    assert.match(viewport, /private readonly retiredFullscreenShells = new WeakSet<HTMLElement>\(\)/);
+    assert.match(viewport, /type PendingFullscreenRequest = Readonly/);
     assert.match(viewport, /const presentation = this\.presentationGeneration/);
+    assert.match(viewport, /requestSerial === this\.fullscreenRequestSerial/);
     assert.match(viewport, /presentation === this\.presentationGeneration/);
     assert.match(viewport, /this\.shell === shell/);
-    assert.match(viewport, /exitStaleFullscreenShell\(shell\)/);
+    assert.match(viewport, /shouldKeepFullscreenShell\(shell\)/);
+    assert.match(viewport, /retiredFullscreenShells\.has\(fullscreenElement as HTMLElement\)/);
+});
 
+test("MENU exit waits only a bounded time for a pending request and suppresses that retained presentation on timeout", () => {
+    assert.match(viewport, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS = 1500/);
     const exitForPresentation = viewport.match(/private async exitFullscreenForPresentation\([\s\S]*?\n    \}/)?.[0] ?? "";
-    assert.match(exitForPresentation, /targetPresentation === this\.presentationGeneration/);
-    assert.match(exitForPresentation, /request\.presentation === targetPresentation && request\.shell === targetShell/);
-    assert.match(exitForPresentation, /targetPresentation !== this\.presentationGeneration/);
-    assert.match(exitForPresentation, /fullscreenElement !== targetShell/);
+    assert.match(exitForPresentation, /this\.fullscreenRequestSerial\+\+/);
+    assert.match(exitForPresentation, /this\.fullscreenEntryAuthorized = false/);
+    assert.match(exitForPresentation, /waitForPendingFullscreenRequests\(targetShell, targetPresentation\)/);
+    assert.match(exitForPresentation, /this\.fullscreenSuppressedPresentation = targetPresentation/);
+    assert.match(exitForPresentation, /getBrowserFullscreenElement\(\) !== targetShell/);
+    assert.match(exitForPresentation, /requestExitForSpecificShell\(targetShell\)/);
 
+    const pendingWait = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(pendingWait, /Promise\.race/);
+    assert.match(pendingWait, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS/);
+    assert.match(pendingWait, /this\.pendingFullscreenRequests\.delete\(request\)/);
+});
+
+test("cleared shells retain no fullscreen authority and late entry is hidden and retired", () => {
     const clear = viewport.match(/public clear\(\): void \{[\s\S]*?\n    \}/)?.[0] ?? "";
-    assert.match(clear, /visibilityTransition = \+\+this\.visibilityTransitionSerial/);
+    assert.match(clear, /this\.fullscreenRequestSerial\+\+/);
+    assert.match(clear, /this\.fullscreenEntryAuthorized = false/);
+    assert.match(clear, /this\.retiredFullscreenShells\.add\(targetShell\)/);
+    assert.match(clear, /this\.presentationGeneration\+\+/);
+    assert.match(clear, /targetIsFullscreen/);
     assert.match(clear, /this\.root\.style\.visibility = "hidden"/);
-    assert.match(clear, /visibilityTransition === this\.visibilityTransitionSerial/);
+
+    const retiredExit = viewport.match(/private hideRootUntilRetiredShellExits\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(retiredExit, /this\.root\.style\.visibility = "hidden"/);
+    assert.match(retiredExit, /requestExitForSpecificShell\(shell\)/);
+    assert.match(retiredExit, /this\.root\.style\.visibility = ""/);
 });
 
 test("interrupted live Continue exits fullscreen before republishing the retained menu", () => {
