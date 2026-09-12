@@ -11,6 +11,7 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
+const FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS = 1500;
 const FULLSCREEN_CHANGE_EVENTS = ["fullscreenchange", "webkitfullscreenchange"] as const;
 
 interface DisplayMode {
@@ -51,14 +52,19 @@ export class GameViewportController {
     private sessionGeneration = 0;
     private presentationGeneration = 0;
     private shellWasFullscreen = false;
+    private fullscreenEntryAuthorized = false;
     private fullscreenRequestSerial = 0;
+    private fullscreenSuppressedPresentation: number | null = null;
     private visibilityTransitionSerial = 0;
     private readonly pendingFullscreenRequests = new Set<PendingFullscreenRequest>();
+    private readonly retiredFullscreenShells = new WeakSet<HTMLElement>();
 
     public constructor(
         private readonly root: HTMLElement,
         private readonly callbacks: GameViewportCallbacks
-    ) {}
+    ) {
+        this.addFullscreenChangeListener(this.handleFullscreenChange);
+    }
 
     public attach(container: AppGameContainer, bufferedGame: BufferedScalableGame, sessionGeneration: number): void {
         this.container = container;
@@ -86,9 +92,10 @@ export class GameViewportController {
         if (this.shell !== null) {
             throw new Error("The previous Jackal game shell must be cleared before creating another one.");
         }
-        this.removeFullscreenChangeListener(this.handleFullscreenChange);
         this.presentationGeneration++;
         this.fullscreenRequestSerial = 0;
+        this.fullscreenEntryAuthorized = false;
+        this.fullscreenSuppressedPresentation = null;
         this.root.innerHTML = `
             <div id="game-shell" class="game-shell">
                 <div id="game-host" class="game-host"></div>
@@ -108,35 +115,42 @@ export class GameViewportController {
         this.sessionGeneration = sessionGeneration;
         this.shellWasFullscreen = false;
         hamburger.addEventListener("click", this.callbacks.returnToMenu);
-        this.addFullscreenChangeListener(this.handleFullscreenChange);
         return host;
     }
 
     public clear(): void {
         const targetShell = this.shell;
         const targetPresentation = this.presentationGeneration;
-        const mustHideUntilFullscreenExit =
-            getBrowserFullscreenElement() !== null || this.hasPendingFullscreenRequest(targetShell, targetPresentation);
+        this.fullscreenRequestSerial++;
+        this.fullscreenEntryAuthorized = false;
+        this.fullscreenSuppressedPresentation = null;
+        this.discardPendingFullscreenRequests(targetShell, targetPresentation);
+        if (targetShell !== null) {
+            this.retiredFullscreenShells.add(targetShell);
+        }
+
+        const targetIsFullscreen = targetShell !== null && getBrowserFullscreenElement() === targetShell;
         let visibilityTransition = 0;
         let fullscreenExit: Promise<boolean> | null = null;
-        if (mustHideUntilFullscreenExit) {
+        if (targetIsFullscreen && targetShell !== null) {
             visibilityTransition = ++this.visibilityTransitionSerial;
             this.root.style.visibility = "hidden";
-            fullscreenExit = this.exitFullscreenForPresentation(targetShell, targetPresentation);
+            fullscreenExit = this.requestExitForSpecificShell(targetShell);
         }
 
         this.stopHamburgerVisibilityMonitor();
         this.stopCursorAutoHide();
         this.stopResponsiveSizing();
-        this.removeFullscreenChangeListener(this.handleFullscreenChange);
         this.shellWasFullscreen = false;
         this.shell = null;
         this.host = null;
         this.container = null;
         this.bufferedGame = null;
+        this.presentationGeneration++;
 
-        if (fullscreenExit !== null) {
+        if (fullscreenExit !== null && targetShell !== null) {
             void fullscreenExit.finally(() => {
+                this.retiredFullscreenShells.delete(targetShell);
                 if (visibilityTransition === this.visibilityTransitionSerial) {
                     this.root.style.visibility = "";
                 }
@@ -220,10 +234,15 @@ export class GameViewportController {
         const shell = this.shell;
         const session = this.sessionGeneration;
         const presentation = this.presentationGeneration;
-        if (shell === null || this.isFullscreen()) {
-            return Promise.resolve(this.isFullscreen());
+        if (shell === null || this.fullscreenSuppressedPresentation === presentation) {
+            return Promise.resolve(false);
+        }
+        if (this.isFullscreen()) {
+            this.fullscreenEntryAuthorized = true;
+            return Promise.resolve(true);
         }
 
+        this.fullscreenEntryAuthorized = true;
         const requestSerial = ++this.fullscreenRequestSerial;
         const promise = requestBrowserFullscreen(shell).then(
             (requested) => {
@@ -234,15 +253,21 @@ export class GameViewportController {
                     this.callbacks.isSessionCurrent(session) &&
                     this.callbacks.isGameplayActive();
                 if (!current) {
-                    if (requested && getBrowserFullscreenElement() === shell) {
-                        void this.exitStaleFullscreenShell(shell);
+                    if (requested && getBrowserFullscreenElement() === shell && !this.shouldKeepFullscreenShell(shell)) {
+                        void this.requestExitForSpecificShell(shell);
                     }
                     return false;
                 }
-                this.shellWasFullscreen = requested && getBrowserFullscreenElement() === shell;
+                const established = requested && getBrowserFullscreenElement() === shell;
+                this.fullscreenEntryAuthorized = established;
+                this.shellWasFullscreen = established;
                 this.updateHamburgerVisibility();
-                this.scheduleFullscreenResize();
-                return this.shellWasFullscreen;
+                if (established) {
+                    this.scheduleFullscreenResize();
+                } else {
+                    this.reconcileDisplayModeNow();
+                }
+                return established;
             },
             () => {
                 if (
@@ -252,6 +277,8 @@ export class GameViewportController {
                     this.callbacks.isSessionCurrent(session) &&
                     this.callbacks.isGameplayActive()
                 ) {
+                    this.fullscreenEntryAuthorized = false;
+                    this.shellWasFullscreen = false;
                     this.reconcileDisplayModeNow();
                 }
                 return false;
@@ -312,69 +339,110 @@ export class GameViewportController {
     }
 
     private async exitFullscreenForPresentation(targetShell: HTMLElement | null, targetPresentation: number): Promise<boolean> {
+        if (targetShell === null) {
+            return true;
+        }
         if (targetPresentation === this.presentationGeneration) {
             this.fullscreenRequestSerial++;
-        }
-        while (true) {
-            const pending = Array.from(this.pendingFullscreenRequests)
-                .filter((request) => request.presentation === targetPresentation && request.shell === targetShell)
-                .map((request) => request.promise);
-            if (pending.length === 0) {
-                break;
-            }
-            await Promise.all(pending);
+            this.fullscreenEntryAuthorized = false;
         }
 
-        const hasExitedTarget = (): boolean => {
-            const fullscreenElement = getBrowserFullscreenElement();
-            if (targetPresentation !== this.presentationGeneration) {
-                return targetShell === null || fullscreenElement !== targetShell;
-            }
-            return fullscreenElement === null;
-        };
+        const pendingSettled = await this.waitForPendingFullscreenRequests(targetShell, targetPresentation);
+        if (!pendingSettled && targetPresentation === this.presentationGeneration) {
+            // A browser that leaves requestFullscreen() unresolved must not block MENU forever.
+            // Keep this retained presentation windowed for subsequent Continue attempts.
+            this.fullscreenSuppressedPresentation = targetPresentation;
+        }
 
-        if (hasExitedTarget()) {
+        if (getBrowserFullscreenElement() !== targetShell) {
             return true;
         }
-        const fullscreenElement = getBrowserFullscreenElement();
-        if (targetPresentation !== this.presentationGeneration && fullscreenElement !== targetShell) {
+        return await this.requestExitForSpecificShell(targetShell);
+    }
+
+    private async waitForPendingFullscreenRequests(targetShell: HTMLElement, targetPresentation: number): Promise<boolean> {
+        const pending = Array.from(this.pendingFullscreenRequests).filter(
+            (request) => request.presentation === targetPresentation && request.shell === targetShell
+        );
+        if (pending.length === 0) {
             return true;
         }
+
+        let timer = 0;
         try {
-            await exitBrowserFullscreen();
-        } catch {
-            // If fullscreen remains active, stay frozen and wait for browser/user exit.
+            const settled = await Promise.race([
+                Promise.all(pending.map((request) => request.promise)).then(() => true),
+                new Promise<boolean>((resolve) => {
+                    timer = window.setTimeout(() => resolve(false), FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS);
+                })
+            ]);
+            if (!settled) {
+                for (const request of pending) {
+                    this.pendingFullscreenRequests.delete(request);
+                }
+            }
+            return settled;
+        } finally {
+            if (timer !== 0) {
+                clearTimeout(timer);
+            }
         }
-        if (hasExitedTarget()) {
-            return true;
+    }
+
+    private discardPendingFullscreenRequests(targetShell: HTMLElement | null, targetPresentation: number): void {
+        if (targetShell === null) {
+            return;
         }
-        return await new Promise<boolean>((resolve) => {
-            const handleExit = (): void => {
-                if (!hasExitedTarget()) {
+        for (const request of Array.from(this.pendingFullscreenRequests)) {
+            if (request.presentation === targetPresentation && request.shell === targetShell) {
+                this.pendingFullscreenRequests.delete(request);
+            }
+        }
+    }
+
+    private shouldKeepFullscreenShell(shell: HTMLElement): boolean {
+        return this.shell === shell && this.fullscreenEntryAuthorized && this.callbacks.isGameplayActive();
+    }
+
+    private requestExitForSpecificShell(shell: HTMLElement): Promise<boolean> {
+        if (getBrowserFullscreenElement() !== shell) {
+            return Promise.resolve(true);
+        }
+        return new Promise<boolean>((resolve) => {
+            let settled = false;
+            const finishIfExited = (): void => {
+                if (settled || getBrowserFullscreenElement() === shell) {
                     return;
                 }
-                this.removeFullscreenChangeListener(handleExit);
+                settled = true;
+                this.removeFullscreenChangeListener(finishIfExited);
                 resolve(true);
             };
-            this.addFullscreenChangeListener(handleExit);
+            this.addFullscreenChangeListener(finishIfExited);
+            finishIfExited();
+            if (settled) {
+                return;
+            }
+            try {
+                void exitBrowserFullscreen().then(finishIfExited, finishIfExited);
+            } catch {
+                // The browser/user may still complete the exit later.
+            }
         });
     }
 
-    private hasPendingFullscreenRequest(targetShell: HTMLElement | null, targetPresentation: number): boolean {
-        return Array.from(this.pendingFullscreenRequests).some(
-            (request) => request.presentation === targetPresentation && request.shell === targetShell
-        );
-    }
-
-    private async exitStaleFullscreenShell(shell: HTMLElement): Promise<void> {
-        if (getBrowserFullscreenElement() !== shell) {
-            return;
-        }
-        try {
-            await exitBrowserFullscreen();
-        } catch {
-            // A stale shell cannot regain application authority; browser/user exit remains sufficient.
-        }
+    private hideRootUntilRetiredShellExits(shell: HTMLElement): void {
+        this.shellWasFullscreen = false;
+        this.fullscreenEntryAuthorized = false;
+        const visibilityTransition = ++this.visibilityTransitionSerial;
+        this.root.style.visibility = "hidden";
+        void this.requestExitForSpecificShell(shell).finally(() => {
+            this.retiredFullscreenShells.delete(shell);
+            if (visibilityTransition === this.visibilityTransitionSerial) {
+                this.root.style.visibility = "";
+                this.reconcileDisplayModeNow();
+            }
+        });
     }
 
     private applyDisplayMode(): void {
@@ -421,9 +489,21 @@ export class GameViewportController {
     }
 
     private readonly handleFullscreenChange = (): void => {
+        const fullscreenElement = getBrowserFullscreenElement();
+        if (fullscreenElement !== null && this.retiredFullscreenShells.has(fullscreenElement as HTMLElement)) {
+            this.hideRootUntilRetiredShellExits(fullscreenElement as HTMLElement);
+            return;
+        }
+
         const shell = this.shell;
         const presentation = this.presentationGeneration;
-        const current = shell !== null && getBrowserFullscreenElement() === shell;
+        const current = shell !== null && fullscreenElement === shell;
+        if (current && !this.fullscreenEntryAuthorized) {
+            this.shellWasFullscreen = false;
+            void this.requestExitForSpecificShell(shell);
+            return;
+        }
+
         const exitedGameplayFullscreen = this.shellWasFullscreen && !current;
         this.shellWasFullscreen = current;
         this.updateHamburgerVisibility();
@@ -436,10 +516,12 @@ export class GameViewportController {
             });
         }
         if (current && !this.callbacks.isGameplayActive()) {
-            void this.exitFullscreenForMenu();
+            this.fullscreenEntryAuthorized = false;
+            void this.requestExitForSpecificShell(shell);
             return;
         }
         if (exitedGameplayFullscreen && this.callbacks.isGameplayActive()) {
+            this.fullscreenEntryAuthorized = false;
             this.callbacks.fullscreenExited();
         }
     };
@@ -464,12 +546,18 @@ export class GameViewportController {
     };
 
     private addFullscreenChangeListener(listener: EventListener): void {
+        if (typeof document === "undefined") {
+            return;
+        }
         for (const eventName of FULLSCREEN_CHANGE_EVENTS) {
             document.addEventListener(eventName, listener);
         }
     }
 
     private removeFullscreenChangeListener(listener: EventListener): void {
+        if (typeof document === "undefined") {
+            return;
+        }
         for (const eventName of FULLSCREEN_CHANGE_EVENTS) {
             document.removeEventListener(eventName, listener);
         }
@@ -536,11 +624,11 @@ function normalizeDisplayMode(width: number, height: number): DisplayMode {
 }
 
 function hasTouchCapability(): boolean {
-    if (navigator.maxTouchPoints > 0) {
+    if (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) {
         return true;
     }
     try {
-        return window.matchMedia?.("(any-pointer: coarse)").matches === true;
+        return typeof window !== "undefined" && window.matchMedia?.("(any-pointer: coarse)").matches === true;
     } catch {
         return false;
     }
