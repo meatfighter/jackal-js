@@ -35,13 +35,16 @@ test("browser title source no longer carries the Java fullscreen instruction", (
     assert.doesNotMatch(introMode, /FULL-SCREEN MODE/);
 });
 
-test("fullscreen preference defaults on and precedes Scaling in the browser menu", () => {
+test("fullscreen preference defaults on, presents unavailable as off, and precedes Scaling", () => {
     assert.match(preferences, /DEFAULT_FULLSCREEN_PREFERENCE\s*=\s*true/);
     const fullscreenIndex = webApp.indexOf('class="setting-fullscreen-row"');
     const scalingIndex = webApp.indexOf('class="setting-scaling-row"');
     assert.ok(fullscreenIndex >= 0, "Fullscreen menu control is missing");
     assert.ok(scalingIndex > fullscreenIndex, "Fullscreen must appear before Scaling");
+    assert.match(webApp, /const fullscreenPresented = !fullscreenUnavailable && this\.fullscreenPreference/);
+    assert.match(webApp, /aria-pressed="\$\{fullscreenPresented\}" data-enabled="\$\{fullscreenPresented\}"/);
     assert.match(webApp, /fullscreenUnavailable[\s\S]*disabled title="Fullscreen is unavailable in this browser"/);
+    assert.match(webApp, /const fullscreenPresented = !fullscreenSwitch\.disabled && this\.fullscreenPreference/);
 });
 
 test("New Game and live Continue initiate audio before fullscreen and before the first await", () => {
