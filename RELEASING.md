@@ -1,6 +1,6 @@
 # Releasing
 
-Releases are built and qualified locally from a clean Git checkout. GitHub Actions is not required.
+Releases are built and qualified locally from a clean Git checkout.
 
 ## Prerequisites
 
