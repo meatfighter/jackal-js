@@ -1,3 +1,7 @@
+.menu-screen {
+    touch-action: manipulation;
+}
+
 .game-shell:fullscreen,
 .game-shell:-webkit-full-screen {
     height: 100vh;
