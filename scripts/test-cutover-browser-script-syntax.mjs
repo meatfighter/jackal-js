@@ -20,11 +20,7 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const suiteSource = readFileSync("scripts/run-browser-qualification-suite.mjs", "utf8");
 
 test("cutover browser qualification scripts are valid JavaScript", () => {
-    for (const path of [
-        ...fullscreen.map(([, path]) => path),
-        ...supplemental.map(([, path]) => path),
-        "scripts/run-browser-qualification-suite.mjs"
-    ]) {
+    for (const path of [...fullscreen.map(([, path]) => path), ...supplemental.map(([, path]) => path), "scripts/run-browser-qualification-suite.mjs"]) {
         const result = spawnSync(process.execPath, ["--check", path], { encoding: "utf8" });
         assert.equal(result.status, 0, `${path} failed node --check:\n${result.stderr || result.stdout}`);
     }
@@ -46,9 +42,7 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     const listMatch = suiteSource.match(/const qualificationScripts = (\[[\s\S]*?\]);/);
     assert.ok(listMatch, "browser qualification suite must declare its script chain");
     assert.deepEqual(JSON.parse(listMatch[1]), expected);
-    assert.ok(
-        suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)")
-    );
+    assert.ok(suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)"));
     assert.match(suiteSource, /PWA_ROOT:\s*pwaRoot/);
     assert.match(suiteSource, /join\(componentReleaseDir, "pwa"\)/);
 });
