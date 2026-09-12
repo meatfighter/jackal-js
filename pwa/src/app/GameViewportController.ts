@@ -234,7 +234,12 @@ export class GameViewportController {
         const shell = this.shell;
         const session = this.sessionGeneration;
         const presentation = this.presentationGeneration;
-        if (shell === null || this.fullscreenSuppressedPresentation === presentation) {
+        if (
+            shell === null ||
+            this.fullscreenSuppressedPresentation === presentation ||
+            !this.callbacks.isSessionCurrent(session) ||
+            !this.callbacks.isGameplayActive()
+        ) {
             return Promise.resolve(false);
         }
         if (this.isFullscreen()) {
@@ -285,10 +290,12 @@ export class GameViewportController {
             }
         );
         const pending: PendingFullscreenRequest = { shell, presentation, promise };
-        this.pendingFullscreenRequests.add(pending);
-        void promise.finally(() => {
-            this.pendingFullscreenRequests.delete(pending);
-        });
+        if (presentation === this.presentationGeneration && this.shell === shell) {
+            this.pendingFullscreenRequests.add(pending);
+            void promise.finally(() => {
+                this.pendingFullscreenRequests.delete(pending);
+            });
+        }
         return promise;
     }
 
