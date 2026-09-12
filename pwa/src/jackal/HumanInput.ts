@@ -123,12 +123,14 @@ export class HumanInput implements IInput {
         return this.isMappedStartPressed() || this.isAnyNonDirectionalControllerButtonPressed();
     }
 
+    /** Browser fullscreen is owned exclusively by the PWA shell. */
     public isFullscreenTogglePressed(): boolean {
-        return this.input.isKeyPressed(Input.KEY_SPACE);
+        return false;
     }
 
+    /** Escape is captured by the PWA shell and never interpreted by translated gameplay. */
     public isEscape(): boolean {
-        return this.input.isKeyPressed(Input.KEY_ESCAPE);
+        return false;
     }
 
     public isPause(): boolean {
