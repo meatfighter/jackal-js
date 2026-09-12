@@ -46,7 +46,9 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     const listMatch = suiteSource.match(/const qualificationScripts = (\[[\s\S]*?\]);/);
     assert.ok(listMatch, "browser qualification suite must declare its script chain");
     assert.deepEqual(JSON.parse(listMatch[1]), expected);
-    assert.ok(suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)"));
+    assert.ok(
+        suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)")
+    );
     assert.match(suiteSource, /PWA_ROOT:\s*pwaRoot/);
     assert.match(suiteSource, /join\(componentReleaseDir, "pwa"\)/);
 });
