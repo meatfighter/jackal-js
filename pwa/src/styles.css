@@ -218,6 +218,17 @@ button {
     text-align: left;
 }
 
+.display-settings-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    justify-content: center;
+    max-width: 100%;
+    width: min(500px, 100%);
+}
+
+.setting-fullscreen-row,
 .setting-scaling-row {
     align-items: center;
     color: var(--plain-white);
@@ -227,9 +238,60 @@ button {
     gap: 10px;
     grid-template-columns: max-content auto;
     justify-content: center;
-    position: relative;
     max-width: 100%;
+    position: relative;
     width: fit-content;
+}
+
+.setting-fullscreen-row {
+    grid-template-columns: max-content 66px;
+}
+
+.menu-switch {
+    background: #050505;
+    border: 2px solid var(--title-mountain-brown);
+    border-radius: 999px;
+    cursor: pointer;
+    height: 34px;
+    padding: 0;
+    position: relative;
+    transition:
+        background 160ms ease-out,
+        border-color 160ms ease-out;
+    width: 66px;
+}
+
+.menu-switch span {
+    background: var(--plain-white);
+    border-radius: 50%;
+    height: 22px;
+    left: 4px;
+    position: absolute;
+    top: 4px;
+    transition:
+        background 160ms ease-out,
+        transform 160ms ease-out;
+    width: 22px;
+}
+
+.menu-switch[data-enabled="true"] {
+    background: var(--title-cream);
+    border-color: var(--title-cream);
+}
+
+.menu-switch[data-enabled="true"] span {
+    background: #000000;
+    transform: translateX(32px);
+}
+
+.menu-switch:focus-visible {
+    border-color: var(--plain-white);
+    outline: none;
+}
+
+.menu-switch:disabled {
+    cursor: default;
+    opacity: 0.5;
 }
 
 .theme-picker {
@@ -451,6 +513,12 @@ button {
     justify-content: center;
     overflow: hidden;
     position: relative;
+    width: 100%;
+}
+
+.game-shell:fullscreen,
+.game-shell:-webkit-full-screen {
+    height: 100%;
     width: 100%;
 }
 
