@@ -40,6 +40,7 @@ try {
     browser = await chromium.launch({ headless: false, args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] });
 
     await qualifySupportedTouchFullscreenAndContinue(browser, url);
+    await qualifyDelayedVoidFullscreen(browser, url);
     await qualifyDesktopFullscreenExit(browser, url);
     await qualifyPreferenceOffAndReset(browser, url);
     await qualifyRejectedFullscreen(browser, url);
@@ -51,7 +52,7 @@ try {
     await qualifyHangingExitRequiresActualFullscreenExit(browser, url);
 
     console.log(
-        "Fullscreen qualification passed: success/Continue, desktop exit, preference persistence, rejection, unavailable/unknown fallback, late/stuck request fencing, and actual-state exit barriers are correct."
+        "Fullscreen qualification passed: synchronous and delayed entry, Continue, desktop exit, persistence, rejection, unavailable/unknown fallback, late/stuck request fencing, and actual-state exit barriers are correct."
     );
 } finally {
     if (browser !== null) {
@@ -83,6 +84,21 @@ async function qualifySupportedTouchFullscreenAndContinue(browser, url) {
         assert.equal(await originalCanvas.evaluate((canvas) => canvas.isConnected), true, "live Continue replaced the retained game canvas");
         assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "New Game + live Continue did not issue exactly two requests");
         assert.deepEqual(errors, [], "supported fullscreen qualification produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyDelayedVoidFullscreen(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "delayed-void", true);
+    try {
+        const fullscreenSwitch = await waitForMenu(page);
+        assert.equal(await fullscreenSwitch.isEnabled(), true);
+        await page.locator("#new-game-button").click();
+        await waitForFullscreenRunning(page, true);
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 1, "delayed void request was not invoked exactly once");
+        assert.equal(await fullscreenSwitchStateFromStorage(page), null, "fullscreen state unexpectedly wrote the default preference");
+        assert.deepEqual(errors, [], "delayed void fullscreen request produced uncaught browser errors");
     } finally {
         await context.close();
     }
@@ -250,7 +266,12 @@ async function qualifyPendingRetainedContinueDeparture(browser, url) {
 async function qualifyNeverSettlingRetainedRequest(browser, url) {
     const { context, errors, page } = await createHarnessPage(browser, url, "success", true);
     try {
-        await waitForMenu(page);
+        const fullscreenSwitch = await waitForMenu(page);
+        await fullscreenSwitch.click();
+        await fullscreenSwitch.click();
+        assert.equal(await fullscreenSwitchState(page), "true");
+        assert.equal(await fullscreenSwitchStateFromStorage(page), "true", "explicit ON preference was not persisted");
+
         await page.locator("#new-game-button").click();
         await waitForFullscreenRunning(page, true);
         const retainedCanvas = await page.locator("canvas").elementHandle();
@@ -275,13 +296,13 @@ async function qualifyNeverSettlingRetainedRequest(browser, url) {
         assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "suppressed retained presentation made a third fullscreen request");
         assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true);
 
-        // Resolve the old request after gameplay has resumed. Its stale shell authority
+        // Resolve the old request after gameplay has resumed. Its stale authority
         // must be retired without sending the current windowed game back to MENU.
         await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
         await page.waitForFunction(() => document.fullscreenElement === null);
         await waitForWindowedRunning(page);
         assert.equal(await page.locator("#continue-button").count(), 0, "late stale request returned the running game to MENU");
-        assert.equal(await fullscreenSwitchStateFromStorage(page), "true");
+        assert.equal(await fullscreenSwitchStateFromStorage(page), "true", "late stale request mutated the stored preference");
         assert.deepEqual(errors, [], "never-settling retained request produced uncaught browser errors");
     } finally {
         await context.close();
@@ -411,6 +432,14 @@ async function installFullscreenHarness(context, initialMode, touch) {
                                 pendingResolve = null;
                             };
                         });
+                    }
+                    if (mode === "delayed-void") {
+                        const target = this;
+                        window.setTimeout(() => {
+                            fullscreenElement = target;
+                            document.dispatchEvent(new Event("fullscreenchange"));
+                        }, 25);
+                        return undefined;
                     }
                     fullscreenElement = this;
                     document.dispatchEvent(new Event("fullscreenchange"));
