@@ -2,9 +2,11 @@ import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 
 export const VOLUME_STORAGE_KEY = "jackal-volume";
 export const SCALING_STORAGE_KEY = "jackal-scaling";
+export const FULLSCREEN_STORAGE_KEY = "jackal-fullscreen";
 export const DIFFICULTY_STORAGE_KEY = "jackal-difficulty";
 export const DEFAULT_VOLUME = 0.1;
 export const DEFAULT_SCALING_PREFERENCE: JackalScalingPreference = "smooth";
+export const DEFAULT_FULLSCREEN_PREFERENCE = true;
 export const DEFAULT_HARD_MODE = false;
 
 export const SCALING_MODE_DEFINITIONS = [
@@ -18,6 +20,7 @@ export type JackalScalingPreference = ScalingModeDefinition["value"];
 
 const volumeStorage = new DeploymentStorageEntry(VOLUME_STORAGE_KEY, "Jackal volume preference");
 const scalingStorage = new DeploymentStorageEntry(SCALING_STORAGE_KEY, "Jackal scaling preference");
+const fullscreenStorage = new DeploymentStorageEntry(FULLSCREEN_STORAGE_KEY, "Jackal fullscreen preference");
 const difficultyStorage = new DeploymentStorageEntry(DIFFICULTY_STORAGE_KEY, "Jackal difficulty preference");
 
 export function readVolume(): number {
@@ -56,6 +59,28 @@ function clearScalingPreference(): boolean {
     return scalingStorage.remove();
 }
 
+export function readFullscreenPreference(): boolean {
+    const result = fullscreenStorage.read();
+    if (!result.available || result.value === null) {
+        return DEFAULT_FULLSCREEN_PREFERENCE;
+    }
+    if (result.value === "true") {
+        return true;
+    }
+    if (result.value === "false") {
+        return false;
+    }
+    return DEFAULT_FULLSCREEN_PREFERENCE;
+}
+
+export function writeFullscreenPreference(value: boolean): boolean {
+    return fullscreenStorage.write(String(value));
+}
+
+function clearFullscreenPreference(): boolean {
+    return fullscreenStorage.remove();
+}
+
 export function readDifficultyPreference(): boolean {
     const result = difficultyStorage.read();
     if (!result.available || result.value === null) {
@@ -81,8 +106,9 @@ function clearDifficultyPreference(): boolean {
 export function clearPreferences(): boolean {
     const volumeCleared = clearVolume();
     const scalingCleared = clearScalingPreference();
+    const fullscreenCleared = clearFullscreenPreference();
     const difficultyCleared = clearDifficultyPreference();
-    return volumeCleared && scalingCleared && difficultyCleared;
+    return volumeCleared && scalingCleared && fullscreenCleared && difficultyCleared;
 }
 
 export function isScalingPreference(value: unknown): value is JackalScalingPreference {
