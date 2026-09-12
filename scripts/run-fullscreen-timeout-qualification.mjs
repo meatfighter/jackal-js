@@ -95,7 +95,12 @@ try {
     await page.evaluate(() => globalThis.__hungFullscreenHarness.resolvePending());
     await page.waitForFunction(() => document.fullscreenElement?.id === "game-shell");
     assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "post-timeout retry replaced the retained canvas");
-    assert.equal(await fullscreenSwitchStateDuringGameplay(page), "true", "post-timeout retry changed the Fullscreen preference");
+
+    // Browser-driven exit still returns to the windowed menu and the human preference remains ON.
+    await page.evaluate(() => document.exitFullscreen());
+    await page.locator("#continue-button").waitFor({ state: "visible" });
+    await page.waitForFunction(() => document.fullscreenElement === null);
+    assert.equal(await fullscreenSwitchState(page), "true", "post-timeout retry or browser exit changed the Fullscreen preference");
 
     assert.deepEqual(errors, [], "hung fullscreen qualification produced uncaught browser errors");
     console.log(
@@ -117,10 +122,6 @@ async function waitForWindowedRunning(page) {
 
 async function fullscreenSwitchState(page) {
     return page.locator("#fullscreen-switch-button").first().getAttribute("aria-pressed");
-}
-
-async function fullscreenSwitchStateDuringGameplay(page) {
-    return page.evaluate(() => localStorage.getItem([...Object.keys(localStorage)].find((key) => key.includes("jackal-fullscreen")) ?? ""));
 }
 
 async function installHungFullscreenHarness(context) {
