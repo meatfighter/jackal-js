@@ -636,11 +636,6 @@ export class JackalWebApp {
         if (this.pwaSessionState !== "starting" && this.pwaSessionState !== "running") {
             return;
         }
-        if (event.code === "Space") {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
-        }
         if (event.key === "Escape") {
             event.preventDefault();
             event.stopImmediatePropagation();
