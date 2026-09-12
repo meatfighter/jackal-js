@@ -33,7 +33,7 @@ While playing, the hamburger button in the upper-left corner returns you to the 
 
 The browser menu also provides:
 
-- **Fullscreen** — Runs gameplay in fullscreen mode when the browser supports it. This preference defaults to on. If fullscreen is unavailable or a fullscreen request is rejected, the game continues normally in the available browser area.
+- **Fullscreen** — Runs gameplay in fullscreen mode when the browser supports it. This preference defaults to on. If the browser reports that fullscreen is unavailable, the switch remains visible but disabled. If fullscreen is unavailable or a fullscreen request is rejected, the game continues normally in the available browser area.
 - **Scaling** — Controls how the game is resized to fit the display.
 - **Volume** — Adjusts the game volume.
 - **Reset** — Erases saved state and restores settings to their defaults.
