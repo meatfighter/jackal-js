@@ -102,12 +102,22 @@ test("MENU exit is exact-shell, starts actual exit promptly, and bounds unresolv
     assert.match(exitForPresentation, /this\.fullscreenRequestSerial\+\+/);
     assert.match(exitForPresentation, /this\.fullscreenEntryAuthorized = false/);
     assert.match(exitForPresentation, /this\.fullscreenSuppressedPresentation = targetPresentation/);
+    assert.match(exitForPresentation, /this\.shell === targetShell/);
     assert.match(exitForPresentation, /getBrowserFullscreenElement\(\) !== targetShell/);
 
     const pending = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n    \}/)?.[0] ?? "";
     assert.match(pending, /Promise\.race/);
     assert.match(pending, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS/);
     assert.match(pending, /this\.pendingFullscreenRequests\.delete\(request\)/);
+});
+
+test("timeout suppression clears only after the abandoned native request finally settles", () => {
+    const pendingRegistration = viewport.match(/const pending: PendingFullscreenRequest[\s\S]*?return promise;/)?.[0] ?? "";
+    assert.match(pendingRegistration, /promise\.finally/);
+    assert.match(pendingRegistration, /this\.fullscreenSuppressedPresentation === presentation/);
+    assert.match(pendingRegistration, /this\.presentationGeneration === presentation/);
+    assert.match(pendingRegistration, /this\.shell === shell/);
+    assert.match(pendingRegistration, /this\.fullscreenSuppressedPresentation = null/);
 });
 
 test("cleared shells retain no fullscreen authority and late entry is hidden and retired", () => {
@@ -120,6 +130,7 @@ test("cleared shells retain no fullscreen authority and late entry is hidden and
     assert.match(clear, /this\.root\.style\.visibility = "hidden"/);
 
     const retiredExit = viewport.match(/private hideRootUntilRetiredShellExits\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(retiredExit, /this\.fullscreenRequestSerial\+\+/);
     assert.match(retiredExit, /this\.root\.style\.visibility = "hidden"/);
     assert.match(retiredExit, /requestExitForSpecificShell\(shell\)/);
     assert.match(retiredExit, /this\.root\.style\.visibility = ""/);
