@@ -85,9 +85,22 @@ try {
     await waitForWindowedRunning(page);
     assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "late fullscreen success replaced or destroyed the retained canvas");
     assert.equal(await page.locator("#continue-button").count(), 0, "late fullscreen success incorrectly returned the resumed game to MENU");
-    assert.deepEqual(errors, [], "hung fullscreen qualification produced uncaught browser errors");
 
-    console.log("Hung fullscreen qualification passed: bounded MENU transition, request suppression, and very-late success retirement are safe.");
+    // Once that abandoned native request has actually settled, suppression is lifted.
+    // The next explicit Continue may try fullscreen again on the same retained shell.
+    await page.locator("#hamburger-button").click();
+    await page.locator("#continue-button").waitFor({ state: "visible" });
+    await page.locator("#continue-button").click({ noWaitAfter: true });
+    await page.waitForFunction(() => globalThis.__hungFullscreenHarness.requestCount() === 2);
+    await page.evaluate(() => globalThis.__hungFullscreenHarness.resolvePending());
+    await page.waitForFunction(() => document.fullscreenElement?.id === "game-shell");
+    assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "post-timeout retry replaced the retained canvas");
+    assert.equal(await fullscreenSwitchStateDuringGameplay(page), "true", "post-timeout retry changed the Fullscreen preference");
+
+    assert.deepEqual(errors, [], "hung fullscreen qualification produced uncaught browser errors");
+    console.log(
+        "Hung fullscreen qualification passed: bounded MENU transition, temporary request suppression, very-late success retirement, and later retry are safe."
+    );
     await context.close();
 } finally {
     if (browser !== null) {
@@ -104,6 +117,10 @@ async function waitForWindowedRunning(page) {
 
 async function fullscreenSwitchState(page) {
     return page.locator("#fullscreen-switch-button").first().getAttribute("aria-pressed");
+}
+
+async function fullscreenSwitchStateDuringGameplay(page) {
+    return page.evaluate(() => localStorage.getItem([...Object.keys(localStorage)].find((key) => key.includes("jackal-fullscreen")) ?? ""));
 }
 
 async function installHungFullscreenHarness(context) {
