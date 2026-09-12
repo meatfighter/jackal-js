@@ -17,18 +17,25 @@ const supplemental = [
     ["verify:lifecycle-stress", "scripts/run-lifecycle-stress-qualification.mjs"]
 ];
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+const suiteSource = readFileSync("scripts/run-browser-qualification-suite.mjs", "utf8");
 
 test("cutover browser qualification scripts are valid JavaScript", () => {
-    for (const [, path] of [...fullscreen, ...supplemental]) {
+    for (const path of [
+        ...fullscreen.map(([, path]) => path),
+        ...supplemental.map(([, path]) => path),
+        "scripts/run-browser-qualification-suite.mjs"
+    ]) {
         const result = spawnSync(process.execPath, ["--check", path], { encoding: "utf8" });
         assert.equal(result.status, 0, `${path} failed node --check:\n${result.stderr || result.stdout}`);
     }
 });
 
-test("qualify:browsers wires the complete cutover acceptance chain", () => {
+test("qualify:browsers rebuilds and wires the complete cutover acceptance chain", () => {
     for (const [name, path] of [...fullscreen, ...supplemental]) {
         assert.equal(packageJson.scripts?.[name], `node ${path}`, `${name} must invoke its audited browser qualifier`);
     }
+    assert.equal(packageJson.scripts?.["qualify:browsers"], "node scripts/run-browser-qualification-suite.mjs");
+
     const expected = [
         "verify:fullscreen",
         "verify:fullscreen-timeout",
@@ -36,5 +43,10 @@ test("qualify:browsers wires the complete cutover acceptance chain", () => {
         "verify:production-browser",
         ...supplemental.map(([name]) => name)
     ];
-    assert.equal(packageJson.scripts?.["qualify:browsers"], expected.map((name) => `npm run ${name}`).join(" && "));
+    const listMatch = suiteSource.match(/const qualificationScripts = (\[[\s\S]*?\]);/);
+    assert.ok(listMatch, "browser qualification suite must declare its script chain");
+    assert.deepEqual(JSON.parse(listMatch[1]), expected);
+    assert.ok(suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)"));
+    assert.match(suiteSource, /PWA_ROOT:\s*pwaRoot/);
+    assert.match(suiteSource, /join\(componentReleaseDir, "pwa"\)/);
 });
