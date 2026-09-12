@@ -24,3 +24,15 @@
     left: calc(14px + env(safe-area-inset-left, 0px));
     top: calc(14px + env(safe-area-inset-top, 0px));
 }
+
+/* An unavailable fullscreen capability is a fixed OFF state, not a dimmed ON preference. */
+.menu-switch:disabled {
+    background: var(--title-shadow-gray);
+    border-color: var(--title-shadow-gray);
+    opacity: 1;
+}
+
+.menu-switch:disabled span {
+    background: #111111;
+    transform: translateX(0);
+}
