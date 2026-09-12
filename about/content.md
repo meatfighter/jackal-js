@@ -19,15 +19,9 @@ _Jackal_ supports both keyboard and gamepad input. The default controls are:
 | Grenade / Missile | X           | A           |
 | Gun               | Z           | X           |
 | Start / Pause     | Enter       | Menu        |
+| Browser menu      | Esc         | —           |
 
 You can change the button mapping by selecting **Options → Input** from the in-game menu.
-
-_Jackal_ reserves two keyboard controls that cannot be remapped:
-
-| Keyboard | Action            |
-| -------- | ----------------- |
-| Space    | Toggle fullscreen |
-| Esc      | Exit fullscreen   |
 
 ## Browser Menu
 
@@ -35,15 +29,16 @@ _Jackal_ opens with a browser menu that provides **New Game** and **Continue** b
 
 **New Game** starts a new game. **Continue** resumes your previous game. _Jackal_ saves your progress so you can close the tab—or even close the browser entirely—and return later to continue playing.
 
-While playing outside fullscreen mode, a hamburger button appears in the upper-left corner of the game. Pressing it pauses the game and returns you to the browser menu.
+While playing, the hamburger button in the upper-left corner returns you to the browser menu. It remains available during fullscreen gameplay on touch-capable devices; on conventional desktop fullscreen, press **Esc** to return to the browser menu.
 
 The browser menu also provides:
 
+- **Fullscreen** — Runs gameplay in fullscreen mode when the browser supports it. This preference defaults to on. If fullscreen is unavailable or a fullscreen request is rejected, the game continues normally in the available browser area.
 - **Scaling** — Controls how the game is resized to fit the display.
 - **Volume** — Adjusts the game volume.
 - **Reset** — Erases saved state and restores settings to their defaults.
 
-_Jackal_ automatically pauses when the browser loses focus and resumes when the browser regains focus.
+Leaving the game by switching tabs or apps, hiding the page, or otherwise interrupting the browser session returns the game to the browser menu. Select **Continue** to resume; gameplay does not automatically restart when focus returns.
 
 ## In-Game Menu
 
