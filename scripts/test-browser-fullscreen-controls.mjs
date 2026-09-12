@@ -59,16 +59,19 @@ test("New Game and live Continue initiate audio before fullscreen and before the
     assert.ok(liveAudio >= 0 && liveFullscreen > liveAudio && liveAwait > liveFullscreen);
 });
 
-test("native fullscreen is preflight-fenced against synchronous activation reentry", () => {
+test("native fullscreen is fenced before and after synchronous browser invocation reentry", () => {
     const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
-    const sessionCheck = request.indexOf("!this.callbacks.isSessionCurrent(session)");
-    const activityCheck = request.indexOf("!this.callbacks.isGameplayActive()");
+    const preflightSession = request.indexOf("!this.callbacks.isSessionCurrent(session)");
+    const preflightActivity = request.indexOf("!this.callbacks.isGameplayActive()");
     const nativeRequest = request.indexOf("requestBrowserFullscreen(shell)");
-    assert.ok(sessionCheck >= 0 && activityCheck >= 0 && nativeRequest > sessionCheck && nativeRequest > activityCheck);
+    const postflight = request.indexOf("const invocationStillCurrent");
+    const suppress = request.indexOf("this.fullscreenSuppressedPresentation = presentation", postflight);
+    assert.ok(preflightSession >= 0 && preflightActivity >= 0 && nativeRequest > preflightSession && nativeRequest > preflightActivity);
+    assert.ok(postflight > nativeRequest && suppress > postflight, "Native-call reentry must be revalidated and temporarily suppressed.");
+    assert.match(request, /this\.clearFullscreenSuppressionWhenSettled\(promise, shell, presentation\)/);
 
     const pendingRegistration = viewport.match(/const pending: PendingFullscreenRequest[\s\S]*?return promise;/)?.[0] ?? "";
-    assert.match(pendingRegistration, /this\.callbacks\.isSessionCurrent\(session\)/);
-    assert.match(pendingRegistration, /this\.callbacks\.isGameplayActive\(\)/);
+    assert.match(pendingRegistration, /this\.pendingFullscreenRequests\.add\(pending\)/);
 });
 
 test("a successfully invoked delayed fullscreen request keeps authority until fullscreenchange", () => {
@@ -112,12 +115,12 @@ test("MENU exit is exact-shell, starts actual exit promptly, and bounds unresolv
 });
 
 test("timeout suppression clears only after the abandoned native request finally settles", () => {
-    const pendingRegistration = viewport.match(/const pending: PendingFullscreenRequest[\s\S]*?return promise;/)?.[0] ?? "";
-    assert.match(pendingRegistration, /promise\.finally/);
-    assert.match(pendingRegistration, /this\.fullscreenSuppressedPresentation === presentation/);
-    assert.match(pendingRegistration, /this\.presentationGeneration === presentation/);
-    assert.match(pendingRegistration, /this\.shell === shell/);
-    assert.match(pendingRegistration, /this\.fullscreenSuppressedPresentation = null/);
+    const helper = viewport.match(/private clearFullscreenSuppressionWhenSettled\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(helper, /promise\.finally/);
+    assert.match(helper, /this\.fullscreenSuppressedPresentation === presentation/);
+    assert.match(helper, /this\.presentationGeneration === presentation/);
+    assert.match(helper, /this\.shell === shell/);
+    assert.match(helper, /this\.fullscreenSuppressedPresentation = null/);
 });
 
 test("cleared shells retain no fullscreen authority and late entry is hidden and retired", () => {
