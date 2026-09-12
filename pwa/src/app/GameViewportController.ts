@@ -520,8 +520,7 @@ export class GameViewportController {
         const presentation = this.presentationGeneration;
         const current = shell !== null && fullscreenElement === shell;
         if (current && !this.fullscreenEntryAuthorized) {
-            this.shellWasFullscreen = false;
-            void this.requestExitForSpecificShell(shell);
+            this.hideRootUntilRetiredShellExits(shell);
             return;
         }
 
@@ -537,8 +536,7 @@ export class GameViewportController {
             });
         }
         if (current && !this.callbacks.isGameplayActive()) {
-            this.fullscreenEntryAuthorized = false;
-            void this.requestExitForSpecificShell(shell);
+            this.hideRootUntilRetiredShellExits(shell);
             return;
         }
         if (exitedGameplayFullscreen && this.callbacks.isGameplayActive()) {
