@@ -32,7 +32,7 @@ While playing outside fullscreen mode, a hamburger button appears in the upper-l
 
 The browser menu also provides:
 
-- **Fullscreen** — Makes the game fill the entire screen when available.
+- **Fullscreen** — Makes the game fill the entire screen.
 - **Scaling** — Controls how the game is resized to fit the display.
 - **Volume** — Adjusts the game volume.
 - **Reset** — Erases saved state and restores settings to their defaults.
