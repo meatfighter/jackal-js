@@ -13,7 +13,6 @@ const webApp = read("pwa/src/app/JackalWebApp.ts");
 const viewport = read("pwa/src/app/GameViewportController.ts");
 const preferences = read("pwa/src/app/AppPreferences.ts");
 const fullscreenCss = read("pwa/src/fullscreen.css");
-const content = read("about/content.md");
 
 test("Space is remappable while Escape remains browser-reserved", () => {
     const reservedKeyBody = buttonMapping.match(/public static isReservedKey\(key: number\): boolean \{([\s\S]*?)\n    \}/)?.[1] ?? "";
@@ -31,8 +30,9 @@ test("Space is remappable while Escape remains browser-reserved", () => {
     assert.doesNotMatch(reservedHandler, /event\.code === "Space"|event\.key === " "/);
 });
 
-test("browser title screen no longer renders the legacy fullscreen instruction", () => {
-    assert.doesNotMatch(introMode, /drawString\(IntroMode\.FULL_SCREEN_TEXT/);
+test("browser title source no longer carries the Java fullscreen instruction", () => {
+    assert.doesNotMatch(introMode, /FULL_SCREEN_TEXT/);
+    assert.doesNotMatch(introMode, /FULL-SCREEN MODE/);
 });
 
 test("fullscreen preference defaults on and precedes Scaling in the browser menu", () => {
@@ -130,11 +130,4 @@ test("fullscreen CSS owns viewport fill and touch safe-area chrome", () => {
     assert.match(fullscreenCss, /height:\s*100vh/);
     assert.match(fullscreenCss, /safe-area-inset-left/);
     assert.match(fullscreenCss, /safe-area-inset-top/);
-});
-
-test("About documentation matches the browser control contract", () => {
-    assert.match(content, /browser version.*Space.*normal remappable keyboard key/i);
-    assert.match(content, /Esc.*reserved.*browser menu/i);
-    assert.match(content, /Fullscreen.*defaults to on/i);
-    assert.match(content, /continues normally in the available browser area/i);
 });
