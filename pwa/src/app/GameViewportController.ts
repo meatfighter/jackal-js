@@ -1,5 +1,12 @@
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
 import type { BufferedScalableGame, BufferedScalingMode } from "slick2d-ts";
+import {
+    exitBrowserFullscreen,
+    getBrowserFullscreenCapability,
+    getBrowserFullscreenElement,
+    requestBrowserFullscreen,
+    type BrowserFullscreenCapability
+} from "slick2d-ts/slick/util/BrowserFullscreen";
 import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 
@@ -14,12 +21,14 @@ interface GameViewportCallbacks {
     readonly getGame: () => Main | null;
     readonly isSessionCurrent: (session: number) => boolean;
     readonly isLiveMenuOpen: () => boolean;
+    readonly isGameplayActive: () => boolean;
     readonly returnToMenu: () => void;
+    readonly fullscreenExited: () => void;
     readonly applyLifecycleSuspension: () => void;
     readonly reportResizeError: (error: unknown) => void;
 }
 
-/** Owns responsive sizing, fullscreen, hamburger visibility, and cursor idling for the active canvas. */
+/** Owns responsive sizing, shell fullscreen, hamburger visibility, and cursor idling for the active canvas. */
 export class GameViewportController {
     private shell: HTMLElement | null = null;
     private host: HTMLElement | null = null;
@@ -32,6 +41,7 @@ export class GameViewportController {
     private container: AppGameContainer | null = null;
     private bufferedGame: BufferedScalableGame | null = null;
     private sessionGeneration = 0;
+    private shellWasFullscreen = false;
 
     public constructor(
         private readonly root: HTMLElement,
@@ -56,7 +66,12 @@ export class GameViewportController {
         return this.shell;
     }
 
+    public getFullscreenCapability(): BrowserFullscreenCapability {
+        return getBrowserFullscreenCapability();
+    }
+
     public createShell(): HTMLElement {
+        document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
         this.root.innerHTML = `
             <div id="game-shell" class="game-shell">
                 <div id="game-host" class="game-host"></div>
@@ -73,7 +88,9 @@ export class GameViewportController {
         }
         this.shell = shell;
         this.host = host;
+        this.shellWasFullscreen = false;
         hamburger.addEventListener("click", this.callbacks.returnToMenu);
+        document.addEventListener("fullscreenchange", this.handleFullscreenChange);
         return host;
     }
 
@@ -81,7 +98,9 @@ export class GameViewportController {
         this.stopHamburgerVisibilityMonitor();
         this.stopCursorAutoHide();
         this.stopResponsiveSizing();
-        this.exitFullscreen();
+        document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
+        void this.exitFullscreen();
+        this.shellWasFullscreen = false;
         this.shell = null;
         this.host = null;
         this.container = null;
@@ -107,7 +126,7 @@ export class GameViewportController {
             this.resizeObserver.observe(host);
         }
         window.addEventListener("resize", this.scheduleResize);
-        document.addEventListener("fullscreenchange", this.scheduleResize);
+        window.visualViewport?.addEventListener("resize", this.scheduleResize);
         this.scheduleResize();
     }
 
@@ -115,7 +134,7 @@ export class GameViewportController {
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
         window.removeEventListener("resize", this.scheduleResize);
-        document.removeEventListener("fullscreenchange", this.scheduleResize);
+        window.visualViewport?.removeEventListener("resize", this.scheduleResize);
         if (this.resizeAnimationFrame !== 0) {
             cancelAnimationFrame(this.resizeAnimationFrame);
             this.resizeAnimationFrame = 0;
@@ -134,7 +153,7 @@ export class GameViewportController {
 
     public getWindowedDisplayMode(): DisplayMode {
         const host = this.host ?? this.root.querySelector<HTMLElement>("#game-host");
-        const fallback = this.getFullscreenDisplayMode();
+        const fallback = this.getAvailableDisplayMode();
         if (host === null) {
             return fallback;
         }
@@ -143,59 +162,72 @@ export class GameViewportController {
     }
 
     public isFullscreen(): boolean {
-        return this.shell !== null && document.fullscreenElement === this.shell;
+        return this.shell !== null && getBrowserFullscreenElement() === this.shell;
     }
 
-    public enterFullscreen(): void {
-        if (this.shell === null || this.isFullscreen() || !this.shell.requestFullscreen) {
-            return;
-        }
+    /**
+     * Must be called directly from the New Game/Continue activation path. Fullscreen
+     * is presentation-only: unsupported/rejected requests resolve false and gameplay
+     * continues in the normal responsive viewport.
+     */
+    public requestFullscreen(): Promise<boolean> {
+        const shell = this.shell;
         const session = this.sessionGeneration;
-        void this.shell
-            .requestFullscreen()
-            .then(() => {
-                if (!this.callbacks.isSessionCurrent(session)) {
-                    return;
+        if (shell === null || this.isFullscreen()) {
+            return Promise.resolve(this.isFullscreen());
+        }
+        return requestBrowserFullscreen(shell).then(
+            (requested) => {
+                if (!this.callbacks.isSessionCurrent(session) || !this.callbacks.isGameplayActive()) {
+                    if (getBrowserFullscreenElement() === shell) {
+                        void exitBrowserFullscreen().catch(() => undefined);
+                    }
+                    return false;
                 }
+                this.shellWasFullscreen = requested && getBrowserFullscreenElement() === shell;
                 this.updateHamburgerVisibility();
                 this.scheduleResize();
-            })
-            .catch((error) => {
+                return this.shellWasFullscreen;
+            },
+            () => {
                 if (this.callbacks.isSessionCurrent(session)) {
-                    console.error(error);
+                    this.scheduleResize();
                 }
-            });
+                return false;
+            }
+        );
     }
 
-    public exitFullscreen(): void {
-        if (!this.isFullscreen() || !document.exitFullscreen) {
+    /** Best-effort exit used by terminal cleanup; failures are intentionally silent. */
+    public async exitFullscreen(): Promise<void> {
+        if (!this.isFullscreen()) {
             return;
         }
-        const session = this.sessionGeneration;
-        void document
-            .exitFullscreen()
-            .then(() => {
-                if (!this.callbacks.isSessionCurrent(session)) {
-                    return;
-                }
-                this.updateHamburgerVisibility();
-                this.scheduleResize();
-            })
-            .catch((error) => {
-                if (this.callbacks.isSessionCurrent(session)) {
-                    console.error(error);
-                }
-            });
+        try {
+            await exitBrowserFullscreen();
+        } catch {
+            // The caller decides whether a menu may be presented while fullscreen remains active.
+        }
+    }
+
+    /**
+     * Used before showing the PWA menu. A false result means the browser still owns
+     * the shell fullscreen and the menu should remain deferred.
+     */
+    public async exitFullscreenForMenu(): Promise<boolean> {
+        if (!this.isFullscreen()) {
+            return true;
+        }
+        await this.exitFullscreen();
+        return !this.isFullscreen();
     }
 
     public startHamburgerVisibilityMonitor(): void {
         this.stopHamburgerVisibilityMonitor();
-        document.addEventListener("fullscreenchange", this.updateHamburgerVisibility);
         this.updateHamburgerVisibility();
     }
 
     public stopHamburgerVisibilityMonitor(): void {
-        document.removeEventListener("fullscreenchange", this.updateHamburgerVisibility);
         if (this.hamburgerVisibilityAnimationFrame !== 0) {
             cancelAnimationFrame(this.hamburgerVisibilityAnimationFrame);
             this.hamburgerVisibilityAnimationFrame = 0;
@@ -236,7 +268,8 @@ export class GameViewportController {
         if (container === null || this.host === null) {
             return;
         }
-        if (document.fullscreenElement !== null && document.fullscreenElement !== this.shell) {
+        const fullscreenElement = getBrowserFullscreenElement();
+        if (fullscreenElement !== null && fullscreenElement !== this.shell) {
             return;
         }
         const displayMode = this.getWindowedDisplayMode();
@@ -254,7 +287,7 @@ export class GameViewportController {
         }
     }
 
-    private getFullscreenDisplayMode(): DisplayMode {
+    private getAvailableDisplayMode(): DisplayMode {
         const viewport = window.visualViewport;
         return normalizeDisplayMode(
             viewport?.width || window.innerWidth || document.documentElement.clientWidth || MainConstants.DISPLAY_WIDTH,
@@ -262,10 +295,22 @@ export class GameViewportController {
         );
     }
 
+    private readonly handleFullscreenChange = (): void => {
+        const current = this.isFullscreen();
+        const exitedGameplayFullscreen = this.shellWasFullscreen && !current;
+        this.shellWasFullscreen = current;
+        this.updateHamburgerVisibility();
+        this.scheduleResize();
+        if (exitedGameplayFullscreen && this.callbacks.isGameplayActive()) {
+            this.callbacks.fullscreenExited();
+        }
+    };
+
     private readonly updateHamburgerVisibility = (): void => {
         const game = this.callbacks.getGame();
         const hamburger = this.root.querySelector<HTMLButtonElement>("#hamburger-button");
-        const hidden = this.callbacks.isLiveMenuOpen() || game === null || game.isLoadingScreenActive() || this.isFullscreen();
+        const fullscreenWithoutTouchExit = this.isFullscreen() && !hasTouchCapability();
+        const hidden = this.callbacks.isLiveMenuOpen() || game === null || game.isLoadingScreenActive() || fullscreenWithoutTouchExit;
         if (!hidden) {
             this.callbacks.applyLifecycleSuspension();
         }
@@ -338,6 +383,17 @@ function normalizeDisplayMode(width: number, height: number): DisplayMode {
         width: Math.max(1, Math.trunc(width)),
         height: Math.max(1, Math.trunc(height))
     };
+}
+
+function hasTouchCapability(): boolean {
+    if (navigator.maxTouchPoints > 0) {
+        return true;
+    }
+    try {
+        return window.matchMedia?.("(any-pointer: coarse)").matches === true;
+    } catch {
+        return false;
+    }
 }
 
 function isElementHovered(element: HTMLElement): boolean {
