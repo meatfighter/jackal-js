@@ -144,12 +144,13 @@ export class JackalWebApp {
             menu.dataset.liveMenu = "true";
         }
         const fullscreenUnavailable = this.viewport.getFullscreenCapability() === "unavailable";
+        const fullscreenPresented = !fullscreenUnavailable && this.fullscreenPreference;
         menu.innerHTML = `
             <section class="menu-panel" aria-label="Jackal menu">
                 <div class="display-settings-row">
                     <div class="setting-fullscreen-row" role="group" aria-label="Fullscreen">
                         <span>Fullscreen</span>
-                        <button id="fullscreen-switch-button" class="menu-switch" type="button" aria-label="Toggle fullscreen" aria-pressed="${this.fullscreenPreference}" data-enabled="${this.fullscreenPreference}"${fullscreenUnavailable ? ' disabled title="Fullscreen is unavailable in this browser"' : ""}><span></span></button>
+                        <button id="fullscreen-switch-button" class="menu-switch" type="button" aria-label="Toggle fullscreen" aria-pressed="${fullscreenPresented}" data-enabled="${fullscreenPresented}"${fullscreenUnavailable ? ' disabled title="Fullscreen is unavailable in this browser"' : ""}><span></span></button>
                     </div>
                     <div class="setting-scaling-row" role="group" aria-label="Scaling">
                         <span>Scaling</span>
@@ -194,8 +195,9 @@ export class JackalWebApp {
             volumeIcon.innerHTML = volumeIconSvg(this.volume);
         };
         const updateFullscreenUi = (): void => {
-            fullscreenSwitch.setAttribute("aria-pressed", String(this.fullscreenPreference));
-            fullscreenSwitch.setAttribute("data-enabled", String(this.fullscreenPreference));
+            const fullscreenPresented = !fullscreenSwitch.disabled && this.fullscreenPreference;
+            fullscreenSwitch.setAttribute("aria-pressed", String(fullscreenPresented));
+            fullscreenSwitch.setAttribute("data-enabled", String(fullscreenPresented));
         };
         const commitVolume = (): void => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
