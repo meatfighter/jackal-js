@@ -63,6 +63,8 @@ export class GameViewportController {
         private readonly root: HTMLElement,
         private readonly callbacks: GameViewportCallbacks
     ) {
+        // This listener stays for the lifetime of the app so a very late browser
+        // fullscreen success from a retired shell can still be recognized and exited.
         this.addFullscreenChangeListener(this.handleFullscreenChange);
     }
 
@@ -244,6 +246,7 @@ export class GameViewportController {
         }
         if (this.isFullscreen()) {
             this.fullscreenEntryAuthorized = true;
+            this.shellWasFullscreen = true;
             return Promise.resolve(true);
         }
 
@@ -306,6 +309,15 @@ export class GameViewportController {
             this.pendingFullscreenRequests.add(pending);
             void promise.finally(() => {
                 this.pendingFullscreenRequests.delete(pending);
+                if (
+                    this.fullscreenSuppressedPresentation === presentation &&
+                    this.presentationGeneration === presentation &&
+                    this.shell === shell
+                ) {
+                    // The browser finally settled the abandoned native request. A later
+                    // explicit Continue may optimistically try fullscreen again.
+                    this.fullscreenSuppressedPresentation = null;
+                }
             });
         }
         return promise;
@@ -368,9 +380,13 @@ export class GameViewportController {
 
         const fullscreenExit = getBrowserFullscreenElement() === targetShell ? this.requestExitForSpecificShell(targetShell) : Promise.resolve(true);
         const pendingSettled = await this.waitForPendingFullscreenRequests(targetShell, targetPresentation);
-        if (!pendingSettled && targetPresentation === this.presentationGeneration) {
+        if (
+            !pendingSettled &&
+            targetPresentation === this.presentationGeneration &&
+            this.shell === targetShell
+        ) {
             // A browser that leaves requestFullscreen() unresolved must not block MENU forever.
-            // Keep this retained presentation windowed for subsequent Continue attempts.
+            // Suppress duplicate requests on this retained shell until that native request settles.
             this.fullscreenSuppressedPresentation = targetPresentation;
         }
         await fullscreenExit;
@@ -453,6 +469,9 @@ export class GameViewportController {
     }
 
     private hideRootUntilRetiredShellExits(shell: HTMLElement): void {
+        // Any current/pending request that overlaps a retired or unauthorized entry
+        // loses authority immediately. Its completion callback must be stale.
+        this.fullscreenRequestSerial++;
         this.shellWasFullscreen = false;
         this.fullscreenEntryAuthorized = false;
         const visibilityTransition = ++this.visibilityTransitionSerial;
