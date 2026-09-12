@@ -59,6 +59,26 @@ test("New Game and live Continue initiate audio before fullscreen and before the
     assert.ok(liveAudio >= 0 && liveFullscreen > liveAudio && liveAwait > liveFullscreen);
 });
 
+test("native fullscreen is preflight-fenced against synchronous activation reentry", () => {
+    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
+    const sessionCheck = request.indexOf("!this.callbacks.isSessionCurrent(session)");
+    const activityCheck = request.indexOf("!this.callbacks.isGameplayActive()");
+    const nativeRequest = request.indexOf("requestBrowserFullscreen(shell)");
+    assert.ok(sessionCheck >= 0 && activityCheck >= 0 && nativeRequest > sessionCheck && nativeRequest > activityCheck);
+
+    const pendingRegistration = viewport.match(/const pending: PendingFullscreenRequest[\s\S]*?return promise;/)?.[0] ?? "";
+    assert.match(pendingRegistration, /this\.callbacks\.isSessionCurrent\(session\)/);
+    assert.match(pendingRegistration, /this\.callbacks\.isGameplayActive\(\)/);
+});
+
+test("a successfully invoked delayed fullscreen request keeps authority until fullscreenchange", () => {
+    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(request, /if \(!requested\) \{[\s\S]*?this\.fullscreenEntryAuthorized = false/);
+    assert.match(request, /const established = getBrowserFullscreenElement\(\) === shell/);
+    assert.match(request, /Legacy\/prefixed APIs may return void before fullscreenchange/);
+    assert.doesNotMatch(request, /this\.fullscreenEntryAuthorized = established/);
+});
+
 test("fullscreen authority is fenced to one presentation and one active request", () => {
     assert.match(viewport, /private presentationGeneration = 0/);
     assert.match(viewport, /private fullscreenEntryAuthorized = false/);
@@ -73,20 +93,21 @@ test("fullscreen authority is fenced to one presentation and one active request"
     assert.match(viewport, /retiredFullscreenShells\.has\(fullscreenElement as HTMLElement\)/);
 });
 
-test("MENU exit waits only a bounded time for a pending request and suppresses that retained presentation on timeout", () => {
+test("MENU exit is exact-shell, starts actual exit promptly, and bounds unresolved entry requests", () => {
     assert.match(viewport, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS = 1500/);
     const exitForPresentation = viewport.match(/private async exitFullscreenForPresentation\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const actualExit = exitForPresentation.indexOf("this.requestExitForSpecificShell(targetShell)");
+    const pendingWait = exitForPresentation.indexOf("this.waitForPendingFullscreenRequests(targetShell, targetPresentation)");
+    assert.ok(actualExit >= 0 && pendingWait > actualExit, "Actual fullscreen exit should start before waiting on a possibly stuck request promise.");
     assert.match(exitForPresentation, /this\.fullscreenRequestSerial\+\+/);
     assert.match(exitForPresentation, /this\.fullscreenEntryAuthorized = false/);
-    assert.match(exitForPresentation, /waitForPendingFullscreenRequests\(targetShell, targetPresentation\)/);
     assert.match(exitForPresentation, /this\.fullscreenSuppressedPresentation = targetPresentation/);
     assert.match(exitForPresentation, /getBrowserFullscreenElement\(\) !== targetShell/);
-    assert.match(exitForPresentation, /requestExitForSpecificShell\(targetShell\)/);
 
-    const pendingWait = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n    \}/)?.[0] ?? "";
-    assert.match(pendingWait, /Promise\.race/);
-    assert.match(pendingWait, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS/);
-    assert.match(pendingWait, /this\.pendingFullscreenRequests\.delete\(request\)/);
+    const pending = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(pending, /Promise\.race/);
+    assert.match(pending, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS/);
+    assert.match(pending, /this\.pendingFullscreenRequests\.delete\(request\)/);
 });
 
 test("cleared shells retain no fullscreen authority and late entry is hidden and retired", () => {
