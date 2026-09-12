@@ -15,7 +15,7 @@ const preferences = read("pwa/src/app/AppPreferences.ts");
 const fullscreenCss = read("pwa/src/fullscreen.css");
 
 test("Space is remappable while Escape remains browser-reserved", () => {
-    const reservedKeyBody = buttonMapping.match(/public static isReservedKey\(key: number\): boolean \{([\s\S]*?)\n    \}/)?.[1] ?? "";
+    const reservedKeyBody = buttonMapping.match(/public static isReservedKey\(key: number\): boolean \{([\s\S]*?)\n {4}\}/)?.[1] ?? "";
     assert.match(reservedKeyBody, /Input\.KEY_ESCAPE/);
     assert.doesNotMatch(reservedKeyBody, /Input\.KEY_SPACE/);
 
@@ -24,7 +24,7 @@ test("Space is remappable while Escape remains browser-reserved", () => {
     assert.match(humanInput, /public isFullscreenTogglePressed\(\): boolean \{\s*return false;\s*\}/);
     assert.match(humanInput, /public isEscape\(\): boolean \{\s*return false;\s*\}/);
 
-    const reservedHandler = webApp.match(/private readonly handleBrowserReservedKey[\s\S]*?\n    \};/)?.[0] ?? "";
+    const reservedHandler = webApp.match(/private readonly handleBrowserReservedKey[\s\S]*?\n {4}\};/)?.[0] ?? "";
     assert.match(reservedHandler, /event\.key === "Escape"/);
     assert.match(reservedHandler, /requestPwaMenu\("escape"\)/);
     assert.doesNotMatch(reservedHandler, /event\.code === "Space"|event\.key === " "/);
@@ -45,14 +45,14 @@ test("fullscreen preference defaults on and precedes Scaling in the browser menu
 });
 
 test("New Game and live Continue initiate audio before fullscreen and before the first await", () => {
-    const coldStart = webApp.match(/private async startGame\([\s\S]*?\n    private async launchPreparedGame/)?.[0] ?? "";
+    const coldStart = webApp.match(/private async startGame\([\s\S]*?\n {4}private async launchPreparedGame/)?.[0] ?? "";
     const coldAudio = coldStart.indexOf("const audio = beginGameAudio();");
     const coldFullscreen = coldStart.indexOf("this.requestPreferredFullscreen();");
     const coldAwait = coldStart.indexOf("await audio.ready");
     assert.ok(coldAudio >= 0 && coldFullscreen > coldAudio && coldAwait > coldFullscreen);
     assert.match(coldStart, /this\.viewport\.createShell\(session\)/);
 
-    const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n    private removeMenuOverlay/)?.[0] ?? "";
+    const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n {4}private removeMenuOverlay/)?.[0] ?? "";
     const liveAudio = liveContinue.indexOf("const audio = beginGameAudio();");
     const liveFullscreen = liveContinue.indexOf("this.requestPreferredFullscreen();");
     const liveAwait = liveContinue.indexOf("await audio.ready");
@@ -60,7 +60,7 @@ test("New Game and live Continue initiate audio before fullscreen and before the
 });
 
 test("native fullscreen is fenced before and after synchronous browser invocation reentry", () => {
-    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
+    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n {4}\}/)?.[0] ?? "";
     const preflightSession = request.indexOf("!this.callbacks.isSessionCurrent(session)");
     const preflightActivity = request.indexOf("!this.callbacks.isGameplayActive()");
     const nativeRequest = request.indexOf("requestBrowserFullscreen(shell)");
@@ -75,7 +75,7 @@ test("native fullscreen is fenced before and after synchronous browser invocatio
 });
 
 test("a successfully invoked delayed fullscreen request keeps authority until fullscreenchange", () => {
-    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
+    const request = viewport.match(/public requestFullscreen\(\): Promise<boolean> \{[\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(request, /if \(!requested\) \{[\s\S]*?this\.fullscreenEntryAuthorized = false/);
     assert.match(request, /const established = getBrowserFullscreenElement\(\) === shell/);
     assert.match(request, /Legacy\/prefixed APIs may return void before fullscreenchange/);
@@ -98,7 +98,7 @@ test("fullscreen authority is fenced to one presentation and one active request"
 
 test("MENU exit is exact-shell, starts actual exit promptly, and bounds unresolved entry requests", () => {
     assert.match(viewport, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS = 1500/);
-    const exitForPresentation = viewport.match(/private async exitFullscreenForPresentation\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const exitForPresentation = viewport.match(/private async exitFullscreenForPresentation\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     const actualExit = exitForPresentation.indexOf("this.requestExitForSpecificShell(targetShell)");
     const pendingWait = exitForPresentation.indexOf("this.waitForPendingFullscreenRequests(targetShell, targetPresentation)");
     assert.ok(actualExit >= 0 && pendingWait > actualExit, "Actual fullscreen exit should start before waiting on a possibly stuck request promise.");
@@ -108,14 +108,14 @@ test("MENU exit is exact-shell, starts actual exit promptly, and bounds unresolv
     assert.match(exitForPresentation, /this\.shell === targetShell/);
     assert.match(exitForPresentation, /getBrowserFullscreenElement\(\) !== targetShell/);
 
-    const pending = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const pending = viewport.match(/private async waitForPendingFullscreenRequests\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(pending, /Promise\.race/);
     assert.match(pending, /FULLSCREEN_REQUEST_SETTLE_TIMEOUT_MS/);
     assert.match(pending, /this\.pendingFullscreenRequests\.delete\(request\)/);
 });
 
 test("timeout suppression clears only after the abandoned native request finally settles", () => {
-    const helper = viewport.match(/private clearFullscreenSuppressionWhenSettled\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const helper = viewport.match(/private clearFullscreenSuppressionWhenSettled\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(helper, /promise\.finally/);
     assert.match(helper, /this\.fullscreenSuppressedPresentation === presentation/);
     assert.match(helper, /this\.presentationGeneration === presentation/);
@@ -124,7 +124,7 @@ test("timeout suppression clears only after the abandoned native request finally
 });
 
 test("cleared shells retain no fullscreen authority and late entry is hidden and retired", () => {
-    const clear = viewport.match(/public clear\(\): void \{[\s\S]*?\n    \}/)?.[0] ?? "";
+    const clear = viewport.match(/public clear\(\): void \{[\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(clear, /this\.fullscreenRequestSerial\+\+/);
     assert.match(clear, /this\.fullscreenEntryAuthorized = false/);
     assert.match(clear, /this\.retiredFullscreenShells\.add\(targetShell\)/);
@@ -132,7 +132,7 @@ test("cleared shells retain no fullscreen authority and late entry is hidden and
     assert.match(clear, /targetIsFullscreen/);
     assert.match(clear, /this\.root\.style\.visibility = "hidden"/);
 
-    const retiredExit = viewport.match(/private hideRootUntilRetiredShellExits\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const retiredExit = viewport.match(/private hideRootUntilRetiredShellExits\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(retiredExit, /this\.fullscreenRequestSerial\+\+/);
     assert.match(retiredExit, /this\.root\.style\.visibility = "hidden"/);
     assert.match(retiredExit, /requestExitForSpecificShell\(shell\)/);
@@ -140,18 +140,18 @@ test("cleared shells retain no fullscreen authority and late entry is hidden and
 });
 
 test("unauthorized or inactive late fullscreen entry is hidden until exact-shell exit", () => {
-    const handler = viewport.match(/private readonly handleFullscreenChange[\s\S]*?\n    \};/)?.[0] ?? "";
+    const handler = viewport.match(/private readonly handleFullscreenChange[\s\S]*?\n {4}\};/)?.[0] ?? "";
     assert.match(handler, /if \(current && !this\.fullscreenEntryAuthorized\) \{\s*this\.hideRootUntilRetiredShellExits\(shell\)/);
     assert.match(handler, /if \(current && !this\.callbacks\.isGameplayActive\(\)\) \{\s*this\.hideRootUntilRetiredShellExits\(shell\)/);
 });
 
 test("interrupted live Continue exits fullscreen before republishing the retained menu", () => {
-    const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(requestMenu, /this\.menuOverlay !== null/);
     assert.match(requestMenu, /restoreExistingLiveMenuAfterInterruptedResume\(session\)/);
     assert.doesNotMatch(requestMenu, /if \(retainExistingOverlay\) \{\s*this\.pwaSessionState = "menu"/);
 
-    const restore = webApp.match(/private async restoreExistingLiveMenuAfterInterruptedResume\([\s\S]*?\n    \}/)?.[0] ?? "";
+    const restore = webApp.match(/private async restoreExistingLiveMenuAfterInterruptedResume\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     const exit = restore.indexOf("await this.viewport.exitFullscreenForMenu()");
     const publishMenu = restore.indexOf('this.pwaSessionState = "menu";');
     assert.ok(exit >= 0 && publishMenu > exit);
@@ -160,7 +160,7 @@ test("interrupted live Continue exits fullscreen before republishing the retaine
 });
 
 test("live Continue reconciles presentation before input and RAF resume", () => {
-    const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n    private removeMenuOverlay/)?.[0] ?? "";
+    const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n {4}private removeMenuOverlay/)?.[0] ?? "";
     const reconcile = liveContinue.indexOf("this.viewport.reconcileDisplayModeNow();");
     const inputResume = liveContinue.indexOf("liveContainer.getInput().resume();");
     const loopResume = liveContinue.indexOf("liveContainer.setLoopSuspended(false);");
@@ -173,10 +173,10 @@ test("live Continue reconciles presentation before input and RAF resume", () => 
 });
 
 test("unsafe cleanup reaches viewport teardown before reload-required UI", () => {
-    const liveMenu = webApp.match(/private async showLiveMenuOverlay\([\s\S]*?\n    private async resumeLiveGameFromMenu/)?.[0] ?? "";
-    const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n    private async restoreExistingLiveMenuAfterInterruptedResume/)?.[0] ?? "";
-    const staleLaunch = webApp.match(/private disposeStaleLaunch\([\s\S]*?\n    public releaseSession/)?.[0] ?? "";
-    const destroySession = webApp.match(/private destroyGameSession\([\s\S]*?\n    private getGameStateStore/)?.[0] ?? "";
+    const liveMenu = webApp.match(/private async showLiveMenuOverlay\([\s\S]*?\n {4}private async resumeLiveGameFromMenu/)?.[0] ?? "";
+    const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n {4}private async restoreExistingLiveMenuAfterInterruptedResume/)?.[0] ?? "";
+    const staleLaunch = webApp.match(/private disposeStaleLaunch\([\s\S]*?\n {4}public releaseSession/)?.[0] ?? "";
+    const destroySession = webApp.match(/private destroyGameSession\([\s\S]*?\n {4}private getGameStateStore/)?.[0] ?? "";
 
     assert.doesNotMatch(liveMenu, /this\.showCleanupFailure\(\)/);
     assert.doesNotMatch(requestMenu, /this\.showCleanupFailure\(\)/);

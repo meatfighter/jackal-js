@@ -82,7 +82,11 @@ async function qualifySupportedTouchFullscreenAndContinue(browser, url) {
         await page.locator("#continue-button").click();
         await waitForFullscreenRunning(page, true);
         assert.equal(await originalCanvas.evaluate((canvas) => canvas.isConnected), true, "live Continue replaced the retained game canvas");
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "New Game + live Continue did not issue exactly two requests");
+        assert.equal(
+            await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()),
+            2,
+            "New Game + live Continue did not issue exactly two requests"
+        );
         assert.deepEqual(errors, [], "supported fullscreen qualification produced uncaught browser errors");
     } finally {
         await context.close();
@@ -195,7 +199,11 @@ async function qualifyUnknownMissingFullscreenMethod(browser, url) {
         assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true");
         await page.locator("#new-game-button").click();
         await waitForWindowedRunning(page);
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "missing request method should fall back without a native call");
+        assert.equal(
+            await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()),
+            0,
+            "missing request method should fall back without a native call"
+        );
         await page.locator("#hamburger-button").click();
         await page.locator("#continue-button").waitFor({ state: "visible" });
         assert.equal(await fullscreenSwitchState(page), "true", "unknown/missing fallback changed the preference");
@@ -293,7 +301,11 @@ async function qualifyNeverSettlingRetainedRequest(browser, url) {
 
         await page.locator("#continue-button").click();
         await waitForWindowedRunning(page);
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "suppressed retained presentation made a third fullscreen request");
+        assert.equal(
+            await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()),
+            2,
+            "suppressed retained presentation made a third fullscreen request"
+        );
         assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true);
 
         // Resolve the old request after gameplay has resumed. Its stale authority
@@ -388,6 +400,9 @@ async function installFullscreenHarness(context, initialMode, touch) {
             let mode = initialMode;
             let exitMode = "success";
             let fullscreenElement = null;
+            const setSyntheticFullscreenElement = (element) => {
+                fullscreenElement = element;
+            };
             let requestCount = 0;
             let pendingResolve = null;
 
@@ -423,10 +438,9 @@ async function installFullscreenHarness(context, initialMode, touch) {
                         return Promise.reject(new DOMException("Synthetic fullscreen denial", "NotAllowedError"));
                     }
                     if (mode === "pending") {
-                        const target = this;
                         return new Promise((resolve) => {
                             pendingResolve = () => {
-                                fullscreenElement = target;
+                                setSyntheticFullscreenElement(this);
                                 document.dispatchEvent(new Event("fullscreenchange"));
                                 resolve();
                                 pendingResolve = null;
@@ -434,14 +448,13 @@ async function installFullscreenHarness(context, initialMode, touch) {
                         });
                     }
                     if (mode === "delayed-void") {
-                        const target = this;
                         window.setTimeout(() => {
-                            fullscreenElement = target;
+                            setSyntheticFullscreenElement(this);
                             document.dispatchEvent(new Event("fullscreenchange"));
                         }, 25);
                         return undefined;
                     }
-                    fullscreenElement = this;
+                    setSyntheticFullscreenElement(this);
                     document.dispatchEvent(new Event("fullscreenchange"));
                     return Promise.resolve();
                 }

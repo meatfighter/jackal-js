@@ -77,11 +77,9 @@ try {
 
     // Very late success from request #2 has no authority over resumed gameplay.
     await page.evaluate(() => globalThis.__reentrantFullscreenHarness.resolvePending());
-    await page.waitForFunction(
-        () => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden",
-        undefined,
-        { timeout: 5_000 }
-    );
+    await page.waitForFunction(() => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden", undefined, {
+        timeout: 5_000
+    });
     await waitForWindowedRunning(page);
     assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true);
     assert.equal(await page.locator("#continue-button").count(), 0, "late reentrant success returned the running game to MENU");
@@ -116,6 +114,9 @@ async function installReentrantFullscreenHarness(context) {
     await context.addInitScript(() => {
         let mode = "success";
         let fullscreenElement = null;
+        const setSyntheticFullscreenElement = (element) => {
+            fullscreenElement = element;
+        };
         let requestCount = 0;
         let pendingResolve = null;
 
@@ -137,18 +138,17 @@ async function installReentrantFullscreenHarness(context) {
             value: function () {
                 requestCount++;
                 if (mode === "blur-pending") {
-                    const target = this;
                     window.dispatchEvent(new Event("blur"));
                     return new Promise((resolve) => {
                         pendingResolve = () => {
-                            fullscreenElement = target;
+                            setSyntheticFullscreenElement(this);
                             document.dispatchEvent(new Event("fullscreenchange"));
                             resolve();
                             pendingResolve = null;
                         };
                     });
                 }
-                fullscreenElement = this;
+                setSyntheticFullscreenElement(this);
                 document.dispatchEvent(new Event("fullscreenchange"));
                 return Promise.resolve();
             }

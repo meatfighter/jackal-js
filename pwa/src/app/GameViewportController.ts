@@ -423,11 +423,7 @@ export class GameViewportController {
 
     private clearFullscreenSuppressionWhenSettled(promise: Promise<boolean>, shell: HTMLElement, presentation: number): void {
         void promise.finally(() => {
-            if (
-                this.fullscreenSuppressedPresentation === presentation &&
-                this.presentationGeneration === presentation &&
-                this.shell === shell
-            ) {
+            if (this.fullscreenSuppressedPresentation === presentation && this.presentationGeneration === presentation && this.shell === shell) {
                 // The browser finally settled the abandoned native request. A later
                 // explicit Continue may optimistically try fullscreen again.
                 this.fullscreenSuppressedPresentation = null;

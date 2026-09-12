@@ -31,12 +31,7 @@ import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
-import {
-    clearPersistedPwaState,
-    persistFullscreenPreference,
-    persistScalingPreference,
-    persistVolumePreference
-} from "./PersistenceActions.js";
+import { clearPersistedPwaState, persistFullscreenPreference, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
 import { PersistenceWarningController } from "./PersistenceWarningController.js";
 import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
@@ -319,7 +314,12 @@ export class JackalWebApp {
         }
         if (
             !this.sessionCleanup.run(() => {
-                this.menuOverlay = this.renderMenu(this.root, true, saved ? null : "Progress could not be saved. Continue still preserves this live game.", true);
+                this.menuOverlay = this.renderMenu(
+                    this.root,
+                    true,
+                    saved ? null : "Progress could not be saved. Continue still preserves this live game.",
+                    true
+                );
             })
         ) {
             this.destroyGameSession();

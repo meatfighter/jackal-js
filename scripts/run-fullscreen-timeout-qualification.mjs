@@ -1,4 +1,4 @@
-/* global document, navigator, window, HTMLElement */
+/* global document, navigator, HTMLElement */
 import assert from "node:assert/strict";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
@@ -72,16 +72,18 @@ try {
     await page.locator("#continue-button").click();
     await waitForWindowedRunning(page);
     assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "hung-request Continue replaced the retained canvas");
-    assert.equal(await page.evaluate(() => globalThis.__hungFullscreenHarness.requestCount()), 1, "suppressed live Continue stacked another fullscreen request");
+    assert.equal(
+        await page.evaluate(() => globalThis.__hungFullscreenHarness.requestCount()),
+        1,
+        "suppressed live Continue stacked another fullscreen request"
+    );
 
     // Now let the first browser request succeed absurdly late. It must be hidden and
     // exited as stale/unauthorized presentation work without returning gameplay to MENU.
     await page.evaluate(() => globalThis.__hungFullscreenHarness.resolvePending());
-    await page.waitForFunction(
-        () => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden",
-        undefined,
-        { timeout: 5_000 }
-    );
+    await page.waitForFunction(() => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden", undefined, {
+        timeout: 5_000
+    });
     await waitForWindowedRunning(page);
     assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true, "late fullscreen success replaced or destroyed the retained canvas");
     assert.equal(await page.locator("#continue-button").count(), 0, "late fullscreen success incorrectly returned the resumed game to MENU");
@@ -127,6 +129,9 @@ async function fullscreenSwitchState(page) {
 async function installHungFullscreenHarness(context) {
     await context.addInitScript(() => {
         let fullscreenElement = null;
+        const setSyntheticFullscreenElement = (element) => {
+            fullscreenElement = element;
+        };
         let requestCount = 0;
         let pendingResolve = null;
 
@@ -147,10 +152,9 @@ async function installHungFullscreenHarness(context) {
             configurable: true,
             value: function () {
                 requestCount++;
-                const target = this;
                 return new Promise((resolve) => {
                     pendingResolve = () => {
-                        fullscreenElement = target;
+                        setSyntheticFullscreenElement(this);
                         document.dispatchEvent(new Event("fullscreenchange"));
                         resolve();
                         pendingResolve = null;

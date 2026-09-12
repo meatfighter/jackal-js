@@ -1,11 +1,5 @@
 import { clearStoredGameState } from "../jackal/persistence/GameStateStorage.js";
-import {
-    clearPreferences,
-    writeFullscreenPreference,
-    writeScalingPreference,
-    writeVolume,
-    type JackalScalingPreference
-} from "./AppPreferences.js";
+import { clearPreferences, writeFullscreenPreference, writeScalingPreference, writeVolume, type JackalScalingPreference } from "./AppPreferences.js";
 import type { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import type { PersistenceWarningController } from "./PersistenceWarningController.js";
 
