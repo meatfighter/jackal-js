@@ -57,7 +57,7 @@ export class ButtonMapping {
     }
 
     public static isReservedKey(key: number): boolean {
-        return key === Input.KEY_SPACE || key === Input.KEY_ESCAPE;
+        return key === Input.KEY_ESCAPE;
     }
 
     public keyboardLabelFor(action: number): string {
