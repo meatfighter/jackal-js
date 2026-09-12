@@ -21,7 +21,7 @@ _Jackal_ supports both keyboard and gamepad input. The default controls are:
 | Start / Pause     | Enter       | Menu        |
 | Browser menu      | Esc         | —           |
 
-You can change the button mapping by selecting **Options → Input** from the in-game menu. **Space** is available as a normal remappable keyboard key. **Esc** is reserved for returning to the browser menu and cannot be assigned to a gameplay action.
+You can change the button mapping by selecting **Options → Input** from the in-game menu. In the browser version, **Space** is available as a normal remappable keyboard key. **Esc** is reserved for returning to the browser menu and cannot be assigned to a gameplay action.
 
 ## Browser Menu
 
