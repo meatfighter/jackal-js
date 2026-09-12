@@ -4,6 +4,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 import { chromium } from "playwright";
+import { disableFullscreenPreference } from "./fullscreen-test-utils.mjs";
 
 const root = resolve(process.env.PWA_ROOT ?? "dist/pwa");
 assert(existsSync(resolve(root, "index.html")), `Missing production PWA: ${root}`);
@@ -52,6 +53,7 @@ try {
     await first.waitForFunction(() => navigator.serviceWorker.controller !== null, undefined, { timeout: 120_000 });
     await first.reload();
     await first.locator(newGameSelector).first().waitFor({ state: "visible" });
+    await disableFullscreenPreference(first);
     await first.locator(newGameSelector).first().click();
     await waitForRunning(first, "first tab initial game");
 
