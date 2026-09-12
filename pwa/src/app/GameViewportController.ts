@@ -299,27 +299,26 @@ export class GameViewportController {
                 return false;
             }
         );
-        const pending: PendingFullscreenRequest = { shell, presentation, promise };
-        if (
+
+        const invocationStillCurrent =
             presentation === this.presentationGeneration &&
             this.shell === shell &&
             this.callbacks.isSessionCurrent(session) &&
-            this.callbacks.isGameplayActive()
-        ) {
-            this.pendingFullscreenRequests.add(pending);
-            void promise.finally(() => {
-                this.pendingFullscreenRequests.delete(pending);
-                if (
-                    this.fullscreenSuppressedPresentation === presentation &&
-                    this.presentationGeneration === presentation &&
-                    this.shell === shell
-                ) {
-                    // The browser finally settled the abandoned native request. A later
-                    // explicit Continue may optimistically try fullscreen again.
-                    this.fullscreenSuppressedPresentation = null;
-                }
-            });
+            this.callbacks.isGameplayActive();
+        if (!invocationStillCurrent) {
+            if (presentation === this.presentationGeneration && this.shell === shell) {
+                this.fullscreenSuppressedPresentation = presentation;
+                this.clearFullscreenSuppressionWhenSettled(promise, shell, presentation);
+            }
+            return promise;
         }
+
+        const pending: PendingFullscreenRequest = { shell, presentation, promise };
+        this.pendingFullscreenRequests.add(pending);
+        void promise.finally(() => {
+            this.pendingFullscreenRequests.delete(pending);
+        });
+        this.clearFullscreenSuppressionWhenSettled(promise, shell, presentation);
         return promise;
     }
 
@@ -380,11 +379,7 @@ export class GameViewportController {
 
         const fullscreenExit = getBrowserFullscreenElement() === targetShell ? this.requestExitForSpecificShell(targetShell) : Promise.resolve(true);
         const pendingSettled = await this.waitForPendingFullscreenRequests(targetShell, targetPresentation);
-        if (
-            !pendingSettled &&
-            targetPresentation === this.presentationGeneration &&
-            this.shell === targetShell
-        ) {
+        if (!pendingSettled && targetPresentation === this.presentationGeneration && this.shell === targetShell) {
             // A browser that leaves requestFullscreen() unresolved must not block MENU forever.
             // Suppress duplicate requests on this retained shell until that native request settles.
             this.fullscreenSuppressedPresentation = targetPresentation;
@@ -424,6 +419,20 @@ export class GameViewportController {
                 clearTimeout(timer);
             }
         }
+    }
+
+    private clearFullscreenSuppressionWhenSettled(promise: Promise<boolean>, shell: HTMLElement, presentation: number): void {
+        void promise.finally(() => {
+            if (
+                this.fullscreenSuppressedPresentation === presentation &&
+                this.presentationGeneration === presentation &&
+                this.shell === shell
+            ) {
+                // The browser finally settled the abandoned native request. A later
+                // explicit Continue may optimistically try fullscreen again.
+                this.fullscreenSuppressedPresentation = null;
+            }
+        });
     }
 
     private discardPendingFullscreenRequests(targetShell: HTMLElement | null, targetPresentation: number): void {
