@@ -33,7 +33,7 @@
         "build": "npm run verify && node scripts/build-release.mjs",
         "release": "npm run verify:dependencies && npm run build",
         "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && node scripts/assert-clean-git.mjs",
-        "qualify:browsers": "npm run verify:fullscreen && npm run verify:fullscreen-timeout && npm run verify:fullscreen-reentry && npm run verify:production-browser && npm run verify:activation-races && npm run verify:audio-interruption && npm run verify:lifecycle-events && npm run verify:ownership-transfer && npm run verify:persistence-failure && npm run verify:lifecycle-stress",
+        "qualify:browsers": "node scripts/run-browser-qualification-suite.mjs",
         "release:web": "npm run verify:dependencies && npm run build:web",
         "release:desktop": "node scripts/release-desktop.mjs",
         "run:desktop": "node scripts/run-desktop.mjs",
