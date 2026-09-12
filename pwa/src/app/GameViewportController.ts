@@ -11,6 +11,7 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 
 const GAME_CURSOR_HIDE_DELAY_MS = 3000;
+const FULLSCREEN_CHANGE_EVENTS = ["fullscreenchange", "webkitfullscreenchange"] as const;
 
 interface DisplayMode {
     readonly width: number;
@@ -71,7 +72,7 @@ export class GameViewportController {
     }
 
     public createShell(): HTMLElement {
-        document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
+        this.removeFullscreenChangeListener(this.handleFullscreenChange);
         this.root.innerHTML = `
             <div id="game-shell" class="game-shell">
                 <div id="game-host" class="game-host"></div>
@@ -90,7 +91,7 @@ export class GameViewportController {
         this.host = host;
         this.shellWasFullscreen = false;
         hamburger.addEventListener("click", this.callbacks.returnToMenu);
-        document.addEventListener("fullscreenchange", this.handleFullscreenChange);
+        this.addFullscreenChangeListener(this.handleFullscreenChange);
         return host;
     }
 
@@ -98,7 +99,7 @@ export class GameViewportController {
         this.stopHamburgerVisibilityMonitor();
         this.stopCursorAutoHide();
         this.stopResponsiveSizing();
-        document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
+        this.removeFullscreenChangeListener(this.handleFullscreenChange);
         void this.exitFullscreen();
         this.shellWasFullscreen = false;
         this.shell = null;
@@ -210,27 +211,32 @@ export class GameViewportController {
     }
 
     /**
-     * Used before showing the PWA menu. If an explicit exit is rejected while the
-     * shell remains fullscreen, stay frozen and wait for the browser/user to finish
-     * leaving fullscreen instead of ever rendering a fullscreen PWA menu.
+     * Used before showing any PWA menu/error UI. This deliberately checks the
+     * document's actual fullscreen state instead of only the current shell, because
+     * terminal cleanup may already have cleared shell ownership while an asynchronous
+     * browser exit is still settling.
      */
     public async exitFullscreenForMenu(): Promise<boolean> {
-        if (!this.isFullscreen()) {
+        if (getBrowserFullscreenElement() === null) {
             return true;
         }
-        await this.exitFullscreen();
-        if (!this.isFullscreen()) {
+        try {
+            await exitBrowserFullscreen();
+        } catch {
+            // If fullscreen remains active, stay frozen and wait for browser/user exit.
+        }
+        if (getBrowserFullscreenElement() === null) {
             return true;
         }
         return await new Promise<boolean>((resolve) => {
             const handleExit = (): void => {
-                if (this.isFullscreen()) {
+                if (getBrowserFullscreenElement() !== null) {
                     return;
                 }
-                document.removeEventListener("fullscreenchange", handleExit);
+                this.removeFullscreenChangeListener(handleExit);
                 resolve(true);
             };
-            document.addEventListener("fullscreenchange", handleExit);
+            this.addFullscreenChangeListener(handleExit);
         });
     }
 
@@ -336,6 +342,18 @@ export class GameViewportController {
             });
         }
     };
+
+    private addFullscreenChangeListener(listener: EventListener): void {
+        for (const eventName of FULLSCREEN_CHANGE_EVENTS) {
+            document.addEventListener(eventName, listener);
+        }
+    }
+
+    private removeFullscreenChangeListener(listener: EventListener): void {
+        for (const eventName of FULLSCREEN_CHANGE_EVENTS) {
+            document.removeEventListener(eventName, listener);
+        }
+    }
 
     private readonly handlePointerEnter = (): void => {
         this.pointerOverHost = true;
