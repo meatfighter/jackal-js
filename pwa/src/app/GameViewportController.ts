@@ -70,7 +70,7 @@ export class GameViewportController {
         return getBrowserFullscreenCapability();
     }
 
-    public createShell(): HTMLElement {
+    public createShell(sessionGeneration: number): HTMLElement {
         document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
         this.root.innerHTML = `
             <div id="game-shell" class="game-shell">
@@ -88,6 +88,7 @@ export class GameViewportController {
         }
         this.shell = shell;
         this.host = host;
+        this.sessionGeneration = sessionGeneration;
         this.shellWasFullscreen = false;
         hamburger.addEventListener("click", this.callbacks.returnToMenu);
         document.addEventListener("fullscreenchange", this.handleFullscreenChange);
@@ -206,20 +207,33 @@ export class GameViewportController {
         try {
             await exitBrowserFullscreen();
         } catch {
-            // The caller decides whether a menu may be presented while fullscreen remains active.
+            // The menu-specific path below keeps presentation deferred if fullscreen remains active.
         }
     }
 
     /**
-     * Used before showing the PWA menu. A false result means the browser still owns
-     * the shell fullscreen and the menu should remain deferred.
+     * Used before showing the PWA menu. If an explicit exit is rejected while the
+     * shell remains fullscreen, stay frozen and wait for the browser/user to finish
+     * leaving fullscreen instead of ever rendering a fullscreen PWA menu.
      */
     public async exitFullscreenForMenu(): Promise<boolean> {
         if (!this.isFullscreen()) {
             return true;
         }
         await this.exitFullscreen();
-        return !this.isFullscreen();
+        if (!this.isFullscreen()) {
+            return true;
+        }
+        return await new Promise<boolean>((resolve) => {
+            const handleExit = (): void => {
+                if (this.isFullscreen()) {
+                    return;
+                }
+                document.removeEventListener("fullscreenchange", handleExit);
+                resolve(true);
+            };
+            document.addEventListener("fullscreenchange", handleExit);
+        });
     }
 
     public startHamburgerVisibilityMonitor(): void {
