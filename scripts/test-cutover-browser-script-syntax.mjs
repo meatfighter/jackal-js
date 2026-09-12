@@ -5,7 +5,8 @@ import test from "node:test";
 
 const fullscreen = [
     ["verify:fullscreen", "scripts/run-fullscreen-qualification.mjs"],
-    ["verify:fullscreen-timeout", "scripts/run-fullscreen-timeout-qualification.mjs"]
+    ["verify:fullscreen-timeout", "scripts/run-fullscreen-timeout-qualification.mjs"],
+    ["verify:fullscreen-reentry", "scripts/run-fullscreen-reentry-qualification.mjs"]
 ];
 const supplemental = [
     ["verify:activation-races", "scripts/run-activation-race-qualification.mjs"],
@@ -31,6 +32,7 @@ test("qualify:browsers wires the complete cutover acceptance chain", () => {
     const expected = [
         "verify:fullscreen",
         "verify:fullscreen-timeout",
+        "verify:fullscreen-reentry",
         "verify:production-browser",
         ...supplemental.map(([name]) => name)
     ];
