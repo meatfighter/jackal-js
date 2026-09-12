@@ -70,7 +70,7 @@ export class GameViewportController {
         return getBrowserFullscreenCapability();
     }
 
-    public createShell(sessionGeneration: number): HTMLElement {
+    public createShell(): HTMLElement {
         document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
         this.root.innerHTML = `
             <div id="game-shell" class="game-shell">
@@ -88,7 +88,6 @@ export class GameViewportController {
         }
         this.shell = shell;
         this.host = host;
-        this.sessionGeneration = sessionGeneration;
         this.shellWasFullscreen = false;
         hamburger.addEventListener("click", this.callbacks.returnToMenu);
         document.addEventListener("fullscreenchange", this.handleFullscreenChange);
@@ -173,13 +172,12 @@ export class GameViewportController {
      */
     public requestFullscreen(): Promise<boolean> {
         const shell = this.shell;
-        const session = this.sessionGeneration;
         if (shell === null || this.isFullscreen()) {
             return Promise.resolve(this.isFullscreen());
         }
         return requestBrowserFullscreen(shell).then(
             (requested) => {
-                if (!this.callbacks.isSessionCurrent(session) || !this.callbacks.isGameplayActive()) {
+                if (this.shell !== shell || !this.callbacks.isGameplayActive()) {
                     if (getBrowserFullscreenElement() === shell) {
                         void exitBrowserFullscreen().catch(() => undefined);
                     }
@@ -191,7 +189,7 @@ export class GameViewportController {
                 return this.shellWasFullscreen;
             },
             () => {
-                if (this.callbacks.isSessionCurrent(session)) {
+                if (this.shell === shell) {
                     this.scheduleResize();
                 }
                 return false;
