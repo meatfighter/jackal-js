@@ -446,7 +446,7 @@ export class JackalWebApp {
         if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
             return;
         }
-        const host = this.viewport.createShell();
+        const host = this.viewport.createShell(session);
         runtime.slick.Display.setParent(host);
         const audio = beginGameAudio();
         this.requestPreferredFullscreen();
@@ -615,7 +615,8 @@ export class JackalWebApp {
             void this.showLiveMenuOverlay();
             return;
         }
-        const retainExistingOverlay = this.liveMenuOpen && this.game !== null && this.container !== null;
+        const retainExistingOverlay = this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
+        const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
         this.suspendGameForMenu();
@@ -625,11 +626,28 @@ export class JackalWebApp {
             return;
         }
         if (retainExistingOverlay) {
-            this.pwaSessionState = "menu";
-            this.syncScreenWakeLock();
+            void this.restoreExistingLiveMenuAfterInterruptedResume(session);
         } else {
             this.showMenu();
         }
+    }
+
+    private async restoreExistingLiveMenuAfterInterruptedResume(session: number): Promise<void> {
+        if (!(await this.viewport.exitFullscreenForMenu())) {
+            return;
+        }
+        if (
+            !this.isCurrentGameSession(session) ||
+            this.pwaSessionState !== "stopping" ||
+            !this.liveMenuOpen ||
+            this.menuOverlay === null ||
+            this.game === null ||
+            this.container === null
+        ) {
+            return;
+        }
+        this.pwaSessionState = "menu";
+        this.syncScreenWakeLock();
     }
 
     private readonly handleBrowserReservedKey = (event: KeyboardEvent): void => {
