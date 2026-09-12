@@ -195,7 +195,7 @@ async function qualifyUnknownMissingFullscreenMethod(browser, url) {
     const { context, errors, page } = await createHarnessPage(browser, url, "unknown-missing", false);
     try {
         const fullscreenSwitch = await waitForMenu(page);
-        assert.equal(await fullscreenSwitch.isEnabled(), true, "unknown capability must remain enabled");
+        assert.equal(await fullscreenSwitch.isEnabled(), false, "missing fullscreen request method should disable the switch");
         assert.equal(await fullscreenSwitch.getAttribute("aria-pressed"), "true");
         await page.locator("#new-game-button").click();
         await waitForWindowedRunning(page);
