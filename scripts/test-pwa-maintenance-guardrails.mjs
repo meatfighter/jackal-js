@@ -45,7 +45,8 @@ test("graphics lifecycle is exit-only and restoration never resumes gameplay", (
 
 test("live-menu transition freezes and retires playback before serializing progress", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
-    const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
+    const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
+    assert.notEqual(liveMenu.length, 0, "showLiveMenuOverlay source slice is empty");
     const suspension = liveMenu.indexOf("this.suspendGameForMenu();");
     const inputSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentInputMapping())");
     const gameSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState())");
@@ -60,7 +61,8 @@ test("live-menu transition freezes and retires playback before serializing progr
 
 test("failed persistence keeps the initialized live game continuable", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
-    const liveMenu = source.slice(source.indexOf("private showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
+    const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
+    assert.notEqual(liveMenu.length, 0, "showLiveMenuOverlay source slice is empty");
     assert.match(liveMenu, /const saved = this\.sessionCleanup\.trySave\(\(\) => this\.saveCurrentGameState\(\)\)/);
     assert.match(liveMenu, /Progress could not be saved\. Continue still preserves this live game\./);
     assert.match(liveMenu, /this\.pwaSessionState = "menu";/);
