@@ -318,7 +318,6 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         if (this.state <= IntroMode.STATE_TITLE || this.state === IntroMode.STATE_STORY_SCROLL) {
             this.main.titleImage.draw(128, 192);
             this.menu.render();
-            this.main.drawString(IntroMode.FULL_SCREEN_TEXT, IntroMode.FULL_SCREEN_TEXT_X, IntroMode.FULL_SCREEN_TEXT_Y, MainConstants.FONT_GRAY);
             this.main.drawString(IntroMode.COPYRIGHT_TEXT, IntroMode.COPYRIGHT_TEXT_X, IntroMode.COPYRIGHT_TEXT_Y, MainConstants.FONT_GRAY);
         }
 
