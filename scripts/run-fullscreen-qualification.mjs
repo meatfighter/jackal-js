@@ -47,9 +47,11 @@ try {
     await qualifyUnknownMissingFullscreenMethod(browser, url);
     await qualifyPendingColdStartDeparture(browser, url);
     await qualifyPendingRetainedContinueDeparture(browser, url);
+    await qualifyNeverSettlingRetainedRequest(browser, url);
+    await qualifyHangingExitRequiresActualFullscreenExit(browser, url);
 
     console.log(
-        "Fullscreen qualification passed: success/Continue, desktop exit, preference persistence, rejection, unavailable/unknown fallback, and pending-request departures are fenced correctly."
+        "Fullscreen qualification passed: success/Continue, desktop exit, preference persistence, rejection, unavailable/unknown fallback, late/stuck request fencing, and actual-state exit barriers are correct."
     );
 } finally {
     if (browser !== null) {
@@ -196,13 +198,21 @@ async function qualifyPendingColdStartDeparture(browser, url) {
         await page.locator("#new-game-button").click({ noWaitAfter: true });
         await page.waitForFunction(() => globalThis.__fullscreenHarness.requestCount() === 1);
         await page.evaluate(() => window.dispatchEvent(new Event("blur")));
-        await page.waitForFunction(() => document.querySelector("#app")?.style.visibility === "hidden");
 
-        await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
+        // A merely pending request does not justify hiding the new cold menu. The
+        // retired shell has no authority unless that old native request succeeds.
         await page.locator("#new-game-button").waitFor({ state: "visible" });
+        assert.equal(await page.locator("canvas").count(), 0, "pending cold-start departure retained gameplay");
+        assert.equal(await page.evaluate(() => document.fullscreenElement), null);
+        assert.notEqual(await page.locator("#app").evaluate((element) => element.style.visibility), "hidden");
+
+        // If the retired native request succeeds late, the page-lifetime listener
+        // must hide the current menu only while retiring that stale fullscreen shell.
+        await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
         await page.waitForFunction(() => document.fullscreenElement === null && document.querySelector("#app")?.style.visibility !== "hidden");
-        assert.equal(await fullscreenSwitchState(page), "true", "pending-request cancellation changed the preference");
-        assert.equal(await page.locator("canvas").count(), 0, "pending cold-start departure left gameplay running behind the menu");
+        await page.locator("#new-game-button").waitFor({ state: "visible" });
+        assert.equal(await fullscreenSwitchState(page), "true", "late retired request changed the preference");
+        assert.equal(await page.locator("canvas").count(), 0, "late retired request restarted gameplay");
         assert.deepEqual(errors, [], "pending cold-start departure produced uncaught browser errors");
     } finally {
         await context.close();
@@ -232,6 +242,69 @@ async function qualifyPendingRetainedContinueDeparture(browser, url) {
         assert.equal(await page.locator("canvas").count(), 1);
         assert.equal(await fullscreenSwitchState(page), "true");
         assert.deepEqual(errors, [], "pending retained-Continue departure produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyNeverSettlingRetainedRequest(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", true);
+    try {
+        await waitForMenu(page);
+        await page.locator("#new-game-button").click();
+        await waitForFullscreenRunning(page, true);
+        const retainedCanvas = await page.locator("canvas").elementHandle();
+        assert.ok(retainedCanvas);
+        await page.locator("#hamburger-button").click();
+        await waitForLiveMenu(page);
+
+        await page.evaluate(() => globalThis.__fullscreenHarness.setMode("pending"));
+        await page.locator("#continue-button").click({ noWaitAfter: true });
+        await page.waitForFunction(() => globalThis.__fullscreenHarness.requestCount() === 2);
+        await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+
+        // The request never settles. MENU must still return after the bounded barrier,
+        // with the retained shell suppressed from making another fullscreen attempt.
+        await page.locator("#continue-button").waitFor({ state: "visible", timeout: 10_000 });
+        assert.equal(await page.evaluate(() => document.fullscreenElement), null);
+        assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true);
+        assert.equal(await fullscreenSwitchState(page), "true");
+
+        await page.locator("#continue-button").click();
+        await waitForWindowedRunning(page);
+        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 2, "suppressed retained presentation made a third fullscreen request");
+        assert.equal(await retainedCanvas.evaluate((canvas) => canvas.isConnected), true);
+
+        // Resolve the old request after gameplay has resumed. Its stale shell authority
+        // must be retired without sending the current windowed game back to MENU.
+        await page.evaluate(() => globalThis.__fullscreenHarness.resolvePending());
+        await page.waitForFunction(() => document.fullscreenElement === null);
+        await waitForWindowedRunning(page);
+        assert.equal(await page.locator("#continue-button").count(), 0, "late stale request returned the running game to MENU");
+        assert.equal(await fullscreenSwitchStateFromStorage(page), "true");
+        assert.deepEqual(errors, [], "never-settling retained request produced uncaught browser errors");
+    } finally {
+        await context.close();
+    }
+}
+
+async function qualifyHangingExitRequiresActualFullscreenExit(browser, url) {
+    const { context, errors, page } = await createHarnessPage(browser, url, "success", true);
+    try {
+        await waitForMenu(page);
+        await page.locator("#new-game-button").click();
+        await waitForFullscreenRunning(page, true);
+        await page.evaluate(() => globalThis.__fullscreenHarness.setExitMode("pending"));
+        await page.locator("#hamburger-button").click({ noWaitAfter: true });
+
+        await page.waitForTimeout(150);
+        assert.equal(await page.evaluate(() => document.fullscreenElement?.id), "game-shell", "synthetic hanging exit unexpectedly left fullscreen");
+        assert.equal(await page.locator("#continue-button").count(), 0, "PWA menu became visible before actual fullscreen exit");
+
+        await page.evaluate(() => globalThis.__fullscreenHarness.forceExit());
+        await waitForLiveMenu(page);
+        assert.equal(await fullscreenSwitchState(page), "true");
+        assert.deepEqual(errors, [], "hanging exit qualification produced uncaught browser errors");
     } finally {
         await context.close();
     }
@@ -281,10 +354,18 @@ async function fullscreenSwitchState(page) {
     return page.locator("#fullscreen-switch-button").first().getAttribute("aria-pressed");
 }
 
+async function fullscreenSwitchStateFromStorage(page) {
+    return page.evaluate(() => {
+        const entry = Object.entries(localStorage).find(([key]) => key.includes("jackal-fullscreen"));
+        return entry?.[1] ?? null;
+    });
+}
+
 async function installFullscreenHarness(context, initialMode, touch) {
     await context.addInitScript(
         ({ initialMode, touch }) => {
             let mode = initialMode;
+            let exitMode = "success";
             let fullscreenElement = null;
             let requestCount = 0;
             let pendingResolve = null;
@@ -297,11 +378,15 @@ async function installFullscreenHarness(context, initialMode, touch) {
             Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => fullscreenElement });
             Object.defineProperty(document, "exitFullscreen", {
                 configurable: true,
-                value: async () => {
+                value: () => {
+                    if (exitMode === "pending") {
+                        return new Promise(() => undefined);
+                    }
                     if (fullscreenElement !== null) {
                         fullscreenElement = null;
                         document.dispatchEvent(new Event("fullscreenchange"));
                     }
+                    return Promise.resolve();
                 }
             });
 
@@ -343,6 +428,9 @@ async function installFullscreenHarness(context, initialMode, touch) {
                     resolvePending: () => pendingResolve?.(),
                     setMode: (nextMode) => {
                         mode = nextMode;
+                    },
+                    setExitMode: (nextMode) => {
+                        exitMode = nextMode;
                     },
                     forceExit: () => {
                         if (fullscreenElement !== null) {
