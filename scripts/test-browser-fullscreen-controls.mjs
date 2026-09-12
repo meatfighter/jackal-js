@@ -12,6 +12,7 @@ const introMode = read("pwa/src/jackal/IntroMode.ts");
 const webApp = read("pwa/src/app/JackalWebApp.ts");
 const viewport = read("pwa/src/app/GameViewportController.ts");
 const preferences = read("pwa/src/app/AppPreferences.ts");
+const fullscreenCss = read("pwa/src/fullscreen.css");
 const content = read("about/content.md");
 
 test("Space is remappable while Escape remains browser-reserved", () => {
@@ -19,6 +20,8 @@ test("Space is remappable while Escape remains browser-reserved", () => {
     assert.match(reservedKeyBody, /Input\.KEY_ESCAPE/);
     assert.doesNotMatch(reservedKeyBody, /Input\.KEY_SPACE/);
 
+    // Until the translated fullscreen skeleton is removed entirely, its browser
+    // input hooks must remain mechanically inert.
     assert.match(humanInput, /public isFullscreenTogglePressed\(\): boolean \{\s*return false;\s*\}/);
     assert.match(humanInput, /public isEscape\(\): boolean \{\s*return false;\s*\}/);
 
@@ -56,23 +59,25 @@ test("New Game and live Continue initiate audio before fullscreen and before the
     assert.ok(liveAudio >= 0 && liveFullscreen > liveAudio && liveAwait > liveFullscreen);
 });
 
-test("fullscreen requests are session-fenced and menu exit waits for pending attempts", () => {
-    assert.match(viewport, /private fullscreenRequestSerial = 0/);
-    assert.match(viewport, /pendingFullscreenRequests = new Set<Promise<boolean>>/);
-    assert.match(viewport, /const session = this\.sessionGeneration/);
-    assert.match(viewport, /this\.callbacks\.isSessionCurrent\(session\)/);
-    assert.match(viewport, /requestSerial !== this\.fullscreenRequestSerial/);
+test("fullscreen requests and exits are fenced to one presentation generation", () => {
+    assert.match(viewport, /private presentationGeneration = 0/);
+    assert.match(viewport, /type PendingFullscreenRequest = Readonly</);
+    assert.match(viewport, /pendingFullscreenRequests = new Set<PendingFullscreenRequest>/);
+    assert.match(viewport, /const presentation = this\.presentationGeneration/);
+    assert.match(viewport, /presentation === this\.presentationGeneration/);
+    assert.match(viewport, /this\.shell === shell/);
+    assert.match(viewport, /exitStaleFullscreenShell\(shell\)/);
 
-    const exitForMenu = viewport.match(/public async exitFullscreenForMenu\(\): Promise<boolean> \{[\s\S]*?\n    \}/)?.[0] ?? "";
-    const invalidate = exitForMenu.indexOf("this.fullscreenRequestSerial++");
-    const pendingWait = exitForMenu.indexOf("await Promise.all([...this.pendingFullscreenRequests])");
-    const actualExit = exitForMenu.indexOf("await exitBrowserFullscreen()");
-    assert.ok(invalidate >= 0 && pendingWait > invalidate && actualExit > pendingWait);
+    const exitForPresentation = viewport.match(/private async exitFullscreenForPresentation\([\s\S]*?\n    \}/)?.[0] ?? "";
+    assert.match(exitForPresentation, /targetPresentation === this\.presentationGeneration/);
+    assert.match(exitForPresentation, /request\.presentation === targetPresentation && request\.shell === targetShell/);
+    assert.match(exitForPresentation, /targetPresentation !== this\.presentationGeneration/);
+    assert.match(exitForPresentation, /fullscreenElement !== targetShell/);
 
     const clear = viewport.match(/public clear\(\): void \{[\s\S]*?\n    \}/)?.[0] ?? "";
-    assert.match(clear, /getBrowserFullscreenElement\(\) !== null \|\| this\.pendingFullscreenRequests\.size > 0/);
+    assert.match(clear, /visibilityTransition = \+\+this\.visibilityTransitionSerial/);
     assert.match(clear, /this\.root\.style\.visibility = "hidden"/);
-    assert.match(clear, /fullscreenExit\.finally/);
+    assert.match(clear, /visibilityTransition === this\.visibilityTransitionSerial/);
 });
 
 test("interrupted live Continue exits fullscreen before republishing the retained menu", () => {
@@ -89,13 +94,42 @@ test("interrupted live Continue exits fullscreen before republishing the retaine
     assert.match(restore, /this\.menuOverlay === null/);
 });
 
-test("fullscreen handling covers standard and WebKit events and settles layout twice", () => {
+test("live Continue reconciles presentation before input and RAF resume", () => {
+    const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n    private removeMenuOverlay/)?.[0] ?? "";
+    const reconcile = liveContinue.indexOf("this.viewport.reconcileDisplayModeNow();");
+    const inputResume = liveContinue.indexOf("liveContainer.getInput().resume();");
+    const loopResume = liveContinue.indexOf("liveContainer.setLoopSuspended(false);");
+    assert.ok(reconcile >= 0 && inputResume > reconcile && loopResume > inputResume);
+    assert.match(liveContinue, /this\.pageLifecycle\.sync\(true\);[\s\S]*this\.pwaSessionState !== "running"/);
+
+    assert.match(viewport, /queueMicrotask\(\(\) => \{[\s\S]*reconcileDisplayModeNow\(\)/);
     assert.match(viewport, /"fullscreenchange", "webkitfullscreenchange"/);
     assert.match(viewport, /private fullscreenResizeSettleAnimationFrame = 0/);
-    assert.match(viewport, /private scheduleFullscreenResize\(\): void/);
-    assert.match(viewport, /this\.scheduleResize\(\);[\s\S]*requestAnimationFrame\(\(\) => \{[\s\S]*this\.scheduleResize\(\)/);
-    assert.match(viewport, /if \(current && !this\.callbacks\.isGameplayActive\(\)\) \{\s*void this\.exitFullscreenForMenu\(\)/);
-    assert.match(viewport, /hasTouchCapability\(\)/);
+});
+
+test("unsafe cleanup reaches viewport teardown before reload-required UI", () => {
+    const liveMenu = webApp.match(/private async showLiveMenuOverlay\([\s\S]*?\n    private async resumeLiveGameFromMenu/)?.[0] ?? "";
+    const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n    private async restoreExistingLiveMenuAfterInterruptedResume/)?.[0] ?? "";
+    const staleLaunch = webApp.match(/private disposeStaleLaunch\([\s\S]*?\n    public releaseSession/)?.[0] ?? "";
+    const destroySession = webApp.match(/private destroyGameSession\([\s\S]*?\n    private getGameStateStore/)?.[0] ?? "";
+
+    assert.doesNotMatch(liveMenu, /this\.showCleanupFailure\(\)/);
+    assert.doesNotMatch(requestMenu, /this\.showCleanupFailure\(\)/);
+    assert.doesNotMatch(staleLaunch, /this\.showCleanupFailure\(\)/);
+    assert.match(liveMenu, /this\.destroyGameSession\(\)/);
+    assert.match(requestMenu, /this\.destroyGameSession\(\)/);
+    assert.match(staleLaunch, /this\.destroyGameSession\(\)/);
+    assert.match(destroySession, /this\.viewport\.clear\(\)/);
+    assert.match(destroySession, /this\.showCleanupFailure\(\)/);
+});
+
+test("fullscreen CSS owns viewport fill and touch safe-area chrome", () => {
+    assert.match(fullscreenCss, /\.game-shell:fullscreen/);
+    assert.match(fullscreenCss, /position:\s*fixed/);
+    assert.match(fullscreenCss, /width:\s*100vw/);
+    assert.match(fullscreenCss, /height:\s*100vh/);
+    assert.match(fullscreenCss, /safe-area-inset-left/);
+    assert.match(fullscreenCss, /safe-area-inset-top/);
 });
 
 test("About documentation matches the browser control contract", () => {
