@@ -16,6 +16,7 @@ const supplemental = [
     ["verify:persistence-failure", "scripts/run-persistence-failure-qualification.mjs"],
     ["verify:lifecycle-stress", "scripts/run-lifecycle-stress-qualification.mjs"]
 ];
+const unrelatedBrowserSuites = ["scripts/run-production-browser-qualification.mjs", ...supplemental.map(([, path]) => path)];
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const suiteSource = readFileSync("scripts/run-browser-qualification-suite.mjs", "utf8");
 
@@ -45,4 +46,13 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     assert.ok(suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)"));
     assert.match(suiteSource, /PWA_ROOT:\s*pwaRoot/);
     assert.match(suiteSource, /join\(componentReleaseDir, "pwa"\)/);
+});
+
+test("unrelated browser qualifiers explicitly disable the default-on Fullscreen preference", () => {
+    for (const path of unrelatedBrowserSuites) {
+        const source = readFileSync(path, "utf8");
+        assert.match(source, /import \{ disableFullscreenPreference \} from "\.\/fullscreen-test-utils\.mjs";/, `${path} must import the shared Fullscreen-OFF helper`);
+        const calls = source.match(/disableFullscreenPreference\s*\(/g) ?? [];
+        assert.ok(calls.length >= 1, `${path} imports the helper but never calls it before exercising its original non-fullscreen contract`);
+    }
 });
