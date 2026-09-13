@@ -526,7 +526,6 @@ export class JackalWebApp {
                 this.saveCurrentInputMapping();
             }
         };
-        mainGame.windowedDisplayModeProvider = () => this.viewport.getResponsiveDisplayMode();
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
                 if (!this.isStartingGameSession(session, audio)) {
