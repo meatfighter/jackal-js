@@ -8,8 +8,6 @@ export interface IInput {
     isLeft(): boolean;
     isRight(): boolean;
     isEnter(): boolean;
-    isFullscreenTogglePressed(): boolean;
-    isEscape(): boolean;
     isPause(): boolean;
     clearKeyPressedRecord(): void;
     update(): boolean;
