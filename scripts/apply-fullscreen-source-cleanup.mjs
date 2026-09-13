@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 const mainPath = "pwa/src/jackal/Main.ts";
 const currentVersionTestPath = "scripts/test-game-state-current-version.mjs";
 const savePreservationTestPath = "scripts/test-game-state-save-preservation.mjs";
+const parityExceptionsPath = "scripts/java-ts-parity-exceptions.json";
 let mainSource = readFileSync(mainPath, "utf8");
 let currentVersionTestSource = readFileSync(currentVersionTestPath, "utf8");
 let savePreservationTestSource = readFileSync(savePreservationTestPath, "utf8");
+const parityExceptions = JSON.parse(readFileSync(parityExceptionsPath, "utf8"));
 
 for (const [text, label] of [
     ["    BufferUtils,\n", "BufferUtils import"],
@@ -89,11 +91,40 @@ if (/\bversion:\s*5\b|currentGameStateVersion - 1/.test(savePreservationTestSour
     throw new Error(`Old development save-version fixture still exists in ${savePreservationTestPath}`);
 }
 
+addParityException(
+    parityExceptions.fieldExceptions,
+    "Main.nativeCursor",
+    "The Java desktop keeps native cursor state for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
+);
+addParityException(
+    parityExceptions.fieldExceptions,
+    "Main.hiddenCursor",
+    "The Java desktop keeps a hidden cursor for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
+);
+addParityException(
+    parityExceptions.methodExceptions,
+    "Main.fullScreenToggleCheck",
+    "Java retains legacy Space/Escape desktop fullscreen polling; the browser PWA shell owns fullscreen and menu transitions."
+);
+addParityException(
+    parityExceptions.methodExceptions,
+    "Main.showMouseCursor",
+    "Java desktop cursor restoration is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+);
+addParityException(
+    parityExceptions.methodExceptions,
+    "Main.hideMouseCursor",
+    "Java desktop cursor hiding is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+);
+
 writeFileSync(mainPath, mainSource);
 writeFileSync(currentVersionTestPath, currentVersionTestSource);
 writeFileSync(savePreservationTestPath, savePreservationTestSource);
+writeFileSync(parityExceptionsPath, `${JSON.stringify(parityExceptions, null, 4)}\n`);
 unlinkSync(fileURLToPath(import.meta.url));
-console.log("Removed obsolete Jackal PWA fullscreen/cursor machinery and pre-release save-schema fixtures; cleanup helper deleted itself.");
+console.log(
+    "Removed obsolete Jackal PWA fullscreen/cursor machinery and pre-release save-schema fixtures, documented the intentional Java/PWA parity boundary, and deleted the cleanup helper."
+);
 
 function replaceExactlyOnce(text, pattern, replacement, label) {
     const globalPattern = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
@@ -112,4 +143,14 @@ function replaceTextExactlyOnce(text, search, replacement, label) {
         throw new Error(`Expected exactly one ${label}; found ${count === 0 ? 0 : "multiple"}. Source was not modified.`);
     }
     return text.replace(search, replacement);
+}
+
+function addParityException(table, key, reason) {
+    if (table === null || typeof table !== "object" || Array.isArray(table)) {
+        throw new Error(`Invalid parity exception table while adding ${key}.`);
+    }
+    if (Object.prototype.hasOwnProperty.call(table, key)) {
+        throw new Error(`Parity exception already exists for ${key}; cleanup assumptions must be re-audited.`);
+    }
+    table[key] = { reason };
 }
