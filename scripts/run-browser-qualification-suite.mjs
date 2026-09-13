@@ -6,6 +6,7 @@ const qualificationScripts = [
     "verify:fullscreen",
     "verify:fullscreen-timeout",
     "verify:fullscreen-reentry",
+    "verify:fullscreen-settings",
     "verify:production-browser",
     "verify:activation-races",
     "verify:audio-interruption",
