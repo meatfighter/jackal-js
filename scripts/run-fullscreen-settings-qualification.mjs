@@ -179,6 +179,9 @@ async function assertWakeAccounting(page, expectedLive, label) {
 async function installFullscreenAndWakeLockHarness(context) {
     await context.addInitScript(() => {
         let fullscreenElement = null;
+        const setSyntheticFullscreenElement = (element) => {
+            fullscreenElement = element;
+        };
         let fullscreenRequests = 0;
         let wakeAcquired = 0;
         let wakeReleased = 0;
@@ -231,7 +234,7 @@ async function installFullscreenAndWakeLockHarness(context) {
             configurable: true,
             value: function () {
                 fullscreenRequests++;
-                fullscreenElement = this;
+                setSyntheticFullscreenElement(this);
                 document.dispatchEvent(new Event("fullscreenchange"));
                 return Promise.resolve();
             }

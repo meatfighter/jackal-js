@@ -16,10 +16,7 @@ test("menu launch admission is state-gated without sticky disabled buttons", () 
 });
 
 test("Fullscreen and Scaling share a wrapping responsive row", () => {
-    assert.match(
-        webAppSource,
-        /class="display-settings-row"[\s\S]*?class="setting-fullscreen-row"[\s\S]*?class="setting-scaling-row"/
-    );
+    assert.match(webAppSource, /class="display-settings-row"[\s\S]*?class="setting-fullscreen-row"[\s\S]*?class="setting-scaling-row"/);
     assert.match(stylesSource, /\.display-settings-row\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/s);
 });
 
