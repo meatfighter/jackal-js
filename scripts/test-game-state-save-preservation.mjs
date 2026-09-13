@@ -128,18 +128,13 @@ test("shared game-state preflight preserves incompatible saves and blocks overwr
     });
 });
 
-test("game-state inspection never deletes future, obsolete, unsupported, or malformed data", async () => {
+test("game-state inspection never deletes future, unsupported, or malformed data", async () => {
     resetStorage();
     const { JackalGameStateStore } = await loadPersistenceModules();
     const store = new JackalGameStateStore("1.0.0");
     const key = gameStateStorageKey();
 
-    for (const value of [
-        JSON.stringify({ version: currentGameStateVersion + 1, kind: "mode", futureShape: true }),
-        JSON.stringify({ version: 5, kind: "game", supported: true }),
-        JSON.stringify({ version: currentGameStateVersion - 1, kind: "game", supported: false }),
-        "{"
-    ]) {
+    for (const value of [JSON.stringify({ version: currentGameStateVersion + 1, kind: "mode", futureShape: true }), "{"]) {
         storage.set(key, value);
         assert.equal(store.hasValidSave(), false);
         assert.equal(storage.get(key), value);

@@ -80,6 +80,20 @@ test("input mappings with unbound controls survive save and restore", async () =
     assert.deepEqual(restored, saved);
 });
 
+test("Space survives input mapping persistence as an ordinary browser gameplay key", async () => {
+    storage.clear();
+    setLocation("https://example.test/stage/pwa/");
+    const { JackalInputMappingStore } = await loadStore();
+    const store = new JackalInputMappingStore();
+    const saved = createMapping({ keyGun: 57 });
+    const restored = createMapping();
+
+    assert.equal(store.save(saved), true);
+    assert.equal(store.restore(restored), true);
+    assert.equal(restored.keyGun, 57);
+    assert.deepEqual(restored, saved);
+});
+
 test("obsolete version-one mappings are discarded instead of migrated", async () => {
     storage.clear();
     const href = "https://example.test/stage/pwa/?v=old";

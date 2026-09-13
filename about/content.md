@@ -10,24 +10,17 @@ Press the **Play** button below to launch an enhanced-graphics desktop browser p
 
 _Jackal_ supports both keyboard and gamepad input. The default controls are:
 
-| Action            | Keyboard    | Gamepad     |
-| ----------------- | ----------- | ----------- |
-| Up                | Up Arrow    | D-pad Up    |
-| Down              | Down Arrow  | D-pad Down  |
-| Left              | Left Arrow  | D-pad Left  |
-| Right             | Right Arrow | D-pad Right |
-| Grenade / Missile | X           | A           |
-| Gun               | Z           | X           |
-| Start / Pause     | Enter       | Menu        |
+| Action        | Keyboard    | Gamepad     |
+| ------------- | ----------- | ----------- |
+| Up            | Up Arrow    | D-pad Up    |
+| Down          | Down Arrow  | D-pad Down  |
+| Left          | Left Arrow  | D-pad Left  |
+| Right         | Right Arrow | D-pad Right |
+| Grenade       | X           | A           |
+| Gun           | Z           | X           |
+| Start / Pause | Enter       | Menu        |
 
 You can change the button mapping by selecting **Options → Input** from the in-game menu.
-
-_Jackal_ reserves two keyboard controls that cannot be remapped:
-
-| Keyboard | Action            |
-| -------- | ----------------- |
-| Space    | Toggle fullscreen |
-| Esc      | Exit fullscreen   |
 
 ## Browser Menu
 
@@ -39,11 +32,10 @@ While playing outside fullscreen mode, a hamburger button appears in the upper-l
 
 The browser menu also provides:
 
+- **Fullscreen** — Makes the game fill the entire screen.
 - **Scaling** — Controls how the game is resized to fit the display.
 - **Volume** — Adjusts the game volume.
 - **Reset** — Erases saved state and restores settings to their defaults.
-
-_Jackal_ automatically pauses when the browser loses focus and resumes when the browser regains focus.
 
 ## In-Game Menu
 

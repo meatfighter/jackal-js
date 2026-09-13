@@ -1,0 +1,42 @@
+.menu-screen {
+    touch-action: manipulation;
+}
+
+.game-shell:fullscreen,
+.game-shell:-webkit-full-screen {
+    height: 100vh;
+    inset: 0;
+    margin: 0;
+    max-height: none;
+    max-width: none;
+    position: fixed;
+    width: 100vw;
+}
+
+.game-shell:fullscreen .game-host,
+.game-shell:-webkit-full-screen .game-host {
+    height: 100%;
+    inset: 0;
+    max-height: none;
+    max-width: none;
+    position: absolute;
+    width: 100%;
+}
+
+.game-shell:fullscreen .hamburger-button,
+.game-shell:-webkit-full-screen .hamburger-button {
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    top: calc(14px + env(safe-area-inset-top, 0px));
+}
+
+/* An unavailable fullscreen capability is a fixed OFF state, not a dimmed ON preference. */
+.menu-switch:disabled {
+    background: var(--title-shadow-gray);
+    border-color: var(--title-shadow-gray);
+    opacity: 1;
+}
+
+.menu-switch:disabled span {
+    background: #111111;
+    transform: translateX(0);
+}

@@ -69,6 +69,15 @@
         "InputMode.controllerUpDown": {
             "reason": "Browser gamepad state is read through the TypeScript input layer."
         },
+        "IntroMode.FULL_SCREEN_TEXT": {
+            "reason": "The Java desktop title screen documents its Space fullscreen control; the PWA owns fullscreen in the browser menu and deliberately omits this instruction."
+        },
+        "IntroMode.FULL_SCREEN_TEXT_X": {
+            "reason": "The browser omits the Java-only fullscreen title instruction and therefore does not need its layout coordinate."
+        },
+        "IntroMode.FULL_SCREEN_TEXT_Y": {
+            "reason": "The browser omits the Java-only fullscreen title instruction and therefore does not need its layout coordinate."
+        },
         "Main.closeRequested": {
             "target": "closeRequestedFlag"
         },
@@ -111,6 +120,12 @@
         },
         "Player.RUMBLE_STEPS": {
             "reason": "The browser keeps this cycle-safe shared constant in PlayerMotionConstants as PLAYER_RUMBLE_STEPS."
+        },
+        "Main.nativeCursor": {
+            "reason": "The Java desktop keeps native cursor state for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
+        },
+        "Main.hiddenCursor": {
+            "reason": "The Java desktop keeps a hidden cursor for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
         }
     },
     "methodExceptions": {
@@ -197,12 +212,36 @@
         },
         "Main.loadClasses": {
             "reason": "ES module evaluation initializes imported class tables; the browser does not need Java Class.forName calls."
+        },
+        "Main.fullScreenToggleCheck": {
+            "reason": "Java retains legacy Space/Escape desktop fullscreen polling; the browser PWA shell owns fullscreen and menu transitions."
+        },
+        "Main.showMouseCursor": {
+            "reason": "Java desktop cursor restoration is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+        },
+        "Main.hideMouseCursor": {
+            "reason": "Java desktop cursor hiding is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+        },
+        "HumanInput.isFullscreenTogglePressed": {
+            "reason": "Java retains legacy Space desktop fullscreen input; the browser PWA shell owns fullscreen and leaves Space available as a remappable gameplay key."
+        },
+        "HumanInput.isEscape": {
+            "reason": "Java retains legacy Escape desktop fullscreen input; the browser PWA shell owns Escape as the return-to-menu command."
+        },
+        "IInput.isFullscreenTogglePressed": {
+            "reason": "The Java input interface exposes its legacy desktop fullscreen toggle; browser fullscreen is owned by the PWA shell instead."
+        },
+        "IInput.isEscape": {
+            "reason": "The Java input interface exposes its legacy Escape fullscreen control; browser Escape is reserved by the PWA shell for returning to the menu."
         }
     },
     "enumMemberExceptions": {
         "Modes.LOADING": "Browser loading is owned by JackalWebApp rather than a gameplay mode."
     },
     "behaviorExceptions": {
-        "Main.update.fadeTiming": "The browser advances the 23-level screen fade from Jackal's existing 10 ms fixed-update loop. This intentionally removes the Java desktop version's display-refresh dependency while leaving the Java source unchanged."
+        "ButtonMapping.browserFullscreenKeys": "Java reserves Space and Escape for its desktop fullscreen controls. The PWA reserves only Escape for its browser menu, leaving Space as a normal remappable gameplay key.",
+        "IntroMode.browserFullscreenInstruction": "Java displays its Space fullscreen instruction on the title screen. The PWA deliberately omits that line because fullscreen belongs to the browser menu.",
+        "Main.update.fadeTiming": "The browser advances the 23-level screen fade from Jackal's existing 10 ms fixed-update loop. This intentionally removes the Java desktop version's display-refresh dependency while leaving the Java source unchanged.",
+        "Main.browserFullscreenOwnership": "Java keeps its Space/Escape Slick fullscreen lifecycle. The PWA shell owns browser fullscreen entry, exit, fallback, and menu transitions instead."
     }
 }

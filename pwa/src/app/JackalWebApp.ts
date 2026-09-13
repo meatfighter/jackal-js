@@ -15,14 +15,23 @@ import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
 import { clearStoredGameState, hasCurrentStoredGameState } from "../jackal/persistence/GameStateStorage.js";
 import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
-import { DEFAULT_SCALING_PREFERENCE, DEFAULT_VOLUME, clampVolume, readScalingPreference, readVolume, type JackalScalingPreference } from "./AppPreferences.js";
+import {
+    DEFAULT_FULLSCREEN_PREFERENCE,
+    DEFAULT_SCALING_PREFERENCE,
+    DEFAULT_VOLUME,
+    clampVolume,
+    readFullscreenPreference,
+    readScalingPreference,
+    readVolume,
+    type JackalScalingPreference
+} from "./AppPreferences.js";
 import type { GameSessionOwnership } from "./GameSessionOwnership.js";
 import { GameViewportController } from "./GameViewportController.js";
 import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
-import { clearPersistedPwaState, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
+import { clearPersistedPwaState, persistFullscreenPreference, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
 import { PersistenceWarningController } from "./PersistenceWarningController.js";
 import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
@@ -55,6 +64,7 @@ export class JackalWebApp {
     private liveMenuOpen = false;
     private volume = readVolume();
     private scalingPreference = readScalingPreference();
+    private fullscreenPreference = readFullscreenPreference();
 
     public constructor(
         root: HTMLElement,
@@ -65,7 +75,9 @@ export class JackalWebApp {
             getGame: () => this.game,
             isSessionCurrent: (session) => this.isCurrentGameSession(session),
             isLiveMenuOpen: () => this.liveMenuOpen,
+            isGameplayActive: () => this.pwaSessionState === "starting" || this.pwaSessionState === "running",
             returnToMenu: () => this.returnToMenu(),
+            fullscreenExited: () => this.requestPwaMenu("fullscreen-exit"),
             applyLifecycleSuspension: () => this.pageLifecycle.sync(this.game !== null),
             reportResizeError: (error) => {
                 console.error(error);
@@ -79,6 +91,7 @@ export class JackalWebApp {
             () => this.pageLifecycle.suspended
         );
         setGameAudioInterruptionHandler((reason) => this.requestPwaMenu(reason));
+        document.addEventListener("keydown", this.handleBrowserReservedKey, true);
         registerServiceWorker(BUILD_STAMP);
     }
 
@@ -130,11 +143,19 @@ export class JackalWebApp {
         if (overlay) {
             menu.dataset.liveMenu = "true";
         }
+        const fullscreenUnavailable = this.viewport.getFullscreenCapability() === "unavailable";
+        const fullscreenPresented = !fullscreenUnavailable && this.fullscreenPreference;
         menu.innerHTML = `
             <section class="menu-panel" aria-label="Jackal menu">
-                <div class="setting-scaling-row" role="group" aria-label="Scaling">
-                    <span>Scaling</span>
-                    ${scalingPickerHtml(this.scalingPreference)}
+                <div class="display-settings-row">
+                    <div class="setting-fullscreen-row" role="group" aria-label="Fullscreen">
+                        <span>Fullscreen</span>
+                        <button id="fullscreen-switch-button" class="menu-switch" type="button" aria-label="Toggle fullscreen" aria-pressed="${fullscreenPresented}" data-enabled="${fullscreenPresented}"${fullscreenUnavailable ? ' disabled title="Fullscreen is unavailable in this browser"' : ""}><span></span></button>
+                    </div>
+                    <div class="setting-scaling-row" role="group" aria-label="Scaling">
+                        <span>Scaling</span>
+                        ${scalingPickerHtml(this.scalingPreference)}
+                    </div>
                 </div>
                 <label class="volume-row">
                     <span id="volume-icon" class="volume-icon" aria-hidden="true">${volumeIconSvg(this.volume)}</span>
@@ -163,7 +184,8 @@ export class JackalWebApp {
         const volumeInput = menu.querySelector<HTMLInputElement>("#volume-input");
         const volumeValue = menu.querySelector<HTMLElement>("#volume-value");
         const volumeIcon = menu.querySelector<HTMLElement>("#volume-icon");
-        if (volumeInput === null || volumeValue === null || volumeIcon === null) {
+        const fullscreenSwitch = menu.querySelector<HTMLButtonElement>("#fullscreen-switch-button");
+        if (volumeInput === null || volumeValue === null || volumeIcon === null || fullscreenSwitch === null) {
             return;
         }
         const updateVolumeUi = (): void => {
@@ -171,6 +193,11 @@ export class JackalWebApp {
             volumeInput.style.setProperty("--thumb-position", `${percent}%`);
             volumeValue.textContent = String(percent);
             volumeIcon.innerHTML = volumeIconSvg(this.volume);
+        };
+        const updateFullscreenUi = (): void => {
+            const fullscreenPresented = !fullscreenSwitch.disabled && this.fullscreenPreference;
+            fullscreenSwitch.setAttribute("aria-pressed", String(fullscreenPresented));
+            fullscreenSwitch.setAttribute("data-enabled", String(fullscreenPresented));
         };
         const commitVolume = (): void => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
@@ -181,7 +208,13 @@ export class JackalWebApp {
             updateVolumeUi();
         });
         volumeInput.addEventListener("change", commitVolume);
+        fullscreenSwitch.addEventListener("click", () => {
+            this.fullscreenPreference = !this.fullscreenPreference;
+            persistFullscreenPreference(this.fullscreenPreference, this.persistenceWarnings);
+            updateFullscreenUi();
+        });
         updateVolumeUi();
+        updateFullscreenUi();
         bindScalingPicker(
             menu,
             () => this.scalingPreference,
@@ -239,6 +272,7 @@ export class JackalWebApp {
         this.clearPwaStorage();
         this.volume = DEFAULT_VOLUME;
         this.scalingPreference = DEFAULT_SCALING_PREFERENCE;
+        this.fullscreenPreference = DEFAULT_FULLSCREEN_PREFERENCE;
         this.applyAudioVolume(this.volume);
         this.pwaSessionState = "menu";
         this.renderMenu(this.root, false, null, false);
@@ -253,11 +287,12 @@ export class JackalWebApp {
         return this.pwaSessionState === "menu" && this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
     }
 
-    private showLiveMenuOverlay(): void {
+    private async showLiveMenuOverlay(): Promise<void> {
         const shell = this.viewport.gameShell;
         if (this.pwaSessionState !== "running" || this.game === null || this.container === null || shell === null) {
             return;
         }
+        const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.liveMenuOpen = true;
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
@@ -270,15 +305,26 @@ export class JackalWebApp {
             () => this.viewport.stopCursorAutoHide()
         );
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
+            return;
+        }
+        if (!(await this.viewport.exitFullscreenForMenu())) {
+            return;
+        }
+        if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "stopping" || this.game === null || this.container === null) {
             return;
         }
         if (
             !this.sessionCleanup.run(() => {
-                this.menuOverlay = this.renderMenu(shell, true, saved ? null : "Progress could not be saved. Continue still preserves this live game.", true);
+                this.menuOverlay = this.renderMenu(
+                    this.root,
+                    true,
+                    saved ? null : "Progress could not be saved. Continue still preserves this live game.",
+                    true
+                );
             })
         ) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
             return;
         }
         this.pwaSessionState = "menu";
@@ -303,6 +349,7 @@ export class JackalWebApp {
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "starting";
         const audio = beginGameAudio();
+        this.requestPreferredFullscreen();
         try {
             if (
                 !(await audio.ready) ||
@@ -323,6 +370,7 @@ export class JackalWebApp {
             ) {
                 return;
             }
+            this.viewport.reconcileDisplayModeNow();
             this.viewport.scheduleResize();
             this.viewport.focusCanvas();
             if (!this.isStartingGameSession(session, audio)) {
@@ -353,6 +401,10 @@ export class JackalWebApp {
             }
             liveGame.setBrowserSuspended(false);
             liveContainer.setLoopSuspended(false);
+            this.pageLifecycle.sync(true);
+            if (!this.isCurrentGameSession(session) || !isGameAudioCurrent(audio) || this.pwaSessionState !== "running") {
+                return;
+            }
             this.persistenceWarnings.showPending();
             this.syncScreenWakeLock();
         } catch (error) {
@@ -401,7 +453,10 @@ export class JackalWebApp {
         if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
             return;
         }
+        const host = this.viewport.createShell(session);
+        runtime.slick.Display.setParent(host);
         const audio = beginGameAudio();
+        this.requestPreferredFullscreen();
 
         try {
             if (!(await audio.ready) || !this.isStartingGameSession(session, audio)) {
@@ -439,8 +494,10 @@ export class JackalWebApp {
             return;
         }
 
-        const host = this.viewport.createShell();
-        runtime.slick.Display.setParent(host);
+        const host = this.viewport.gameHost;
+        if (host === null) {
+            throw new Error("Jackal game host is unavailable during startup.");
+        }
 
         const mainGame = new runtime.Main();
         mainGame.reserveBrowserRuntime();
@@ -450,7 +507,7 @@ export class JackalWebApp {
             maintainAspect: true,
             scalingMode: bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)
         });
-        const displayMode = this.viewport.getWindowedDisplayMode();
+        const displayMode = this.viewport.getResponsiveDisplayMode();
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
         appContainer.setPreserveAudioCacheOnDestroy(true);
         appContainer.setLoopSuspended(true);
@@ -467,20 +524,6 @@ export class JackalWebApp {
         mainGame.inputMappingChangedHandler = () => {
             if (this.isCurrentGameSession(session)) {
                 this.saveCurrentInputMapping();
-            }
-        };
-        mainGame.windowedDisplayModeProvider = () => this.viewport.getWindowedDisplayMode();
-        mainGame.browserFullscreenController = {
-            isFullscreen: () => this.isCurrentGameSession(session) && this.viewport.isFullscreen(),
-            enterFullscreen: () => {
-                if (this.isCurrentGameSession(session)) {
-                    this.viewport.enterFullscreen();
-                }
-            },
-            exitFullscreen: () => {
-                if (this.isCurrentGameSession(session)) {
-                    this.viewport.exitFullscreen();
-                }
             }
         };
         if (restoreSavedGame) {
@@ -553,6 +596,13 @@ export class JackalWebApp {
         this.pageLifecycle.sync(true);
     }
 
+    private requestPreferredFullscreen(): void {
+        if (!this.fullscreenPreference || this.viewport.getFullscreenCapability() === "unavailable") {
+            return;
+        }
+        void this.viewport.requestFullscreen();
+    }
+
     private returnToMenu(): void {
         this.requestPwaMenu("hamburger");
     }
@@ -568,25 +618,54 @@ export class JackalWebApp {
             !this.container.isDestroyed() &&
             !this.game.isLoadingScreenActive()
         ) {
-            this.showLiveMenuOverlay();
+            void this.showLiveMenuOverlay();
             return;
         }
-        const retainExistingOverlay = this.liveMenuOpen && this.game !== null && this.container !== null;
+        const retainExistingOverlay = this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
+        const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
         this.suspendGameForMenu();
         this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
             return;
         }
         if (retainExistingOverlay) {
-            this.pwaSessionState = "menu";
-            this.syncScreenWakeLock();
+            void this.restoreExistingLiveMenuAfterInterruptedResume(session);
         } else {
             this.showMenu();
         }
     }
+
+    private async restoreExistingLiveMenuAfterInterruptedResume(session: number): Promise<void> {
+        if (!(await this.viewport.exitFullscreenForMenu())) {
+            return;
+        }
+        if (
+            !this.isCurrentGameSession(session) ||
+            this.pwaSessionState !== "stopping" ||
+            !this.liveMenuOpen ||
+            this.menuOverlay === null ||
+            this.game === null ||
+            this.container === null
+        ) {
+            return;
+        }
+        this.pwaSessionState = "menu";
+        this.syncScreenWakeLock();
+    }
+
+    private readonly handleBrowserReservedKey = (event: KeyboardEvent): void => {
+        if (this.pwaSessionState !== "starting" && this.pwaSessionState !== "running") {
+            return;
+        }
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this.requestPwaMenu("escape");
+        }
+    };
 
     private saveCurrentGameState(): boolean {
         if (!this.getOwnership().owned || this.game === null || this.runtimeLoader.preparedRuntime === null || !this.game.isStateSaveReady()) {
@@ -674,7 +753,6 @@ export class JackalWebApp {
     }
 
     private disposeStaleLaunch(mainGame: Main, appContainer: AppGameContainer): void {
-        // Withdraw stale references before cleanup hooks can synchronously reenter.
         if (this.container === appContainer) {
             this.container = null;
         }
@@ -686,7 +764,7 @@ export class JackalWebApp {
             () => appContainer.destroy()
         );
         if (!this.sessionCleanup.safe) {
-            this.showCleanupFailure();
+            this.destroyGameSession();
         }
     }
 

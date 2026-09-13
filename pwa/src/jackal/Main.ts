@@ -1,20 +1,4 @@
-import {
-    BasicGame,
-    BufferUtils,
-    Color,
-    CursorLoader,
-    GL11,
-    Image,
-    Log,
-    Music,
-    Mouse,
-    Sound,
-    Sys,
-    XMLPackedSheet,
-    type Cursor,
-    type GameContainer,
-    type Graphics
-} from "slick2d-ts";
+import { BasicGame, Color, GL11, Image, Log, Music, Sound, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
 import {
     ArrayList,
     JAVA_LONG_LOW_3_BITS,
@@ -69,16 +53,6 @@ import { Triggers } from "./Triggers.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IInput } from "./IInput.js";
 import type { IMode } from "./IMode.js";
-interface WindowedDisplayMode {
-    width: number;
-    height: number;
-}
-
-interface BrowserFullscreenController {
-    isFullscreen(): boolean;
-    enterFullscreen(): void;
-    exitFullscreen(): void;
-}
 
 /*
  * Jackal
@@ -153,7 +127,6 @@ export class Main extends BasicGame {
     public nextFrameTime: number = 0;
     public mode: IMode | null = null;
     public input: IInput = null!;
-    public nativeCursor: Cursor | null = null;
     public currentSong: Song | null = null;
     public requestedSong: Song | null = null;
     public loadIndex: number = 0;
@@ -312,12 +285,9 @@ export class Main extends BasicGame {
     public konamiCode: KonamiCode | null = null;
 
     public gc: GameContainer = null!;
-    public hiddenCursor: Cursor | null = null;
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
     public inputMappingChangedHandler: (() => void) | null = null;
-    public windowedDisplayModeProvider: (() => WindowedDisplayMode) | null = null;
-    public browserFullscreenController: BrowserFullscreenController | null = null;
     public browserSuspended: boolean = false;
     private loadingFinishedNotified: boolean = false;
     private browserRuntimeActive: boolean = false;
@@ -378,7 +348,6 @@ export class Main extends BasicGame {
                 this.applyRequestedSongChange();
             }
 
-            this.fullScreenToggleCheck(gc);
             this.input.snap();
             const mode = this.mode;
             if (mode === null) {
@@ -473,29 +442,6 @@ export class Main extends BasicGame {
         this.continuePlayer();
         this.continued = false;
         this.stageIndex = 0;
-    }
-
-    private fullScreenToggleCheck(gc: GameContainer): void {
-        let isEscape = this.input.isEscape();
-        if (this.input.isFullscreenTogglePressed() || isEscape) {
-            let fullscreen = this.browserFullscreenController !== null ? this.browserFullscreenController.isFullscreen() : gc.isFullscreen();
-            if (fullscreen) {
-                if (this.browserFullscreenController !== null) {
-                    this.browserFullscreenController.exitFullscreen();
-                } else {
-                    this.showMouseCursor();
-                    gc.setFullscreen(false);
-                }
-            } else if (!isEscape) {
-                if (this.browserFullscreenController !== null) {
-                    this.browserFullscreenController.enterFullscreen();
-                } else {
-                    this.hideMouseCursor();
-                    gc.setFullscreen(true);
-                }
-            }
-            this.resetNextFrameTime();
-        }
     }
 
     public render(gc: GameContainer, g: Graphics): void {
@@ -647,27 +593,6 @@ export class Main extends BasicGame {
             return this.upgradeWeapon(false);
         }
         return false;
-    }
-
-    private showMouseCursor(): void {
-        try {
-            Mouse.setNativeCursor(this.nativeCursor);
-        } catch (e) {
-            Log.error("Failed to load and apply cursor.", e);
-        }
-    }
-
-    private hideMouseCursor(): void {
-        try {
-            if (this.hiddenCursor === null) {
-                let buffer = BufferUtils.createByteBuffer(32 * 32 * 4);
-                this.hiddenCursor = CursorLoader.get().getCursor(buffer, 0, 0, 32, 32);
-            }
-            this.nativeCursor = Mouse.getNativeCursor();
-            Mouse.setNativeCursor(this.hiddenCursor);
-        } catch (e) {
-            Log.error("Failed to load and apply cursor.", e);
-        }
     }
 
     public drawNumber(value: number, digits: number, x: number, y: number, color: number): void {
@@ -1318,6 +1243,7 @@ export class Main extends BasicGame {
             this.players[i][3] = this.players[i][0].getFlippedCopy(true, false);
             this.players[i][4] = this.players[i][1].getFlippedCopy(true, false);
         }
+
         for (let i = 0; i < 4; i++) {
             this.explosions[i] = pack1.getSprite(`explosion-${i}.png`)!;
         }
@@ -2068,8 +1994,6 @@ export class Main extends BasicGame {
         this.inputMappingChangedHandler = null;
         this.loadingCompleteHandler = null;
         this.loadingFinishedHandler = null;
-        this.windowedDisplayModeProvider = null;
-        this.browserFullscreenController = null;
     }
 
     /** PWA suspension controls simulation/input, never logical audio preferences. */
@@ -2106,13 +2030,6 @@ export class Main extends BasicGame {
                 slickInput.clearControlPressedRecord();
             }
         }
-    }
-
-    public getWindowedDisplayMode(): WindowedDisplayMode {
-        if (this.windowedDisplayModeProvider !== null) {
-            return this.windowedDisplayModeProvider();
-        }
-        return { width: Main.DISPLAY_WIDTH, height: Main.DISPLAY_HEIGHT };
     }
 
     private notifyLoadingFinished(): void {

@@ -123,14 +123,6 @@ export class HumanInput implements IInput {
         return this.isMappedStartPressed() || this.isAnyNonDirectionalControllerButtonPressed();
     }
 
-    public isFullscreenTogglePressed(): boolean {
-        return this.input.isKeyPressed(Input.KEY_SPACE);
-    }
-
-    public isEscape(): boolean {
-        return this.input.isKeyPressed(Input.KEY_ESCAPE);
-    }
-
     public isPause(): boolean {
         return this.isMappedStartPressed();
     }
