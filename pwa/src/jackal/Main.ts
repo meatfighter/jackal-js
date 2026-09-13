@@ -53,10 +53,6 @@ import { Triggers } from "./Triggers.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IInput } from "./IInput.js";
 import type { IMode } from "./IMode.js";
-interface WindowedDisplayMode {
-    width: number;
-    height: number;
-}
 
 /*
  * Jackal
@@ -292,7 +288,6 @@ export class Main extends BasicGame {
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
     public inputMappingChangedHandler: (() => void) | null = null;
-    public windowedDisplayModeProvider: (() => WindowedDisplayMode) | null = null;
     public browserSuspended: boolean = false;
     private loadingFinishedNotified: boolean = false;
     private browserRuntimeActive: boolean = false;
@@ -1248,6 +1243,7 @@ export class Main extends BasicGame {
             this.players[i][3] = this.players[i][0].getFlippedCopy(true, false);
             this.players[i][4] = this.players[i][1].getFlippedCopy(true, false);
         }
+
         for (let i = 0; i < 4; i++) {
             this.explosions[i] = pack1.getSprite(`explosion-${i}.png`)!;
         }
@@ -1998,7 +1994,6 @@ export class Main extends BasicGame {
         this.inputMappingChangedHandler = null;
         this.loadingCompleteHandler = null;
         this.loadingFinishedHandler = null;
-        this.windowedDisplayModeProvider = null;
     }
 
     /** PWA suspension controls simulation/input, never logical audio preferences. */
@@ -2035,13 +2030,6 @@ export class Main extends BasicGame {
                 slickInput.clearControlPressedRecord();
             }
         }
-    }
-
-    public getWindowedDisplayMode(): WindowedDisplayMode {
-        if (this.windowedDisplayModeProvider !== null) {
-            return this.windowedDisplayModeProvider();
-        }
-        return { width: Main.DISPLAY_WIDTH, height: Main.DISPLAY_HEIGHT };
     }
 
     private notifyLoadingFinished(): void {
