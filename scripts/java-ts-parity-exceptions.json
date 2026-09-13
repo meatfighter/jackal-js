@@ -120,6 +120,12 @@
         },
         "Player.RUMBLE_STEPS": {
             "reason": "The browser keeps this cycle-safe shared constant in PlayerMotionConstants as PLAYER_RUMBLE_STEPS."
+        },
+        "Main.nativeCursor": {
+            "reason": "The Java desktop keeps native cursor state for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
+        },
+        "Main.hiddenCursor": {
+            "reason": "The Java desktop keeps a hidden cursor for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
         }
     },
     "methodExceptions": {
@@ -206,6 +212,27 @@
         },
         "Main.loadClasses": {
             "reason": "ES module evaluation initializes imported class tables; the browser does not need Java Class.forName calls."
+        },
+        "Main.fullScreenToggleCheck": {
+            "reason": "Java retains legacy Space/Escape desktop fullscreen polling; the browser PWA shell owns fullscreen and menu transitions."
+        },
+        "Main.showMouseCursor": {
+            "reason": "Java desktop cursor restoration is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+        },
+        "Main.hideMouseCursor": {
+            "reason": "Java desktop cursor hiding is part of its legacy fullscreen lifecycle; browser presentation is owned by the PWA shell."
+        },
+        "HumanInput.isFullscreenTogglePressed": {
+            "reason": "Java retains legacy Space desktop fullscreen input; the browser PWA shell owns fullscreen and leaves Space available as a remappable gameplay key."
+        },
+        "HumanInput.isEscape": {
+            "reason": "Java retains legacy Escape desktop fullscreen input; the browser PWA shell owns Escape as the return-to-menu command."
+        },
+        "IInput.isFullscreenTogglePressed": {
+            "reason": "The Java input interface exposes its legacy desktop fullscreen toggle; browser fullscreen is owned by the PWA shell instead."
+        },
+        "IInput.isEscape": {
+            "reason": "The Java input interface exposes its legacy Escape fullscreen control; browser Escape is reserved by the PWA shell for returning to the menu."
         }
     },
     "enumMemberExceptions": {

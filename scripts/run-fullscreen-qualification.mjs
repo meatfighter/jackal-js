@@ -204,7 +204,11 @@ async function qualifyMissingFullscreenMethod(browser, url) {
         assert.equal(await fullscreenSwitchStateFromStorage(page), null, "missing-method fallback rewrote the stored default preference");
         await page.locator("#new-game-button").click();
         await waitForWindowedRunning(page);
-        assert.equal(await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()), 0, "missing request method should fall back without a native call");
+        assert.equal(
+            await page.evaluate(() => globalThis.__fullscreenHarness.requestCount()),
+            0,
+            "missing request method should fall back without a native call"
+        );
         await page.locator("#hamburger-button").click();
         await page.locator("#continue-button").waitFor({ state: "visible" });
         assert.equal(await fullscreenSwitchState(page), "false", "missing-method control should remain presented OFF");

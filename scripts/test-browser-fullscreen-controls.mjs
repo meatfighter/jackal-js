@@ -154,6 +154,9 @@ test("fullscreen CSS owns viewport fill, safe-area chrome, unavailable OFF state
     assert.match(fullscreenCss, /height:\s*100vh/);
     assert.match(fullscreenCss, /safe-area-inset-left/);
     assert.match(fullscreenCss, /safe-area-inset-top/);
-    assert.match(fullscreenCss, /\.menu-switch:disabled\s*\{[^}]*background:\s*var\(--title-shadow-gray\);[^}]*border-color:\s*var\(--title-shadow-gray\);[^}]*opacity:\s*1;/s);
+    assert.match(
+        fullscreenCss,
+        /\.menu-switch:disabled\s*\{[^}]*background:\s*var\(--title-shadow-gray\);[^}]*border-color:\s*var\(--title-shadow-gray\);[^}]*opacity:\s*1;/s
+    );
     assert.match(fullscreenCss, /\.menu-switch:disabled span\s*\{[^}]*background:\s*#111111;[^}]*transform:\s*translateX\(0\);/s);
 });
