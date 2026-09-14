@@ -1,0 +1,242 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { test } from "node:test";
+import ts from "typescript";
+
+const slickModuleUrl = import.meta.resolve("slick2d-ts");
+const mainSource = readFileSync(new URL("../pwa/src/jackal/Main.ts", import.meta.url), "utf8");
+const registrySource = readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8");
+const audioSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateAudio.ts", import.meta.url), "utf8");
+const fieldsSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateFields.ts", import.meta.url), "utf8");
+const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", import.meta.url), "utf8");
+
+function compileModule(source) {
+    const output = ts.transpileModule(source, {
+        compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
+    }).outputText;
+    return `data:text/javascript;base64,${Buffer.from(output).toString("base64")}`;
+}
+
+async function loadAudioModules() {
+    const registryUrl = compileModule(registrySource);
+    const fieldsUrl = compileModule(fieldsSource);
+    const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
+    const audioUrl = compileModule(
+        audioSource
+            .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
+            .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
+            .replace(`from "../AudioRegistry.js"`, `from "${registryUrl}"`)
+            .replace(`from "./GameStateFields.js"`, `from "${fieldsUrl}"`)
+    );
+    const [registry, audio] = await Promise.all([import(registryUrl), import(audioUrl)]);
+    return { registry, audio };
+}
+
+function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+}
+
+function voice(overrides = {}) {
+    return {
+        looped: false,
+        playbackRate: 1,
+        positionSeconds: 0.05,
+        gain: 1,
+        spatialPosition: null,
+        ...overrides
+    };
+}
+
+function playback(voices = [], activeVoiceIndex = voices.length === 0 ? null : voices.length - 1) {
+    return { voices, activeVoiceIndex };
+}
+
+class FakeSound {
+    constructor(state = playback()) {
+        this.state = clone(state);
+        this.restoreCalls = [];
+    }
+
+    capturePlaybackState() {
+        return clone(this.state);
+    }
+
+    restorePlaybackState(state) {
+        this.state = clone(state);
+        this.restoreCalls.push(clone(state));
+    }
+
+    play() {
+        const voices = [...this.state.voices, voice()];
+        this.state = playback(voices, voices.length - 1);
+    }
+}
+
+function fakeMain(soundIds) {
+    const main = {
+        lastPlayTime: new Map(),
+        currentSong: null,
+        requestedSong: null,
+        browserRuntimeActive: true,
+        stopCount: 0,
+        isBrowserRuntimeActive() {
+            return this.browserRuntimeActive;
+        },
+        stopAllSounds() {
+            this.stopCount++;
+            for (const id of soundIds) {
+                this[id].state = playback();
+            }
+        }
+    };
+    for (const id of soundIds) {
+        main[id] = new FakeSound();
+    }
+    return main;
+}
+
+function declaredMainSoundFields() {
+    const file = ts.createSourceFile("Main.ts", mainSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const result = [];
+    for (const statement of file.statements) {
+        if (!ts.isClassDeclaration(statement) || statement.name?.text !== "Main") {
+            continue;
+        }
+        for (const member of statement.members) {
+            if (!ts.isPropertyDeclaration(member) || member.type?.getText(file) !== "Sound" || !ts.isIdentifier(member.name)) {
+                continue;
+            }
+            result.push(member.name.text);
+        }
+    }
+    return result;
+}
+
+function functionBody(source, signature) {
+    const start = source.indexOf(signature);
+    assert.notEqual(start, -1, `Missing ${signature}.`);
+    const next = source.indexOf("\n    private ", start + signature.length);
+    return source.slice(start, next === -1 ? source.length : next);
+}
+
+test("AudioRegistry exactly covers Main Sound fields and rejects identity aliases", async () => {
+    const { registry } = await loadAudioModules();
+    const declared = declaredMainSoundFields();
+    assert.equal(declared.length, 25);
+    assert.equal(registry.SOUND_FIELD_NAMES.length, 25);
+    assert.equal(new Set(registry.SOUND_FIELD_NAMES).size, 25);
+    assert.deepEqual([...registry.SOUND_FIELD_NAMES].sort(), [...declared].sort());
+
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    assert.equal(registry.registeredSounds(main).length, 25);
+
+    main.enemyHitSound = main.bulletHitSound;
+    assert.throws(() => registry.registeredSounds(main), /aliased Sound object/);
+
+    const incomplete = fakeMain(registry.SOUND_FIELD_NAMES);
+    incomplete.wellDoneSound = null;
+    assert.throws(() => registry.registeredSounds(incomplete), /registry is incomplete/);
+});
+
+test("audio capture is sparse, preserves overlaps and snapshots remaining cooldown", async () => {
+    const { registry, audio } = await loadAudioModules();
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    main.helicopterSound.state = playback([voice({ looped: true, positionSeconds: 1.25 })], 0);
+    main.explodeSound.state = playback([voice({ positionSeconds: 0.1 }), voice({ positionSeconds: 0.2 })], null);
+    main.machineGunSound.state = playback([voice({ positionSeconds: 0.03 })], 0);
+    main.lastPlayTime.set(main.machineGunSound, Date.now() - 40);
+    main.lastPlayTime.set(main.missileSound, Date.now() - 500);
+
+    const snapshot = audio.captureAudioStateSnapshot(main);
+    assert.deepEqual(snapshot.sounds.map(({ id }) => id), ["explodeSound", "helicopterSound", "machineGunSound"]);
+    assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.voices.length, 2);
+    assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.activeVoiceIndex, null);
+    assert.equal(snapshot.sounds.find(({ id }) => id === "helicopterSound").playback.voices[0].positionSeconds, 1.25);
+    assert.equal(snapshot.cooldowns.length, 1);
+    assert.equal(snapshot.cooldowns[0].id, "machineGunSound");
+    assert.ok(snapshot.cooldowns[0].remainingMs >= 60 && snapshot.cooldowns[0].remainingMs <= 125);
+});
+
+test("audio restore is exhaustive and reconstructs repeat suppression without a wall-clock timestamp", async () => {
+    const { registry, audio } = await loadAudioModules();
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    main.extraLifeSound.state = playback([voice()], 0);
+    main.lastPlayTime.set(main.extraLifeSound, Date.now());
+
+    const helicopter = playback([voice({ looped: true, positionSeconds: 1.75 })], 0);
+    const machineGun = playback([voice({ looped: true, positionSeconds: 0.04 })], 0);
+    const overlapping = playback([voice({ positionSeconds: 0.1 }), voice({ positionSeconds: 0.2 })], null);
+    const snapshot = {
+        requestedSongId: null,
+        currentSongState: null,
+        audioState: {
+            musicOn: true,
+            soundOn: true,
+            sounds: [
+                { id: "explodeSound", playback: overlapping },
+                { id: "helicopterSound", playback: helicopter },
+                { id: "machineGunSound", playback: machineGun }
+            ],
+            cooldowns: [{ id: "machineGunSound", remainingMs: 80 }]
+        }
+    };
+    const gc = {
+        musicOn: null,
+        soundOn: null,
+        setMusicOn(value) {
+            this.musicOn = value;
+        },
+        setSoundOn(value) {
+            this.soundOn = value;
+        }
+    };
+
+    audio.restoreAudioPlayback(main, gc, snapshot);
+    assert.equal(main.stopCount, 1);
+    assert.equal(gc.musicOn, true);
+    assert.equal(gc.soundOn, true);
+    assert.deepEqual(main.helicopterSound.state, helicopter);
+    assert.deepEqual(main.machineGunSound.state, machineGun);
+    assert.deepEqual(main.explodeSound.state, overlapping);
+    assert.deepEqual(main.extraLifeSound.state, playback());
+    for (const id of registry.SOUND_FIELD_NAMES) {
+        assert.equal(main[id].restoreCalls.length, 1, `${id} must receive exactly one captured-or-empty restore.`);
+    }
+
+    assert.equal(main.lastPlayTime.size, 1);
+    const reconstructedElapsed = Date.now() - main.lastPlayTime.get(main.machineGunSound);
+    assert.ok(reconstructedElapsed >= 45 && reconstructedElapsed < 70, `unexpected reconstructed cooldown elapsed time: ${reconstructedElapsed}`);
+
+    const beforeVoices = main.machineGunSound.state.voices.length;
+    const lastPlayTime = main.lastPlayTime.get(main.machineGunSound);
+    const now = Date.now();
+    if (lastPlayTime === undefined || now - lastPlayTime > 125) {
+        main.machineGunSound.play();
+        main.lastPlayTime.set(main.machineGunSound, now);
+    }
+    assert.equal(main.machineGunSound.state.voices.length, beforeVoices, "restored cooldown must suppress an immediate duplicate Sound voice");
+});
+
+test("Sound persistence uses public logical transport APIs only", () => {
+    assert.match(audioSource, /capturePlaybackState\(\)/);
+    assert.match(audioSource, /restorePlaybackState\(/);
+    assert.match(audioSource, /registeredSounds\(main\)/);
+    assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
+});
+
+test("live-menu lifecycle freezes before save and commits audio before resume", () => {
+    const liveMenu = functionBody(webAppSource, "private async showLiveMenuOverlay()");
+    assert.ok(liveMenu.indexOf("this.suspendGameForMenu()") < liveMenu.indexOf("this.saveCurrentGameState()"));
+
+    const suspend = functionBody(webAppSource, "private suspendGameForMenu()");
+    assert.match(suspend, /setLoopSuspended\(true\)/);
+    assert.match(suspend, /setBrowserSuspended\(true\)/);
+    assert.match(suspend, /releaseGameAudio\(\)/);
+    assert.doesNotMatch(suspend, /stopAllSounds|stopSoundEffects|stopAllPlayback|destroy\(/);
+
+    const resume = functionBody(webAppSource, "private async resumeLiveGameFromMenu()");
+    const commit = resume.indexOf("commitGameAudio(audio)");
+    assert.notEqual(commit, -1);
+    assert.ok(commit < resume.indexOf("liveGame.setBrowserSuspended(false)"));
+    assert.ok(commit < resume.indexOf("liveContainer.setLoopSuspended(false)"));
+});
