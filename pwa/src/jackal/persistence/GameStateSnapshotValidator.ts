@@ -412,7 +412,7 @@ function isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
             !isSoundId(snapshot.id) ||
             cooldownIds.has(snapshot.id) ||
             typeof snapshot.remainingMs !== "number" ||
-            !Number.isFinite(snapshot.remainingMs) ||
+            !Number.isInteger(snapshot.remainingMs) ||
             snapshot.remainingMs < 0 ||
             snapshot.remainingMs > MainConstants.MINIMUM_SOUND_TIME
         ) {
