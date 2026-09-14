@@ -1,4 +1,6 @@
-import { isMusicPlaybackSnapshot } from "slick2d-ts";
+import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
+import { MainConstants } from "../../java/MainConstants.js";
+import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
 import {
     type AudioStateSnapshot,
     type ButtonMappingSnapshot,
@@ -55,7 +57,9 @@ const MENU_SNAPSHOT_FIELDS = ["fields"] as const;
 const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerButtons"] as const;
 const JEEP_YEAH_EXTRA_FIELDS = ["explosion", "leftPlane", "rightPlane", "fireLeft", "fireRight", "bullets"] as const;
 const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
-const AUDIO_STATE_FIELDS = ["musicOn", "soundOn"] as const;
+const AUDIO_STATE_FIELDS = ["musicOn", "soundOn", "sounds", "cooldowns"] as const;
+const SOUND_FIELDS = ["id", "playback"] as const;
+const SOUND_COOLDOWN_FIELDS = ["id", "remainingMs"] as const;
 const SONG_FIELDS = ["id", "playing", "playedIntro2", "activeMusic"] as const;
 const MUSIC_FIELDS = ["id", "playback"] as const;
 
@@ -75,6 +79,8 @@ const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
 const MAX_POSITION_MAGNITUDE = 1_000_000;
 const MAX_VELOCITY_MAGNITUDE = 10_000;
 const MAX_MUSIC_POSITION_SECONDS = 86_400;
+const MAX_SOUND_POSITION_SECONDS = 86_400;
+const MAX_TOTAL_SOUND_VOICES = 62;
 const JAVA_INT_MAX = 2_147_483_647;
 
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
@@ -365,7 +371,57 @@ function isJavaRandomSeedLimb(value: unknown): value is number {
 }
 
 function isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
-    return isRecord(value) && hasExactFields(value, AUDIO_STATE_FIELDS) && typeof value.musicOn === "boolean" && typeof value.soundOn === "boolean";
+    if (
+        !isRecord(value) ||
+        !hasExactFields(value, AUDIO_STATE_FIELDS) ||
+        typeof value.musicOn !== "boolean" ||
+        typeof value.soundOn !== "boolean" ||
+        !Array.isArray(value.sounds) ||
+        value.sounds.length > SOUND_FIELD_NAMES.length ||
+        !Array.isArray(value.cooldowns) ||
+        value.cooldowns.length > SOUND_FIELD_NAMES.length
+    ) {
+        return false;
+    }
+
+    const soundIds = new Set<string>();
+    let totalVoices = 0;
+    for (const snapshot of value.sounds) {
+        if (
+            !isRecord(snapshot) ||
+            !hasExactFields(snapshot, SOUND_FIELDS) ||
+            !isSoundId(snapshot.id) ||
+            soundIds.has(snapshot.id) ||
+            !isSoundPlaybackSnapshot(snapshot.playback) ||
+            snapshot.playback.voices.length === 0
+        ) {
+            return false;
+        }
+        soundIds.add(snapshot.id);
+        totalVoices += snapshot.playback.voices.length;
+        if (totalVoices > MAX_TOTAL_SOUND_VOICES || snapshot.playback.voices.some((voice) => voice.positionSeconds > MAX_SOUND_POSITION_SECONDS)) {
+            return false;
+        }
+    }
+
+    const cooldownIds = new Set<string>();
+    for (const snapshot of value.cooldowns) {
+        if (
+            !isRecord(snapshot) ||
+            !hasExactFields(snapshot, SOUND_COOLDOWN_FIELDS) ||
+            !isSoundId(snapshot.id) ||
+            cooldownIds.has(snapshot.id) ||
+            typeof snapshot.remainingMs !== "number" ||
+            !Number.isFinite(snapshot.remainingMs) ||
+            snapshot.remainingMs < 0 ||
+            snapshot.remainingMs > MainConstants.MINIMUM_SOUND_TIME
+        ) {
+            return false;
+        }
+        cooldownIds.add(snapshot.id);
+    }
+
+    return true;
 }
 
 function isSongSnapshot(value: unknown): value is SongSnapshot | null {
