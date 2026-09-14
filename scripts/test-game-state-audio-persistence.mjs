@@ -138,12 +138,27 @@ test("AudioRegistry exactly covers Main Sound fields and rejects identity aliase
     assert.throws(() => registry.registeredSounds(incomplete), /registry is incomplete/);
 });
 
-test("audio capture is sparse, preserves overlaps and snapshots remaining cooldown", async () => {
+test("capture includes every registered active Sound in deterministic order", async () => {
+    const { registry, audio } = await loadAudioModules();
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    for (let i = 0; i < registry.SOUND_FIELD_NAMES.length; i++) {
+        main[registry.SOUND_FIELD_NAMES[i]].state = playback([voice({ positionSeconds: 0.01 * (i + 1) })], 0);
+    }
+
+    const snapshot = audio.captureAudioStateSnapshot(main);
+    assert.deepEqual(
+        snapshot.sounds.map(({ id }) => id),
+        [...registry.SOUND_FIELD_NAMES]
+    );
+});
+
+test("audio capture is sparse, preserves overlaps and snapshots independent remaining cooldown", async () => {
     const { registry, audio } = await loadAudioModules();
     const main = fakeMain(registry.SOUND_FIELD_NAMES);
     main.helicopterSound.state = playback([voice({ looped: true, positionSeconds: 1.25 })], 0);
     main.explodeSound.state = playback([voice({ positionSeconds: 0.1 }), voice({ positionSeconds: 0.2 })], null);
     main.machineGunSound.state = playback([voice({ positionSeconds: 0.03 })], 0);
+    main.lastPlayTime.set(main.extraLifeSound, Date.now() - 20);
     main.lastPlayTime.set(main.machineGunSound, Date.now() - 40);
     main.lastPlayTime.set(main.missileSound, Date.now() - 500);
 
@@ -152,9 +167,10 @@ test("audio capture is sparse, preserves overlaps and snapshots remaining cooldo
     assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.voices.length, 2);
     assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.activeVoiceIndex, null);
     assert.equal(snapshot.sounds.find(({ id }) => id === "helicopterSound").playback.voices[0].positionSeconds, 1.25);
-    assert.equal(snapshot.cooldowns.length, 1);
-    assert.equal(snapshot.cooldowns[0].id, "machineGunSound");
-    assert.ok(snapshot.cooldowns[0].remainingMs >= 60 && snapshot.cooldowns[0].remainingMs <= 125);
+    assert.deepEqual(snapshot.cooldowns.map(({ id }) => id), ["extraLifeSound", "machineGunSound"]);
+    assert.equal(snapshot.sounds.some(({ id }) => id === "extraLifeSound"), false, "cooldown state must not require an active waveform");
+    assert.ok(snapshot.cooldowns[0].remainingMs >= 80 && snapshot.cooldowns[0].remainingMs <= 125);
+    assert.ok(snapshot.cooldowns[1].remainingMs >= 60 && snapshot.cooldowns[1].remainingMs <= 125);
 });
 
 test("audio restore is exhaustive and reconstructs repeat suppression without a wall-clock timestamp", async () => {
