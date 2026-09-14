@@ -91,7 +91,7 @@ async function verify(): Promise<void> {
         first.main.extraLivesStr = "3";
         assert(first.main.mode === runtime.Main.gameMode, "Real Jackal Main did not enter GameMode before save.");
 
-        first.main.helicopterSound.restorePlaybackState({
+        first.main.helicopterSound2.restorePlaybackState({
             voices: [soundVoice(0.05, true)],
             activeVoiceIndex: 0
         });
@@ -105,7 +105,7 @@ async function verify(): Promise<void> {
         });
         first.main.lastPlayTime.set(first.main.machineGunSound, Date.now() - 40);
 
-        const expectedHelicopter = first.main.helicopterSound.capturePlaybackState();
+        const expectedHelicopter = first.main.helicopterSound2.capturePlaybackState();
         const expectedMachineGun = first.main.machineGunSound.capturePlaybackState();
         const expectedExplode = first.main.explodeSound.capturePlaybackState();
         assert(expectedHelicopter.voices.length === 1, "Browser fixture did not install helicopter Sound state.");
@@ -127,12 +127,12 @@ async function verify(): Promise<void> {
         assert(second.main.extraLives === 3 && second.main.extraLivesStr === "3", "Fresh Jackal Main did not restore life state.");
         assert(second.main.isBrowserRuntimeActive(), "Restored Jackal Main is not the active browser runtime.");
 
-        const helicopter = second.main.helicopterSound.capturePlaybackState();
+        const helicopter = second.main.helicopterSound2.capturePlaybackState();
         assert(helicopter.voices.length === 1 && helicopter.activeVoiceIndex === 0, "Fresh Jackal Main did not restore helicopter Sound state.");
         assertRestoredPosition(helicopter.voices[0].positionSeconds, expectedHelicopter.voices[0].positionSeconds, "helicopter Sound");
-        second.main.playSoundIfNotPlaying(second.main.helicopterSound);
+        second.main.playSoundIfNotPlaying(second.main.helicopterSound2);
         assert(
-            second.main.helicopterSound.capturePlaybackState().voices.length === helicopter.voices.length,
+            second.main.helicopterSound2.capturePlaybackState().voices.length === helicopter.voices.length,
             "Restored helicopter ambience was restarted by playSoundIfNotPlaying()."
         );
 
