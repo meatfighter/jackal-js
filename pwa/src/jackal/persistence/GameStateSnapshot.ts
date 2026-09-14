@@ -1,4 +1,5 @@
-import type { MusicPlaybackSnapshot } from "slick2d-ts";
+import type { MusicPlaybackSnapshot, SoundPlaybackSnapshot } from "slick2d-ts";
+import type { SoundId } from "../AudioRegistry.js";
 import type { GameElementTypeId } from "./GameElementTypeIds.js";
 import type { MusicId, SongId, StandaloneModeId } from "./GameStateFields.js";
 import type { SupportedGameStateVersion } from "./GameStateSchema.js";
@@ -25,9 +26,21 @@ export type SongSnapshot = {
     activeMusic: MusicSnapshot | null;
 };
 
+export type SoundSnapshot = {
+    id: SoundId;
+    playback: SoundPlaybackSnapshot;
+};
+
+export type SoundCooldownSnapshot = {
+    id: SoundId;
+    remainingMs: number;
+};
+
 export type AudioStateSnapshot = {
     musicOn: boolean;
     soundOn: boolean;
+    sounds: SoundSnapshot[];
+    cooldowns: SoundCooldownSnapshot[];
 };
 
 export type EncodedValue =
