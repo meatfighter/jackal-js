@@ -257,3 +257,18 @@ test("live-menu lifecycle freezes before save and commits audio before resume", 
     assert.ok(commit < resume.indexOf("liveGame.setBrowserSuspended(false)"));
     assert.ok(commit < resume.indexOf("liveContainer.setLoopSuspended(false)"));
 });
+
+test("fresh durable restore completes before audio commit and gameplay resume", () => {
+    const launch = webAppSource.slice(webAppSource.indexOf("private async launchPreparedGame"), webAppSource.indexOf("private returnToMenu"));
+    const restoreHook = launch.indexOf("mainGame.loadingCompleteHandler");
+    const start = launch.indexOf("await appContainer.start()");
+    const resources = launch.indexOf("await ResourceLoader.waitForAll()");
+    const commit = launch.indexOf("commitGameAudio(audio)");
+    const gameResume = launch.indexOf("mainGame.setBrowserSuspended(false)");
+    const loopResume = launch.indexOf("appContainer.setLoopSuspended(false)");
+
+    assert.ok(restoreHook >= 0 && start > restoreHook, "saved-state restore hook must be installed before container startup");
+    assert.ok(resources > start && commit > resources, "container startup and restore must settle before audio generation commit");
+    assert.ok(gameResume > commit, "logical game clock must not resume before audio generation commit");
+    assert.ok(loopResume > commit, "RAF loop must not resume before audio generation commit");
+});
