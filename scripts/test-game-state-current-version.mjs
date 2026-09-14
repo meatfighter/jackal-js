@@ -260,6 +260,10 @@ test("current audio state is exact, sparse and bounded", async () => {
     unknownCooldown.audioState.cooldowns = [{ id: "unknownSound", remainingMs: 10 }];
     assert.equal(validator.isSupportedGameStateSnapshot(unknownCooldown), false);
 
+    const fractionalCooldown = modeSnapshot(fields, currentVersion);
+    fractionalCooldown.audioState.cooldowns = [{ id: "machineGunSound", remainingMs: 10.5 }];
+    assert.equal(validator.isSupportedGameStateSnapshot(fractionalCooldown), false);
+
     const excessiveCooldown = modeSnapshot(fields, currentVersion);
     excessiveCooldown.audioState.cooldowns = [{ id: "machineGunSound", remainingMs: 126 }];
     assert.equal(validator.isSupportedGameStateSnapshot(excessiveCooldown), false);
