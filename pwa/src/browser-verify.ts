@@ -100,7 +100,7 @@ async function verify(): Promise<void> {
             activeVoiceIndex: 0
         });
         first.main.explodeSound.restorePlaybackState({
-            voices: [soundVoice(0.01), soundVoice(0.02)],
+            voices: [soundVoice(0.01, true), soundVoice(0.02, true)],
             activeVoiceIndex: null
         });
         first.main.lastPlayTime.set(first.main.machineGunSound, Date.now() - 40);
@@ -130,6 +130,11 @@ async function verify(): Promise<void> {
         const helicopter = second.main.helicopterSound.capturePlaybackState();
         assert(helicopter.voices.length === 1 && helicopter.activeVoiceIndex === 0, "Fresh Jackal Main did not restore helicopter Sound state.");
         assertRestoredPosition(helicopter.voices[0].positionSeconds, expectedHelicopter.voices[0].positionSeconds, "helicopter Sound");
+        second.main.playSoundIfNotPlaying(second.main.helicopterSound);
+        assert(
+            second.main.helicopterSound.capturePlaybackState().voices.length === helicopter.voices.length,
+            "Restored helicopter ambience was restarted by playSoundIfNotPlaying()."
+        );
 
         const machineGun = second.main.machineGunSound.capturePlaybackState();
         assert(machineGun.voices.length === 1 && machineGun.activeVoiceIndex === 0, "Fresh Jackal Main did not restore machine-gun Sound state.");
