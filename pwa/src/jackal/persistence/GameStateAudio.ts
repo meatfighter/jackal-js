@@ -1,13 +1,30 @@
-import { Music, SoundStore, type GameContainer } from "slick2d-ts";
+import { Music, SoundStore, type GameContainer, type SoundPlaybackSnapshot } from "slick2d-ts";
+import { MainConstants } from "../../java/MainConstants.js";
+import { registeredSounds, soundForId, type RegisteredSound } from "../AudioRegistry.js";
 import type { Main } from "../Main.js";
 import type { Song } from "../Song.js";
 import { SONG_IDS, parseMusicId, type MusicId, type SongId } from "./GameStateFields.js";
-import type { AudioStateSnapshot, JackalGameStateSnapshot, MusicSnapshot, SongSnapshot } from "./GameStateSnapshot.js";
+import type {
+    AudioStateSnapshot,
+    JackalGameStateSnapshot,
+    MusicSnapshot,
+    SongSnapshot,
+    SoundCooldownSnapshot,
+    SoundSnapshot
+} from "./GameStateSnapshot.js";
 
-export function captureAudioStateSnapshot(_main: Main): AudioStateSnapshot {
+const EMPTY_SOUND_PLAYBACK: SoundPlaybackSnapshot = Object.freeze({
+    voices: Object.freeze([]),
+    activeVoiceIndex: null
+});
+
+export function captureAudioStateSnapshot(main: Main): AudioStateSnapshot {
+    const sounds = registeredSounds(main);
     return {
         musicOn: SoundStore.get().musicOn(),
-        soundOn: SoundStore.get().soundsOn()
+        soundOn: SoundStore.get().soundsOn(),
+        sounds: captureSoundSnapshots(sounds),
+        cooldowns: captureSoundCooldownSnapshots(main, sounds)
     };
 }
 
@@ -44,14 +61,71 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
  * callbacks. The shell commits its fresh generation after the entire game state
  * is installed. Current and requested songs may intentionally differ mid-change.
  */
-export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
+export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
     if (!main.isBrowserRuntimeActive()) {
         return;
     }
+
     main.stopAllSounds();
+    main.lastPlayTime.clear();
     Music.resetPlaybackState();
-    gc.setMusicOn(snapshot.audioState.musicOn);
-    gc.setSoundOn(snapshot.audioState.soundOn);
+
+    try {
+        gc.setMusicOn(snapshot.audioState.musicOn);
+        gc.setSoundOn(snapshot.audioState.soundOn);
+        restoreSongState(main, snapshot);
+        restoreSoundState(main, snapshot.audioState.sounds);
+        restoreSoundCooldownState(main, snapshot.audioState.cooldowns);
+    } catch (error) {
+        main.stopAllSounds();
+        main.lastPlayTime.clear();
+        Music.resetPlaybackState();
+        throw error;
+    }
+}
+
+/** Compatibility name retained for the existing serializer call site. */
+export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
+    restoreAudioPlayback(main, gc, snapshot);
+}
+
+function captureSoundSnapshots(sounds: readonly RegisteredSound[]): SoundSnapshot[] {
+    const snapshots: SoundSnapshot[] = [];
+    for (const { id, sound } of sounds) {
+        const playback = sound.capturePlaybackState();
+        if (playback.voices.length !== 0) {
+            snapshots.push({ id, playback });
+        }
+    }
+    return snapshots;
+}
+
+function captureSoundCooldownSnapshots(main: Main, sounds: readonly RegisteredSound[]): SoundCooldownSnapshot[] {
+    const snapshots: SoundCooldownSnapshot[] = [];
+    const now = Date.now();
+    const minimumSoundTime = MainConstants.MINIMUM_SOUND_TIME;
+
+    for (const { id, sound } of sounds) {
+        const lastPlayTime = main.lastPlayTime.get(sound);
+        if (lastPlayTime === undefined) {
+            continue;
+        }
+        if (!Number.isFinite(lastPlayTime)) {
+            throw new Error(`Jackal Sound cooldown is invalid for ${id}.`);
+        }
+        const elapsedMs = Math.max(0, now - lastPlayTime);
+        if (elapsedMs > minimumSoundTime) {
+            continue;
+        }
+        snapshots.push({
+            id,
+            remainingMs: Math.max(0, Math.min(minimumSoundTime, minimumSoundTime - elapsedMs))
+        });
+    }
+    return snapshots;
+}
+
+function restoreSongState(main: Main, snapshot: JackalGameStateSnapshot): void {
     const state = snapshot.currentSongState;
     const currentSong = state === null ? null : songById(main, state.id);
     main.currentSong = currentSong;
@@ -67,6 +141,22 @@ export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: Jac
             throw new Error(`Saved Jackal music part is unavailable: ${state.activeMusic.id}`);
         }
         music.restorePlaybackState(state.activeMusic.playback);
+    }
+}
+
+function restoreSoundState(main: Main, snapshots: readonly SoundSnapshot[]): void {
+    const saved = new Map(snapshots.map((snapshot) => [snapshot.id, snapshot.playback] as const));
+    for (const { id, sound } of registeredSounds(main)) {
+        sound.restorePlaybackState(saved.get(id) ?? EMPTY_SOUND_PLAYBACK);
+    }
+}
+
+function restoreSoundCooldownState(main: Main, snapshots: readonly SoundCooldownSnapshot[]): void {
+    const now = Date.now();
+    const minimumSoundTime = MainConstants.MINIMUM_SOUND_TIME;
+    for (const snapshot of snapshots) {
+        const elapsedMs = minimumSoundTime - snapshot.remainingMs;
+        main.lastPlayTime.set(soundForId(main, snapshot.id), now - elapsedMs);
     }
 }
 
