@@ -66,9 +66,7 @@ export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: Ja
         return;
     }
 
-    main.stopAllSounds();
-    main.lastPlayTime.clear();
-    Music.resetPlaybackState();
+    clearExistingAudioState(main);
 
     try {
         gc.setMusicOn(snapshot.audioState.musicOn);
@@ -77,9 +75,7 @@ export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: Ja
         restoreSoundState(main, snapshot.audioState.sounds);
         restoreSoundCooldownState(main, snapshot.audioState.cooldowns);
     } catch (error) {
-        main.stopAllSounds();
-        main.lastPlayTime.clear();
-        Music.resetPlaybackState();
+        clearExistingAudioState(main);
         throw error;
     }
 }
@@ -87,6 +83,16 @@ export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: Ja
 /** Compatibility name retained for the existing serializer call site. */
 export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
     restoreAudioPlayback(main, gc, snapshot);
+}
+
+function clearExistingAudioState(main: Main): void {
+    // Jackal's translated stop helper preserves Slick's latest-voice Sound.stop()
+    // semantics. Follow it with the engine's true all-effect operation so an
+    // older overlapping voice cannot survive into an exact durable restore.
+    main.stopAllSounds();
+    SoundStore.get().stopSoundEffects();
+    main.lastPlayTime.clear();
+    Music.resetPlaybackState();
 }
 
 function captureSoundSnapshots(sounds: readonly RegisteredSound[]): SoundSnapshot[] {
