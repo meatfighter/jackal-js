@@ -217,10 +217,11 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
     assert.equal(main.machineGunSound.state.voices.length, beforeVoices, "restored cooldown must suppress an immediate duplicate Sound voice");
 });
 
-test("Sound persistence uses public logical transport APIs only", () => {
+test("Sound persistence uses public logical transport APIs and true all-voice cleanup", () => {
     assert.match(audioSource, /capturePlaybackState\(\)/);
     assert.match(audioSource, /restorePlaybackState\(/);
     assert.match(audioSource, /registeredSounds\(main\)/);
+    assert.match(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
     assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
 });
 
