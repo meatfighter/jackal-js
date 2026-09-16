@@ -235,10 +235,12 @@ test("current audio state is exact, sparse and bounded", async () => {
     assert.equal(validator.isSupportedGameStateSnapshot(emptySparseSound), false);
 
     const tooManyVoices = modeSnapshot(fields, currentVersion);
-    tooManyVoices.audioState.sounds = [{
-        id: "explodeSound",
-        playback: { voices: new Array(63).fill(null).map(() => soundVoice()), activeVoiceIndex: 62 }
-    }];
+    tooManyVoices.audioState.sounds = [
+        {
+            id: "explodeSound",
+            playback: { voices: new Array(63).fill(null).map(() => soundVoice()), activeVoiceIndex: 62 }
+        }
+    ];
     assert.equal(validator.isSupportedGameStateSnapshot(tooManyVoices), false);
 
     const badGain = modeSnapshot(fields, currentVersion);

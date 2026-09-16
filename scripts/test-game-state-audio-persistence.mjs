@@ -163,12 +163,22 @@ test("audio capture is sparse, preserves overlaps and snapshots independent rema
     main.lastPlayTime.set(main.missileSound, Date.now() - 500);
 
     const snapshot = audio.captureAudioStateSnapshot(main);
-    assert.deepEqual(snapshot.sounds.map(({ id }) => id), ["explodeSound", "helicopterSound", "machineGunSound"]);
+    assert.deepEqual(
+        snapshot.sounds.map(({ id }) => id),
+        ["explodeSound", "helicopterSound", "machineGunSound"]
+    );
     assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.voices.length, 2);
     assert.equal(snapshot.sounds.find(({ id }) => id === "explodeSound").playback.activeVoiceIndex, null);
     assert.equal(snapshot.sounds.find(({ id }) => id === "helicopterSound").playback.voices[0].positionSeconds, 1.25);
-    assert.deepEqual(snapshot.cooldowns.map(({ id }) => id), ["extraLifeSound", "machineGunSound"]);
-    assert.equal(snapshot.sounds.some(({ id }) => id === "extraLifeSound"), false, "cooldown state must not require an active waveform");
+    assert.deepEqual(
+        snapshot.cooldowns.map(({ id }) => id),
+        ["extraLifeSound", "machineGunSound"]
+    );
+    assert.equal(
+        snapshot.sounds.some(({ id }) => id === "extraLifeSound"),
+        false,
+        "cooldown state must not require an active waveform"
+    );
     assert.ok(snapshot.cooldowns[0].remainingMs >= 80 && snapshot.cooldowns[0].remainingMs <= 125);
     assert.ok(snapshot.cooldowns[1].remainingMs >= 60 && snapshot.cooldowns[1].remainingMs <= 125);
 });

@@ -4,14 +4,7 @@ import { registeredSounds, soundForId, type RegisteredSound } from "../AudioRegi
 import type { Main } from "../Main.js";
 import type { Song } from "../Song.js";
 import { SONG_IDS, parseMusicId, type MusicId, type SongId } from "./GameStateFields.js";
-import type {
-    AudioStateSnapshot,
-    JackalGameStateSnapshot,
-    MusicSnapshot,
-    SongSnapshot,
-    SoundCooldownSnapshot,
-    SoundSnapshot
-} from "./GameStateSnapshot.js";
+import type { AudioStateSnapshot, JackalGameStateSnapshot, MusicSnapshot, SongSnapshot, SoundCooldownSnapshot, SoundSnapshot } from "./GameStateSnapshot.js";
 
 const EMPTY_SOUND_PLAYBACK: SoundPlaybackSnapshot = Object.freeze({
     voices: Object.freeze([]),
