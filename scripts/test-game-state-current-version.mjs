@@ -270,7 +270,7 @@ test("current audio state is exact, sparse and bounded", async () => {
 });
 
 test("current entity runtime descriptors are required and exact", async () => {
-    const { schema, fields, runtimeFields, validator } = await loadPersistenceValidation();
+    const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
     const enemyBullet = { id: 0, type: "EnemyBullet", fields: {}, runtimeFields: { enemyBulletSprite: "yellow" } };
     assert.equal(validator.isSupportedGameStateSnapshot(gameSnapshot(fields, currentVersion, enemyBullet)), true);
