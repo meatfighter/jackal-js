@@ -5,6 +5,7 @@
         "LoadingMode": "Browser resource preparation and loading UI are owned by the PWA shell."
     },
     "typescriptOnlyFiles": {
+        "AudioRegistry": "Browser save-state persistence assigns stable IDs to Jackal Sound objects without changing Java gameplay semantics.",
         "MainRuntimeState": "Breaks ESM circular dependencies while preserving Java-style global runtime ownership.",
         "GameTileTypes": "Cycle-safe source of truth for tile type constants shared by GameMode and translated entities.",
         "PlayerMotionConstants": "Cycle-safe source of truth for Player motion constants and precomputed rumble values used by cutscenes.",
