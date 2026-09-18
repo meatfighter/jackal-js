@@ -138,7 +138,7 @@ test("AudioRegistry exactly covers Main Sound fields and rejects identity aliase
     assert.throws(() => registry.registeredSounds(incomplete), /registry is incomplete/);
 });
 
-test("capture includes every registered active Sound in deterministic order", async () => {
+test("capture includes every registered active Sound in deterministic order without global audio policy", async () => {
     const { registry, audio } = await loadAudioModules();
     const main = fakeMain(registry.SOUND_FIELD_NAMES);
     for (let i = 0; i < registry.SOUND_FIELD_NAMES.length; i++) {
@@ -146,6 +146,8 @@ test("capture includes every registered active Sound in deterministic order", as
     }
 
     const snapshot = audio.captureAudioStateSnapshot(main);
+    assert.equal("musicOn" in snapshot, false);
+    assert.equal("soundOn" in snapshot, false);
     assert.deepEqual(
         snapshot.sounds.map(({ id }) => id),
         [...registry.SOUND_FIELD_NAMES]
@@ -196,8 +198,6 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
         requestedSongId: null,
         currentSongState: null,
         audioState: {
-            musicOn: true,
-            soundOn: true,
             sounds: [
                 { id: "explodeSound", playback: overlapping },
                 { id: "helicopterSound", playback: helicopter },
@@ -206,21 +206,8 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
             cooldowns: [{ id: "machineGunSound", remainingMs: 80 }]
         }
     };
-    const gc = {
-        musicOn: null,
-        soundOn: null,
-        setMusicOn(value) {
-            this.musicOn = value;
-        },
-        setSoundOn(value) {
-            this.soundOn = value;
-        }
-    };
-
-    audio.restoreAudioPlayback(main, gc, snapshot);
+    audio.restoreAudioPlayback(main, snapshot);
     assert.equal(main.stopCount, 1);
-    assert.equal(gc.musicOn, true);
-    assert.equal(gc.soundOn, true);
     assert.deepEqual(main.helicopterSound.state, helicopter);
     assert.deepEqual(main.machineGunSound.state, machineGun);
     assert.deepEqual(main.explodeSound.state, overlapping);
@@ -248,7 +235,24 @@ test("Sound persistence uses public logical transport APIs and true all-voice cl
     assert.match(audioSource, /restorePlaybackState\(/);
     assert.match(audioSource, /registeredSounds\(main\)/);
     assert.match(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
+    assert.doesNotMatch(audioSource, /\b(?:musicOn|soundOn|setMusicOn|setSoundOn)\b/);
     assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
+});
+
+test("application audio policy is established before playback activation and on Reset", () => {
+    const startGame = functionBody(webAppSource, "private async startGame");
+    assert.ok(startGame.indexOf("this.applyApplicationAudioPreferences()") < startGame.indexOf("beginGameAudio()"));
+
+    const resume = functionBody(webAppSource, "private async resumeLiveGameFromMenu()");
+    assert.ok(resume.indexOf("this.applyApplicationAudioPreferences()") < resume.indexOf("beginGameAudio()"));
+
+    const reset = functionBody(webAppSource, "private resetPwaState()");
+    assert.match(reset, /this\.applyApplicationAudioPreferences\(\)/);
+
+    const helper = functionBody(webAppSource, "private applyApplicationAudioPreferences()");
+    assert.match(helper, /setMusicOn\(true\)/);
+    assert.match(helper, /setSoundsOn\(true\)/);
+    assert.match(helper, /this\.applyAudioVolume\(this\.volume\)/);
 });
 
 test("live-menu lifecycle freezes before save and commits audio before resume", () => {
