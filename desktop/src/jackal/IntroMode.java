@@ -113,8 +113,7 @@ public class IntroMode implements IMode, IFadeListener, IMenuListener {
     state = STATE_TITLE;
     delay = TITLE_DELAY;
     scrollOffsetX = 0;
-    main.stopAllSoundEffects();
-    main.stopSong();
+    main.stopAllSound();
     menu.setInputEnabled(true);    
   }
   
