@@ -273,7 +273,7 @@ export class JackalWebApp {
         this.volume = DEFAULT_VOLUME;
         this.scalingPreference = DEFAULT_SCALING_PREFERENCE;
         this.fullscreenPreference = DEFAULT_FULLSCREEN_PREFERENCE;
-        this.applyAudioVolume(this.volume);
+        this.applyApplicationAudioPreferences();
         this.pwaSessionState = "menu";
         this.renderMenu(this.root, false, null, false);
     }
@@ -348,6 +348,7 @@ export class JackalWebApp {
         const liveHost = this.viewport.gameHost;
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "starting";
+        this.applyApplicationAudioPreferences();
         const audio = beginGameAudio();
         this.requestPreferredFullscreen();
         try {
@@ -445,6 +446,7 @@ export class JackalWebApp {
         if (!this.destroyGameSession()) {
             return;
         }
+        this.applyApplicationAudioPreferences();
         this.gameOwnershipEpoch = this.getOwnership().epoch;
         this.pwaSessionState = "starting";
         this.gameLaunchInProgress = true;
@@ -850,6 +852,13 @@ export class JackalWebApp {
 
     private setAudioVolume(value: number): void {
         this.volume = clampVolume(value, this.volume);
+        this.applyAudioVolume(this.volume);
+    }
+
+    private applyApplicationAudioPreferences(): void {
+        const store = SoundStore.get();
+        store.setMusicOn(true);
+        store.setSoundsOn(true);
         this.applyAudioVolume(this.volume);
     }
 
