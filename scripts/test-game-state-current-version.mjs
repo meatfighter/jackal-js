@@ -97,7 +97,7 @@ function baseSnapshot(fields, version) {
         friendlySoldierCount: 0,
         requestedSongId: null,
         currentSongState: null,
-        audioState: { musicOn: true, soundOn: true, sounds: [], cooldowns: [] }
+        audioState: { sounds: [], cooldowns: [] }
     };
 }
 
