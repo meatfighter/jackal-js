@@ -77,6 +77,32 @@ export class Song {
         }
     }
 
+    /** Pause the exact active Music part without changing Song sequencing. */
+    public pause(): void {
+        if (!this.playing) {
+            return;
+        }
+        for (const music of [this.intro, this.intro2, this.loop]) {
+            if (music?.getTransportState() === "playing") {
+                music.pause();
+                return;
+            }
+        }
+    }
+
+    /** Resume the exact paused Music part without changing Song sequencing. */
+    public resume(): void {
+        if (!this.playing) {
+            return;
+        }
+        for (const music of [this.intro, this.intro2, this.loop]) {
+            if (music?.getTransportState() === "paused") {
+                music.resume();
+                return;
+            }
+        }
+    }
+
     public update(): void {
         if (!this.playing || this.intro?.isTransportActive()) {
             return;
