@@ -142,7 +142,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 13);
+    assert.equal(currentVersion, 14);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -167,6 +167,11 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const badAudioShape = modeSnapshot(fields, currentVersion);
     badAudioShape.audioState.extra = true;
     assert.equal(validator.isSupportedGameStateSnapshot(badAudioShape), false);
+
+    const obsoleteAudioPolicy = modeSnapshot(fields, currentVersion);
+    obsoleteAudioPolicy.audioState.musicOn = false;
+    obsoleteAudioPolicy.audioState.soundOn = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(obsoleteAudioPolicy), false);
 
     const missingSoundArray = modeSnapshot(fields, currentVersion);
     delete missingSoundArray.audioState.sounds;
