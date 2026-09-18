@@ -283,6 +283,35 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
     assert.equal(main.machineGunSound.state.voices.length, beforeVoices, "restored cooldown must suppress an immediate duplicate Sound voice");
 });
 
+test("failed audio restore cannot mutate application audio policy", async () => {
+    const { registry, audio } = await loadAudioModules();
+    const { SoundStore } = await import("slick2d-ts");
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    const store = SoundStore.get();
+    store.setMusicOn(false);
+    store.setSoundsOn(true);
+
+    main.explodeSound.restorePlaybackState = () => {
+        throw new Error("Injected Jackal audio restore failure.");
+    };
+    const snapshot = {
+        requestedSongId: null,
+        currentSongState: null,
+        audioState: {
+            sounds: [{ id: "explodeSound", playback: playback([voice()], 0) }],
+            cooldowns: []
+        }
+    };
+
+    try {
+        assert.throws(() => audio.restoreAudioPlayback(main, snapshot), /Injected Jackal audio restore failure/);
+        assert.equal(store.musicOn(), false);
+        assert.equal(store.soundsOn(), true);
+    } finally {
+        store.destroy();
+    }
+});
+
 test("Sound persistence uses public logical transport APIs and true all-voice cleanup", () => {
     assert.match(audioSource, /capturePlaybackState\(\)/);
     assert.match(audioSource, /restorePlaybackState\(/);
