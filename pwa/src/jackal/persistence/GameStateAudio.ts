@@ -1,4 +1,4 @@
-import { Music, SoundStore, type GameContainer, type SoundPlaybackSnapshot } from "slick2d-ts";
+import { Music, SoundStore, type SoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { registeredSounds, soundForId, type RegisteredSound } from "../AudioRegistry.js";
 import type { Main } from "../Main.js";
@@ -14,8 +14,6 @@ const EMPTY_SOUND_PLAYBACK: SoundPlaybackSnapshot = Object.freeze({
 export function captureAudioStateSnapshot(main: Main): AudioStateSnapshot {
     const sounds = registeredSounds(main);
     return {
-        musicOn: SoundStore.get().musicOn(),
-        soundOn: SoundStore.get().soundsOn(),
         sounds: captureSoundSnapshots(sounds),
         cooldowns: captureSoundCooldownSnapshots(main, sounds)
     };
@@ -54,7 +52,7 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
  * callbacks. The shell commits its fresh generation after the entire game state
  * is installed. Current and requested songs may intentionally differ mid-change.
  */
-export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
+export function restoreAudioPlayback(main: Main, snapshot: JackalGameStateSnapshot): void {
     if (!main.isBrowserRuntimeActive()) {
         return;
     }
@@ -62,8 +60,6 @@ export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: Ja
     clearExistingAudioState(main);
 
     try {
-        gc.setMusicOn(snapshot.audioState.musicOn);
-        gc.setSoundOn(snapshot.audioState.soundOn);
         restoreSongState(main, snapshot);
         restoreSoundState(main, snapshot.audioState.sounds);
         restoreSoundCooldownState(main, snapshot.audioState.cooldowns);
@@ -73,10 +69,6 @@ export function restoreAudioPlayback(main: Main, gc: GameContainer, snapshot: Ja
     }
 }
 
-/** Compatibility name retained for the existing serializer call site. */
-export function restoreSongPlayback(main: Main, gc: GameContainer, snapshot: JackalGameStateSnapshot): void {
-    restoreAudioPlayback(main, gc, snapshot);
-}
 
 function clearExistingAudioState(main: Main): void {
     // Jackal's translated stop helper preserves Slick's latest-voice Sound.stop()
