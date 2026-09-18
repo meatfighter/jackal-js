@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import ts from "typescript";
 
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const slickModuleUrl = import.meta.resolve("slick2d-ts");
 const mainSource = readFileSync(new URL("../pwa/src/jackal/Main.ts", import.meta.url), "utf8");
 const registrySource = readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8");
@@ -136,6 +139,29 @@ function declaredMainSoundFields() {
         }
     }
     return result;
+}
+
+function collectAudioPolicySetterCalls(directory, relative = "") {
+    const calls = [];
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
+        const path = resolve(directory, entry.name);
+        if (entry.isDirectory()) {
+            calls.push(...collectAudioPolicySetterCalls(path, childRelative));
+            continue;
+        }
+        if (!entry.isFile() || !entry.name.endsWith(".ts")) {
+            continue;
+        }
+        const source = readFileSync(path, "utf8");
+        for (const method of ["setMusicOn", "setSoundsOn", "setSoundOn"]) {
+            const matches = source.match(new RegExp(`\\.${method}\\s*\\(`, "g")) ?? [];
+            for (let i = 0; i < matches.length; i++) {
+                calls.push(`pwa/src/${childRelative}:${method}`);
+            }
+        }
+    }
+    return calls.sort();
 }
 
 function functionBody(source, signature) {
@@ -306,6 +332,14 @@ test("Song pause/resume preserves intro, intro2, and loop sequencing", async () 
     song.resume();
     assert.equal(loop.state, "playing");
     assert.equal(loop.resumeCalls, 1);
+});
+
+test("only the PWA shell may mutate global Music/Sound enable policy", () => {
+    const calls = collectAudioPolicySetterCalls(resolve(rootDir, "pwa", "src"));
+    assert.deepEqual(calls, [
+        "pwa/src/app/JackalWebApp.ts:setMusicOn",
+        "pwa/src/app/JackalWebApp.ts:setSoundsOn"
+    ]);
 });
 
 test("gameplay Pause uses Song transport rather than global Music policy", () => {
