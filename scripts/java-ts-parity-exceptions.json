@@ -243,6 +243,7 @@
         "ButtonMapping.browserFullscreenKeys": "Java reserves Space and Escape for its desktop fullscreen controls. The PWA reserves only Escape for its browser menu, leaving Space as a normal remappable gameplay key.",
         "IntroMode.browserFullscreenInstruction": "Java displays its Space fullscreen instruction on the title screen. The PWA deliberately omits that line because fullscreen belongs to the browser menu.",
         "Main.update.fadeTiming": "The browser advances the 23-level screen fade from Jackal's existing 10 ms fixed-update loop. This intentionally removes the Java desktop version's display-refresh dependency while leaving the Java source unchanged.",
+        "GameMode.browserPauseMusicTransport": "Java uses GameContainer.setMusicOn(false/true) for gameplay Pause. The browser keeps application-wide Music policy in the PWA shell and pauses/resumes the exact active Song Music transport instead, preserving the same user-visible pause behavior without leaking game state into page-global audio policy.",
         "Main.browserFullscreenOwnership": "Java keeps its Space/Escape Slick fullscreen lifecycle. The PWA shell owns browser fullscreen entry, exit, fallback, and menu transitions instead."
     }
 }
