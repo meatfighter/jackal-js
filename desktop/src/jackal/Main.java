@@ -1161,18 +1161,7 @@ public class Main extends BasicGame {
     currentSong = null;
   }
   
-  public void stopAllSound() {
-    stopSong(bossSong);
-    stopSong(continueSong);
-    stopSong(cutsceneSong);
-    stopSong(endingSong);
-    stopSong(introSong);
-    stopSong(stageSong0);
-    stopSong(stageSong1);
-    stopSong(stageSong2);
-    stopSong(superTankSong);
-    stopSong(titleSong);
-
+  public void stopAllSoundEffects() {
     stopSound(bulletHitSound);
     stopSound(enemyHitSound);
     stopSound(explodeSound);
@@ -1200,6 +1189,21 @@ public class Main extends BasicGame {
     stopSound(wellDoneSound);
   }
 
+  public void stopAllSound() {
+    stopSong(bossSong);
+    stopSong(continueSong);
+    stopSong(cutsceneSong);
+    stopSong(endingSong);
+    stopSong(introSong);
+    stopSong(stageSong0);
+    stopSong(stageSong1);
+    stopSong(stageSong2);
+    stopSong(superTankSong);
+    stopSong(titleSong);
+
+    stopAllSoundEffects();
+  }
+  
   public void requestSong(Song song) {
     if (closeRequested) {
       return;
