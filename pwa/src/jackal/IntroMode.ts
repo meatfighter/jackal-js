@@ -111,6 +111,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         this.state = IntroMode.STATE_TITLE;
         this.delay = IntroMode.TITLE_DELAY;
         this.scrollOffsetX = 0;
+        this.main.stopAllSoundEffects();
         this.main.stopAllSongs();
         this.menu.setInputEnabled(true);
     }
