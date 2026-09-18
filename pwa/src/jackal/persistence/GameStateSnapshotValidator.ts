@@ -157,6 +157,14 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
         return false;
     }
+    const paused = gameMode.fields.paused;
+    if (typeof paused !== "boolean") {
+        return false;
+    }
+    const activeMusicTransport = snapshot.currentSongState?.activeMusic?.playback.transport ?? null;
+    if ((paused && activeMusicTransport !== "paused") || (!paused && activeMusicTransport === "paused")) {
+        return false;
+    }
     for (const entitySnapshot of gameMode.entities) {
         if (
             !isRecord(entitySnapshot) ||
