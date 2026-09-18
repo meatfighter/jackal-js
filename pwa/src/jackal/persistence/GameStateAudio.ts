@@ -48,8 +48,8 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
 }
 
 /**
- * Restore is an atomic logical operation, not a sequence of play/seek/unmute
- * callbacks. The shell commits its fresh generation after the entire game state
+ * Restore is an atomic logical operation, not a sequence of play/seek/native
+ * attachment callbacks. The shell commits its fresh generation after the entire game state
  * is installed. Current and requested songs may intentionally differ mid-change.
  */
 export function restoreAudioPlayback(main: Main, snapshot: JackalGameStateSnapshot): void {
