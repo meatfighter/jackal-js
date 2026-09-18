@@ -1,4 +1,4 @@
-import { BasicGame, Color, GL11, Image, Log, Music, Sound, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
+import { BasicGame, Color, GL11, Image, Log, Music, Sound, SoundStore, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
 import {
     ArrayList,
     JAVA_LONG_LOW_3_BITS,
@@ -1079,6 +1079,11 @@ export class Main extends BasicGame {
         this.currentSong = null;
     }
 
+    /** Destroy every logical SFX voice without changing application Sound policy. */
+    public stopAllSoundEffects(): void {
+        SoundStore.get().stopSoundEffects();
+    }
+
     public stopAllSound(): void {
         this.stopSong(this.bossSong);
         this.stopSong(this.continueSong);
@@ -1091,31 +1096,7 @@ export class Main extends BasicGame {
         this.stopSong(this.superTankSong);
         this.stopSong(this.titleSong);
 
-        this.stopSound(this.bulletHitSound);
-        this.stopSound(this.enemyHitSound);
-        this.stopSound(this.explodeSound);
-        this.stopSound(this.explodeSound2);
-        this.stopSound(this.explodeSound3);
-        this.stopSound(this.extraLifeSound);
-        this.stopSound(this.fireSound);
-        this.stopSound(this.helicopterSound);
-        this.stopSound(this.helicopterSound2);
-        this.stopSound(this.helicopterPickupSound);
-        this.stopSound(this.headquartersExplodesSound);
-        this.stopSound(this.hutSound);
-        this.stopSound(this.introChingSound);
-        this.stopSound(this.introTypeSound);
-        this.stopSound(this.laserSound);
-        this.stopSound(this.machineGunSound);
-        this.stopSound(this.missileSound);
-        this.stopSound(this.pauseSound);
-        this.stopSound(this.pickupSound);
-        this.stopSound(this.playerExplodeSound);
-        this.stopSound(this.planeSound);
-        this.stopSound(this.soldierKilledSound);
-        this.stopSound(this.throwSound);
-        this.stopSound(this.weaponUpgradeSound);
-        this.stopSound(this.wellDoneSound);
+        this.stopAllSoundEffects();
     }
 
     public requestSong(song: Song): void {
