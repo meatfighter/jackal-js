@@ -69,7 +69,6 @@ export function restoreAudioPlayback(main: Main, snapshot: JackalGameStateSnapsh
     }
 }
 
-
 function clearExistingAudioState(main: Main): void {
     // Jackal's translated stop helper preserves Slick's latest-voice Sound.stop()
     // semantics. Follow it with the engine's true all-effect operation so an

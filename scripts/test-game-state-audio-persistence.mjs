@@ -366,10 +366,7 @@ test("Song pause/resume preserves intro, intro2, and loop sequencing", async () 
 
 test("only the PWA shell may mutate global Music/Sound enable policy", () => {
     const calls = collectAudioPolicySetterCalls(resolve(rootDir, "pwa", "src"));
-    assert.deepEqual(calls, [
-        "pwa/src/app/JackalWebApp.ts:setMusicOn",
-        "pwa/src/app/JackalWebApp.ts:setSoundsOn"
-    ]);
+    assert.deepEqual(calls, ["pwa/src/app/JackalWebApp.ts:setMusicOn", "pwa/src/app/JackalWebApp.ts:setSoundsOn"]);
 });
 
 test("Song pause/resume preserves sequencing and paused transport snapshot", async () => {
