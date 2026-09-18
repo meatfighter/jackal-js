@@ -131,7 +131,7 @@ function gameSnapshot(fields, version, entity) {
         ...baseSnapshot(fields, version),
         kind: "game",
         gameMode: {
-            fields: encodedFields(fields.GAME_MODE_FIELD_NAMES),
+            fields: encodedFields(fields.GAME_MODE_FIELD_NAMES, { paused: false }),
             elements: [[entity.id], [], [], [], [], [], [], []],
             entities: [entity]
         },
