@@ -237,6 +237,20 @@ test("paused GameMode requires a paused current Music transport", async () => {
     const unpausedWithPausedMusic = structuredClone(paused);
     unpausedWithPausedMusic.gameMode.fields.paused = false;
     assert.equal(validator.isSupportedGameStateSnapshot(unpausedWithPausedMusic), false);
+
+    const pausedWithoutPlayingSong = structuredClone(paused);
+    pausedWithoutPlayingSong.currentSongState.playing = false;
+    assert.equal(validator.isSupportedGameStateSnapshot(pausedWithoutPlayingSong), false);
+
+    const standalonePausedMusic = modeSnapshot(fields, currentVersion);
+    standalonePausedMusic.requestedSongId = "stageSong0";
+    standalonePausedMusic.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: true,
+        activeMusic: { id: "stageSong0.loop", playback: playback({ transport: "paused" }) }
+    };
+    assert.equal(validator.isSupportedGameStateSnapshot(standalonePausedMusic), false);
 });
 
 test("current audio state is exact, sparse and bounded", async () => {
