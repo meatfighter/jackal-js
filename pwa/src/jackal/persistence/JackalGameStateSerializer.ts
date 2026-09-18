@@ -57,7 +57,7 @@ import {
 } from "./GameStateFields.js";
 import { GAME_STATE_VERSION } from "./GameStateSchema.js";
 import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
-import { captureAudioStateSnapshot, captureSongSnapshot, restoreSongPlayback, songIdFor } from "./GameStateAudio.js";
+import { captureAudioStateSnapshot, captureSongSnapshot, restoreAudioPlayback, songIdFor } from "./GameStateAudio.js";
 import {
     createUninitialized,
     decodeFieldsInto,
@@ -222,7 +222,7 @@ export class JackalGameStateSerializer {
         FriendlySoldier.count = snapshot.friendlySoldierCount;
         main.mode = gameMode;
         this.restoreFadeListener(main, gameMode);
-        restoreSongPlayback(main, gc, snapshot);
+        restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
     }
@@ -254,7 +254,7 @@ export class JackalGameStateSerializer {
         FriendlySoldier.count = snapshot.friendlySoldierCount;
         main.mode = mode;
         this.restoreFadeListener(main, mode);
-        restoreSongPlayback(main, gc, snapshot);
+        restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
     }
