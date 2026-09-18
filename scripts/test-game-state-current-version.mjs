@@ -215,6 +215,30 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedStage), false);
 });
 
+test("paused GameMode requires a paused current Music transport", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    const currentVersion = schema.GAME_STATE_VERSION;
+
+    const paused = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    paused.gameMode.fields.paused = true;
+    paused.requestedSongId = "stageSong0";
+    paused.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: true,
+        activeMusic: { id: "stageSong0.loop", playback: playback({ transport: "paused" }) }
+    };
+    assert.equal(validator.isSupportedGameStateSnapshot(paused), true);
+
+    const pausedWithPlayingMusic = structuredClone(paused);
+    pausedWithPlayingMusic.currentSongState.activeMusic.playback.transport = "playing";
+    assert.equal(validator.isSupportedGameStateSnapshot(pausedWithPlayingMusic), false);
+
+    const unpausedWithPausedMusic = structuredClone(paused);
+    unpausedWithPausedMusic.gameMode.fields.paused = false;
+    assert.equal(validator.isSupportedGameStateSnapshot(unpausedWithPausedMusic), false);
+});
+
 test("current audio state is exact, sparse and bounded", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
