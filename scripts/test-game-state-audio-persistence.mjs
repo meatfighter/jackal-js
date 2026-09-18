@@ -50,6 +50,7 @@ async function loadAudioModules() {
     const registryUrl = compileModule(registrySource);
     const fieldsUrl = compileModule(fieldsSource);
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
+    const songUrl = compileModule(songSource.replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`));
     const audioUrl = compileModule(
         audioSource
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
@@ -57,8 +58,8 @@ async function loadAudioModules() {
             .replace(`from "../AudioRegistry.js"`, `from "${registryUrl}"`)
             .replace(`from "./GameStateFields.js"`, `from "${fieldsUrl}"`)
     );
-    const [registry, audio] = await Promise.all([import(registryUrl), import(audioUrl)]);
-    return { registry, audio };
+    const [registry, audio, songModule] = await Promise.all([import(registryUrl), import(audioUrl), import(songUrl)]);
+    return { registry, audio, Song: songModule.Song };
 }
 
 function clone(value) {
@@ -340,6 +341,74 @@ test("only the PWA shell may mutate global Music/Sound enable policy", () => {
         "pwa/src/app/JackalWebApp.ts:setMusicOn",
         "pwa/src/app/JackalWebApp.ts:setSoundsOn"
     ]);
+});
+
+test("Song pause/resume preserves sequencing and paused transport snapshot", async () => {
+    const { audio, Song } = await loadAudioModules();
+
+    function fakeMusic(initialState) {
+        return {
+            state: initialState,
+            pauseCalls: 0,
+            resumeCalls: 0,
+            getTransportState() {
+                return this.state;
+            },
+            isTransportActive() {
+                return this.state === "playing" || this.state === "paused";
+            },
+            pause() {
+                if (this.state === "playing") {
+                    this.pauseCalls++;
+                    this.state = "paused";
+                }
+            },
+            resume() {
+                if (this.state === "paused") {
+                    this.resumeCalls++;
+                    this.state = "playing";
+                }
+            },
+            stop() {
+                this.state = "stopped";
+            },
+            capturePlaybackState() {
+                return {
+                    transport: this.state,
+                    looped: false,
+                    playbackRate: 1,
+                    positionSeconds: 12.5,
+                    volume: 1,
+                    fade: null
+                };
+            }
+        };
+    }
+
+    const intro = fakeMusic("playing");
+    const intro2 = fakeMusic("stopped");
+    const loop = fakeMusic("stopped");
+    const song = Song.fromTwoIntrosAndLoopMusic(intro, intro2, loop);
+    song.playing = true;
+    song.playedIntro2 = false;
+
+    song.pause();
+    assert.equal(intro.state, "paused");
+    assert.equal(intro.pauseCalls, 1);
+    assert.equal(song.playing, true, "pause must not change Song sequencing ownership");
+
+    const main = { stageSong0: song };
+    const snapshot = audio.captureSongSnapshot(main, song);
+    assert.equal(snapshot.id, "stageSong0");
+    assert.equal(snapshot.playing, true);
+    assert.equal(snapshot.activeMusic.id, "stageSong0.intro");
+    assert.equal(snapshot.activeMusic.playback.transport, "paused");
+    assert.equal(snapshot.activeMusic.playback.positionSeconds, 12.5);
+
+    song.resume();
+    assert.equal(intro.state, "playing");
+    assert.equal(intro.resumeCalls, 1);
+    assert.equal(song.playing, true);
 });
 
 test("gameplay Pause uses Song transport rather than global Music policy", () => {
