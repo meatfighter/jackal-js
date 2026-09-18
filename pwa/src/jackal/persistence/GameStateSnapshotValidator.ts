@@ -163,7 +163,10 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         return false;
     }
     const activeMusicTransport = currentSongState?.activeMusic?.playback.transport ?? null;
-    if ((paused && activeMusicTransport !== "paused") || (!paused && activeMusicTransport === "paused")) {
+    if (
+        (paused && (currentSongState === null || !currentSongState.playing || activeMusicTransport !== "paused")) ||
+        (!paused && activeMusicTransport === "paused")
+    ) {
         return false;
     }
     for (const entitySnapshot of gameMode.entities) {
@@ -184,6 +187,10 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
         return false;
     }
     if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId))) {
+        return false;
+    }
+    const currentSongState = snapshot.currentSongState;
+    if (!isSongSnapshot(currentSongState) || currentSongState?.activeMusic?.playback.transport === "paused") {
         return false;
     }
     return isModeExtraSnapshot(snapshot.modeId, snapshot.modeExtra);
