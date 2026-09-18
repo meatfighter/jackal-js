@@ -13,6 +13,7 @@ const server = await createServer({
     server: { middlewareMode: true }
 });
 const { IntroMode } = await server.ssrLoadModule("/src/jackal/IntroMode.ts");
+const { SOUND_FIELD_NAMES } = await server.ssrLoadModule("/src/jackal/AudioRegistry.ts");
 
 after(async () => {
     await server.close();
@@ -132,8 +133,9 @@ test("Jackal cleanup is all-voice, title-scoped, and mirrored in Java", () => {
     assert.doesNotMatch(tsSetMode, /stopAllSoundEffects|stopSoundEffects/, "generic Jackal mode changes must remain non-destructive");
 
     const javaEffects = sourceBetween(javaMain, "  public void stopAllSoundEffects()", "  public void stopAllSound()");
-    assert.match(javaEffects, /stopSound\(introChingSound\);/);
-    assert.match(javaEffects, /stopSound\(introTypeSound\);/);
+    for (const id of SOUND_FIELD_NAMES) {
+        assert.match(javaEffects, new RegExp(`stopSound\\(${escapeRegExp(id)}\\);`), `desktop cleanup missing ${id}`);
+    }
 
     const javaAll = sourceBetween(javaMain, "  public void stopAllSound()", "  public void requestSong(");
     assert.match(javaAll, /stopAllSoundEffects\(\);/);
@@ -156,4 +158,8 @@ function assertInOrder(source, snippets) {
         assert.ok(index > previous, `Expected ordered source snippet: ${snippet}`);
         previous = index;
     }
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
