@@ -37,8 +37,6 @@ export type SoundCooldownSnapshot = {
 };
 
 export type AudioStateSnapshot = {
-    musicOn: boolean;
-    soundOn: boolean;
     sounds: SoundSnapshot[];
     cooldowns: SoundCooldownSnapshot[];
 };
