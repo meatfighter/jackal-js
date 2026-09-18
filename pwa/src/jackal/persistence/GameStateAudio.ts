@@ -1,4 +1,4 @@
-import { Music, SoundStore, type SoundPlaybackSnapshot } from "slick2d-ts";
+import { Music, type SoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { registeredSounds, soundForId, type RegisteredSound } from "../AudioRegistry.js";
 import type { Main } from "../Main.js";
@@ -70,11 +70,7 @@ export function restoreAudioPlayback(main: Main, snapshot: JackalGameStateSnapsh
 }
 
 function clearExistingAudioState(main: Main): void {
-    // Jackal's translated stop helper preserves Slick's latest-voice Sound.stop()
-    // semantics. Follow it with the engine's true all-effect operation so an
-    // older overlapping voice cannot survive into an exact durable restore.
     main.stopAllSounds();
-    SoundStore.get().stopSoundEffects();
     main.lastPlayTime.clear();
     Music.resetPlaybackState();
 }
