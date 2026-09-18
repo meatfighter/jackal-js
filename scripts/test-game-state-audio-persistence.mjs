@@ -312,11 +312,14 @@ test("failed audio restore cannot mutate application audio policy", async () => 
     }
 });
 
-test("Sound persistence uses public logical transport APIs and true all-voice cleanup", () => {
+test("Sound persistence uses public logical transport APIs and Main-owned true all-voice cleanup", () => {
     assert.match(audioSource, /capturePlaybackState\(\)/);
     assert.match(audioSource, /restorePlaybackState\(/);
     assert.match(audioSource, /registeredSounds\(main\)/);
-    assert.match(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
+    assert.match(audioSource, /main\.stopAllSounds\(\)/);
+    assert.doesNotMatch(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
+    assert.match(mainSource, /public stopAllSoundEffects\(\): void \{\s*SoundStore\.get\(\)\.stopSoundEffects\(\);\s*\}/);
+    assert.match(mainSource, /public stopAllSound\(\): void \{[\s\S]*?this\.stopAllSoundEffects\(\);\s*\}/);
     assert.doesNotMatch(audioSource, /\b(?:musicOn|soundOn|setMusicOn|setSoundOn)\b/);
     assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
 });
