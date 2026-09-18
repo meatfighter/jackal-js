@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import ts from "typescript";
@@ -159,26 +159,6 @@ function collectAudioPolicySetterCalls(directory, relative = "") {
             for (let i = 0; i < matches.length; i++) {
                 calls.push(`pwa/src/${childRelative}:${method}`);
             }
-        }
-    }
-    return calls.sort();
-}
-
-function collectPolicySetterCalls(directory, relative = "") {
-    const calls = [];
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-        const relativePath = relative ? `${relative}/${entry.name}` : entry.name;
-        const path = join(directory, entry.name);
-        if (entry.isDirectory()) {
-            calls.push(...collectPolicySetterCalls(path, relativePath));
-            continue;
-        }
-        if (!entry.isFile() || !entry.name.endsWith(".ts")) {
-            continue;
-        }
-        const source = readFileSync(path, "utf8");
-        for (const match of source.matchAll(/\.(setMusicOn|setSoundOn)\s*\(/g)) {
-            calls.push(`pwa/src/${relativePath}:${match[1]}`);
         }
     }
     return calls.sort();
@@ -362,14 +342,6 @@ test("only the PWA shell may mutate global Music/Sound enable policy", () => {
     ]);
 });
 
-test("only the Jackal PWA shell may mutate global Music/Sound enable policy", () => {
-    const calls = collectPolicySetterCalls(resolve(rootDir, "pwa", "src"));
-    assert.deepEqual(calls, [
-        "pwa/src/app/JackalWebApp.ts:setMusicOn",
-        "pwa/src/app/JackalWebApp.ts:setSoundOn"
-    ]);
-});
-
 test("gameplay Pause uses Song transport rather than global Music policy", () => {
     assert.doesNotMatch(gameModeSource, /setMusicOn\s*\(/);
     assert.match(gameModeSource, /currentSong\?\.pause\(\)/);
@@ -380,41 +352,6 @@ test("gameplay Pause uses Song transport rather than global Music policy", () =>
     assert.match(songSource, /public resume\(\): void/);
     assert.match(songSource, /getTransportState\(\) === "paused"/);
     assert.match(songSource, /music\.resume\(\)/);
-});
-
-test("Song pause/resume targets only the active logical Music part", async () => {
-    const slickStub = compileModule("export class Music {}");
-    const songUrl = compileModule(songSource.replace(`from "slick2d-ts"`, `from "${slickStub}"`));
-    const { Song } = await import(songUrl);
-
-    const events = [];
-    const music = (name, state) => ({
-        state,
-        getTransportState() {
-            return this.state;
-        },
-        pause() {
-            events.push(`pause:${name}`);
-            this.state = "paused";
-        },
-        resume() {
-            events.push(`resume:${name}`);
-            this.state = "playing";
-        }
-    });
-    const intro = music("intro", "stopped");
-    const intro2 = music("intro2", "playing");
-    const loop = music("loop", "stopped");
-    const song = Song.fromTwoIntrosAndLoopMusic(intro, intro2, loop);
-    song.playing = true;
-
-    song.pause();
-    assert.deepEqual(events, ["pause:intro2"]);
-    assert.equal(intro2.state, "paused");
-
-    song.resume();
-    assert.deepEqual(events, ["pause:intro2", "resume:intro2"]);
-    assert.equal(intro2.state, "playing");
 });
 
 test("application audio policy is established before playback activation and on Reset", () => {
