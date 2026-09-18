@@ -57,7 +57,7 @@ const MENU_SNAPSHOT_FIELDS = ["fields"] as const;
 const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerButtons"] as const;
 const JEEP_YEAH_EXTRA_FIELDS = ["explosion", "leftPlane", "rightPlane", "fireLeft", "fireRight", "bullets"] as const;
 const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
-const AUDIO_STATE_FIELDS = ["musicOn", "soundOn", "sounds", "cooldowns"] as const;
+const AUDIO_STATE_FIELDS = ["sounds", "cooldowns"] as const;
 const SOUND_FIELDS = ["id", "playback"] as const;
 const SOUND_COOLDOWN_FIELDS = ["id", "remainingMs"] as const;
 const SONG_FIELDS = ["id", "playing", "playedIntro2", "activeMusic"] as const;
@@ -374,8 +374,6 @@ function isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
     if (
         !isRecord(value) ||
         !hasExactFields(value, AUDIO_STATE_FIELDS) ||
-        typeof value.musicOn !== "boolean" ||
-        typeof value.soundOn !== "boolean" ||
         !Array.isArray(value.sounds) ||
         value.sounds.length > SOUND_FIELD_NAMES.length ||
         !Array.isArray(value.cooldowns) ||
