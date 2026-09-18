@@ -132,16 +132,13 @@ test("Jackal cleanup is all-voice, title-scoped, and mirrored in Java", () => {
     const tsSetMode = sourceBetween(tsMain, "    public setMode(", "    public addPoints(");
     assert.doesNotMatch(tsSetMode, /stopAllSoundEffects|stopSoundEffects/, "generic Jackal mode changes must remain non-destructive");
 
-    const javaEffects = sourceBetween(javaMain, "  public void stopAllSoundEffects()", "  public void stopAllSound()");
+    const javaAll = sourceBetween(javaMain, "  public void stopAllSound()", "  public void requestSong(");
     for (const id of SOUND_FIELD_NAMES) {
-        assert.match(javaEffects, new RegExp(`stopSound\\(${escapeRegExp(id)}\\);`), `desktop cleanup missing ${id}`);
+        assert.match(javaAll, new RegExp(`stopSound\\(${escapeRegExp(id)}\\);`), `desktop cleanup missing ${id}`);
     }
 
-    const javaAll = sourceBetween(javaMain, "  public void stopAllSound()", "  public void requestSong(");
-    assert.match(javaAll, /stopAllSoundEffects\(\);/);
-
     const javaStartTitle = sourceBetween(javaIntro, "  private void startTitle()", "  private void updateTitleScreen()");
-    assertInOrder(javaStartTitle, ["main.stopAllSoundEffects();", "main.stopSong();", "menu.setInputEnabled(true);"]);
+    assertInOrder(javaStartTitle, ["main.stopAllSound();", "menu.setInputEnabled(true);"]);
 });
 
 function sourceBetween(source, startMarker, endMarker) {
