@@ -9,6 +9,8 @@ const registrySource = readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts"
 const audioSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateAudio.ts", import.meta.url), "utf8");
 const fieldsSource = readFileSync(new URL("../pwa/src/jackal/persistence/GameStateFields.ts", import.meta.url), "utf8");
 const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", import.meta.url), "utf8");
+const gameModeSource = readFileSync(new URL("../pwa/src/jackal/GameMode.ts", import.meta.url), "utf8");
+const songSource = readFileSync(new URL("../pwa/src/jackal/Song.ts", import.meta.url), "utf8");
 
 function compileModule(source) {
     const output = ts.transpileModule(source, {
@@ -237,6 +239,18 @@ test("Sound persistence uses public logical transport APIs and true all-voice cl
     assert.match(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
     assert.doesNotMatch(audioSource, /\b(?:musicOn|soundOn|setMusicOn|setSoundOn)\b/);
     assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
+});
+
+test("gameplay Pause uses Song transport rather than global Music policy", () => {
+    assert.doesNotMatch(gameModeSource, /setMusicOn\s*\(/);
+    assert.match(gameModeSource, /currentSong\?\.pause\(\)/);
+    assert.match(gameModeSource, /currentSong\?\.resume\(\)/);
+    assert.match(songSource, /public pause\(\): void/);
+    assert.match(songSource, /getTransportState\(\) === "playing"/);
+    assert.match(songSource, /music\.pause\(\)/);
+    assert.match(songSource, /public resume\(\): void/);
+    assert.match(songSource, /getTransportState\(\) === "paused"/);
+    assert.match(songSource, /music\.resume\(\)/);
 });
 
 test("application audio policy is established before playback activation and on Reset", () => {
