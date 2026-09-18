@@ -158,10 +158,11 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         return false;
     }
     const paused = gameMode.fields.paused;
-    if (typeof paused !== "boolean") {
+    const currentSongState = snapshot.currentSongState;
+    if (typeof paused !== "boolean" || !isSongSnapshot(currentSongState)) {
         return false;
     }
-    const activeMusicTransport = snapshot.currentSongState?.activeMusic?.playback.transport ?? null;
+    const activeMusicTransport = currentSongState?.activeMusic?.playback.transport ?? null;
     if ((paused && activeMusicTransport !== "paused") || (!paused && activeMusicTransport === "paused")) {
         return false;
     }
