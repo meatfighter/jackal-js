@@ -910,14 +910,14 @@ export class GameMode implements IMode, IFadeListener {
         if (this.paused) {
             if (this.input.isPause()) {
                 this.paused = false;
-                gc.setMusicOn(true);
+                this.main.currentSong?.resume();
             }
             this.main.resetNextFrameTime();
             return;
         } else if (this.input.isPause() && !this.stageCompletedFlag && this.playing && this.main.isSongPlaying()) {
             this.paused = true;
             this.main.playSound(this.main.pauseSound);
-            gc.setMusicOn(false);
+            this.main.currentSong?.pause();
         }
 
         if (++this.waterAlphaIndex === GameMode.WATER_ALPHAS_PERIOD) {
