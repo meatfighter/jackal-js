@@ -25,8 +25,23 @@ function walkTypeScriptFiles(directory) {
 }
 
 const signatureMap = JSON.parse(read("scripts/java-ts-signature-map.json"));
+const parityExceptions = JSON.parse(read("scripts/java-ts-parity-exceptions.json"));
 const floatMetadata = read("scripts/java-float-parity/java-float-metadata.jsonl").trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
 const javaClasses = new Map(floatMetadata.filter((entry) => entry.fullName === entry.name).map((entry) => [entry.name, entry]));
+
+test("browser gameplay Pause keeps application audio policy out of GameMode", () => {
+    const java = read("desktop/src/jackal/GameMode.java");
+    const browser = read("pwa/src/jackal/GameMode.ts");
+    const reason = parityExceptions.behaviorExceptions["GameMode.browserPauseMusicTransport"];
+
+    assert.match(java, /gc\.setMusicOn\(false\)/);
+    assert.match(java, /gc\.setMusicOn\(true\)/);
+    assert.doesNotMatch(browser, /setMusicOn\s*\(/);
+    assert.match(browser, /currentSong\?\.pause\(\)/);
+    assert.match(browser, /currentSong\?\.resume\(\)/);
+    assert.match(reason, /application-wide Music policy/i);
+    assert.match(reason, /exact active Song Music transport/i);
+});
 
 test("GameElement preserves Java's derived-object initialization order", () => {
     const source = read("pwa/src/jackal/GameElement.ts");
