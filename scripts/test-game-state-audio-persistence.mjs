@@ -363,7 +363,7 @@ test("only the PWA shell may mutate global Music/Sound enable policy", () => {
 });
 
 test("only the Jackal PWA shell may mutate global Music/Sound enable policy", () => {
-    const calls = collectPolicySetterCalls(resolve(new URL("../pwa/src", import.meta.url).pathname));
+    const calls = collectPolicySetterCalls(resolve(rootDir, "pwa", "src"));
     assert.deepEqual(calls, [
         "pwa/src/app/JackalWebApp.ts:setMusicOn",
         "pwa/src/app/JackalWebApp.ts:setSoundOn"
