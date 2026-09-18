@@ -19,6 +19,30 @@ function compileModule(source) {
     return `data:text/javascript;base64,${Buffer.from(output).toString("base64")}`;
 }
 
+async function loadSongModule() {
+    const fakeMusicUrl = compileModule(`
+        export class Music {
+            constructor() {
+                this.state = "stopped";
+                this.pauseCalls = 0;
+                this.resumeCalls = 0;
+                this.playCalls = 0;
+                this.loopCalls = 0;
+            }
+            getTransportState() { return this.state; }
+            isTransportActive() { return this.state === "playing" || this.state === "paused"; }
+            play() { this.playCalls++; this.state = "playing"; }
+            loop() { this.loopCalls++; this.state = "playing"; }
+            stop() { this.state = "stopped"; }
+            pause() { if (this.state === "playing") { this.pauseCalls++; this.state = "paused"; } }
+            resume() { if (this.state === "paused") { this.resumeCalls++; this.state = "playing"; } }
+        }
+    `);
+    const songUrl = compileModule(songSource.replace(`from "slick2d-ts"`, `from "${fakeMusicUrl}"`));
+    const [{ Song }, { Music }] = await Promise.all([import(songUrl), import(fakeMusicUrl)]);
+    return { Song, Music };
+}
+
 async function loadAudioModules() {
     const registryUrl = compileModule(registrySource);
     const fieldsUrl = compileModule(fieldsSource);
@@ -239,6 +263,49 @@ test("Sound persistence uses public logical transport APIs and true all-voice cl
     assert.match(audioSource, /SoundStore\.get\(\)\.stopSoundEffects\(\)/);
     assert.doesNotMatch(audioSource, /\b(?:musicOn|soundOn|setMusicOn|setSoundOn)\b/);
     assert.doesNotMatch(audioSource, /\.ref\b|sourceId|AudioBufferSourceNode|Reflect\./);
+});
+
+test("Song pause/resume preserves intro, intro2, and loop sequencing", async () => {
+    const { Song, Music } = await loadSongModule();
+    const intro = new Music();
+    const intro2 = new Music();
+    const loop = new Music();
+    const song = Song.fromTwoIntrosAndLoopMusic(intro, intro2, loop);
+
+    song.play();
+    assert.equal(intro.state, "playing");
+    assert.equal(song.playedIntro2, false);
+
+    song.pause();
+    assert.equal(intro.state, "paused");
+    song.update();
+    assert.equal(intro2.state, "stopped", "paused intro must remain the active Song part");
+    song.resume();
+    assert.equal(intro.state, "playing");
+
+    intro.state = "stopped";
+    song.update();
+    assert.equal(intro2.state, "playing");
+    assert.equal(song.playedIntro2, true);
+
+    song.pause();
+    assert.equal(intro2.state, "paused");
+    song.update();
+    assert.equal(loop.state, "stopped", "paused intro2 must not advance to loop");
+    song.resume();
+    assert.equal(intro2.state, "playing");
+
+    intro2.state = "stopped";
+    song.update();
+    assert.equal(loop.state, "playing");
+
+    song.pause();
+    assert.equal(loop.state, "paused");
+    song.update();
+    assert.equal(loop.loopCalls, 1, "paused loop must not be restarted by Song.update()");
+    song.resume();
+    assert.equal(loop.state, "playing");
+    assert.equal(loop.resumeCalls, 1);
 });
 
 test("gameplay Pause uses Song transport rather than global Music policy", () => {
