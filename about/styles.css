@@ -600,6 +600,10 @@ button {
     margin-top: 0.12rem;
 }
 
+.site-footer__license-link {
+    white-space: nowrap;
+}
+
 .site-footer__links {
     display: block;
     flex: 0 0 auto;
@@ -614,6 +618,12 @@ button {
 
 .site-footer__separator {
     color: var(--muted);
+}
+
+@media (min-width: 721px) {
+    .site-footer__copyright {
+        white-space: nowrap;
+    }
 }
 
 @media (max-width: 720px) {

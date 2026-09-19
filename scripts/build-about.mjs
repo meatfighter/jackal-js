@@ -1,7 +1,7 @@
 import { writeFileAtomic } from "./atomic-file-utils.mjs";
 import { generateAboutImageAssets, titleImageHeight, titleImageSizes, titleImageWidth } from "./about-image-assets.mjs";
 import { finalizeAboutPageHtml, prepareAboutArticleHtml } from "./about-html.mjs";
-import { renderAboutMarkdown } from "./about-markdown.mjs";
+import { renderAboutFooterMarkdown, renderAboutMarkdown } from "./about-markdown.mjs";
 import { assertComponentReleaseOutputPath, componentReleaseDir, copyDirectory, ensureDirectory, readVersion, renderTemplate, rootDir } from "./build-utils.mjs";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -41,7 +41,7 @@ await withReleaseOperationLock(async () => {
     );
     const renderedMarkdown = renderAboutMarkdown(contentMarkdown);
     const footerMarkdown = readFileSync(join(aboutDir, "footer.md"), "utf8");
-    const renderedFooter = renderAboutMarkdown(footerMarkdown);
+    const renderedFooter = renderAboutFooterMarkdown(footerMarkdown);
     if (renderedFooter.articleHtml.trim() === "") {
         throw new Error("about/footer.md must not be empty.");
     }
