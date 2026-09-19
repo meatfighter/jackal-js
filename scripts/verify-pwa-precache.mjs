@@ -224,7 +224,7 @@ function verifyBuiltServiceWorkerRegistration(files) {
     if (!javascript.includes("./sw.js?v=")) {
         throw new Error("Built JavaScript does not register the service worker with a page-relative ./sw.js URL.");
     }
-    if (!javascript.includes('scope:"./"')) {
+    if (!/scope\s*:\s*(["'`])\.\/\1/.test(javascript)) {
         throw new Error('Built JavaScript does not register the service worker with scope "./".');
     }
 }

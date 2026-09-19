@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { join, relative, resolve } from "node:path";
 import { defineConfig } from "vite";
 import type { Plugin, ResolvedConfig } from "vite";
-import versionFileInfo from "../version.json";
+import versionFileInfo from "../version.json" with { type: "json" };
 
 const APP_VERSION_TOKEN = "__APP_VERSION__";
 const BUILD_STAMP_TOKEN = "__BUILD_STAMP__";
