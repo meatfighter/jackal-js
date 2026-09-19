@@ -47,13 +47,13 @@ test("about Markdown content is the user-facing source of truth", () => {
 });
 
 test("about footer Markdown is a heading-free scoped legal source", () => {
-    assert.match(footerMarkdown, /© 2013, 2026 meatfighter\.com/);
-    assert.match(footerMarkdown, /Third-party and preexisting game content is excluded/);
-    assert.match(footerMarkdown, /\[CC BY-SA 4\.0\]\(https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\)/);
-    assert.match(footerMarkdown, /does not apply to third-party or preexisting game content/);
+    assert.match(footerMarkdown, /Original code, graphics, and other original material created for this project © 2013, 2026 meatfighter\.com/);
+    assert.match(footerMarkdown, /third-party and preexisting game content and trademarks remain\s+the property of their respective rights holders/);
+    assert.match(footerMarkdown, /Original page text is licensed under \[CC BY-SA 4\.0\]\(https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/\)/);
     assert.doesNotMatch(footerMarkdown, /^#{1,6}\s/m);
     const rendered = renderedFooterFixture();
-    assert.match(rendered.articleHtml, /<p>Original code and original material created for this project © 2013, 2026 meatfighter\.com\./);
+    assert.equal((rendered.articleHtml.match(/<p>/g) ?? []).length, 1);
+    assert.match(rendered.articleHtml, /<p>Original code, graphics, and other original material created for this project © 2013, 2026 meatfighter\.com/);
     assert.match(
         rendered.articleHtml,
         /href="https:\/\/creativecommons\.org\/licenses\/by-sa\/4\.0\/" target="_blank" rel="noopener noreferrer">CC BY-SA 4\.0<\/a>/
@@ -124,7 +124,10 @@ test("about page shell carries SEO, theme, footer, and generated-content placeho
     assert.match(styles, /\.site-footer__inner \{[\s\S]*align-items: flex-start;[\s\S]*gap: 1\.5rem;/);
     assert.match(styles, /\.site-footer__left \{\s+min-width: 0;\s+flex: 1 1 auto;\s+font-size: 0\.95rem;\s+\}/);
     assert.match(styles, /\.site-footer__left p \+ p \{\s+margin-top: 0\.12rem;\s+\}/);
-    assert.match(styles, /\.site-footer__links \{[\s\S]*flex: 0 0 auto;[\s\S]*font-weight: 600;\s+line-height: 1\.6;/);
+    assert.match(
+        styles,
+        /\.site-footer__links \{[\s\S]*flex: 0 0 auto;[\s\S]*align-self: center;[\s\S]*font-weight: 600;\s+line-height: 1\.6;/
+    );
     assert.doesNotMatch(styles, /\.site-footer__links \{[^}]*font-size:/);
     assert.match(styles, /@media \(max-width: 720px\) \{[\s\S]*\.site-footer__links \{\s+margin-top: 0\.65rem;\s+text-align: center;\s+\}/);
     assert.match(indexTemplate, /<script src=".\/theme\.js\?v=__BUILD_STAMP_ENCODED__"><\/script>/);

@@ -603,6 +603,7 @@ button {
 .site-footer__links {
     display: block;
     flex: 0 0 auto;
+    align-self: center;
     flex-wrap: wrap;
     justify-content: flex-end;
     text-align: right;

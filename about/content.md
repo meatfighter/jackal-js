@@ -99,6 +99,6 @@ Java 21 or newer is required.
 
 Konami developed and published _Jackal_ for the NES. It credits **H. Hori** and **H. Yanagisawa** with programming; **M. Fujiwara**, **Yoichi Yoshimoto**, and **Junko Maruo** with character design; **Kenji Shimoide**, **Naoki Satō**, and **Tomo Yamamoto** with visual design; and **Shinya Sakamoto** and **Atsushi Fujio** with music. This port would not exist without their brilliant work.
 
-This project is an unofficial recreation of and tribute to the original game, developed as a hobby programming project. It is not affiliated with, sponsored by, or endorsed by Konami or Nintendo. The original game, graphics, music, sound effects, and other content remain the property of their respective rights holders.
+This project is an unofficial recreation of and tribute to the original game, developed as a hobby programming project. It is not affiliated with, sponsored by, or endorsed by the creators, publishers, trademark owners, or other rights holders of the game it references. Preexisting game content, including graphics, music, sound effects, characters, names, logos, and trademarks, remains the property of the applicable rights holders.
 
 I provide this port free of charge. It contains no advertising and generates no revenue.
