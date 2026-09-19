@@ -1230,6 +1230,7 @@ test("desktop ZIP verifier requires runtime jars, natives, and notices", () => {
         /libjinput-osx\.jnilib/
     );
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/THIRD_PARTY_NOTICES.md")), /THIRD_PARTY_NOTICES\.md/);
+    assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/COPYRIGHT.md")), /COPYRIGHT\.md/);
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/LWJGL-2.txt")), /LWJGL-2\.txt/);
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/LGPL-2.0.txt")), /LGPL-2\.0\.txt/);
     assert.throws(() => verifyDesktopZipEntries(entries.filter((entry) => entry.name !== "jackal-desktop/licenses/JORBIS-NOTICE.txt")), /JORBIS-NOTICE\.txt/);

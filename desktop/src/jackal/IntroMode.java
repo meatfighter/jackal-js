@@ -55,10 +55,10 @@ public class IntroMode implements IMode, IFadeListener, IMenuListener {
   public static final float FULL_SCREEN_TEXT_X
       = (Main.DISPLAY_WIDTH - (FULL_SCREEN_TEXT.length() << 5)) / 2f;
   public static final float FULL_SCREEN_TEXT_Y = 800;
-  public static final String COPYRIGHT_TEXT = "© 2013, 2026 MEATFIGHTER.COM";
-  public static final float COPYRIGHT_TEXT_X
-      = (Main.DISPLAY_WIDTH - (COPYRIGHT_TEXT.length() << 5)) / 2f;
-  public static final float COPYRIGHT_TEXT_Y = 860;
+  public static final String ATTRIBUTION_TEXT = "2013, 2026 MEATFIGHTER.COM";
+  public static final float ATTRIBUTION_TEXT_X
+      = (Main.DISPLAY_WIDTH - (ATTRIBUTION_TEXT.length() << 5)) / 2f;
+  public static final float ATTRIBUTION_TEXT_Y = 860;
   
   public static final float UPPER_SOLDIER_Y = 96;
   public static final float LOWER_SOLDIER_Y = 576;
@@ -322,8 +322,8 @@ public class IntroMode implements IMode, IFadeListener, IMenuListener {
       menu.render();
       main.drawString(FULL_SCREEN_TEXT, FULL_SCREEN_TEXT_X, 
           FULL_SCREEN_TEXT_Y, Main.FONT_GRAY);
-      main.drawString(COPYRIGHT_TEXT, COPYRIGHT_TEXT_X, 
-          COPYRIGHT_TEXT_Y, Main.FONT_GRAY);
+      main.drawString(ATTRIBUTION_TEXT, ATTRIBUTION_TEXT_X, 
+          ATTRIBUTION_TEXT_Y, Main.FONT_GRAY);
     }
 
     if (state == STATE_STORY_SCROLL || state == STATE_STORY) {

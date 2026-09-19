@@ -53,9 +53,9 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         [304, 736]
     ];
 
-    public static readonly COPYRIGHT_TEXT: string = "© 2013, 2026 MEATFIGHTER.COM";
-    public static readonly COPYRIGHT_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.COPYRIGHT_TEXT.length << 5)) / 2);
-    public static readonly COPYRIGHT_TEXT_Y: number = 860;
+    public static readonly ATTRIBUTION_TEXT: string = "2013, 2026 MEATFIGHTER.COM";
+    public static readonly ATTRIBUTION_TEXT_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (IntroMode.ATTRIBUTION_TEXT.length << 5)) / 2);
+    public static readonly ATTRIBUTION_TEXT_Y: number = 860;
 
     public static readonly UPPER_SOLDIER_Y: number = 96;
     public static readonly LOWER_SOLDIER_Y: number = 576;
@@ -316,7 +316,7 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         if (this.state <= IntroMode.STATE_TITLE || this.state === IntroMode.STATE_STORY_SCROLL) {
             this.main.titleImage.draw(128, 192);
             this.menu.render();
-            this.main.drawString(IntroMode.COPYRIGHT_TEXT, IntroMode.COPYRIGHT_TEXT_X, IntroMode.COPYRIGHT_TEXT_Y, MainConstants.FONT_GRAY);
+            this.main.drawString(IntroMode.ATTRIBUTION_TEXT, IntroMode.ATTRIBUTION_TEXT_X, IntroMode.ATTRIBUTION_TEXT_Y, MainConstants.FONT_GRAY);
         }
 
         if (this.state === IntroMode.STATE_STORY_SCROLL || this.state === IntroMode.STATE_STORY) {

@@ -25,6 +25,7 @@ const requiredSourceEntries = ["sources/jorbis-0.0.17-sources.jar"];
 const requiredRootEntries = [
     `${distributionName}.jar`,
     "LICENSE",
+    "COPYRIGHT.md",
     "THIRD_PARTY_NOTICES.md",
     "RUNTIME_DEPENDENCIES.md",
     "README.md",

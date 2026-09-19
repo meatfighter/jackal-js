@@ -1,6 +1,6 @@
 /*
  * Jackal
- * Copyright (C) 2013 meatfighter.com
+ * Copyright (C) 2013, 2026 meatfighter.com
  *
  * This file is part of Jackal
  *

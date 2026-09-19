@@ -274,10 +274,13 @@ function createDistribution() {
     copyDirectoryContents(licenseDir, join(distributionDir, "licenses"));
     copyDirectoryContents(runtimeSourceDir, join(distributionDir, "sources"));
     const licensePath = join(rootDir, "LICENSE");
+    const copyrightPath = join(rootDir, "COPYRIGHT.md");
     const noticesPath = join(rootDir, "THIRD_PARTY_NOTICES.md");
     assertRealFile(licensePath, "license file");
+    assertRealFile(copyrightPath, "copyright file");
     assertRealFile(noticesPath, "third-party notices");
     copyFileSync(licensePath, assertDesktopTargetPath("desktop distribution license", join(distributionDir, "LICENSE")));
+    copyFileSync(copyrightPath, assertDesktopTargetPath("desktop distribution copyright", join(distributionDir, "COPYRIGHT.md")));
     copyFileSync(noticesPath, assertDesktopTargetPath("desktop distribution third-party notices", join(distributionDir, "THIRD_PARTY_NOTICES.md")));
 
     removeDesktopTargetFile(stableZipPath, "stable desktop ZIP");
