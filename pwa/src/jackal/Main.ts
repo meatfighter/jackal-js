@@ -13,7 +13,7 @@ import {
 } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 
-import { ButtonMapping } from "./ButtonMapping.js";
+import { ButtonMapping, type MappingWriteResult } from "./ButtonMapping.js";
 
 import { ContinueMode } from "./ContinueMode.js";
 import { DifficultyMode } from "./DifficultyMode.js";
@@ -288,7 +288,7 @@ export class Main extends BasicGame {
     public gc: GameContainer = null!;
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
-    public inputMappingChangedHandler: (() => void) | null = null;
+    public inputMappingChangedHandler: (() => MappingWriteResult) | null = null;
     public browserSuspended: boolean = false;
     private loadingFinishedNotified: boolean = false;
     private browserRuntimeActive: boolean = false;
@@ -1992,6 +1992,7 @@ export class Main extends BasicGame {
         this.browserSuspended = suspended;
         this.clearInputPressedRecords();
         if (!suspended) {
+            this.gc?.getInput().sampleControllersForBaseline();
             this.input?.snap();
             if (this.mode instanceof GameMode) {
                 this.mode.player?.resyncInputAfterBrowserResume();
@@ -2049,10 +2050,11 @@ export class Main extends BasicGame {
         }
     }
 
-    public notifyInputMappingChanged(): void {
-        if (this.inputMappingChangedHandler !== null) {
-            this.inputMappingChangedHandler();
+    public notifyInputMappingChanged(): MappingWriteResult {
+        if (this.inputMappingChangedHandler === null) {
+            return { saved: false, reason: "unavailable" };
         }
+        return this.inputMappingChangedHandler();
     }
 
     public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
