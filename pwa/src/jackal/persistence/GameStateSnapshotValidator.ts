@@ -406,7 +406,6 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             nameIndex < InputMode.ACTIONS.length &&
             delay >= 1 &&
             delay <= InputMode.FADE_TIME &&
-            armDelay === 0 &&
             assignmentCount === nameIndex + 1 &&
             assignmentsMatchInputDraft(value, nameIndex + 1) &&
             message === ""
@@ -417,7 +416,6 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             nameIndex === InputMode.ACTIONS.length &&
             delay >= 1 &&
             delay <= InputMode.DONE_DELAY &&
-            armDelay === 0 &&
             assignmentCount === InputMode.ACTIONS.length &&
             message === "SAVED"
         );
@@ -425,7 +423,6 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
 
     return (
         delay === 0 &&
-        armDelay === 0 &&
         (nameIndex === 0 || nameIndex === InputMode.ACTIONS.length) &&
         (assignmentCount === 0 || assignmentCount === InputMode.ACTIONS.length) &&
         message === ""
