@@ -13,6 +13,16 @@ export class HumanInput implements IInput {
     private right = false;
     private fire = false;
     private shoot = false;
+    private controllerUp = false;
+    private controllerDown = false;
+    private controllerLeft = false;
+    private controllerRight = false;
+    private controllerFire = false;
+    private controllerShoot = false;
+    private readonly controllerConnectionGenerations: number[] = [];
+    private readonly controllerBlockedControls: boolean[][] = [];
+    private lastControllerSampleSequence = -1;
+    private lastControllerMappingSignature = "";
 
     public constructor(buttonMapping: ButtonMapping, gc: GameContainer) {
         this.buttonMapping = buttonMapping;
@@ -20,31 +30,100 @@ export class HumanInput implements IInput {
     }
 
     public snap(): void {
-        this.up = this.input.isKeyDown(this.buttonMapping.keyUp) || this.isControllerBindingDown(this.buttonMapping.controllerUp);
-        this.down = this.input.isKeyDown(this.buttonMapping.keyDown) || this.isControllerBindingDown(this.buttonMapping.controllerDown);
-        this.left = this.input.isKeyDown(this.buttonMapping.keyLeft) || this.isControllerBindingDown(this.buttonMapping.controllerLeft);
-        this.right = this.input.isKeyDown(this.buttonMapping.keyRight) || this.isControllerBindingDown(this.buttonMapping.controllerRight);
-        this.fire = this.input.isKeyDown(this.buttonMapping.keyGrenade) || this.isAnyControllerButtonDown(this.buttonMapping.controllerGrenade);
-        this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun) || this.isAnyControllerButtonDown(this.buttonMapping.controllerGun);
+        this.refreshControllerLevels();
+        this.up = this.input.isKeyDown(this.buttonMapping.keyUp) || this.controllerUp;
+        this.down = this.input.isKeyDown(this.buttonMapping.keyDown) || this.controllerDown;
+        this.left = this.input.isKeyDown(this.buttonMapping.keyLeft) || this.controllerLeft;
+        this.right = this.input.isKeyDown(this.buttonMapping.keyRight) || this.controllerRight;
+        this.fire = this.input.isKeyDown(this.buttonMapping.keyGrenade) || this.controllerFire;
+        this.shoot = this.input.isKeyDown(this.buttonMapping.keyGun) || this.controllerShoot;
     }
 
-    private isControllerBindingDown(button: number): boolean {
-        switch (button) {
-            case 12:
-                return this.input.isControllerUp(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
-            case 13:
-                return this.input.isControllerDown(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
-            case 14:
-                return this.input.isControllerLeft(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
-            case 15:
-                return this.input.isControllerRight(Input.ANY_CONTROLLER) || this.isAnyControllerButtonDown(button);
+    private refreshControllerLevels(): void {
+        const status = this.input.getControllerSampleStatus();
+        if (!status.valid) {
+            return;
+        }
+
+        const mappingSignature = [
+            this.buttonMapping.controllerUp,
+            this.buttonMapping.controllerDown,
+            this.buttonMapping.controllerLeft,
+            this.buttonMapping.controllerRight,
+            this.buttonMapping.controllerGrenade,
+            this.buttonMapping.controllerGun
+        ].join(",");
+        const mappingChanged = mappingSignature !== this.lastControllerMappingSignature;
+        const firstSample = this.lastControllerSampleSequence < 0;
+        this.lastControllerMappingSignature = mappingSignature;
+        this.lastControllerSampleSequence = status.sequence;
+
+        let up = false;
+        let down = false;
+        let left = false;
+        let right = false;
+        let fire = false;
+        let shoot = false;
+        const controllerCount = this.input.getControllerCount();
+        this.controllerConnectionGenerations.length = controllerCount;
+        this.controllerBlockedControls.length = controllerCount;
+
+        for (let controller = 0; controller < controllerCount; controller++) {
+            const generation = this.input.getControllerConnectionGeneration(controller);
+            const previousGeneration = this.controllerConnectionGenerations[controller] ?? 0;
+            const ownerChanged = generation === 0 || generation !== previousGeneration;
+            this.controllerConnectionGenerations[controller] = generation;
+
+            let blocked = this.controllerBlockedControls[controller];
+            if (blocked === undefined) {
+                blocked = [false, false, false, false, false, false];
+                this.controllerBlockedControls[controller] = blocked;
+            }
+
+            const establishBaseline = firstSample || status.baselineOnly || ownerChanged || mappingChanged;
+            up ||= this.sampleControllerControl(controller, 0, this.isControllerBindingDown(this.buttonMapping.controllerUp, controller), establishBaseline, blocked);
+            down ||= this.sampleControllerControl(controller, 1, this.isControllerBindingDown(this.buttonMapping.controllerDown, controller), establishBaseline, blocked);
+            left ||= this.sampleControllerControl(controller, 2, this.isControllerBindingDown(this.buttonMapping.controllerLeft, controller), establishBaseline, blocked);
+            right ||= this.sampleControllerControl(controller, 3, this.isControllerBindingDown(this.buttonMapping.controllerRight, controller), establishBaseline, blocked);
+            fire ||= this.sampleControllerControl(controller, 4, this.isControllerButtonDown(this.buttonMapping.controllerGrenade, controller), establishBaseline, blocked);
+            shoot ||= this.sampleControllerControl(controller, 5, this.isControllerButtonDown(this.buttonMapping.controllerGun, controller), establishBaseline, blocked);
+        }
+
+        this.controllerUp = up;
+        this.controllerDown = down;
+        this.controllerLeft = left;
+        this.controllerRight = right;
+        this.controllerFire = fire;
+        this.controllerShoot = shoot;
+    }
+
+    private sampleControllerControl(controller: number, control: number, down: boolean, establishBaseline: boolean, blocked: boolean[]): boolean {
+        void controller;
+        if (establishBaseline && down) {
+            blocked[control] = true;
+        } else if (!down) {
+            blocked[control] = false;
+        }
+        return down && !blocked[control];
+    }
+
+    private isControllerBindingDown(binding: number, controller: number): boolean {
+        switch (binding) {
+            case ButtonMapping.CONTROLLER_DIRECTION_UP:
+                return this.input.isControllerUp(controller);
+            case ButtonMapping.CONTROLLER_DIRECTION_DOWN:
+                return this.input.isControllerDown(controller);
+            case ButtonMapping.CONTROLLER_DIRECTION_LEFT:
+                return this.input.isControllerLeft(controller);
+            case ButtonMapping.CONTROLLER_DIRECTION_RIGHT:
+                return this.input.isControllerRight(controller);
             default:
-                return this.isAnyControllerButtonDown(button);
+                return this.isControllerButtonDown(binding, controller);
         }
     }
 
-    private isAnyControllerButtonDown(button: number): boolean {
-        return button >= 0 && this.input.isButtonPressed(button, Input.ANY_CONTROLLER);
+    private isControllerButtonDown(button: number, controller: number): boolean {
+        return button >= 0 && this.input.isButtonPressed(button, controller);
     }
 
     private isControllerBindingPressed(button: number): boolean {
@@ -72,7 +151,7 @@ export class HumanInput implements IInput {
         for (let controller = 0; controller < controllerCount; controller++) {
             const buttonCount = this.input.getButtonCount(controller);
             for (let button = 0; button < buttonCount; button++) {
-                if (!this.isDirectionalGamepadButton(button) && !this.isMappedDirectionButton(button)) {
+                if (!this.input.isControllerButtonDirectional(button, controller) && !this.isMappedDirectionButton(button)) {
                     pressed = this.input.isControlPressed(HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button, controller) || pressed;
                 }
             }
@@ -87,10 +166,6 @@ export class HumanInput implements IInput {
             this.buttonMapping.controllerLeft === button ||
             this.buttonMapping.controllerRight === button
         );
-    }
-
-    private isDirectionalGamepadButton(button: number): boolean {
-        return button >= ButtonMapping.DEFAULT_CONTROLLER_UP && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
 
     public reset(): void {}
@@ -120,7 +195,9 @@ export class HumanInput implements IInput {
     }
 
     public isEnter(): boolean {
-        return this.isMappedStartPressed() || this.isAnyNonDirectionalControllerButtonPressed();
+        const mappedStartPressed = this.isMappedStartPressed();
+        const anyNonDirectionalPressed = this.isAnyNonDirectionalControllerButtonPressed();
+        return mappedStartPressed || anyNonDirectionalPressed;
     }
 
     public isPause(): boolean {
