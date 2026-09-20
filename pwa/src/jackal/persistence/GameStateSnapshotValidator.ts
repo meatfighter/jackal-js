@@ -1,6 +1,8 @@
 import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
+import { ButtonMapping } from "../ButtonMapping.js";
+import { InputMode } from "../InputMode.js";
 import {
     type AudioStateSnapshot,
     type ButtonMappingSnapshot,
@@ -71,8 +73,9 @@ const MAX_ENCODED_ARRAY_LENGTH = 8192;
 const MAX_ENCODED_RECORD_FIELDS = 512;
 const MAX_ENCODED_STRING_LENGTH = 4096;
 const MAX_BIGINT_DIGITS = 128;
-const MAX_INPUT_ASSIGNMENTS = 64;
+const MAX_INPUT_ASSIGNMENTS = InputMode.ACTIONS.length;
 const MAX_INPUT_CODE = 65_535;
+const MAX_CONTROLLER_BUTTON_INDEX = InputMode.GAMEPAD_BUTTON_INDEX_LIMIT - 1;
 const MAX_JEEP_YEAH_BULLETS = 4096;
 const MAX_FRIENDLY_SOLDIER_COUNT = 4096;
 const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
@@ -193,7 +196,7 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
     if (!isSongSnapshot(currentSongState) || currentSongState?.activeMusic?.playback.transport === "paused") {
         return false;
     }
-    return isModeExtraSnapshot(snapshot.modeId, snapshot.modeExtra);
+    return isModeExtraSnapshot(snapshot.modeId, snapshot.modeFields, snapshot.modeExtra);
 }
 
 function isRestorableMainFields(fields: EncodedRecord): boolean {
@@ -227,7 +230,7 @@ function isElementLayers(value: unknown, entityIds: Set<number>): boolean {
     return true;
 }
 
-function isModeExtraSnapshot(modeId: StandaloneModeId, extra: unknown): boolean {
+function isModeExtraSnapshot(modeId: StandaloneModeId, modeFields: EncodedRecord, extra: unknown): boolean {
     switch (modeId) {
         case "INTRO":
         case "CONTINUE":
@@ -235,7 +238,7 @@ function isModeExtraSnapshot(modeId: StandaloneModeId, extra: unknown): boolean 
         case "OPTIONS":
             return isExactObject(extra, "menu") && isMenuSnapshot(extra.menu);
         case "INPUT":
-            return isExactObject(extra, "input") && isInputModeExtraSnapshot(extra.input);
+            return isExactObject(extra, "input") && isInputModeExtraSnapshot(modeFields, extra.input);
         case "YEAH":
         case "WE_MADE_IT":
             return isExactObject(extra, "jeepYeah") && isJeepYeahModeExtraSnapshot(extra.jeepYeah);
@@ -259,23 +262,115 @@ function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
 }
 
 function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot | null {
-    return (
-        value === null ||
-        (isRecord(value) &&
-            hasExactFields(value, MENU_SNAPSHOT_FIELDS) &&
-            isEncodedRecord(value.fields, new Set<number>()) &&
-            hasExactFields(value.fields, BUTTON_MAPPING_FIELD_NAMES))
-    );
+    if (value === null) {
+        return true;
+    }
+    if (
+        !isRecord(value) ||
+        !hasExactFields(value, MENU_SNAPSHOT_FIELDS) ||
+        !isEncodedRecord(value.fields, new Set<number>()) ||
+        !hasExactFields(value.fields, BUTTON_MAPPING_FIELD_NAMES)
+    ) {
+        return false;
+    }
+
+    const fields = value.fields;
+    for (const key of ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"]) {
+        if (!isBinding(fields[key], MAX_INPUT_CODE)) {
+            return false;
+        }
+    }
+    for (const key of [
+        "controllerUp",
+        "controllerDown",
+        "controllerLeft",
+        "controllerRight",
+        "controllerGrenade",
+        "controllerGun",
+        "controllerStart"
+    ]) {
+        if (!isBinding(fields[key], MAX_CONTROLLER_BUTTON_INDEX)) {
+            return false;
+        }
+    }
+    return true;
 }
 
-function isInputModeExtraSnapshot(value: unknown): value is InputModeExtraSnapshot {
+function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): value is InputModeExtraSnapshot {
+    if (
+        !isRecord(value) ||
+        !hasExactFields(value, INPUT_MODE_EXTRA_FIELDS) ||
+        !isMenuSnapshot(value.menu) ||
+        !isButtonMappingSnapshot(value.draftButtonMapping) ||
+        !isUniqueIntegerArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS, MAX_INPUT_CODE) ||
+        !isUniqueIntegerArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS, MAX_CONTROLLER_BUTTON_INDEX)
+    ) {
+        return false;
+    }
+
+    const state = modeFields.state;
+    const nameIndex = modeFields.nameIndex;
+    const delay = modeFields.delay;
+    const selectedIndex = modeFields.selectedIndex;
+    const message = modeFields.message;
+    const armDelay = modeFields.armDelay;
+    if (
+        !isIntegerInRange(state, InputMode.STATE_FADE_IN, InputMode.STATE_SAVED) ||
+        !isIntegerInRange(nameIndex, 0, InputMode.ACTIONS.length) ||
+        !isIntegerInRange(selectedIndex, InputMode.OPTION_CHANGE, InputMode.OPTION_DONE) ||
+        typeof message !== "string" ||
+        message.length > MAX_ENCODED_STRING_LENGTH ||
+        !isIntegerInRange(armDelay, 0, InputMode.ARM_DELAY) ||
+        typeof delay !== "number" ||
+        !Number.isInteger(delay)
+    ) {
+        return false;
+    }
+
+    const assignmentCount = value.assignedKeys.length + value.assignedControllerButtons.length;
+    const reading = state === InputMode.STATE_READING;
+    const readFade = state === InputMode.STATE_READ_FADE;
+    const saved = state === InputMode.STATE_SAVED;
+    const menuRequired = !reading && !readFade && !saved;
+    if ((value.menu !== null) !== menuRequired || (value.draftButtonMapping !== null) !== (reading || readFade)) {
+        return false;
+    }
+
+    if (reading) {
+        return (
+            nameIndex < InputMode.ACTIONS.length &&
+            delay === 0 &&
+            assignmentCount === nameIndex &&
+            (message === "" || message === "ALREADY USED")
+        );
+    }
+    if (readFade) {
+        return (
+            nameIndex < InputMode.ACTIONS.length &&
+            delay >= 1 &&
+            delay <= InputMode.FADE_TIME &&
+            armDelay === 0 &&
+            assignmentCount === nameIndex + 1 &&
+            message === ""
+        );
+    }
+    if (saved) {
+        return (
+            nameIndex === InputMode.ACTIONS.length &&
+            delay >= 1 &&
+            delay <= InputMode.DONE_DELAY &&
+            armDelay === 0 &&
+            assignmentCount === InputMode.ACTIONS.length &&
+            message === "SAVED"
+        );
+    }
+
     return (
-        isRecord(value) &&
-        hasExactFields(value, INPUT_MODE_EXTRA_FIELDS) &&
-        isMenuSnapshot(value.menu) &&
-        isButtonMappingSnapshot(value.draftButtonMapping) &&
-        isIntegerArray(value.assignedKeys) &&
-        isIntegerArray(value.assignedControllerButtons)
+        delay === 0 &&
+        armDelay === 0 &&
+        (nameIndex === 0 || nameIndex === InputMode.ACTIONS.length) &&
+        (assignmentCount === 0 || assignmentCount === InputMode.ACTIONS.length) &&
+        message === ""
     );
 }
 
@@ -475,8 +570,17 @@ function isNullableSongId(value: unknown): boolean {
     return value === null || isSongId(value);
 }
 
-function isIntegerArray(value: unknown): value is number[] {
-    return Array.isArray(value) && value.length <= MAX_INPUT_ASSIGNMENTS && value.every((entry) => isIntegerInRange(entry, 0, MAX_INPUT_CODE));
+function isUniqueIntegerArray(value: unknown, maxLength: number, maximum: number): value is number[] {
+    return (
+        Array.isArray(value) &&
+        value.length <= maxLength &&
+        new Set(value).size === value.length &&
+        value.every((entry) => isIntegerInRange(entry, 0, maximum))
+    );
+}
+
+function isBinding(value: unknown, maximum: number): value is number {
+    return value === ButtonMapping.NO_BINDING || isIntegerInRange(value, 0, maximum);
 }
 
 function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
