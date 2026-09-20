@@ -287,7 +287,7 @@ function isSimpleMenuModeFields(fields: EncodedRecord, maximumSelectedIndex: num
         return optionSelected === false && selectedIndex === 0;
     }
     if (state === 1) {
-        return !optionSelected || selectedIndex >= 0;
+        return optionSelected || selectedIndex === 0;
     }
     return optionSelected;
 }
