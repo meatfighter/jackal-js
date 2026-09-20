@@ -62,14 +62,15 @@ import { captureAudioStateSnapshot, captureSongSnapshot, restoreAudioPlayback, s
 import {
     createUninitialized,
     decodeFieldsInto,
+    decodeNamedFieldsInto,
     encodeNamedFields,
     encodeNullableNamedFields,
-    encodeObjectFields,
     readEncodedBooleanField,
     readEncodedNumberField,
     type GameStateDecodeContext,
     type GameStateEncodeContext
 } from "./GameStateCodec.js";
+import { getEntityDurableFieldNames, getPlayerDurableFieldNames } from "./GameStateFieldPolicies.js";
 import {
     GAME_ELEMENT_JAVA_FLOAT_FIELDS,
     GAME_MODE_JAVA_FLOAT_FIELDS,
@@ -139,7 +140,7 @@ export class JackalGameStateSerializer {
                 elements: this.snapshotElementLayers(gameMode, context),
                 entities
             },
-            playerFields: encodeObjectFields(player, context)
+            playerFields: encodeNamedFields(player, getPlayerDurableFieldNames(), context)
         };
     }
 
@@ -199,7 +200,7 @@ export class JackalGameStateSerializer {
         this.restoreKonamiCode(main, snapshot, context);
 
         decodeFieldsInto(gameMode, snapshot.gameMode.fields, context, GAME_MODE_JAVA_FLOAT_FIELDS);
-        decodeFieldsInto(player, snapshot.playerFields, context, PLAYER_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(player, snapshot.playerFields, getPlayerDurableFieldNames(), context, PLAYER_JAVA_FLOAT_FIELDS);
         this.restoreBackPointers(main, gameMode, player, gc);
 
         for (const entitySnapshot of snapshot.gameMode.entities) {
@@ -207,7 +208,13 @@ export class JackalGameStateSerializer {
             if (entity === undefined) {
                 throw new Error(`Missing restored entity ${entitySnapshot.id}.`);
             }
-            decodeFieldsInto(entity, entitySnapshot.fields, context, GAME_ELEMENT_JAVA_FLOAT_FIELDS[entitySnapshot.type]);
+            decodeNamedFieldsInto(
+                entity,
+                entitySnapshot.fields,
+                getEntityDurableFieldNames(entitySnapshot.type),
+                context,
+                GAME_ELEMENT_JAVA_FLOAT_FIELDS[entitySnapshot.type]
+            );
         }
 
         this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);
@@ -552,7 +559,7 @@ export class JackalGameStateSerializer {
         if (id === undefined) {
             throw new Error(`Unregistered Jackal entity: ${type}`);
         }
-        const fields = encodeObjectFields(entity, context);
+        const fields = encodeNamedFields(entity, getEntityDurableFieldNames(type), context);
         const runtimeFields = captureEntityRuntimeFields(entity, context.main, context.gameMode);
         return {
             id,
