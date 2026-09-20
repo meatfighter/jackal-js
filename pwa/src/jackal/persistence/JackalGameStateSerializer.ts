@@ -50,6 +50,7 @@ import {
     JEEP_YEAH_EXPLOSION_FIELD_NAMES,
     JEEP_YEAH_FIRE_FIELD_NAMES,
     JEEP_YEAH_PLANE_FIELD_NAMES,
+    KONAMI_CODE_FIELD_NAMES,
     MAIN_FIELD_NAMES,
     MENU_FIELD_NAMES,
     modeFieldsForModeId,
@@ -160,7 +161,7 @@ export class JackalGameStateSerializer {
             appVersion,
             savedAt: new Date().toISOString(),
             mainFields: encodeNamedFields(main, MAIN_FIELD_NAMES, context),
-            konamiCodeFields: main.konamiCode === null ? null : encodeObjectFields(main.konamiCode, context),
+            konamiCodeFields: main.konamiCode === null ? null : encodeNamedFields(main.konamiCode, KONAMI_CODE_FIELD_NAMES, context),
             random: main.random.getState(),
             friendlySoldierCount: FriendlySoldier.count,
             requestedSongId: songIdFor(main, main.requestedSong),
@@ -280,6 +281,7 @@ export class JackalGameStateSerializer {
         decodeFieldsInto(konamiCode, snapshot.konamiCodeFields, context);
         konamiCode.main = main;
         konamiCode.input = main.input;
+        konamiCode.resyncInputAfterBrowserResume();
         main.konamiCode = konamiCode;
     }
 
@@ -508,6 +510,7 @@ export class JackalGameStateSerializer {
         menu.main = main;
         menu.input = main.input;
         menu.menuListener = listener;
+        menu.resyncInputAfterBrowserResume();
     }
 
     private isModeWithMenu(mode: object): mode is ModeWithMenu {
