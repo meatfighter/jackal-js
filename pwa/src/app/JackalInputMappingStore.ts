@@ -89,8 +89,8 @@ export class JackalInputMappingStore {
         }
     }
 
-    public clear(): boolean {
-        return this.storage.remove();
+    public clear(isAuthorized: () => boolean): boolean {
+        return isAuthorized() && this.storage.remove();
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
@@ -108,7 +108,7 @@ export class JackalInputMappingStore {
 
         if (!this.isSupportedSnapshot(snapshot)) {
             if (this.isObsoletePrepublicSnapshot(snapshot)) {
-                this.clear();
+                this.storage.remove();
             }
             return null;
         }
