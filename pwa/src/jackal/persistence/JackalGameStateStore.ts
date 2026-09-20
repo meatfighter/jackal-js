@@ -1,6 +1,6 @@
 import type { GameContainer } from "slick2d-ts";
 import type { Main } from "../Main.js";
-import { clearStoredGameState, inspectStoredGameState, writeStoredGameState } from "./GameStateStorage.js";
+import { clearStoredGameState, inspectStoredGameState, writeStoredGameState, type GameStateWriteResult } from "./GameStateStorage.js";
 import { JackalGameStateSerializer } from "./JackalGameStateSerializer.js";
 
 export class JackalGameStateStore {
@@ -8,15 +8,15 @@ export class JackalGameStateStore {
 
     public constructor(private readonly appVersion: string) {}
 
-    public save(main: Main): boolean {
+    public save(main: Main, isAuthorized: () => boolean): GameStateWriteResult {
         if (!main.isStateSaveReady()) {
-            return false;
+            return { saved: false, reason: "invalid-snapshot" };
         }
         try {
-            return writeStoredGameState(this.serializer.createSnapshot(main, this.appVersion));
+            return writeStoredGameState(this.serializer.createSnapshot(main, this.appVersion), isAuthorized);
         } catch (error) {
             console.warn("Unable to save Jackal game state.", error);
-            return false;
+            return { saved: false, reason: "encode-failed" };
         }
     }
 
