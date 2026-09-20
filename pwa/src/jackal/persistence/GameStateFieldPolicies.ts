@@ -258,12 +258,15 @@ function isEncodedValueForPolicy(
                 ? policy.nullable
                 : isTypedEntityReference(value, policy.targets, entityTypes);
         case "referenceList":
-            return (
-                isTaggedItems(value, "arrayList") &&
-                value.items.length >= policy.minLength &&
-                value.items.length <= policy.maxLength &&
-                value.items.every((item) => isTypedEntityReference(item, policy.targets, entityTypes))
-            );
+            if (
+                !isTaggedItems(value, "arrayList") ||
+                value.items.length < policy.minLength ||
+                value.items.length > policy.maxLength ||
+                !value.items.every((item) => isTypedEntityReference(item, policy.targets, entityTypes))
+            ) {
+                return false;
+            }
+            return new Set(value.items.map((item) => (item as { id: number }).id)).size === value.items.length;
         case "numberArray":
             return (
                 isTaggedItems(value, "array") &&
