@@ -1981,6 +1981,9 @@ export class Main extends BasicGame {
     public setBrowserSuspended(suspended: boolean): void {
         this.browserSuspended = suspended;
         this.clearInputPressedRecords();
+        if (!suspended && this.mode instanceof InputMode) {
+            this.mode.resyncControllerStateAfterBrowserResume();
+        }
         this.resetNextFrameTime();
     }
 
