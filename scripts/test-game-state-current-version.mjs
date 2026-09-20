@@ -316,6 +316,24 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     unreachableDraftController.modeExtra.input.draftButtonMapping.fields.controllerGun = 64;
     assert.equal(validator.isSupportedGameStateSnapshot(unreachableDraftController), false);
 
+    const dpadActionDraft = structuredClone(validInput);
+    dpadActionDraft.modeExtra.input.draftButtonMapping.fields.controllerGun = 12;
+    assert.equal(validator.isSupportedGameStateSnapshot(dpadActionDraft), false);
+
+    const reservedKeyDraft = structuredClone(validInput);
+    reservedKeyDraft.modeExtra.input.draftButtonMapping.fields.keyGun = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(reservedKeyDraft), false);
+
+    const duplicateDraftKey = structuredClone(validInput);
+    duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGun =
+        duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGrenade;
+    assert.equal(validator.isSupportedGameStateSnapshot(duplicateDraftKey), false);
+
+    const duplicateDraftController = structuredClone(validInput);
+    duplicateDraftController.modeExtra.input.draftButtonMapping.fields.controllerGun =
+        duplicateDraftController.modeExtra.input.draftButtonMapping.fields.controllerGrenade;
+    assert.equal(validator.isSupportedGameStateSnapshot(duplicateDraftController), false);
+
     const impossibleReadFade = structuredClone(validInput);
     impossibleReadFade.modeFields.state = 3;
     impossibleReadFade.modeFields.delay = 0;
