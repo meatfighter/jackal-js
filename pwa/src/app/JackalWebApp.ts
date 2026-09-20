@@ -202,7 +202,7 @@ export class JackalWebApp {
         };
         const commitVolume = (): void => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
-            persistVolumePreference(this.volume, this.persistenceWarnings);
+            persistVolumePreference(this.volume, this.persistenceWarnings, () => this.getOwnership().owned);
         };
         volumeInput.addEventListener("input", () => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
@@ -211,7 +211,7 @@ export class JackalWebApp {
         volumeInput.addEventListener("change", commitVolume);
         fullscreenSwitch.addEventListener("click", () => {
             this.fullscreenPreference = !this.fullscreenPreference;
-            persistFullscreenPreference(this.fullscreenPreference, this.persistenceWarnings);
+            persistFullscreenPreference(this.fullscreenPreference, this.persistenceWarnings, () => this.getOwnership().owned);
             updateFullscreenUi();
         });
         updateVolumeUi();
@@ -257,7 +257,7 @@ export class JackalWebApp {
 
     private setScalingPreference(value: JackalScalingPreference): void {
         this.scalingPreference = value;
-        persistScalingPreference(value, this.persistenceWarnings);
+        persistScalingPreference(value, this.persistenceWarnings, () => this.getOwnership().owned);
         if (this.runtimeLoader.preparedRuntime !== null) {
             this.viewport.setScalingMode(bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick, this.scalingPreference));
         }
@@ -280,7 +280,7 @@ export class JackalWebApp {
     }
 
     private clearPwaStorage(): void {
-        clearPersistedPwaState(this.inputMappingStore, this.persistenceWarnings);
+        clearPersistedPwaState(this.inputMappingStore, this.persistenceWarnings, () => this.getOwnership().owned);
         this.gameStateStore = null;
     }
 
