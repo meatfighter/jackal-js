@@ -449,7 +449,11 @@ function isElementLayers(value: unknown, entityIds: Set<number>): boolean {
 function isModeExtraSnapshot(modeId: StandaloneModeId, modeFields: EncodedRecord, extra: unknown): boolean {
     switch (modeId) {
         case "INTRO":
-            return isExactObject(extra, "menu") && isRequiredMenuSnapshot(extra.menu, 1);
+            return (
+                isExactObject(extra, "menu") &&
+                isRequiredMenuSnapshot(extra.menu, 1) &&
+                isIntroMenuSnapshotConsistent(modeFields, extra.menu)
+            );
         case "CONTINUE":
         case "DIFFICULTY":
             return (
@@ -510,6 +514,24 @@ function isMenuSnapshot(value: unknown, maximumSelectedIndex: number = 2): value
 
 function isRequiredMenuSnapshot(value: unknown, maximumSelectedIndex: number): value is MenuSnapshot {
     return value !== null && isMenuSnapshot(value, maximumSelectedIndex);
+}
+
+function isIntroMenuSnapshotConsistent(modeFields: EncodedRecord, menu: MenuSnapshot): boolean {
+    const selectionMade = modeFields.selectionMade;
+    const selectedIndex = modeFields.selectedIndex;
+    const menuSelectionMade = menu.fields.selectionMade;
+    const menuSelectedIndex = menu.fields.selectedIndex;
+    if (
+        typeof selectionMade !== "boolean" ||
+        !isIntegerInRange(selectedIndex, 0, 1) ||
+        typeof menuSelectionMade !== "boolean" ||
+        !isIntegerInRange(menuSelectedIndex, 0, 1)
+    ) {
+        return false;
+    }
+    return selectionMade
+        ? menuSelectionMade && menuSelectedIndex === selectedIndex
+        : !menuSelectionMade;
 }
 
 function isSimpleMenuSnapshotConsistent(modeFields: EncodedRecord, menu: MenuSnapshot): boolean {
