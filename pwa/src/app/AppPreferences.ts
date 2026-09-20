@@ -32,8 +32,8 @@ export function readVolume(): number {
     return Number.isFinite(percent) ? Math.max(0, Math.min(1, percent / 100)) : DEFAULT_VOLUME;
 }
 
-export function writeVolume(value: number): boolean {
-    return volumeStorage.write(String(Math.round(value * 100)));
+export function writeVolume(value: number, isAuthorized: () => boolean): boolean {
+    return isAuthorized() && volumeStorage.write(String(Math.round(value * 100)));
 }
 
 function clearVolume(): boolean {
@@ -51,8 +51,8 @@ export function readScalingPreference(): JackalScalingPreference {
     return DEFAULT_SCALING_PREFERENCE;
 }
 
-export function writeScalingPreference(value: JackalScalingPreference): boolean {
-    return scalingStorage.write(value);
+export function writeScalingPreference(value: JackalScalingPreference, isAuthorized: () => boolean): boolean {
+    return isAuthorized() && scalingStorage.write(value);
 }
 
 function clearScalingPreference(): boolean {
@@ -73,40 +73,28 @@ export function readFullscreenPreference(): boolean {
     return DEFAULT_FULLSCREEN_PREFERENCE;
 }
 
-export function writeFullscreenPreference(value: boolean): boolean {
-    return fullscreenStorage.write(String(value));
+export function writeFullscreenPreference(value: boolean, isAuthorized: () => boolean): boolean {
+    return isAuthorized() && fullscreenStorage.write(String(value));
 }
 
 function clearFullscreenPreference(): boolean {
     return fullscreenStorage.remove();
 }
 
-export function readDifficultyPreference(): boolean {
-    const result = difficultyStorage.read();
-    if (!result.available || result.value === null) {
-        return DEFAULT_HARD_MODE;
-    }
-    if (result.value === "hard") {
-        return true;
-    }
-    if (result.value === "normal") {
-        return false;
-    }
-    return DEFAULT_HARD_MODE;
-}
-
-export function writeDifficultyPreference(hardMode: boolean): boolean {
-    return difficultyStorage.write(hardMode ? "hard" : "normal");
-}
-
 function clearDifficultyPreference(): boolean {
     return difficultyStorage.remove();
 }
 
-export function clearPreferences(): boolean {
+export function clearPreferences(isAuthorized: () => boolean): boolean {
+    if (!isAuthorized()) {
+        return false;
+    }
     const volumeCleared = clearVolume();
+    if (!isAuthorized()) return false;
     const scalingCleared = clearScalingPreference();
+    if (!isAuthorized()) return false;
     const fullscreenCleared = clearFullscreenPreference();
+    if (!isAuthorized()) return false;
     const difficultyCleared = clearDifficultyPreference();
     return volumeCleared && scalingCleared && fullscreenCleared && difficultyCleared;
 }
