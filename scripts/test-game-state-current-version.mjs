@@ -373,10 +373,26 @@ function gameSnapshot(fields, version, entity) {
         kind: "game",
         gameMode: {
             fields: encodedFields(fields.GAME_MODE_FIELD_NAMES, {
+                tileMap: { kind: "array", items: [{ kind: "array", items: [0] }] },
+                typesMap: { kind: "array", items: [{ kind: "array", items: [1] }] },
+                triggedGroups: { kind: "array", items: [] },
+                waterAlphaIndex: 0,
+                conveyorOffset: 0,
+                conveyorLastIndex: 0,
+                conveyorDelta: 0,
+                cameraX: 0,
+                cameraY: 0,
+                maxCameraX: 0,
+                maxCameraY: 0,
                 paused: false,
+                triggerY: 0,
                 bossCameraPan: false,
                 endingCameraPan: false,
-                cameraPanListener: { kind: "nullRef" }
+                playing: true,
+                cameraPanListener: null,
+                stageIndex: 0,
+                stageCompletedFlag: false,
+                stageCompletedDelay: 228
             }),
             elements: [[normalizedEntity.id], [], [], [], [], [], [], []],
             entities: [normalizedEntity]
