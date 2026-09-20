@@ -97,7 +97,7 @@ test("restore exceptions preserve the current stored game-state snapshot", async
         const { JackalGameStateStore } = await loadPersistenceModules();
         const key = gameStateStorageKey();
         storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "keep", throwOnRestore: true }));
-        assert.equal(new JackalGameStateStore("1.0.0").restore({}, {}), false);
+        assert.equal(new JackalGameStateStore("1.0.0").restore({}, {}), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.has(key), true);
     });
 });
@@ -109,23 +109,64 @@ test("shared game-state preflight preserves incompatible saves and blocks overwr
         const key = gameStateStorageKey();
         const futureSnapshot = JSON.stringify({ version: currentGameStateVersion + 1, kind: "game", futureShape: true });
         storage.set(key, futureSnapshot);
-        assert.equal(gameStorage.hasCurrentStoredGameState(), false);
+        assert.equal(gameStorage.hasCurrentStoredGameState(), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), futureSnapshot);
-        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), futureSnapshot);
 
         const oversizedSnapshot = "x".repeat(maxGameStateTextLength + 1);
         storage.set(key, oversizedSnapshot);
-        assert.equal(gameStorage.hasCurrentStoredGameState(), false);
+        assert.equal(gameStorage.hasCurrentStoredGameState(), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), oversizedSnapshot);
-        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), oversizedSnapshot);
 
         throwOnGet = true;
-        assert.equal(gameStorage.hasCurrentStoredGameState(), false);
-        assert.equal(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }), false);
+        assert.equal(gameStorage.hasCurrentStoredGameState(), { saved: false, reason: "unsupported-future" });
+        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), oversizedSnapshot);
     });
+});
+
+test("game-state write authority is rechecked at the actual storage boundary", async () => {
+    resetStorage();
+    const { gameStorage } = await loadPersistenceModules();
+    const key = gameStateStorageKey();
+    storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "keep" }));
+
+    let authorized = false;
+    const result = gameStorage.writeStoredGameState(
+        { version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" },
+        () => authorized
+    );
+    assert.deepEqual(result, { saved: false, reason: "not-authorized" });
+    assert.equal(JSON.parse(storage.get(key)).marker, "keep");
+
+    authorized = true;
+    const saved = gameStorage.writeStoredGameState(
+        { version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" },
+        () => authorized
+    );
+    assert.deepEqual(saved, { saved: true });
+    assert.equal(JSON.parse(storage.get(key)).marker, "replace");
+});
+
+test("game-state inspection distinguishes protected future state from invalid data", async () => {
+    resetStorage();
+    const { gameStorage } = await loadPersistenceModules();
+    const key = gameStateStorageKey();
+
+    storage.set(key, JSON.stringify({ version: currentGameStateVersion + 1, futureShape: true }));
+    assert.deepEqual(gameStorage.inspectStoredGameState(), {
+        status: "unsupported-future",
+        version: currentGameStateVersion + 1
+    });
+
+    storage.set(key, JSON.stringify({ version: currentGameStateVersion - 1, oldShape: true }));
+    assert.deepEqual(gameStorage.inspectStoredGameState(), { status: "invalid" });
+
+    throwOnGet = true;
+    assert.deepEqual(gameStorage.inspectStoredGameState(), { status: "read-failed" });
 });
 
 test("game-state inspection never deletes future, unsupported, or malformed data", async () => {
@@ -136,7 +177,7 @@ test("game-state inspection never deletes future, unsupported, or malformed data
 
     for (const value of [JSON.stringify({ version: currentGameStateVersion + 1, kind: "mode", futureShape: true }), "{"]) {
         storage.set(key, value);
-        assert.equal(store.hasValidSave(), false);
+        assert.equal(store.hasValidSave(), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.get(key), value);
     }
 });
@@ -148,7 +189,7 @@ test("game-state inspection preserves data when storage reads fail", async () =>
         const key = gameStateStorageKey();
         storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true }));
         throwOnGet = true;
-        assert.equal(new JackalGameStateStore("1.0.0").hasValidSave(), false);
+        assert.equal(new JackalGameStateStore("1.0.0").hasValidSave(), { saved: false, reason: "unsupported-future" });
         assert.equal(storage.has(key), true);
     });
 });
