@@ -343,6 +343,47 @@ test("Java gameplay fields, methods, and enum members are present or explicitly 
     }
 });
 
+test("documented Java/TypeScript member exceptions are all still necessary", () => {
+    for (const [key, entry] of Object.entries(exceptions.fieldExceptions)) {
+        const [className, memberName] = splitMappingKey(key);
+        assert.equal(exceptions.javaOnlyFiles[className], undefined, `${key} should not need a member exception for a Java-only file.`);
+        const javaPath = join(javaRoot, `${className}.java`);
+        const tsPath = join(tsRoot, `${className}.ts`);
+        const java = javaDeclaration(readFileSync(javaPath, "utf8"), className);
+        const typescript = tsDeclaration(tsPath, className);
+        assert.ok(java.fields.has(memberName), `Stale field exception ${key}: Java field no longer exists.`);
+        assert.equal(typescript.fields.has(memberName), false, `Stale field exception ${key}: TypeScript now has the Java field directly.`);
+        if (entry.target !== undefined) {
+            assert.ok(typescript.fields.has(entry.target), `Field exception ${key} maps to missing TypeScript field ${entry.target}.`);
+        } else {
+            assert.ok(typeof entry.reason === "string" && entry.reason.length > 0, `Field exception ${key} must explain the platform difference.`);
+        }
+    }
+
+    for (const [key, entry] of Object.entries(exceptions.methodExceptions)) {
+        const [className, memberName] = splitMappingKey(key);
+        assert.equal(exceptions.javaOnlyFiles[className], undefined, `${key} should not need a member exception for a Java-only file.`);
+        const javaPath = join(javaRoot, `${className}.java`);
+        const tsPath = join(tsRoot, `${className}.ts`);
+        const java = javaDeclaration(readFileSync(javaPath, "utf8"), className);
+        const typescript = tsDeclaration(tsPath, className);
+        assert.ok(java.methods.has(memberName), `Stale method exception ${key}: Java method no longer exists.`);
+        assert.equal(typescript.methods.has(memberName), false, `Stale method exception ${key}: TypeScript now has the Java method directly.`);
+        assert.ok(typeof entry.reason === "string" && entry.reason.length > 0, `Method exception ${key} must explain the platform difference.`);
+    }
+
+    for (const [key, reason] of Object.entries(exceptions.enumMemberExceptions)) {
+        const [className, memberName] = splitMappingKey(key);
+        const javaPath = join(javaRoot, `${className}.java`);
+        const tsPath = join(tsRoot, `${className}.ts`);
+        const java = javaDeclaration(readFileSync(javaPath, "utf8"), className);
+        const typescript = tsDeclaration(tsPath, className);
+        assert.ok(java.enumMembers.has(memberName), `Stale enum exception ${key}: Java enum member no longer exists.`);
+        assert.equal(typescript.enumMembers.has(memberName), false, `Stale enum exception ${key}: TypeScript now has the Java enum member.`);
+        assert.ok(typeof reason === "string" && reason.length > 0, `Enum exception ${key} must explain the platform difference.`);
+    }
+});
+
 test("renamed overloads and constructor factories cover every Java signature exactly once", () => {
     const mappedMethods = new Map();
     for (const [key, mapping] of Object.entries(signatureMap.methodMappings)) {
