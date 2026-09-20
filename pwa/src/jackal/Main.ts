@@ -34,6 +34,7 @@ import { openDataResource } from "./JackalResources.js";
 import { KonamiCode } from "./KonamiCode.js";
 import { LargeImage } from "./LargeImage.js";
 import { MapMode } from "./MapMode.js";
+import { Menu } from "./Menu.js";
 import {
     clearMainRuntime,
     installMainRuntime,
@@ -1990,8 +1991,18 @@ export class Main extends BasicGame {
     public setBrowserSuspended(suspended: boolean): void {
         this.browserSuspended = suspended;
         this.clearInputPressedRecords();
-        if (!suspended && this.mode instanceof InputMode) {
-            this.mode.resyncControllerStateAfterBrowserResume();
+        if (!suspended) {
+            if (this.mode instanceof InputMode) {
+                this.mode.resyncControllerStateAfterBrowserResume();
+            }
+            const mode = this.mode;
+            if (mode !== null && typeof mode === "object" && Reflect.has(mode, "menu")) {
+                const menu = Reflect.get(mode, "menu");
+                if (menu instanceof Menu) {
+                    menu.resyncInputAfterBrowserResume();
+                }
+            }
+            this.konamiCode?.resyncInputAfterBrowserResume();
         }
         this.resetNextFrameTime();
     }
