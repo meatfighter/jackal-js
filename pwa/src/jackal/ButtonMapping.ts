@@ -210,6 +210,36 @@ export class ButtonMapping {
         );
     }
 
+    public static isValidKeyBinding(value: unknown): value is number {
+        return (
+            typeof value === "number" &&
+            Number.isInteger(value) &&
+            (value === ButtonMapping.NO_BINDING ||
+                (Input.isBrowserKeyCodeSupported(value) && !ButtonMapping.isReservedKey(value)))
+        );
+    }
+
+    public static isValidRawControllerButton(value: unknown): value is number {
+        return (
+            typeof value === "number" &&
+            Number.isInteger(value) &&
+            value >= 0 &&
+            value < Input.BROWSER_CONTROLLER_BUTTON_LIMIT
+        );
+    }
+
+    public static isValidControllerBinding(value: unknown): value is number {
+        return (
+            value === ButtonMapping.NO_BINDING ||
+            (typeof value === "number" && ButtonMapping.isLogicalControllerDirection(value)) ||
+            ButtonMapping.isValidRawControllerButton(value)
+        );
+    }
+
+    public static isValidControllerActionBinding(value: unknown): value is number {
+        return value === ButtonMapping.NO_BINDING || ButtonMapping.isValidRawControllerButton(value);
+    }
+
     private static padLabel(label: string): string {
         return label.length >= 8 ? label : label + "        ".substring(label.length);
     }
