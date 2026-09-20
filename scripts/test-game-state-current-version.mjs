@@ -106,7 +106,6 @@ function baseSnapshot(fields, version) {
         savedAt: "2026-08-31T00:00:00.000Z",
         kind: "mode",
         mainFields: encodedFields(fields.MAIN_FIELD_NAMES, {
-            loadIndex: 42,
             stageIndex: 0,
             score: 0,
             extraLives: 0,
