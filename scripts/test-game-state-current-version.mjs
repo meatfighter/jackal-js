@@ -177,7 +177,12 @@ function gameSnapshot(fields, version, entity) {
         ...baseSnapshot(fields, version),
         kind: "game",
         gameMode: {
-            fields: encodedFields(fields.GAME_MODE_FIELD_NAMES, { paused: false }),
+            fields: encodedFields(fields.GAME_MODE_FIELD_NAMES, {
+                paused: false,
+                bossCameraPan: false,
+                endingCameraPan: false,
+                cameraPanListener: { kind: "nullRef" }
+            }),
             elements: [[entity.id], [], [], [], [], [], [], []],
             entities: [entity]
         },
@@ -309,6 +314,24 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const mismatchedStage = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     mismatchedStage.gameMode.fields.stageIndex = 1;
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedStage), false);
+
+    const activePanWithoutListener = gameSnapshot(fields, currentVersion, { id: 0, type: "BossSuperTank", fields: {}, runtimeFields: null });
+    activePanWithoutListener.gameMode.fields.endingCameraPan = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(activePanWithoutListener), false);
+
+    const activePanWithWrongListenerType = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    activePanWithWrongListenerType.gameMode.fields.bossCameraPan = true;
+    activePanWithWrongListenerType.gameMode.fields.cameraPanListener = { kind: "entityRef", id: 0 };
+    assert.equal(validator.isSupportedGameStateSnapshot(activePanWithWrongListenerType), false);
+
+    const activePanWithListener = gameSnapshot(fields, currentVersion, { id: 0, type: "BossSuperTank", fields: {}, runtimeFields: null });
+    activePanWithListener.gameMode.fields.endingCameraPan = true;
+    activePanWithListener.gameMode.fields.cameraPanListener = { kind: "entityRef", id: 0 };
+    assert.equal(validator.isSupportedGameStateSnapshot(activePanWithListener), true);
+
+    const conflictingPans = structuredClone(activePanWithListener);
+    conflictingPans.gameMode.fields.bossCameraPan = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(conflictingPans), false);
 });
 
 test("paused GameMode requires a paused current Music transport", async () => {
