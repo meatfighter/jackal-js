@@ -156,6 +156,7 @@ const fieldLists = new Map([
     ["MAIN_FIELD_NAMES", ["Main"]],
     ["GAME_MODE_FIELD_NAMES", ["GameMode"]],
     ["MENU_FIELD_NAMES", ["Menu"]],
+    ["KONAMI_CODE_FIELD_NAMES", ["KonamiCode"]],
     ["BUTTON_MAPPING_FIELD_NAMES", ["ButtonMapping"]],
     ["INTRO_MODE_FIELD_NAMES", ["IntroMode"]],
     ["SIMPLE_MENU_MODE_FIELD_NAMES", ["ContinueMode", "DifficultyMode", "OptionsMode"]],
