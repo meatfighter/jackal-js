@@ -195,11 +195,11 @@ export class JackalGameStateSerializer {
             entitiesById
         };
 
-        decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(main, snapshot.mainFields, MAIN_FIELD_NAMES, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = Random.fromState(snapshot.random);
         this.restoreKonamiCode(main, snapshot, context);
 
-        decodeFieldsInto(gameMode, snapshot.gameMode.fields, context, GAME_MODE_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(gameMode, snapshot.gameMode.fields, GAME_MODE_FIELD_NAMES, context, GAME_MODE_JAVA_FLOAT_FIELDS);
         decodeNamedFieldsInto(player, snapshot.playerFields, getPlayerDurableFieldNames(), context, PLAYER_JAVA_FLOAT_FIELDS);
         this.restoreBackPointers(main, gameMode, player, gc);
 
@@ -248,15 +248,21 @@ export class JackalGameStateSerializer {
             entitiesById: new Map<number, GameElement>()
         };
 
-        decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(main, snapshot.mainFields, MAIN_FIELD_NAMES, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = Random.fromState(snapshot.random);
         this.restoreKonamiCode(main, snapshot, context);
 
         const mode = this.createStandaloneMode(snapshot.modeId);
         mode.init(main, gc);
-        decodeFieldsInto(main, snapshot.mainFields, context, MAIN_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(main, snapshot.mainFields, MAIN_FIELD_NAMES, context, MAIN_JAVA_FLOAT_FIELDS);
         main.random = Random.fromState(snapshot.random);
-        decodeFieldsInto(mode, snapshot.modeFields, context, STANDALONE_MODE_JAVA_FLOAT_FIELDS[snapshot.modeId] ?? []);
+        decodeNamedFieldsInto(
+            mode,
+            snapshot.modeFields,
+            modeFieldsForModeId(snapshot.modeId),
+            context,
+            STANDALONE_MODE_JAVA_FLOAT_FIELDS[snapshot.modeId] ?? []
+        );
         this.restoreModeRuntimePointers(mode, main, gc);
         this.restoreModeExtraSnapshot(mode, snapshot.modeExtra, context);
 
@@ -285,7 +291,7 @@ export class JackalGameStateSerializer {
             return;
         }
         const konamiCode = createUninitialized(KonamiCode.prototype);
-        decodeFieldsInto(konamiCode, snapshot.konamiCodeFields, context);
+        decodeNamedFieldsInto(konamiCode, snapshot.konamiCodeFields, KONAMI_CODE_FIELD_NAMES, context);
         konamiCode.main = main;
         konamiCode.input = main.input;
         konamiCode.resyncInputAfterBrowserResume();
@@ -454,7 +460,7 @@ export class JackalGameStateSerializer {
         }
         const menu = menuMode.menu === null ? createUninitialized(Menu.prototype) : menuMode.menu;
         menuMode.menu = menu;
-        decodeFieldsInto(menu, snapshot.fields, context, MENU_JAVA_FLOAT_FIELDS);
+        decodeNamedFieldsInto(menu, snapshot.fields, MENU_FIELD_NAMES, context, MENU_JAVA_FLOAT_FIELDS);
         this.restoreMenuRuntimePointers(menu, context.main, menuMode);
     }
 
@@ -464,7 +470,7 @@ export class JackalGameStateSerializer {
             Reflect.set(mode, "draftButtonMapping", null);
         } else {
             mode.draftButtonMapping = new ButtonMapping();
-            decodeFieldsInto(mode.draftButtonMapping, snapshot.draftButtonMapping.fields, context);
+            decodeNamedFieldsInto(mode.draftButtonMapping, snapshot.draftButtonMapping.fields, BUTTON_MAPPING_FIELD_NAMES, context);
         }
         mode.assignedKeys = new Set(snapshot.assignedKeys);
         mode.assignedControllerButtons = new Set(snapshot.assignedControllerButtons);
@@ -472,15 +478,65 @@ export class JackalGameStateSerializer {
     }
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {
-        Reflect.set(mode, "explosion", this.restoreNullableTypedRecord(JeepYeahExplosion, snapshot.explosion, context, JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS));
-        Reflect.set(mode, "leftPlane", this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS));
-        Reflect.set(mode, "rightPlane", this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS));
-        Reflect.set(mode, "fireLeft", this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, context, JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS));
-        Reflect.set(mode, "fireRight", this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, context, JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS));
+        Reflect.set(
+            mode,
+            "explosion",
+            this.restoreNullableTypedRecord(
+                JeepYeahExplosion,
+                snapshot.explosion,
+                JEEP_YEAH_EXPLOSION_FIELD_NAMES,
+                context,
+                JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS
+            )
+        );
+        Reflect.set(
+            mode,
+            "leftPlane",
+            this.restoreNullableTypedRecord(
+                JeepYeahPlane,
+                snapshot.leftPlane,
+                JEEP_YEAH_PLANE_FIELD_NAMES,
+                context,
+                JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS
+            )
+        );
+        Reflect.set(
+            mode,
+            "rightPlane",
+            this.restoreNullableTypedRecord(
+                JeepYeahPlane,
+                snapshot.rightPlane,
+                JEEP_YEAH_PLANE_FIELD_NAMES,
+                context,
+                JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS
+            )
+        );
+        Reflect.set(
+            mode,
+            "fireLeft",
+            this.restoreNullableTypedRecord(
+                JeepYeahFireLeft,
+                snapshot.fireLeft,
+                JEEP_YEAH_FIRE_FIELD_NAMES,
+                context,
+                JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS
+            )
+        );
+        Reflect.set(
+            mode,
+            "fireRight",
+            this.restoreNullableTypedRecord(
+                JeepYeahFireRight,
+                snapshot.fireRight,
+                JEEP_YEAH_FIRE_FIELD_NAMES,
+                context,
+                JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS
+            )
+        );
         mode.bullets = new ArrayList<JeepYeahBullet>(snapshot.bullets.length);
         for (const bulletSnapshot of snapshot.bullets) {
             const bullet = createUninitialized(JeepYeahBullet.prototype);
-            decodeFieldsInto(bullet, bulletSnapshot, context, JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS);
+            decodeNamedFieldsInto(bullet, bulletSnapshot, JEEP_YEAH_BULLET_FIELD_NAMES, context, JEEP_YEAH_BULLET_JAVA_FLOAT_FIELDS);
             mode.bullets.add(bullet);
         }
     }
@@ -488,6 +544,7 @@ export class JackalGameStateSerializer {
     private restoreNullableTypedRecord<T extends object>(
         constructor: { prototype: T },
         snapshot: EncodedRecord | null,
+        fieldNames: readonly string[],
         context: RestoreContext,
         javaFloatFields: JavaFloatStateSpec
     ): T | null {
@@ -495,7 +552,7 @@ export class JackalGameStateSerializer {
             return null;
         }
         const value = createUninitialized(constructor.prototype);
-        decodeFieldsInto(value, snapshot, context, javaFloatFields);
+        decodeNamedFieldsInto(value, snapshot, fieldNames, context, javaFloatFields);
         return value;
     }
 
