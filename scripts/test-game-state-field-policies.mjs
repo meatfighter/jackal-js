@@ -67,6 +67,15 @@ try {
 
         const fractional = { ...valid, angleSteps: 0.5 };
         assert.equal(policy.isPlayerDurableFields(fractional), false, "Java int fields must reject fractional values");
+
+        const impossibleAngle = { ...valid, angle: 1 };
+        assert.equal(policy.isPlayerDurableFields(impossibleAngle), false, "logical Player angles must stay on 45-degree steps");
+
+        const impossibleTarget = { ...valid, targetAngle: 360 };
+        assert.equal(policy.isPlayerDurableFields(impossibleTarget), false);
+
+        const impossiblePowCounts = { ...valid, pows: 1, releaseablePows: 2 };
+        assert.equal(policy.isPlayerDurableFields(impossiblePowCounts), false);
     });
 
     test("snapshot discovery preserves detached cyclic durable references exactly once", () => {
@@ -115,6 +124,15 @@ try {
         const badBoolean = structuredClone(bomb);
         badBoolean.airplane = 0;
         assert.equal(policy.isEntityDurableFields("Bomb", badBoolean, new Map()), false);
+        const invalidLayer = structuredClone(bomb);
+        invalidLayer.layer = 8;
+        assert.equal(policy.isEntityDurableFields("Bomb", invalidLayer, new Map()), false);
+
+        const invalidStateDescriptor = policy.getEntityDurableFieldDescriptor("BossSuperTank");
+        const invalidState = encodedRecordForDescriptor(invalidStateDescriptor, new Map());
+        invalidState.state = 99;
+        assert.equal(policy.isEntityDurableFields("BossSuperTank", invalidState, new Map()), false);
+
         const shortTrail = structuredClone(bomb);
         shortTrail.trail.items.pop();
         assert.equal(policy.isEntityDurableFields("Bomb", shortTrail, new Map()), false);
