@@ -250,7 +250,7 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
     if (!isStandaloneModeId(snapshot.modeId) || !isEncodedRecord(snapshot.modeFields, new Set<number>())) {
         return false;
     }
-    if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId))) {
+    if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId)) || !isStandaloneModeFieldsValid(snapshot.modeId, snapshot.modeFields)) {
         return false;
     }
     const currentSongState = snapshot.currentSongState;
@@ -258,6 +258,38 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
         return false;
     }
     return isModeExtraSnapshot(snapshot.modeId, snapshot.modeFields, snapshot.modeExtra);
+}
+
+function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRecord): boolean {
+    switch (modeId) {
+        case "CONTINUE":
+        case "DIFFICULTY":
+            return isSimpleMenuModeFields(fields, 1);
+        case "OPTIONS":
+            return isSimpleMenuModeFields(fields, 2);
+        default:
+            return true;
+    }
+}
+
+function isSimpleMenuModeFields(fields: EncodedRecord, maximumSelectedIndex: number): boolean {
+    const state = fields.state;
+    const optionSelected = fields.optionSelectedFlag;
+    const selectedIndex = fields.selectedIndex;
+    if (
+        !isIntegerInRange(state, 0, 3) ||
+        typeof optionSelected !== "boolean" ||
+        !isIntegerInRange(selectedIndex, 0, maximumSelectedIndex)
+    ) {
+        return false;
+    }
+    if (state === 0) {
+        return optionSelected === false && selectedIndex === 0;
+    }
+    if (state === 1) {
+        return !optionSelected || selectedIndex >= 0;
+    }
+    return optionSelected;
 }
 
 function isRestorableMainFields(fields: EncodedRecord): boolean {
