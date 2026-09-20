@@ -227,6 +227,10 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     extraTopLevelField.unexpected = true;
     assert.equal(validator.isSupportedGameStateSnapshot(extraTopLevelField), false);
 
+    const obsoletePlayerLatch = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    obsoletePlayerLatch.playerFields.fireReleased = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(obsoletePlayerLatch), false);
+
     const badTimestamp = modeSnapshot(fields, currentVersion);
     badTimestamp.savedAt = "not-a-date";
     assert.equal(validator.isSupportedGameStateSnapshot(badTimestamp), false);
