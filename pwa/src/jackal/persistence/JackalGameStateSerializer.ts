@@ -221,6 +221,7 @@ export class JackalGameStateSerializer {
         }
         FriendlySoldier.count = snapshot.friendlySoldierCount;
         main.mode = gameMode;
+        main.reconcileStateAfterRestore();
         this.restoreFadeListener(main, gameMode);
         restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
@@ -253,6 +254,7 @@ export class JackalGameStateSerializer {
 
         FriendlySoldier.count = snapshot.friendlySoldierCount;
         main.mode = mode;
+        main.reconcileStateAfterRestore();
         this.restoreFadeListener(main, mode);
         restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
