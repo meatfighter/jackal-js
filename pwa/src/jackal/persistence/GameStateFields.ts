@@ -188,7 +188,9 @@ export const SKIPPED_INSTANCE_FIELDS: ReadonlySet<string> = new Set([
     "panel",
     "sprite",
     "sprites",
-    "vehicle"
+    "vehicle",
+    "fireReleased",
+    "shootReleased"
 ]);
 
 export const SONG_IDS = [
