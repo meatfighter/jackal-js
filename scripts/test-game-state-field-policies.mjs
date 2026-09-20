@@ -22,6 +22,7 @@ try {
     const typeIds = await server.ssrLoadModule("/src/jackal/persistence/GameElementTypeIds.ts");
     const typeRegistry = await server.ssrLoadModule("/src/jackal/persistence/GameElementTypeRegistry.ts");
     const stateFields = await server.ssrLoadModule("/src/jackal/persistence/GameStateFields.ts");
+    const { GAME_STATE_VERSION } = await server.ssrLoadModule("/src/jackal/persistence/GameStateSchema.ts");
     const { JackalGameStateSerializer } = await server.ssrLoadModule("/src/jackal/persistence/JackalGameStateSerializer.ts");
     const { ArrayList } = await server.ssrLoadModule("/src/java/JavaRuntime.ts");
 
@@ -95,6 +96,62 @@ try {
         assert.equal(context.ids.get(fire), 1);
     });
 
+    test("GameMode restore preflight matches mutable maps to the loaded stage resource", () => {
+        const serializer = new JackalGameStateSerializer();
+        const stage = createStageResource(40, 40);
+        const snapshot = createGameModeSnapshot(
+            GAME_STATE_VERSION,
+            stateFields,
+            policy,
+            stage
+        );
+
+        assert.equal(serializer.isSupportedSnapshot(snapshot), true);
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, snapshot), true);
+
+        const triggerMutated = structuredClone(snapshot);
+        triggerMutated.gameMode.fields.tileMap.items[1].items[1] = 2;
+        triggerMutated.gameMode.fields.typesMap.items[1].items[1] = 2;
+        triggerMutated.gameMode.fields.triggedGroups.items[0] = true;
+        assert.equal(
+            serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, triggerMutated),
+            true,
+            "values supplied by a shipped trigger group remain valid mutable stage state"
+        );
+
+        const wrongWidth = structuredClone(snapshot);
+        wrongWidth.gameMode.fields.tileMap.items = wrongWidth.gameMode.fields.tileMap.items.map((row) => ({
+            ...row,
+            items: row.items.slice(0, 39)
+        }));
+        wrongWidth.gameMode.fields.typesMap.items = wrongWidth.gameMode.fields.typesMap.items.map((row) => ({
+            ...row,
+            items: row.items.slice(0, 39)
+        }));
+        assert.equal(serializer.isSupportedSnapshot(wrongWidth), true, "rectangular wrong-width maps are structurally valid");
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, wrongWidth), false);
+
+        const unknownTile = structuredClone(snapshot);
+        unknownTile.gameMode.fields.tileMap.items[0].items[0] = 999;
+        assert.equal(serializer.isSupportedSnapshot(unknownTile), true);
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, unknownTile), false);
+
+        const unknownType = structuredClone(snapshot);
+        unknownType.gameMode.fields.typesMap.items[0].items[0] = 5;
+        assert.equal(serializer.isSupportedSnapshot(unknownType), true);
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, unknownType), false);
+
+        const wrongTriggerCount = structuredClone(snapshot);
+        wrongTriggerCount.gameMode.fields.triggedGroups.items = [];
+        assert.equal(serializer.isSupportedSnapshot(wrongTriggerCount), true);
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, wrongTriggerCount), false);
+
+        const impossibleCamera = structuredClone(snapshot);
+        impossibleCamera.gameMode.fields.maxCameraX = 257;
+        assert.equal(serializer.isSupportedSnapshot(impossibleCamera), true);
+        assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, impossibleCamera), false);
+    });
+
     test("typed references, unique lists, arrays and matrices reject malformed values", () => {
         const bossBlueDescriptor = policy.getEntityDurableFieldDescriptor("BossBlueTank");
         const bossBlueTypes = new Map([[7, "BossBlueTanksManager"]]);
@@ -148,6 +205,85 @@ try {
     });
 } finally {
     await server.close();
+}
+
+function createStageResource(width, height) {
+    const tileMap = Array.from({ length: height }, () => Array.from({ length: width }, () => 0));
+    const typesMap = Array.from({ length: height }, () => Array.from({ length: width }, () => 1));
+    return {
+        mapWidth: width,
+        mapHeight: height,
+        tileMap,
+        typesMap,
+        groups: [[[1, 1, 2, 2]]]
+    };
+}
+
+function createGameModeSnapshot(version, fields, policy, stage) {
+    const matrix = (rows) => ({
+        kind: "array",
+        items: rows.map((row) => ({ kind: "array", items: [...row] }))
+    });
+    const mainFields = Object.fromEntries(fields.MAIN_FIELD_NAMES.map((name) => [name, 0]));
+    Object.assign(mainFields, {
+        fading: false,
+        fadeIndex: 0,
+        fadeOut: false,
+        extraLives: 0,
+        score: 0,
+        stageIndex: 0,
+        hasMissiles: false,
+        missilePower: 0,
+        friendlySoldiersPickedUp: 0,
+        hardMode: false,
+        continued: false
+    });
+
+    const maxCameraX = (stage.mapWidth - 32) * 32;
+    const maxCameraY = (stage.mapHeight - 31) * 32;
+    const gameModeFields = Object.fromEntries(fields.GAME_MODE_FIELD_NAMES.map((name) => [name, 0]));
+    Object.assign(gameModeFields, {
+        tileMap: matrix(stage.tileMap),
+        typesMap: matrix(stage.typesMap),
+        triggedGroups: { kind: "array", items: [false] },
+        waterAlphaIndex: 0,
+        conveyorOffset: 0,
+        conveyorLastIndex: 0,
+        conveyorDelta: 0,
+        cameraX: 0,
+        cameraY: maxCameraY,
+        maxCameraX,
+        maxCameraY,
+        paused: false,
+        triggerY: stage.mapHeight,
+        bossCameraPan: false,
+        endingCameraPan: false,
+        playing: true,
+        cameraPanListener: null,
+        stageIndex: 0,
+        stageCompletedFlag: false,
+        stageCompletedDelay: 228
+    });
+
+    return {
+        version,
+        appVersion: "resource-preflight-test",
+        savedAt: "2026-09-20T00:00:00.000Z",
+        kind: "game",
+        mainFields,
+        konamiCodeFields: null,
+        random: { seed0: 1, seed1: 2, seed2: 3 },
+        friendlySoldierCount: 0,
+        requestedSongId: null,
+        currentSongState: null,
+        audioState: { sounds: [], cooldowns: [] },
+        gameMode: {
+            fields: gameModeFields,
+            elements: [[], [], [], [], [], [], [], []],
+            entities: []
+        },
+        playerFields: encodedRecordForDescriptor(policy.PLAYER_DURABLE_FIELD_DESCRIPTOR, new Map())
+    };
 }
 
 function encodedRecordForDescriptor(descriptor, entityTypes) {
