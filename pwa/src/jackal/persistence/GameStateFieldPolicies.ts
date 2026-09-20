@@ -9,7 +9,7 @@ import { GAME_ELEMENT_JAVA_FLOAT_FIELDS, PLAYER_JAVA_FLOAT_FIELDS } from "./Java
 
 export type DurableFieldPolicy =
     | { readonly kind: "boolean" }
-    | { readonly kind: "number"; readonly integer: boolean }
+    | { readonly kind: "number"; readonly integer: boolean; readonly min?: number; readonly max?: number }
     | { readonly kind: "reference"; readonly targets: readonly GameElementTypeId[]; readonly nullable: boolean }
     | { readonly kind: "referenceList"; readonly targets: readonly GameElementTypeId[]; readonly minLength: number; readonly maxLength: number }
     | { readonly kind: "numberArray"; readonly integer: boolean; readonly length: number }
@@ -213,14 +213,14 @@ function policyForZeroState(
         return Object.freeze({ kind: "reference", targets, nullable: true });
     }
     if (NULLABLE_NUMERIC_FIELDS[type]?.has(name) === true) {
-        return Object.freeze({ kind: "number", integer: true });
+        return numberPolicy(type, name, true);
     }
 
     switch (typeof value) {
         case "boolean":
             return Object.freeze({ kind: "boolean" });
         case "number":
-            return Object.freeze({ kind: "number", integer: !floatFields.has(name) });
+            return numberPolicy(type, name, !floatFields.has(name));
         default:
             throw new Error(`Unclassified durable Jackal field ${type}.${name}; update the persistence policy before saving this class.`);
     }
@@ -252,7 +252,7 @@ function isEncodedValueForPolicy(
         case "boolean":
             return typeof value === "boolean";
         case "number":
-            return isReasonableNumber(value, fieldName, policy.integer);
+            return isReasonableNumber(value, fieldName, policy.integer, policy.min, policy.max);
         case "reference":
             return value === null
                 ? policy.nullable
@@ -305,11 +305,68 @@ function isTaggedItems(value: unknown, kind: "array" | "arrayList"): value is { 
     return isRecord(value) && Object.keys(value).length === 2 && value.kind === kind && Array.isArray(value.items);
 }
 
-function isReasonableNumber(value: unknown, fieldName: string, integer: boolean): value is number {
+function numberPolicy(type: GameElementTypeId, name: string, integer: boolean): DurableFieldPolicy {
+    const explicit = explicitIntegerRange(type, name);
+    if (explicit !== null) {
+        return Object.freeze({ kind: "number", integer: true, min: explicit[0], max: explicit[1] });
+    }
+    if (integer) {
+        const inferred = inferStaticEnumRange(type, name);
+        if (inferred !== null) {
+            return Object.freeze({ kind: "number", integer: true, min: inferred[0], max: inferred[1] });
+        }
+    }
+    return Object.freeze({ kind: "number", integer });
+}
+
+function explicitIntegerRange(type: GameElementTypeId, name: string): readonly [number, number] | null {
+    if (name === "layer") return [0, 7];
+    if (name === "changeLayerValue") return [-1, 7];
+    if (name === "trailIndex") return [0, 7];
+    if ((type === "RotatingGun" || type === "BossSuperTankGun") && name === "state") return [0, 2];
+    if (type === "EnemySoldier" && name === "type") return [0, 4];
+    if (type === "FriendlySoldier" && name === "type") return [0, 7];
+    if (type === "LasersManager" && name === "beamIndex") return [0, 2];
+    return null;
+}
+
+function inferStaticEnumRange(type: GameElementTypeId, name: string): readonly [number, number] | null {
+    const prefix =
+        name === "state" ? "STATE_" :
+        name === "type" ? "TYPE_" :
+        name === "spriteIndex" ? "SPRITE_" :
+        name === "orientation" ? "ORIENTATION_" :
+        null;
+    if (prefix === null) {
+        return null;
+    }
+    const constructor = GAME_ELEMENT_TYPES[type] as unknown as Record<string, unknown>;
+    const values = Object.entries(constructor)
+        .filter(([key, value]) => key.startsWith(prefix) && typeof value === "number" && Number.isInteger(value))
+        .map(([, value]) => value as number);
+    if (values.length === 0) {
+        return null;
+    }
+    return [Math.min(...values), Math.max(...values)];
+}
+
+function isReasonableNumber(
+    value: unknown,
+    fieldName: string,
+    integer: boolean,
+    min?: number,
+    max?: number
+): value is number {
     if (typeof value !== "number" || !Number.isFinite(value) || (integer && !Number.isInteger(value))) {
         return false;
     }
     if (integer && (value < JAVA_INT_MIN || value > JAVA_INT_MAX)) {
+        return false;
+    }
+    if (min !== undefined && value < min) {
+        return false;
+    }
+    if (max !== undefined && value > max) {
         return false;
     }
     if (fieldName === "vx" || fieldName === "vy") {
