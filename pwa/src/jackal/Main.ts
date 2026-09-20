@@ -1992,7 +1992,10 @@ export class Main extends BasicGame {
         this.browserSuspended = suspended;
         this.clearInputPressedRecords();
         if (!suspended) {
-            if (this.mode instanceof InputMode) {
+            this.input?.snap();
+            if (this.mode instanceof GameMode) {
+                this.mode.player?.resyncInputAfterBrowserResume();
+            } else if (this.mode instanceof InputMode) {
                 this.mode.resyncControllerStateAfterBrowserResume();
             }
             const mode = this.mode;
