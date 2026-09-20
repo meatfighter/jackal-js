@@ -75,6 +75,9 @@ const MAX_ENCODED_ARRAY_LENGTH = 8192;
 const MAX_ENCODED_RECORD_FIELDS = 512;
 const MAX_ENCODED_STRING_LENGTH = 4096;
 const MAX_BIGINT_DIGITS = 128;
+const MAX_TOTAL_SNAPSHOT_CONTAINERS = 65_536;
+const MAX_TOTAL_SNAPSHOT_CHILDREN = 524_288;
+const MAX_TOTAL_SNAPSHOT_STRING_CHARS = 1_500_000;
 const MAX_INPUT_ASSIGNMENTS = InputMode.ACTIONS.length;
 const MAX_CONTROLLER_BUTTON_INDEX = InputMode.GAMEPAD_BUTTON_INDEX_LIMIT - 1;
 const MAX_JEEP_YEAH_BULLETS = 4096;
@@ -100,6 +103,9 @@ const CAMERA_PAN_LISTENER_TYPES = new Set([
 ]);
 
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
+    if (!isWithinGameStateValidationBudget(snapshot)) {
+        return false;
+    }
     if (!isRecord(snapshot) || !isSupportedGameStateVersion(snapshot.version) || (snapshot.kind !== "game" && snapshot.kind !== "mode")) {
         return false;
     }
@@ -107,6 +113,61 @@ export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is Jac
         return false;
     }
     return snapshot.kind === "game" ? isGameStateSnapshot(snapshot) : isStandaloneStateSnapshot(snapshot);
+}
+
+export function isWithinGameStateValidationBudget(value: unknown): boolean {
+    const stack: unknown[] = [value];
+    const seen = new WeakSet<object>();
+    let containers = 0;
+    let children = 0;
+    let stringChars = 0;
+
+    while (stack.length > 0) {
+        const current = stack.pop();
+        if (typeof current === "string") {
+            stringChars += current.length;
+            if (stringChars > MAX_TOTAL_SNAPSHOT_STRING_CHARS) {
+                return false;
+            }
+            continue;
+        }
+        if (current === null || typeof current !== "object") {
+            continue;
+        }
+        if (seen.has(current)) {
+            return false;
+        }
+        seen.add(current);
+        if (++containers > MAX_TOTAL_SNAPSHOT_CONTAINERS) {
+            return false;
+        }
+
+        if (Array.isArray(current)) {
+            children += current.length;
+            if (children > MAX_TOTAL_SNAPSHOT_CHILDREN) {
+                return false;
+            }
+            for (const child of current) {
+                stack.push(child);
+            }
+            continue;
+        }
+
+        const entries = Object.entries(current);
+        children += entries.length;
+        if (children > MAX_TOTAL_SNAPSHOT_CHILDREN) {
+            return false;
+        }
+        for (const [key, child] of entries) {
+            stringChars += key.length;
+            if (stringChars > MAX_TOTAL_SNAPSHOT_STRING_CHARS) {
+                return false;
+            }
+            stack.push(child);
+        }
+    }
+
+    return true;
 }
 
 function isBaseSnapshot(snapshot: UnknownRecord): boolean {
