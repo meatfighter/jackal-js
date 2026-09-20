@@ -103,11 +103,24 @@ export function encodeValue(value: unknown, context: GameStateEncodeContext): En
 }
 
 export function decodeFieldsInto(target: object, fields: EncodedRecord, context: GameStateDecodeContext, javaFloatFields: JavaFloatStateSpec = []): void {
-    for (const [key, value] of Object.entries(fields)) {
+    decodeNamedFieldsInto(target, fields, Object.keys(fields), context, javaFloatFields);
+}
+
+export function decodeNamedFieldsInto(
+    target: object,
+    fields: EncodedRecord,
+    names: readonly string[],
+    context: GameStateDecodeContext,
+    javaFloatFields: JavaFloatStateSpec = []
+): void {
+    for (const key of names) {
         if (key === "__proto__" || key === "constructor" || key === "prototype") {
             throw new Error(`Unsafe saved field name: ${key}`);
         }
-        Reflect.set(target, key, decodeValue(value, context));
+        if (!Object.hasOwn(fields, key)) {
+            throw new Error(`Missing saved field: ${key}`);
+        }
+        Reflect.set(target, key, decodeValue(fields[key]!, context));
     }
     normalizeJavaFloatFields(target, javaFloatFields);
 }
