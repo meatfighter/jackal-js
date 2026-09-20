@@ -70,7 +70,7 @@ import {
     type GameStateDecodeContext,
     type GameStateEncodeContext
 } from "./GameStateCodec.js";
-import { getEntityDurableFieldNames, getPlayerDurableFieldNames } from "./GameStateFieldPolicies.js";
+import { getDurableEntityReferences, getEntityDurableFieldNames, getPlayerDurableFieldNames } from "./GameStateFieldPolicies.js";
 import {
     GAME_ELEMENT_JAVA_FLOAT_FIELDS,
     GAME_MODE_JAVA_FLOAT_FIELDS,
@@ -540,16 +540,35 @@ export class JackalGameStateSerializer {
     private createGameStateEncodeContext(main: Main, gameMode: GameMode, player: Player): GameModeEncodeContext {
         const ids = new Map<object, number>();
         const entities: GameElement[] = [];
+        const register = (entity: GameElement): void => {
+            if (!ids.has(entity)) {
+                ids.set(entity, entities.length);
+                entities.push(entity);
+            }
+        };
+
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
             const list = gameMode.elements[layer];
             for (let i = 0; i < list.size(); i++) {
                 const entity = list.get(i);
-                if (entity !== null && !ids.has(entity)) {
-                    ids.set(entity, entities.length);
-                    entities.push(entity);
+                if (entity !== null) {
+                    register(entity);
                 }
             }
         }
+
+        // Layer membership is the active simulation graph, but durable references can
+        // legitimately keep detached objects alive. Preserve the transitive reference
+        // closure so save/restore never silently converts those links to null.
+        for (let i = 0; i < entities.length; i++) {
+            const entity = entities[i]!;
+            const type = getGameElementTypeId(entity);
+            for (const referenced of getDurableEntityReferences(type, entity)) {
+                getGameElementTypeId(referenced); // fail closed on unsupported object types
+                register(referenced);
+            }
+        }
+
         return { main, gameMode, player, ids, entities };
     }
 
