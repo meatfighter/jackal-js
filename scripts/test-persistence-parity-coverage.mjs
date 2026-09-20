@@ -187,6 +187,19 @@ test("named persistence fields are unique and correspond to declared runtime sta
     }
 });
 
+test("global Player input-release skips do not collide with other runtime classes", () => {
+    const model = buildClassModel();
+    for (const field of ["fireReleased", "shootReleased"]) {
+        const owners = [];
+        for (const [className, entry] of model.entries()) {
+            if (entry.fields.has(field)) {
+                owners.push(className);
+            }
+        }
+        assert.deepEqual(owners.sort(), ["Player"], `${field} must remain a Player-only transient field`);
+    }
+});
+
 test("generic object serialization explicitly excludes reconstructed and runtime-only state", () => {
     const skipped = persistenceConstant("SKIPPED_INSTANCE_FIELDS");
     assert.equal(new Set(skipped).size, skipped.length, "SKIPPED_INSTANCE_FIELDS contains duplicates.");
