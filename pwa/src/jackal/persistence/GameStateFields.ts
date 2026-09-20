@@ -23,25 +23,18 @@ function fieldsOf<T extends object>() {
 }
 
 export const MAIN_FIELD_NAMES = fieldsOf<Main>()(
-    "nextFrameTime",
     "loadIndex",
     "fading",
     "fadeIndex",
     "fadeOut",
     "extraLives",
-    "extraLivesStr",
     "score",
-    "scoreStr",
     "stageIndex",
     "hasMissiles",
     "missilePower",
     "friendlySoldiersPickedUp",
     "hardMode",
     "continued",
-    "closeRequestedFlag",
-    "controllerGrenadePressed",
-    "controllerGunPressed",
-    "unitVector"
 );
 
 export const GAME_MODE_FIELD_NAMES = fieldsOf<GameMode>()(
