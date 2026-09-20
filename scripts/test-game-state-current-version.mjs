@@ -22,12 +22,34 @@ async function loadPersistenceValidation() {
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
     const audioRegistryUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8"));
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
+    const buttonMappingUrl = compileModule("export class ButtonMapping { static NO_BINDING = -1; }");
+    const inputModeUrl = compileModule(`
+        export class InputMode {
+            static STATE_FADE_IN = 0;
+            static STATE_MENU = 1;
+            static STATE_READING = 2;
+            static STATE_READ_FADE = 3;
+            static STATE_FADE_OUT = 4;
+            static STATE_DONE = 5;
+            static STATE_SAVED = 6;
+            static OPTION_CHANGE = 0;
+            static OPTION_RESET = 1;
+            static OPTION_DONE = 2;
+            static FADE_TIME = 11;
+            static DONE_DELAY = 30;
+            static ARM_DELAY = 8;
+            static GAMEPAD_BUTTON_INDEX_LIMIT = 64;
+            static ACTIONS = [0, 1, 2, 3, 4, 5, 6];
+        }
+    `);
     const runtimeFieldsUrl = compileModule(source("EntityRuntimeFields.ts").replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`));
     const validatorUrl = compileModule(
         source("GameStateSnapshotValidator.ts")
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
             .replace(`from "../AudioRegistry.js"`, `from "${audioRegistryUrl}"`)
+            .replace(`from "../ButtonMapping.js"`, `from "${buttonMappingUrl}"`)
+            .replace(`from "../InputMode.js"`, `from "${inputModeUrl}"`)
             .replace(`from "./GameStateSchema.js"`, `from "${schemaUrl}"`)
             .replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`)
             .replace(`from "./EntityRuntimeFields.js"`, `from "${runtimeFieldsUrl}"`)
@@ -114,11 +136,35 @@ function inputModeSnapshot(fields, version) {
     return {
         ...baseSnapshot(fields, version),
         modeId: "INPUT",
-        modeFields: encodedFields(fields.INPUT_MODE_FIELD_NAMES),
+        modeFields: encodedFields(fields.INPUT_MODE_FIELD_NAMES, {
+            state: 2,
+            nameIndex: 0,
+            delay: 0,
+            selectedIndex: 0,
+            message: "",
+            armDelay: 8
+        }),
         modeExtra: {
             input: {
                 menu: null,
-                draftButtonMapping: null,
+                draftButtonMapping: {
+                    fields: encodedFields(fields.BUTTON_MAPPING_FIELD_NAMES, {
+                        keyUp: 200,
+                        keyDown: 208,
+                        keyLeft: 203,
+                        keyRight: 205,
+                        keyGrenade: 45,
+                        keyGun: 44,
+                        keyStart: 28,
+                        controllerUp: 12,
+                        controllerDown: 13,
+                        controllerLeft: 14,
+                        controllerRight: 15,
+                        controllerGrenade: 0,
+                        controllerGun: 2,
+                        controllerStart: 9
+                    })
+                },
                 assignedKeys: [],
                 assignedControllerButtons: []
             }
@@ -203,9 +249,42 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     };
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedMusic), false);
 
-    const impossibleInput = inputModeSnapshot(fields, currentVersion);
-    impossibleInput.modeExtra.input.assignedKeys = new Array(65).fill(1);
-    assert.equal(validator.isSupportedGameStateSnapshot(impossibleInput), false);
+    const validInput = inputModeSnapshot(fields, currentVersion);
+    assert.equal(validator.isSupportedGameStateSnapshot(validInput), true);
+
+    const missingInputDraft = structuredClone(validInput);
+    missingInputDraft.modeExtra.input.draftButtonMapping = null;
+    assert.equal(validator.isSupportedGameStateSnapshot(missingInputDraft), false);
+
+    const inputMenuWhileReading = structuredClone(validInput);
+    inputMenuWhileReading.modeExtra.input.menu = { fields: encodedFields(fields.MENU_FIELD_NAMES) };
+    assert.equal(validator.isSupportedGameStateSnapshot(inputMenuWhileReading), false);
+
+    const duplicateInputAssignments = structuredClone(validInput);
+    duplicateInputAssignments.modeFields.nameIndex = 2;
+    duplicateInputAssignments.modeFields.armDelay = 0;
+    duplicateInputAssignments.modeExtra.input.assignedKeys = [45, 45];
+    assert.equal(validator.isSupportedGameStateSnapshot(duplicateInputAssignments), false);
+
+    const mismatchedInputAssignmentCount = structuredClone(validInput);
+    mismatchedInputAssignmentCount.modeFields.nameIndex = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(mismatchedInputAssignmentCount), false);
+
+    const unreachableControllerAssignment = structuredClone(validInput);
+    unreachableControllerAssignment.modeFields.nameIndex = 1;
+    unreachableControllerAssignment.modeExtra.input.assignedControllerButtons = [64];
+    assert.equal(validator.isSupportedGameStateSnapshot(unreachableControllerAssignment), false);
+
+    const unreachableDraftController = structuredClone(validInput);
+    unreachableDraftController.modeExtra.input.draftButtonMapping.fields.controllerGun = 64;
+    assert.equal(validator.isSupportedGameStateSnapshot(unreachableDraftController), false);
+
+    const impossibleReadFade = structuredClone(validInput);
+    impossibleReadFade.modeFields.state = 3;
+    impossibleReadFade.modeFields.delay = 0;
+    impossibleReadFade.modeFields.armDelay = 0;
+    impossibleReadFade.modeExtra.input.assignedKeys = [45];
+    assert.equal(validator.isSupportedGameStateSnapshot(impossibleReadFade), false);
 
     const unsafeVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
     assert.equal(validator.isSupportedGameStateSnapshot(unsafeVelocity), false);
