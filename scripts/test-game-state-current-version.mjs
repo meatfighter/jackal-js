@@ -188,7 +188,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 14);
+    assert.equal(currentVersion, 15);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -196,6 +196,23 @@ test("save-state validator accepts only the current schema", async () => {
     const invalidSeed = modeSnapshot(fields, currentVersion);
     invalidSeed.random.seed2 = 65536;
     assert.equal(validator.isSupportedGameStateSnapshot(invalidSeed), false);
+
+    const validKonamiProgress = modeSnapshot(fields, currentVersion);
+    validKonamiProgress.konamiCodeFields = { enabled: false, sequenceIndex: 7 };
+    assert.equal(validator.isSupportedGameStateSnapshot(validKonamiProgress), true);
+
+    const completedKonami = modeSnapshot(fields, currentVersion);
+    completedKonami.konamiCodeFields = { enabled: true, sequenceIndex: 10 };
+    assert.equal(validator.isSupportedGameStateSnapshot(completedKonami), true);
+
+    const obsoleteKonamiLatch = modeSnapshot(fields, currentVersion);
+    obsoleteKonamiLatch.konamiCodeFields = { enabled: false, sequenceIndex: 0, keyReleased: true };
+    assert.equal(validator.isSupportedGameStateSnapshot(obsoleteKonamiLatch), false);
+
+    const impossibleEnabledKonami = modeSnapshot(fields, currentVersion);
+    impossibleEnabledKonami.konamiCodeFields = { enabled: true, sequenceIndex: 9 };
+    assert.equal(validator.isSupportedGameStateSnapshot(impossibleEnabledKonami), false);
+
 });
 
 test("save-state validator rejects corrupt but superficially shaped state", async () => {
