@@ -83,6 +83,8 @@ const MAX_POSITION_MAGNITUDE = 1_000_000;
 const MAX_VELOCITY_MAGNITUDE = 10_000;
 const MAX_MUSIC_POSITION_SECONDS = 86_400;
 const MAX_SOUND_POSITION_SECONDS = 86_400;
+const MIN_FADE_INDEX = -1;
+const MAX_FADE_INDEX = 23;
 const MAX_TOTAL_SOUND_VOICES = 62;
 const JAVA_INT_MAX = 2_147_483_647;
 const FORBIDDEN_STATE_FIELD_NAMES = new Set(["__proto__", "constructor", "prototype"]);
@@ -260,13 +262,18 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
 
 function isRestorableMainFields(fields: EncodedRecord): boolean {
     return (
-        isIntegerInRange(fields.loadIndex, 42, 1_000_000) &&
+        typeof fields.fading === "boolean" &&
+        isIntegerInRange(fields.fadeIndex, MIN_FADE_INDEX, MAX_FADE_INDEX) &&
+        typeof fields.fadeOut === "boolean" &&
         isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) &&
         isIntegerInRange(fields.score, 0, JAVA_INT_MAX) &&
         isIntegerInRange(fields.extraLives, 0, 1_000_000) &&
+        typeof fields.hasMissiles === "boolean" &&
         isIntegerInRange(fields.missilePower, 0, 1_000_000) &&
         isIntegerInRange(fields.friendlySoldiersPickedUp, 0, 1_000_000) &&
-        typeof fields.hardMode === "boolean"
+        typeof fields.hardMode === "boolean" &&
+        typeof fields.continued === "boolean" &&
+        (!fields.fading || isIntegerInRange(fields.fadeIndex, 0, MAX_FADE_INDEX - 1))
     );
 }
 
