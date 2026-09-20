@@ -94,6 +94,24 @@ test("Space survives input mapping persistence as an ordinary browser gameplay k
     assert.deepEqual(restored, saved);
 });
 
+test("controller mappings outside the runtime 64-button scan range are rejected", async () => {
+    storage.clear();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), controllerGun: 64 }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+
+    const valid = createMapping({ controllerGun: 63 });
+    assert.equal(new JackalInputMappingStore().save(valid), true);
+    const restored = createMapping();
+    assert.equal(new JackalInputMappingStore().restore(restored), true);
+    assert.equal(restored.controllerGun, 63);
+});
+
 test("obsolete version-one mappings are discarded instead of migrated", async () => {
     storage.clear();
     const href = "https://example.test/stage/pwa/?v=old";
