@@ -9,7 +9,13 @@ import { GAME_ELEMENT_JAVA_FLOAT_FIELDS, PLAYER_JAVA_FLOAT_FIELDS } from "./Java
 
 export type DurableFieldPolicy =
     | { readonly kind: "boolean" }
-    | { readonly kind: "number"; readonly integer: boolean; readonly min?: number; readonly max?: number }
+    | {
+          readonly kind: "number";
+          readonly integer: boolean;
+          readonly min?: number;
+          readonly max?: number;
+          readonly allowedValues?: readonly number[];
+      }
     | { readonly kind: "reference"; readonly targets: readonly GameElementTypeId[]; readonly nullable: boolean }
     | { readonly kind: "referenceList"; readonly targets: readonly GameElementTypeId[]; readonly minLength: number; readonly maxLength: number }
     | { readonly kind: "numberArray"; readonly integer: boolean; readonly length: number }
@@ -267,7 +273,7 @@ function isEncodedValueForPolicy(
         case "boolean":
             return typeof value === "boolean";
         case "number":
-            return isReasonableNumber(value, fieldName, policy.integer, policy.min, policy.max);
+            return isReasonableNumber(value, fieldName, policy.integer, policy.min, policy.max, policy.allowedValues);
         case "reference":
             return value === null
                 ? policy.nullable
@@ -365,9 +371,9 @@ function numberPolicy(type: GameElementTypeId, name: string, integer: boolean): 
         return Object.freeze({ kind: "number", integer: true, min: explicit[0], max: explicit[1] });
     }
     if (integer) {
-        const inferred = inferStaticEnumRange(type, name);
+        const inferred = inferStaticEnumValues(type, name);
         if (inferred !== null) {
-            return Object.freeze({ kind: "number", integer: true, min: inferred[0], max: inferred[1] });
+            return Object.freeze({ kind: "number", integer: true, allowedValues: Object.freeze(inferred) });
         }
     }
     return Object.freeze({ kind: "number", integer });
@@ -384,7 +390,7 @@ function explicitIntegerRange(type: GameElementTypeId, name: string): readonly [
     return null;
 }
 
-function inferStaticEnumRange(type: GameElementTypeId, name: string): readonly [number, number] | null {
+function inferStaticEnumValues(type: GameElementTypeId, name: string): number[] | null {
     const prefix =
         name === "state" ? "STATE_" :
         name === "type" ? "TYPE_" :
@@ -398,10 +404,7 @@ function inferStaticEnumRange(type: GameElementTypeId, name: string): readonly [
     const values = Object.entries(constructor)
         .filter(([key, value]) => key.startsWith(prefix) && typeof value === "number" && Number.isInteger(value))
         .map(([, value]) => value as number);
-    if (values.length === 0) {
-        return null;
-    }
-    return [Math.min(...values), Math.max(...values)];
+    return values.length === 0 ? null : [...new Set(values)];
 }
 
 function isReasonableNumber(
@@ -409,7 +412,8 @@ function isReasonableNumber(
     fieldName: string,
     integer: boolean,
     min?: number,
-    max?: number
+    max?: number,
+    allowedValues?: readonly number[]
 ): value is number {
     if (typeof value !== "number" || !Number.isFinite(value) || (integer && !Number.isInteger(value))) {
         return false;
@@ -421,6 +425,9 @@ function isReasonableNumber(
         return false;
     }
     if (max !== undefined && value > max) {
+        return false;
+    }
+    if (allowedValues !== undefined && !allowedValues.includes(value)) {
         return false;
     }
     if (fieldName === "vx" || fieldName === "vy") {
