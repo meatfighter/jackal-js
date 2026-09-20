@@ -200,7 +200,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
 
     public keyPressed(i: number, c: string): void {
         void c;
-        if (!Input.isBrowserKeyCodeSupported(i) || ButtonMapping.isReservedKey(i)) {
+        if (!ButtonMapping.isValidKeyBinding(i) || i === ButtonMapping.NO_BINDING) {
             return;
         }
         if (this.state !== InputMode.STATE_READING || this.armDelay > 0) {
