@@ -31,8 +31,8 @@ export function clearPersistedPwaState(
     isAuthorized: () => boolean
 ): void {
     const preferencesCleared = clearPreferences(isAuthorized);
-    const gameStateCleared = clearStoredGameState();
-    const inputMappingCleared = inputMappings.clear();
+    const gameStateCleared = clearStoredGameState(isAuthorized);
+    const inputMappingCleared = inputMappings.clear(isAuthorized);
     if (!preferencesCleared || !gameStateCleared || !inputMappingCleared) {
         warnings.report("Some saved Jackal settings could not be cleared.");
     }
