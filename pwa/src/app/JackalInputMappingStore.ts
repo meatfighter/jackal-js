@@ -1,8 +1,6 @@
-import { Input } from "slick2d-ts";
 import { ButtonMapping, type MappingWriteFailureReason, type MappingWriteResult } from "../jackal/ButtonMapping.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
-const NO_BINDING = -1;
-const MAX_CONTROLLER_BUTTON_INDEX = Input.BROWSER_CONTROLLER_BUTTON_LIMIT - 1;
+const NO_BINDING = ButtonMapping.NO_BINDING;
 
 interface JackalInputMappingSnapshot {
     version: number;
@@ -158,20 +156,20 @@ export class JackalInputMappingStore {
             Object.keys(snapshot).length === expectedFields.length &&
             expectedFields.every((key) => Object.hasOwn(snapshot, key)) &&
             snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
-            this.isKeyBinding(snapshot.keyUp) &&
-            this.isKeyBinding(snapshot.keyDown) &&
-            this.isKeyBinding(snapshot.keyLeft) &&
-            this.isKeyBinding(snapshot.keyRight) &&
-            this.isKeyBinding(snapshot.keyGrenade) &&
-            this.isKeyBinding(snapshot.keyGun) &&
-            this.isKeyBinding(snapshot.keyStart) &&
-            this.isControllerDirectionBinding(snapshot.controllerUp) &&
-            this.isControllerDirectionBinding(snapshot.controllerDown) &&
-            this.isControllerDirectionBinding(snapshot.controllerLeft) &&
-            this.isControllerDirectionBinding(snapshot.controllerRight) &&
-            this.isControllerActionBinding(snapshot.controllerGrenade) &&
-            this.isControllerActionBinding(snapshot.controllerGun) &&
-            this.isControllerActionBinding(snapshot.controllerStart) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyUp) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyDown) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyLeft) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyRight) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyGrenade) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyGun) &&
+            ButtonMapping.isValidKeyBinding(snapshot.keyStart) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerUp) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerDown) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerLeft) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerRight) &&
+            ButtonMapping.isValidControllerActionBinding(snapshot.controllerGrenade) &&
+            ButtonMapping.isValidControllerActionBinding(snapshot.controllerGun) &&
+            ButtonMapping.isValidControllerActionBinding(snapshot.controllerStart) &&
             this.hasRequiredActionBindings(snapshot) &&
             this.hasUniqueNonBindingValues([
                 snapshot.keyUp,
@@ -209,32 +207,6 @@ export class JackalInputMappingStore {
 
     private isRecord(value: unknown): value is Record<string, unknown> {
         return value !== null && typeof value === "object" && !Array.isArray(value);
-    }
-
-    private isKeyBinding(value: unknown): value is number {
-        return (
-            value === NO_BINDING ||
-            (typeof value === "number" &&
-                Number.isInteger(value) &&
-                Input.isBrowserKeyCodeSupported(value) &&
-                !ButtonMapping.isReservedKey(value))
-        );
-    }
-
-    private isRawControllerButton(value: unknown): value is number {
-        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_CONTROLLER_BUTTON_INDEX;
-    }
-
-    private isControllerDirectionBinding(value: unknown): value is number {
-        return (
-            value === NO_BINDING ||
-            (typeof value === "number" && ButtonMapping.isLogicalControllerDirection(value)) ||
-            this.isRawControllerButton(value)
-        );
-    }
-
-    private isControllerActionBinding(value: unknown): value is number {
-        return value === NO_BINDING || this.isRawControllerButton(value);
     }
 
     private hasRequiredActionBindings(snapshot: JackalInputMappingSnapshot): boolean {
