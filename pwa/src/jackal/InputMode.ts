@@ -198,19 +198,6 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
 
     public inputStarted(): void {}
 
-    private bindControllerDirection(buttonIndex: number): void {
-        if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
-            return;
-        }
-
-        if (!this.bindDraftControllerButton(buttonIndex)) {
-            this.message = "ALREADY USED";
-            return;
-        }
-
-        this.advance();
-    }
-
     public keyPressed(i: number, c: string): void {
         void c;
         if (!Input.isBrowserKeyCodeSupported(i) || ButtonMapping.isReservedKey(i)) {
