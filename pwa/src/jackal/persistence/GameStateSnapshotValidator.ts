@@ -318,12 +318,33 @@ function isExactObject(value: unknown, key: string): value is UnknownRecord {
 }
 
 function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
+    if (value === null) {
+        return true;
+    }
+    if (
+        !isRecord(value) ||
+        !hasExactFields(value, MENU_SNAPSHOT_FIELDS) ||
+        !isEncodedRecord(value.fields, new Set<number>()) ||
+        !hasExactFields(value.fields, MENU_FIELD_NAMES)
+    ) {
+        return false;
+    }
+
+    const fields = value.fields;
     return (
-        value === null ||
-        (isRecord(value) &&
-            hasExactFields(value, MENU_SNAPSHOT_FIELDS) &&
-            isEncodedRecord(value.fields, new Set<number>()) &&
-            hasExactFields(value.fields, MENU_FIELD_NAMES))
+        isFiniteNumber(fields.x) &&
+        isFiniteNumber(fields.y) &&
+        isFiniteNumber(fields.iconY) &&
+        isIntegerInRange(fields.selectedIndex, 0, 2) &&
+        isIntegerInRange(fields.icon, 0, 5) &&
+        isIntegerInRange(fields.selectState, 0, 2) &&
+        isFiniteNumber(fields.iconVy) &&
+        isFiniteNumber(fields.iconMidY) &&
+        isFiniteNumber(fields.iconA) &&
+        isFiniteNumber(fields.targetY) &&
+        typeof fields.selectionMade === "boolean" &&
+        typeof fields.inputEnabled === "boolean" &&
+        typeof fields.konamiCodeTest === "boolean"
     );
 }
 
@@ -710,6 +731,10 @@ function isControllerActionBinding(value: unknown): value is number {
 function hasUniqueNonBindingValues(values: readonly unknown[]): boolean {
     const assigned = values.filter((value): value is number => typeof value === "number" && value !== ButtonMapping.NO_BINDING);
     return new Set(assigned).size === assigned.length;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value);
 }
 
 function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
