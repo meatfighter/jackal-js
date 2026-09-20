@@ -103,12 +103,11 @@ export class JackalInputMappingStore {
         try {
             snapshot = JSON.parse(stored.value);
         } catch {
-            this.clear();
             return null;
         }
 
         if (!this.isSupportedSnapshot(snapshot)) {
-            if (!this.shouldPreserveUnsupportedSnapshot(snapshot)) {
+            if (this.isObsoletePrepublicSnapshot(snapshot)) {
                 this.clear();
             }
             return null;
@@ -127,9 +126,13 @@ export class JackalInputMappingStore {
         }
 
         try {
-            return this.shouldPreserveUnsupportedSnapshot(JSON.parse(stored.value) as unknown) ? "protected" : null;
+            const snapshot = JSON.parse(stored.value) as unknown;
+            if (this.isSupportedSnapshot(snapshot) || this.isObsoletePrepublicSnapshot(snapshot)) {
+                return null;
+            }
+            return "protected";
         } catch {
-            return null;
+            return "protected";
         }
     }
 
@@ -192,7 +195,7 @@ export class JackalInputMappingStore {
         );
     }
 
-    private shouldPreserveUnsupportedSnapshot(snapshot: unknown): boolean {
+    private isObsoletePrepublicSnapshot(snapshot: unknown): boolean {
         if (!this.isRecord(snapshot)) {
             return false;
         }
@@ -200,8 +203,7 @@ export class JackalInputMappingStore {
         return (
             typeof version === "number" &&
             Number.isInteger(version) &&
-            version >= JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION &&
-            version !== JackalInputMappingStore.SNAPSHOT_VERSION
+            version < JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION
         );
     }
 
