@@ -55,21 +55,6 @@
         "HumanInput.nonDirectionalButtonWasDown": {
             "reason": "Browser input edge tracking is implemented by the Slick2D TypeScript input layer."
         },
-        "InputMode.controllerButtonDown": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.controllerDownDown": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.controllerLeftDown": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.controllerRightDown": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.controllerUpDown": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
         "IntroMode.FULL_SCREEN_TEXT": {
             "reason": "The Java desktop title screen documents its Space fullscreen control; the PWA owns fullscreen in the browser menu and deliberately omits this instruction."
         },
@@ -146,33 +131,6 @@
             "reason": "Browser button-edge state is read through the TypeScript input layer."
         },
         "HumanInput.syncControllerPressedRecord": {
-            "reason": "Browser gamepad edge tracking is implemented in the input runtime."
-        },
-        "InputMode.bindControllerInputPressed": {
-            "reason": "Browser gamepad binding uses browser input events/state."
-        },
-        "InputMode.getPressedControllerDirection": {
-            "reason": "Browser gamepad binding uses browser input events/state."
-        },
-        "InputMode.getPressedNonDirectionalControllerButton": {
-            "reason": "Browser gamepad binding uses browser input events/state."
-        },
-        "InputMode.isControllerDownPressed": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.isControllerLeftPressed": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.isControllerRightPressed": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.isControllerUpPressed": {
-            "reason": "Browser gamepad state is read through the TypeScript input layer."
-        },
-        "InputMode.isDraftDirectionButton": {
-            "reason": "Browser binding validation is implemented with the browser mapping model."
-        },
-        "InputMode.syncControllerInputState": {
             "reason": "Browser gamepad edge tracking is implemented in the input runtime."
         },
         "Main.describe": {
