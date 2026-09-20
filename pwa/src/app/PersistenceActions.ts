@@ -3,26 +3,34 @@ import { clearPreferences, writeFullscreenPreference, writeScalingPreference, wr
 import type { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import type { PersistenceWarningController } from "./PersistenceWarningController.js";
 
-export function persistVolumePreference(value: number, warnings: PersistenceWarningController): void {
-    if (!writeVolume(value)) {
+export function persistVolumePreference(value: number, warnings: PersistenceWarningController, isAuthorized: () => boolean): void {
+    if (!writeVolume(value, isAuthorized)) {
         warnings.report("Volume setting could not be saved.");
     }
 }
 
-export function persistScalingPreference(value: JackalScalingPreference, warnings: PersistenceWarningController): void {
-    if (!writeScalingPreference(value)) {
+export function persistScalingPreference(
+    value: JackalScalingPreference,
+    warnings: PersistenceWarningController,
+    isAuthorized: () => boolean
+): void {
+    if (!writeScalingPreference(value, isAuthorized)) {
         warnings.report("Scaling setting could not be saved.");
     }
 }
 
-export function persistFullscreenPreference(value: boolean, warnings: PersistenceWarningController): void {
-    if (!writeFullscreenPreference(value)) {
+export function persistFullscreenPreference(value: boolean, warnings: PersistenceWarningController, isAuthorized: () => boolean): void {
+    if (!writeFullscreenPreference(value, isAuthorized)) {
         warnings.report("Fullscreen setting could not be saved.");
     }
 }
 
-export function clearPersistedPwaState(inputMappings: JackalInputMappingStore, warnings: PersistenceWarningController): void {
-    const preferencesCleared = clearPreferences();
+export function clearPersistedPwaState(
+    inputMappings: JackalInputMappingStore,
+    warnings: PersistenceWarningController,
+    isAuthorized: () => boolean
+): void {
+    const preferencesCleared = clearPreferences(isAuthorized);
     const gameStateCleared = clearStoredGameState();
     const inputMappingCleared = inputMappings.clear();
     if (!preferencesCleared || !gameStateCleared || !inputMappingCleared) {
