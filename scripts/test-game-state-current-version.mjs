@@ -284,6 +284,47 @@ function inputModeSnapshot(fields, version) {
     };
 }
 
+function jeepYeahModeSnapshot(fields, version) {
+    return {
+        ...baseSnapshot(fields, version),
+        modeId: "YEAH",
+        modeFields: encodedFields(fields.JEEP_YEAH_MODE_FIELD_NAMES, {
+            smokeX: 0,
+            smokeY: 0,
+            bulletDelay: 11,
+            yeahVisible: 136,
+            yeah: true,
+            state: 0
+        }),
+        modeExtra: {
+            jeepYeah: {
+                explosion: null,
+                leftPlane: encodedFields(fields.JEEP_YEAH_PLANE_FIELD_NAMES, {
+                    x: -650,
+                    y: -300,
+                    z: -8,
+                    left: true,
+                    angle: 0
+                }),
+                rightPlane: null,
+                fireLeft: null,
+                fireRight: null,
+                bullets: [
+                    encodedFields(fields.JEEP_YEAH_BULLET_FIELD_NAMES, {
+                        x: 308,
+                        y: 408,
+                        vx: -2,
+                        vy: -5,
+                        angle: -50,
+                        remove: false,
+                        scale: 1
+                    })
+                ]
+            }
+        }
+    };
+}
+
 function gameSnapshot(fields, version, entity) {
     const normalizedEntity = {
         ...entity,
@@ -426,6 +467,49 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     impossibleMenuFadeOut.modeFields.state = 2;
     impossibleMenuFadeOut.modeFields.optionSelectedFlag = false;
     assert.equal(validator.isSupportedGameStateSnapshot(impossibleMenuFadeOut), false);
+
+    const wrongStandalonePrimitive = modeSnapshot(fields, currentVersion);
+    wrongStandalonePrimitive.modeFields.delay = "250";
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(wrongStandalonePrimitive),
+        false,
+        "standalone numeric fields must reject string aliases before generic restore"
+    );
+
+    const wrongStandaloneState = modeSnapshot(fields, currentVersion);
+    wrongStandaloneState.modeFields.state = 4;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(wrongStandaloneState),
+        false,
+        "IntroMap state must stay within the reachable 0..3 state domain"
+    );
+
+    const validJeepYeah = jeepYeahModeSnapshot(fields, currentVersion);
+    assert.equal(validator.isSupportedGameStateSnapshot(validJeepYeah), true);
+
+    const numericJeepPlaneBoolean = structuredClone(validJeepYeah);
+    numericJeepPlaneBoolean.modeExtra.jeepYeah.leftPlane.left = 0;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(numericJeepPlaneBoolean),
+        false,
+        "Jeep-Yeah plane boolean fields must reject numeric aliases"
+    );
+
+    const shadowedJeepBulletMethod = structuredClone(validJeepYeah);
+    shadowedJeepBulletMethod.modeExtra.jeepYeah.bullets[0].update = 0;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(shadowedJeepBulletMethod),
+        false,
+        "Jeep-Yeah auxiliary records must reject method-shadow/extra fields"
+    );
+
+    const wrongJeepModeBoolean = structuredClone(validJeepYeah);
+    wrongJeepModeBoolean.modeFields.yeah = 1;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(wrongJeepModeBoolean),
+        false,
+        "Jeep-Yeah mode booleans must be true booleans"
+    );
 
     const obsoleteAudioPolicy = modeSnapshot(fields, currentVersion);
     obsoleteAudioPolicy.audioState.musicOn = false;
