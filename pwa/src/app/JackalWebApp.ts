@@ -674,14 +674,19 @@ export class JackalWebApp {
     };
 
     private saveCurrentGameState(): boolean {
-        if (!this.getOwnership().owned || this.game === null || this.runtimeLoader.preparedRuntime === null || !this.game.isStateSaveReady()) {
+        const mainGame = this.game;
+        const runtime = this.runtimeLoader.preparedRuntime;
+        if (!this.getOwnership().owned || mainGame === null || runtime === null || !mainGame.isStateSaveReady()) {
             return false;
         }
-        const saved = this.getGameStateStore(this.runtimeLoader.preparedRuntime).save(this.game);
-        if (!saved) {
+        const result = this.getGameStateStore(runtime).save(
+            mainGame,
+            () => this.getOwnership().owned && this.game === mainGame
+        );
+        if (!result.saved) {
             this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
         }
-        return saved;
+        return result.saved;
     }
 
     private clearStoredGameState(): void {
