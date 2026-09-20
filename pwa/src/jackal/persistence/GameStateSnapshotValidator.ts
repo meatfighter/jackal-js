@@ -424,8 +424,8 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
 
     return (
         delay === 0 &&
-        (nameIndex === 0 || nameIndex === InputMode.ACTIONS.length) &&
-        (assignmentCount === 0 || assignmentCount === InputMode.ACTIONS.length) &&
+        ((nameIndex === 0 && assignmentCount === 0) ||
+            (nameIndex === InputMode.ACTIONS.length && assignmentCount === InputMode.ACTIONS.length)) &&
         message === ""
     );
 }
