@@ -204,7 +204,9 @@ test("generic object serialization explicitly excludes reconstructed and runtime
         "enemies",
         "solids",
         "mines",
-        "player"
+        "player",
+        "fireReleased",
+        "shootReleased"
     ]) {
         assert.ok(skipped.includes(field), `${field} must remain reconstructed or runtime-only rather than generically persisted.`);
     }
