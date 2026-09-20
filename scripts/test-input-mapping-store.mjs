@@ -220,6 +220,22 @@ test("malformed input-mapping bytes are protected from automatic overwrite", asy
     assert.equal(storage.get(key), "{");
 });
 
+test("unknown nonpositive mapping versions are protected rather than treated as legacy", async () => {
+    resetStorage();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+    const unknown = JSON.stringify({ version: 0, ...createMapping() });
+    storage.set(key, unknown);
+
+    const store = new JackalInputMappingStore();
+    assert.equal(store.restore(createMapping()), false);
+    assert.equal(storage.get(key), unknown);
+    assert.deepEqual(store.save(createMapping(), authorized), { saved: false, reason: "protected" });
+    assert.equal(storage.get(key), unknown);
+});
+
 test("future public input mappings are preserved and protected from overwrite", async () => {
     resetStorage();
     const href = "https://example.test/stage/pwa/?v=old";
