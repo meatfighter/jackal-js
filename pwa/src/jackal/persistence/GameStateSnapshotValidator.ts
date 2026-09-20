@@ -405,7 +405,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             delay === 0 &&
             assignmentCount === nameIndex &&
             assignmentsMatchInputDraft(value, nameIndex) &&
-            (message === "" || message === "ALREADY USED")
+            (message === "" || (message === "ALREADY USED" && armDelay === 0))
         );
     }
     if (readFade) {
