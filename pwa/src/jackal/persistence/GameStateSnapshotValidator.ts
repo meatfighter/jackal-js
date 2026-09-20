@@ -26,10 +26,21 @@ import {
     BUTTON_MAPPING_FIELD_NAMES,
     GAME_MODE_FIELD_NAMES,
     GAME_MODE_LAYER_COUNT,
+    HARD_ENDING_MODE_FIELD_NAMES,
+    INTRO_MODE_FIELD_NAMES,
+    INTRO_MAP_MODE_FIELD_NAMES,
+    JEEP_HERE_MODE_FIELD_NAMES,
+    JEEP_YEAH_BULLET_FIELD_NAMES,
+    JEEP_YEAH_EXPLOSION_FIELD_NAMES,
+    JEEP_YEAH_FIRE_FIELD_NAMES,
+    JEEP_YEAH_MODE_FIELD_NAMES,
+    JEEP_YEAH_PLANE_FIELD_NAMES,
     KONAMI_CODE_FIELD_NAMES,
     MAIN_FIELD_NAMES,
+    MAP_MODE_FIELD_NAMES,
     MENU_FIELD_NAMES,
     STAGE_COUNT,
+    SUNSET_MODE_FIELD_NAMES,
     isMusicId,
     isSongId,
     isStandaloneModeId,
@@ -322,14 +333,60 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
 
 function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRecord): boolean {
     switch (modeId) {
+        case "INTRO":
+            return (
+                hasPrimitiveFieldTypes(fields, INTRO_MODE_FIELD_NAMES, ["selectionMade"]) &&
+                isIntegerInRange(fields.state, 0, 11) &&
+                isIntegerInRange(fields.selectedIndex, 0, 1)
+            );
+        case "HERE":
+            return hasPrimitiveFieldTypes(fields, JEEP_HERE_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 4);
+        case "YEAH":
+        case "WE_MADE_IT":
+            return hasPrimitiveFieldTypes(fields, JEEP_YEAH_MODE_FIELD_NAMES, ["yeah"]) && isIntegerInRange(fields.state, 0, 3);
+        case "SUNSET":
+            return hasPrimitiveFieldTypes(fields, SUNSET_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 9);
+        case "HARD_ENDING":
+            return (
+                hasPrimitiveFieldTypes(fields, HARD_ENDING_MODE_FIELD_NAMES, [], ["finalScore"]) &&
+                isIntegerInRange(fields.state, 0, 9)
+            );
+        case "MAP":
+            return hasPrimitiveFieldTypes(fields, MAP_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 5);
+        case "INTRO_MAP":
+            return hasPrimitiveFieldTypes(fields, INTRO_MAP_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 3);
         case "CONTINUE":
         case "DIFFICULTY":
             return isSimpleMenuModeFields(fields, 1);
         case "OPTIONS":
             return isSimpleMenuModeFields(fields, 2);
-        default:
-            return true;
+        case "INPUT":
+            return true; // Input-mode fields are checked together with its logical extra snapshot.
     }
+}
+
+function hasPrimitiveFieldTypes(
+    fields: EncodedRecord,
+    expectedFields: readonly string[],
+    booleanFields: readonly string[] = [],
+    stringFields: readonly string[] = []
+): boolean {
+    if (!hasExactFields(fields, expectedFields)) {
+        return false;
+    }
+    const booleans = new Set(booleanFields);
+    const strings = new Set(stringFields);
+    for (const name of expectedFields) {
+        const value = fields[name];
+        if (booleans.has(name)) {
+            if (typeof value !== "boolean") return false;
+        } else if (strings.has(name)) {
+            if (typeof value !== "string" || value.length > MAX_ENCODED_STRING_LENGTH) return false;
+        } else if (typeof value !== "number" || !isReasonableFiniteNumber(value, name)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function isSimpleMenuModeFields(fields: EncodedRecord, maximumSelectedIndex: number): boolean {
@@ -617,19 +674,43 @@ function isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtra
         return false;
     }
     if (
-        !isNullableEncodedRecord(value.explosion) ||
-        !isNullableEncodedRecord(value.leftPlane) ||
-        !isNullableEncodedRecord(value.rightPlane) ||
-        !isNullableEncodedRecord(value.fireLeft) ||
-        !isNullableEncodedRecord(value.fireRight)
+        !isNullablePrimitiveRecord(
+            value.explosion,
+            JEEP_YEAH_EXPLOSION_FIELD_NAMES,
+            ["grenadeExplosion", "damagesEnemies", "tiny", "remove"]
+        ) ||
+        !isNullablePrimitiveRecord(value.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, ["left"]) ||
+        !isNullablePrimitiveRecord(value.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, ["left"]) ||
+        !isNullablePrimitiveRecord(value.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES) ||
+        !isNullablePrimitiveRecord(value.fireRight, JEEP_YEAH_FIRE_FIELD_NAMES)
     ) {
         return false;
     }
-    return value.bullets.every((bullet) => isEncodedRecord(bullet, new Set<number>()));
+    return value.bullets.every((bullet) =>
+        isPrimitiveRecord(bullet, JEEP_YEAH_BULLET_FIELD_NAMES, ["remove"])
+    );
 }
 
-function isNullableEncodedRecord(value: unknown): value is EncodedRecord | null {
-    return value === null || isEncodedRecord(value, new Set<number>());
+function isNullablePrimitiveRecord(
+    value: unknown,
+    expectedFields: readonly string[],
+    booleanFields: readonly string[] = [],
+    stringFields: readonly string[] = []
+): value is EncodedRecord | null {
+    return value === null || isPrimitiveRecord(value, expectedFields, booleanFields, stringFields);
+}
+
+function isPrimitiveRecord(
+    value: unknown,
+    expectedFields: readonly string[],
+    booleanFields: readonly string[] = [],
+    stringFields: readonly string[] = []
+): value is EncodedRecord {
+    return (
+        isRecord(value) &&
+        isEncodedRecord(value, new Set<number>()) &&
+        hasPrimitiveFieldTypes(value as EncodedRecord, expectedFields, booleanFields, stringFields)
+    );
 }
 
 function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth = 0): value is EncodedRecord {
