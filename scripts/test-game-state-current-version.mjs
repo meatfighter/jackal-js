@@ -301,6 +301,10 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     hiddenStaleInputAssignment.modeExtra.input.assignedKeys = [999];
     assert.equal(validator.isSupportedGameStateSnapshot(hiddenStaleInputAssignment), false);
 
+    const unreachableDraftKey = structuredClone(validInput);
+    unreachableDraftKey.modeExtra.input.draftButtonMapping.fields.keyUp = 999;
+    assert.equal(validator.isSupportedGameStateSnapshot(unreachableDraftKey), false);
+
     const validCompletedInputAssignment = structuredClone(validInput);
     validCompletedInputAssignment.modeFields.nameIndex = 1;
     validCompletedInputAssignment.modeFields.armDelay = 0;
