@@ -176,6 +176,14 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
         return false;
     }
+    const bossCameraPan = gameMode.fields.bossCameraPan;
+    const endingCameraPan = gameMode.fields.endingCameraPan;
+    if (typeof bossCameraPan !== "boolean" || typeof endingCameraPan !== "boolean" || (bossCameraPan && endingCameraPan)) {
+        return false;
+    }
+    if ((bossCameraPan || endingCameraPan) && !isEntityReference(gameMode.fields.cameraPanListener, entityIds)) {
+        return false;
+    }
     const paused = gameMode.fields.paused;
     const currentSongState = snapshot.currentSongState;
     if (typeof paused !== "boolean" || !isSongSnapshot(currentSongState)) {
@@ -199,6 +207,16 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         }
     }
     return isElementLayers(gameMode.elements, entityIds);
+}
+
+function isEntityReference(value: unknown, entityIds: ReadonlySet<number>): boolean {
+    return (
+        isRecord(value) &&
+        Object.keys(value).length === 2 &&
+        value.kind === "entityRef" &&
+        isIntegerInRange(value.id, 0, MAX_ENTITY_COUNT - 1) &&
+        entityIds.has(value.id)
+    );
 }
 
 function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalStandaloneModeStateSnapshot {
