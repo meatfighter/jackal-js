@@ -218,7 +218,7 @@ test("current save snapshots preserve translated hidden fields without legacy al
     const schema = readFileSync(join(jackalRoot, "persistence", "GameStateSchema.ts"), "utf8");
     const codec = readFileSync(join(jackalRoot, "persistence", "GameStateCodec.ts"), "utf8");
 
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*14/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*15/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(serializerSource, /const fields = encodeObjectFields\(entity, context\)/);
     assert.match(codec, /for \(const key of Object\.keys\(source\)\)/);
