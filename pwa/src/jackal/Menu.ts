@@ -62,6 +62,10 @@ export class Menu {
         this.inputEnabled = inputEnabled;
     }
 
+    public resyncInputAfterBrowserResume(): void {
+        this.buttonReleased = false;
+    }
+
     private moveIcon(): void {
         if (this.menuListener !== null) {
             this.menuListener.selectionChanged(this.selectedIndex);
