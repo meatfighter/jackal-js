@@ -1,8 +1,8 @@
 import { Input } from "slick2d-ts";
-import { ButtonMapping } from "../jackal/ButtonMapping.js";
+import { ButtonMapping, type MappingWriteFailureReason, type MappingWriteResult } from "../jackal/ButtonMapping.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 const NO_BINDING = -1;
-const MAX_CONTROLLER_BUTTON_INDEX = 63;
+const MAX_CONTROLLER_BUTTON_INDEX = Input.BROWSER_CONTROLLER_BUTTON_LIMIT - 1;
 
 interface JackalInputMappingSnapshot {
     version: number;
@@ -23,14 +23,15 @@ interface JackalInputMappingSnapshot {
 }
 
 export class JackalInputMappingStore {
-    private static readonly SNAPSHOT_VERSION = 2;
-    private static readonly FIRST_PUBLIC_SNAPSHOT_VERSION = 2;
+    private static readonly SNAPSHOT_VERSION = 3;
+    private static readonly FIRST_PUBLIC_SNAPSHOT_VERSION = 3;
     private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
 
-    public save(buttonMapping: ButtonMapping): boolean {
+    public save(buttonMapping: ButtonMapping): MappingWriteResult {
         try {
-            if (this.hasProtectedStoredSnapshot()) {
-                return false;
+            const blockedReason = this.writeBlockedReason();
+            if (blockedReason !== null) {
+                return { saved: false, reason: blockedReason };
             }
             const snapshot = {
                 version: JackalInputMappingStore.SNAPSHOT_VERSION,
@@ -50,12 +51,12 @@ export class JackalInputMappingStore {
                 controllerStart: buttonMapping.controllerStart
             } satisfies JackalInputMappingSnapshot;
             if (!this.isSupportedSnapshot(snapshot)) {
-                return false;
+                return { saved: false, reason: "invalid" };
             }
-            return this.storage.write(JSON.stringify(snapshot));
+            return this.storage.write(JSON.stringify(snapshot)) ? { saved: true } : { saved: false, reason: "unavailable" };
         } catch (error) {
             console.warn("Unable to encode Jackal input mapping.", error);
-            return false;
+            return { saved: false, reason: "invalid" };
         }
     }
 
@@ -114,19 +115,19 @@ export class JackalInputMappingStore {
         return snapshot;
     }
 
-    private hasProtectedStoredSnapshot(): boolean {
+    private writeBlockedReason(): MappingWriteFailureReason | null {
         const stored = this.storage.read();
         if (!stored.available) {
-            return true;
+            return "unavailable";
         }
         if (stored.value === null) {
-            return false;
+            return null;
         }
 
         try {
-            return this.shouldPreserveUnsupportedSnapshot(JSON.parse(stored.value) as unknown);
+            return this.shouldPreserveUnsupportedSnapshot(JSON.parse(stored.value) as unknown) ? "protected" : null;
         } catch {
-            return false;
+            return null;
         }
     }
 
@@ -160,13 +161,14 @@ export class JackalInputMappingStore {
             this.isKeyBinding(snapshot.keyGrenade) &&
             this.isKeyBinding(snapshot.keyGun) &&
             this.isKeyBinding(snapshot.keyStart) &&
-            this.isControllerBinding(snapshot.controllerUp) &&
-            this.isControllerBinding(snapshot.controllerDown) &&
-            this.isControllerBinding(snapshot.controllerLeft) &&
-            this.isControllerBinding(snapshot.controllerRight) &&
+            this.isControllerDirectionBinding(snapshot.controllerUp) &&
+            this.isControllerDirectionBinding(snapshot.controllerDown) &&
+            this.isControllerDirectionBinding(snapshot.controllerLeft) &&
+            this.isControllerDirectionBinding(snapshot.controllerRight) &&
             this.isControllerActionBinding(snapshot.controllerGrenade) &&
             this.isControllerActionBinding(snapshot.controllerGun) &&
             this.isControllerActionBinding(snapshot.controllerStart) &&
+            this.hasRequiredActionBindings(snapshot) &&
             this.hasUniqueNonBindingValues([
                 snapshot.keyUp,
                 snapshot.keyDown,
@@ -215,15 +217,32 @@ export class JackalInputMappingStore {
         );
     }
 
-    private isControllerBinding(value: unknown): value is number {
+    private isRawControllerButton(value: unknown): value is number {
+        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_CONTROLLER_BUTTON_INDEX;
+    }
+
+    private isControllerDirectionBinding(value: unknown): value is number {
         return (
             value === NO_BINDING ||
-            (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_CONTROLLER_BUTTON_INDEX)
+            (typeof value === "number" && ButtonMapping.isLogicalControllerDirection(value)) ||
+            this.isRawControllerButton(value)
         );
     }
 
     private isControllerActionBinding(value: unknown): value is number {
-        return this.isControllerBinding(value) && (value === NO_BINDING || value < ButtonMapping.DEFAULT_CONTROLLER_UP || value > ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
+        return value === NO_BINDING || this.isRawControllerButton(value);
+    }
+
+    private hasRequiredActionBindings(snapshot: JackalInputMappingSnapshot): boolean {
+        return (
+            (snapshot.keyUp !== NO_BINDING || snapshot.controllerUp !== NO_BINDING) &&
+            (snapshot.keyDown !== NO_BINDING || snapshot.controllerDown !== NO_BINDING) &&
+            (snapshot.keyLeft !== NO_BINDING || snapshot.controllerLeft !== NO_BINDING) &&
+            (snapshot.keyRight !== NO_BINDING || snapshot.controllerRight !== NO_BINDING) &&
+            (snapshot.keyGrenade !== NO_BINDING || snapshot.controllerGrenade !== NO_BINDING) &&
+            (snapshot.keyGun !== NO_BINDING || snapshot.controllerGun !== NO_BINDING) &&
+            (snapshot.keyStart !== NO_BINDING || snapshot.controllerStart !== NO_BINDING)
+        );
     }
 
     private hasUniqueNonBindingValues(values: readonly number[]): boolean {
