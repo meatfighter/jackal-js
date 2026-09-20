@@ -35,6 +35,10 @@ export class KonamiCode {
     public input: IInput = null!;
     public sequenceIndex: number = 0;
 
+    public resyncInputAfterBrowserResume(): void {
+        this.keyReleased = false;
+    }
+
     public gettingClose(): boolean {
         return (
             !this.enabled &&
