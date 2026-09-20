@@ -1,14 +1,15 @@
-import { Color, type ControllerListener, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
+import { Color, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
+import { ControllerSupport } from "./ControllerSupport.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMenuListener } from "./IMenuListener.js";
 import type { IMode } from "./IMode.js";
 import { Menu } from "./Menu.js";
 import { Modes } from "./Modes.js";
 import type { Main } from "./Main.js";
-export class InputMode implements IMode, ControllerListener, KeyListener, IFadeListener, IMenuListener {
+export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListener {
     public static readonly STATE_FADE_IN: number = 0;
     public static readonly STATE_MENU: number = 1;
     public static readonly STATE_READING: number = 2;
@@ -70,6 +71,11 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
+    private controllerButtonDown: boolean[] = [];
+    private controllerUpDown: boolean = false;
+    private controllerDownDown: boolean = false;
+    private controllerLeftDown: boolean = false;
+    private controllerRightDown: boolean = false;
     public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
@@ -137,6 +143,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         this.armDelay = InputMode.ARM_DELAY;
         this.gc.getInput().resetAdditionalControllerDirectionAxisCalibration();
         this.addInputListeners();
+        this.syncControllerInputState();
         this.gc.getInput().clearKeyPressedRecord();
         this.gc.getInput().clearControlPressedRecord();
     }
@@ -149,11 +156,15 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         }
     }
 
+    /** Re-baselines polled controller edges after the browser shell has owned input. */
+    public resyncControllerStateAfterBrowserResume(): void {
+        this.syncControllerInputState();
+    }
+
     private addInputListeners(): void {
         if (this.listeningForInput) {
             return;
         }
-        this.gc.getInput().addControllerListener(this);
         this.gc.getInput().addKeyListener(this);
         this.listeningForInput = true;
     }
@@ -162,36 +173,9 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         if (!this.listeningForInput) {
             return;
         }
-        this.gc.getInput().removeControllerListener(this);
         this.gc.getInput().removeKeyListener(this);
         this.listeningForInput = false;
     }
-
-    public controllerLeftPressed(_controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_LEFT);
-    }
-
-    public controllerLeftReleased(i: number): void {}
-
-    public controllerRightPressed(_controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
-    }
-
-    public controllerRightReleased(controllerIndex: number): void {}
-
-    public controllerUpPressed(_controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_UP);
-    }
-
-    public controllerUpReleased(controllerIndex: number): void {}
-
-    public controllerDownPressed(_controllerIndex: number): void {
-        this.bindControllerDirection(ButtonMapping.DEFAULT_CONTROLLER_DOWN);
-    }
-
-    public controllerDownReleased(controllerIndex: number): void {}
-
-    public controllerButtonReleased(controllerIndex: number, buttonIndex: number): void {}
 
     public setInput(input: Input): void {}
 
@@ -202,24 +186,6 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
     public inputEnded(): void {}
 
     public inputStarted(): void {}
-
-    public controllerButtonPressed(_controllerIndex: number, buttonIndex: number): void {
-        if (this.state !== InputMode.STATE_READING) {
-            return;
-        }
-
-        buttonIndex--;
-        if (buttonIndex < 0 || (this.isActionStep() && this.isDirectionalGamepadButton(buttonIndex))) {
-            return;
-        }
-
-        if (!this.bindDraftControllerButton(buttonIndex)) {
-            this.message = "ALREADY USED";
-            return;
-        }
-
-        this.advance();
-    }
 
     private bindControllerDirection(buttonIndex: number): void {
         if (this.state !== InputMode.STATE_READING || this.isActionStep()) {
@@ -408,8 +374,122 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
         return action === ButtonMapping.ACTION_GRENADE || action === ButtonMapping.ACTION_GUN || action === ButtonMapping.ACTION_START;
     }
 
-    private isDirectionalGamepadButton(buttonIndex: number): boolean {
-        return buttonIndex >= ButtonMapping.DEFAULT_CONTROLLER_UP && buttonIndex <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+    private bindControllerInputPressed(): void {
+        if (this.state !== InputMode.STATE_READING) {
+            this.syncControllerInputState();
+            return;
+        }
+
+        const direction = this.getPressedControllerDirection();
+        if (direction !== ButtonMapping.NO_BINDING && !this.isActionStep()) {
+            this.bindControllerDirection(direction);
+            return;
+        }
+
+        const button = this.getPressedNonDirectionalControllerButton();
+        if (button !== ButtonMapping.NO_BINDING) {
+            if (!this.bindDraftControllerButton(button)) {
+                this.message = "ALREADY USED";
+                return;
+            }
+            this.advance();
+        }
+    }
+
+    private getPressedControllerDirection(): number {
+        if (this.isControllerUpPressed()) {
+            return ButtonMapping.DEFAULT_CONTROLLER_UP;
+        }
+        if (this.isControllerDownPressed()) {
+            return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
+        }
+        if (this.isControllerLeftPressed()) {
+            return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
+        }
+        if (this.isControllerRightPressed()) {
+            return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+        }
+        return ButtonMapping.NO_BINDING;
+    }
+
+    private getPressedNonDirectionalControllerButton(): number {
+        const input = this.gc.getInput();
+        this.resizeControllerButtonState(input);
+        let pressedButton = ButtonMapping.NO_BINDING;
+        for (let button = 0; button < this.controllerButtonDown.length; button++) {
+            const down = ControllerSupport.isButtonDown(input, button);
+            const pressed = down && !this.controllerButtonDown[button];
+            this.controllerButtonDown[button] = down;
+            if (
+                pressedButton === ButtonMapping.NO_BINDING &&
+                pressed &&
+                !ControllerSupport.isDirectionalButton(button) &&
+                !this.isDraftDirectionButton(button)
+            ) {
+                pressedButton = button;
+            }
+        }
+        return pressedButton;
+    }
+
+    private isDraftDirectionButton(button: number): boolean {
+        return (
+            this.draftButtonMapping.controllerUp === button ||
+            this.draftButtonMapping.controllerDown === button ||
+            this.draftButtonMapping.controllerLeft === button ||
+            this.draftButtonMapping.controllerRight === button
+        );
+    }
+
+    private isControllerUpPressed(): boolean {
+        const down = ControllerSupport.isUpDown(this.gc.getInput());
+        const pressed = down && !this.controllerUpDown;
+        this.controllerUpDown = down;
+        return pressed;
+    }
+
+    private isControllerDownPressed(): boolean {
+        const down = ControllerSupport.isDownDown(this.gc.getInput());
+        const pressed = down && !this.controllerDownDown;
+        this.controllerDownDown = down;
+        return pressed;
+    }
+
+    private isControllerLeftPressed(): boolean {
+        const down = ControllerSupport.isLeftDown(this.gc.getInput());
+        const pressed = down && !this.controllerLeftDown;
+        this.controllerLeftDown = down;
+        return pressed;
+    }
+
+    private isControllerRightPressed(): boolean {
+        const down = ControllerSupport.isRightDown(this.gc.getInput());
+        const pressed = down && !this.controllerRightDown;
+        this.controllerRightDown = down;
+        return pressed;
+    }
+
+    private resizeControllerButtonState(input: Input): void {
+        const length = ControllerSupport.getButtonScanLimit(input);
+        if (this.controllerButtonDown.length < length) {
+            const previousLength = this.controllerButtonDown.length;
+            this.controllerButtonDown.length = length;
+            this.controllerButtonDown.fill(false, previousLength);
+        } else if (this.controllerButtonDown.length > length) {
+            this.controllerButtonDown.length = length;
+        }
+    }
+
+    private syncControllerInputState(): void {
+        const input = this.gc.getInput();
+        this.resizeControllerButtonState(input);
+        this.controllerUpDown = ControllerSupport.isUpDown(input);
+        this.controllerDownDown = ControllerSupport.isDownDown(input);
+        this.controllerLeftDown = ControllerSupport.isLeftDown(input);
+        this.controllerRightDown = ControllerSupport.isRightDown(input);
+        for (let button = 0; button < this.controllerButtonDown.length; button++) {
+            this.controllerButtonDown[button] = ControllerSupport.isButtonDown(input, button);
+        }
     }
 
     private getCurrentAction(): number {
@@ -430,7 +510,10 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                 break;
             case InputMode.STATE_READING:
                 if (this.armDelay > 0) {
+                    this.syncControllerInputState();
                     this.armDelay--;
+                } else {
+                    this.bindControllerInputPressed();
                 }
                 break;
             case InputMode.STATE_READ_FADE:
@@ -446,6 +529,7 @@ export class InputMode implements IMode, ControllerListener, KeyListener, IFadeL
                     } else {
                         this.state = InputMode.STATE_READING;
                         this.armDelay = InputMode.ARM_DELAY;
+                        this.syncControllerInputState();
                     }
                 }
                 break;
