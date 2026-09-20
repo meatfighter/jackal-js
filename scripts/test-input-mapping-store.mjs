@@ -36,10 +36,19 @@ async function loadStore() {
         `from "${helperModuleUrl}";`
     );
     const storageModuleUrl = compileModule(storageSource);
-    const source = readFileSync(new URL("../pwa/src/app/JackalInputMappingStore.ts", import.meta.url), "utf8").replace(
-        `from "./DeploymentStorage.js";`,
-        `from "${storageModuleUrl}";`
-    );
+    const buttonMappingModuleUrl = compileModule(`
+        export class ButtonMapping {
+            static NO_BINDING = -1;
+            static DEFAULT_CONTROLLER_UP = 12;
+            static DEFAULT_CONTROLLER_DOWN = 13;
+            static DEFAULT_CONTROLLER_LEFT = 14;
+            static DEFAULT_CONTROLLER_RIGHT = 15;
+            static isReservedKey(key) { return key === 1; }
+        }
+    `);
+    const source = readFileSync(new URL("../pwa/src/app/JackalInputMappingStore.ts", import.meta.url), "utf8")
+        .replace(`from "../jackal/ButtonMapping.js";`, `from "${buttonMappingModuleUrl}";`)
+        .replace(`from "./DeploymentStorage.js";`, `from "${storageModuleUrl}";`);
     return import(compileModule(source));
 }
 
@@ -92,6 +101,37 @@ test("Space survives input mapping persistence as an ordinary browser gameplay k
     assert.equal(store.restore(restored), true);
     assert.equal(restored.keyGun, 57);
     assert.deepEqual(restored, saved);
+});
+
+test("reserved keys, duplicate bindings, and D-pad action bindings are rejected on save and restore", async () => {
+    storage.clear();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+
+    const invalidCases = [
+        createMapping({ keyGun: 1 }),
+        createMapping({ keyGun: 45 }),
+        createMapping({ controllerGun: 0 }),
+        createMapping({ controllerGun: 12 })
+    ];
+    for (const invalid of invalidCases) {
+        const store = new JackalInputMappingStore();
+        assert.equal(store.save(invalid), false);
+        assert.equal(storage.has(key), false);
+    }
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), keyGun: 1 }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), controllerGun: 12 }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+
+    const directionOnDpad = createMapping({ controllerUp: 12, controllerDown: 13, controllerLeft: 14, controllerRight: 15 });
+    assert.equal(new JackalInputMappingStore().save(directionOnDpad), true);
 });
 
 test("controller mappings outside the runtime 64-button scan range are rejected", async () => {
