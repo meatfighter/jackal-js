@@ -106,13 +106,27 @@ test("playback activation is attempt-scoped and stale Continue cleanup cannot ta
 test("synchronous post-commit UI hooks are rechecked before RUNNING", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
+    const launchPause = launch.indexOf("appContainer.getInput().pause();");
+    const launchStart = launch.indexOf("await appContainer.start();");
     const launchFocus = launch.indexOf("this.viewport.focusCanvas();");
     const launchGuard = launch.indexOf(
         "if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)",
         launchFocus
     );
-    const launchRunning = launch.indexOf('this.pwaSessionState = "running";', launchFocus);
-    assert.ok(launchFocus >= 0 && launchGuard > launchFocus && launchRunning > launchGuard);
+    const launchResume = launch.indexOf("appContainer.getInput().resume();", launchGuard);
+    const launchClear = launch.indexOf("mainGame.clearInputPressedRecords();", launchResume);
+    const launchRunning = launch.indexOf('this.pwaSessionState = "running";', launchClear);
+    const launchUnsuspend = launch.indexOf("mainGame.setBrowserSuspended(false);", launchRunning);
+    assert.ok(
+        launchPause >= 0 &&
+            launchStart > launchPause &&
+            launchFocus > launchStart &&
+            launchGuard > launchFocus &&
+            launchResume > launchGuard &&
+            launchClear > launchResume &&
+            launchRunning > launchClear &&
+            launchUnsuspend > launchRunning
+    );
 
     const resume = source.slice(source.indexOf("private async resumeLiveGameFromMenu"), source.indexOf("private removeMenuOverlay"));
     const resumeFocus = resume.indexOf("this.viewport.focusCanvas();");
