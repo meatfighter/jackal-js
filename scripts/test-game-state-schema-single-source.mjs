@@ -24,9 +24,14 @@ test("PWA shell and store share the same game-state storage gateway", () => {
     assert.doesNotMatch(webAppSource, /localStorage\.(?:getItem|setItem|removeItem)/);
     assert.match(storeSource, /inspectStoredGameState/);
     assert.match(storeSource, /writeStoredGameState/);
+    assert.match(storeSource, /isAuthorized: \(\) => boolean/);
     assert.match(storeSource, /clearStoredGameState/);
     assert.match(storageSource, /GAME_STATE_STORAGE_KEY/);
     assert.match(storageSource, /isSupportedGameStateSnapshot/);
-    assert.match(storageSource, /existing\.status === "unavailable" \|\| existing\.status === "invalid"/);
+    assert.match(storageSource, /status: "unsupported-future"/);
+    assert.match(storageSource, /reason: "not-authorized"/);
+    assert.match(storageSource, /isAuthorized\(\)/);
+    assert.match(storageSource, /reason: "read-failed"/);
+    assert.match(storageSource, /reason: "invalid-existing"/);
     assert.doesNotMatch(storageSource, /shouldPreserveUnsupportedGameStateSnapshot/);
 });
