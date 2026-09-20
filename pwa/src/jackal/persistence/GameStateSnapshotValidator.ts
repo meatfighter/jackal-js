@@ -1,4 +1,4 @@
-import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
+import { Input, isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
 import { ButtonMapping } from "../ButtonMapping.js";
@@ -75,7 +75,6 @@ const MAX_ENCODED_RECORD_FIELDS = 512;
 const MAX_ENCODED_STRING_LENGTH = 4096;
 const MAX_BIGINT_DIGITS = 128;
 const MAX_INPUT_ASSIGNMENTS = InputMode.ACTIONS.length;
-const MAX_INPUT_CODE = 65_535;
 const MAX_CONTROLLER_BUTTON_INDEX = InputMode.GAMEPAD_BUTTON_INDEX_LIMIT - 1;
 const MAX_JEEP_YEAH_BULLETS = 4096;
 const MAX_FRIENDLY_SOLDIER_COUNT = 4096;
@@ -359,7 +358,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         !hasExactFields(value, INPUT_MODE_EXTRA_FIELDS) ||
         !isMenuSnapshot(value.menu) ||
         !isButtonMappingSnapshot(value.draftButtonMapping) ||
-        !isUniqueIntegerArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS, MAX_INPUT_CODE) ||
+        !isUniqueKeyArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS) ||
         !isUniqueIntegerArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS, MAX_CONTROLLER_BUTTON_INDEX)
     ) {
         return false;
@@ -660,6 +659,15 @@ function isNullableSongId(value: unknown): boolean {
     return value === null || isSongId(value);
 }
 
+function isUniqueKeyArray(value: unknown, maxLength: number): value is number[] {
+    return (
+        Array.isArray(value) &&
+        value.length <= maxLength &&
+        new Set(value).size === value.length &&
+        value.every((entry) => isKeyBinding(entry) && entry !== ButtonMapping.NO_BINDING)
+    );
+}
+
 function isUniqueIntegerArray(value: unknown, maxLength: number, maximum: number): value is number[] {
     return (
         Array.isArray(value) &&
@@ -672,7 +680,10 @@ function isUniqueIntegerArray(value: unknown, maxLength: number, maximum: number
 function isKeyBinding(value: unknown): value is number {
     return (
         value === ButtonMapping.NO_BINDING ||
-        (isIntegerInRange(value, 0, MAX_INPUT_CODE) && !ButtonMapping.isReservedKey(value))
+        (typeof value === "number" &&
+            Number.isInteger(value) &&
+            Input.isBrowserKeyCodeSupported(value) &&
+            !ButtonMapping.isReservedKey(value))
     );
 }
 
