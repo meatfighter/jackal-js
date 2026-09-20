@@ -5,6 +5,7 @@ import type { HardEndingMode } from "../HardEndingMode.js";
 import type { InputMode } from "../InputMode.js";
 import type { IntroMapMode } from "../IntroMapMode.js";
 import type { IntroMode } from "../IntroMode.js";
+import type { KonamiCode } from "../KonamiCode.js";
 import type { JeepHereMode } from "../JeepHereMode.js";
 import type { JeepYeahBullet } from "../JeepYeahBullet.js";
 import type { JeepYeahExplosion } from "../JeepYeahExplosion.js";
@@ -66,7 +67,6 @@ export const MENU_FIELD_NAMES = fieldsOf<Menu>()(
     "iconY",
     "selectedIndex",
     "icon",
-    "buttonReleased",
     "selectState",
     "iconVy",
     "iconMidY",
@@ -76,6 +76,8 @@ export const MENU_FIELD_NAMES = fieldsOf<Menu>()(
     "inputEnabled",
     "konamiCodeTest"
 );
+
+export const KONAMI_CODE_FIELD_NAMES = fieldsOf<KonamiCode>()("enabled", "sequenceIndex");
 
 export const BUTTON_MAPPING_FIELD_NAMES = fieldsOf<ButtonMapping>()(
     "keyUp",
