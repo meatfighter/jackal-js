@@ -331,10 +331,20 @@ function isElementLayers(value: unknown, entityIds: Set<number>): boolean {
 function isModeExtraSnapshot(modeId: StandaloneModeId, modeFields: EncodedRecord, extra: unknown): boolean {
     switch (modeId) {
         case "INTRO":
+            return isExactObject(extra, "menu") && isRequiredMenuSnapshot(extra.menu, 1);
         case "CONTINUE":
         case "DIFFICULTY":
+            return (
+                isExactObject(extra, "menu") &&
+                isRequiredMenuSnapshot(extra.menu, 1) &&
+                isSimpleMenuSnapshotConsistent(modeFields, extra.menu)
+            );
         case "OPTIONS":
-            return isExactObject(extra, "menu") && isMenuSnapshot(extra.menu);
+            return (
+                isExactObject(extra, "menu") &&
+                isRequiredMenuSnapshot(extra.menu, 2) &&
+                isSimpleMenuSnapshotConsistent(modeFields, extra.menu)
+            );
         case "INPUT":
             return isExactObject(extra, "input") && isInputModeExtraSnapshot(modeFields, extra.input);
         case "YEAH":
@@ -349,7 +359,7 @@ function isExactObject(value: unknown, key: string): value is UnknownRecord {
     return isRecord(value) && Object.keys(value).length === 1 && Object.hasOwn(value, key);
 }
 
-function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
+function isMenuSnapshot(value: unknown, maximumSelectedIndex: number = 2): value is MenuSnapshot | null {
     if (value === null) {
         return true;
     }
@@ -367,7 +377,7 @@ function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
         isFiniteNumber(fields.x) &&
         isFiniteNumber(fields.y) &&
         isFiniteNumber(fields.iconY) &&
-        isIntegerInRange(fields.selectedIndex, 0, 2) &&
+        isIntegerInRange(fields.selectedIndex, 0, maximumSelectedIndex) &&
         isIntegerInRange(fields.icon, 0, 5) &&
         isIntegerInRange(fields.selectState, 0, 2) &&
         isFiniteNumber(fields.iconVy) &&
@@ -378,6 +388,27 @@ function isMenuSnapshot(value: unknown): value is MenuSnapshot | null {
         typeof fields.inputEnabled === "boolean" &&
         typeof fields.konamiCodeTest === "boolean"
     );
+}
+
+function isRequiredMenuSnapshot(value: unknown, maximumSelectedIndex: number): value is MenuSnapshot {
+    return value !== null && isMenuSnapshot(value, maximumSelectedIndex);
+}
+
+function isSimpleMenuSnapshotConsistent(modeFields: EncodedRecord, menu: MenuSnapshot): boolean {
+    const optionSelected = modeFields.optionSelectedFlag;
+    const selectedIndex = modeFields.selectedIndex;
+    if (typeof optionSelected !== "boolean" || !isIntegerInRange(selectedIndex, 0, 2)) {
+        return false;
+    }
+    const menuSelectedIndex = menu.fields.selectedIndex;
+    const menuSelectionMade = menu.fields.selectionMade;
+    if (typeof menuSelectionMade !== "boolean" || typeof menuSelectedIndex !== "number") {
+        return false;
+    }
+    if (optionSelected) {
+        return menuSelectionMade && menuSelectedIndex === selectedIndex;
+    }
+    return !menuSelectionMade;
 }
 
 function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot | null {
@@ -416,7 +447,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
     if (
         !isRecord(value) ||
         !hasExactFields(value, INPUT_MODE_EXTRA_FIELDS) ||
-        !isMenuSnapshot(value.menu) ||
+        !isMenuSnapshot(value.menu, 2) ||
         !isButtonMappingSnapshot(value.draftButtonMapping) ||
         !isUniqueKeyArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS) ||
         !isUniqueIntegerArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS, MAX_CONTROLLER_BUTTON_INDEX)
