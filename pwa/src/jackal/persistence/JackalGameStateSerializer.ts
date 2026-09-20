@@ -31,6 +31,7 @@ import { DifficultyMode } from "../DifficultyMode.js";
 import {
     type ButtonMappingSnapshot,
     type EncodedRecord,
+    type EncodedValue,
     type EntitySnapshot,
     type GenericModeExtraSnapshot,
     type InputModeExtraSnapshot,
