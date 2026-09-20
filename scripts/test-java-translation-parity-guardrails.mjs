@@ -69,9 +69,13 @@ test("Java field hiding remains represented by separate JavaScript properties", 
 
     const serializer = read("pwa/src/jackal/persistence/JackalGameStateSerializer.ts");
     const codec = read("pwa/src/jackal/persistence/GameStateCodec.ts");
-    assert.match(serializer, /const fields = encodeObjectFields\(entity, context\);/);
-    assert.match(codec, /for \(const key of Object\.keys\(source\)\)/);
-    assert.match(codec, /record\[key\] = encodeValue\(value, context\)/);
+    const policies = read("pwa/src/jackal/persistence/GameStateFieldPolicies.ts");
+    assert.match(serializer, /const fields = encodeNamedFields\(entity, getEntityDurableFieldNames\(type\), context\);/);
+    assert.match(serializer, /decodeNamedFieldsInto\([\s\S]*getEntityDurableFieldNames\(entitySnapshot\.type\)/);
+    assert.match(policies, /Explosion:\s*\{ sourceEnemy: ENEMY_ENTITY_TYPES \}/);
+    assert.match(policies, /Fire:\s*\{ sourceEnemy: ENEMY_ENTITY_TYPES \}/);
+    assert.match(codec, /throw new Error\("Unregistered object reference in durable Jackal game state\."\)/);
+    assert.doesNotMatch(codec, /encodeObjectFields|Object\.keys\(source\)/);
     assert.doesNotMatch(serializer, /record\.enemy\s*=|delete record\.sourceEnemy|normalizeTranslatedEntityFields/);
 });
 
