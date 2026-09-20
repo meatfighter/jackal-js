@@ -181,7 +181,13 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         entityTypes.set(entitySnapshot.id, entitySnapshot.type);
     }
     const mainFields = snapshot.mainFields;
-    if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
+    if (
+        !isEncodedRecord(snapshot.playerFields, entityIds) ||
+        Object.hasOwn(snapshot.playerFields, "fireReleased") ||
+        Object.hasOwn(snapshot.playerFields, "shootReleased") ||
+        !isEncodedRecord(gameMode.fields, entityIds) ||
+        !isEncodedRecord(mainFields)
+    ) {
         return false;
     }
     if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
