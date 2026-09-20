@@ -70,9 +70,6 @@
         "Main.controllers": {
             "reason": "Browser gamepads are discovered through the browser input layer."
         },
-        "Main.findNativeDisplayMode": {
-            "reason": "Desktop display modes have no browser equivalent."
-        },
         "Main.fullscreenFallbackActive": {
             "reason": "Browser fullscreen fallback is owned by the PWA shell."
         },
