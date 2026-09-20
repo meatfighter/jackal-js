@@ -106,12 +106,17 @@ function baseSnapshot(fields, version) {
         savedAt: "2026-08-31T00:00:00.000Z",
         kind: "mode",
         mainFields: encodedFields(fields.MAIN_FIELD_NAMES, {
+            fading: false,
+            fadeIndex: 0,
+            fadeOut: false,
             stageIndex: 0,
             score: 0,
             extraLives: 0,
+            hasMissiles: false,
             missilePower: 0,
             friendlySoldiersPickedUp: 0,
-            hardMode: false
+            hardMode: false,
+            continued: false
         }),
         konamiCodeFields: null,
         random: { seed0: 1, seed1: 2, seed2: 3 },
@@ -234,6 +239,19 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const badTimestamp = modeSnapshot(fields, currentVersion);
     badTimestamp.savedAt = "not-a-date";
     assert.equal(validator.isSupportedGameStateSnapshot(badTimestamp), false);
+
+    const invalidMainBoolean = modeSnapshot(fields, currentVersion);
+    invalidMainBoolean.mainFields.hasMissiles = 0;
+    assert.equal(validator.isSupportedGameStateSnapshot(invalidMainBoolean), false);
+
+    const invalidFadeIndex = modeSnapshot(fields, currentVersion);
+    invalidFadeIndex.mainFields.fadeIndex = 24;
+    assert.equal(validator.isSupportedGameStateSnapshot(invalidFadeIndex), false);
+
+    const invalidActiveFadeBoundary = modeSnapshot(fields, currentVersion);
+    invalidActiveFadeBoundary.mainFields.fading = true;
+    invalidActiveFadeBoundary.mainFields.fadeIndex = 23;
+    assert.equal(validator.isSupportedGameStateSnapshot(invalidActiveFadeBoundary), false);
 
     const badAudioShape = modeSnapshot(fields, currentVersion);
     badAudioShape.audioState.extra = true;
