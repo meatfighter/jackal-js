@@ -81,6 +81,24 @@ function clearFullscreenPreference(): boolean {
     return fullscreenStorage.remove();
 }
 
+export function readDifficultyPreference(): boolean {
+    const result = difficultyStorage.read();
+    if (!result.available || result.value === null) {
+        return DEFAULT_HARD_MODE;
+    }
+    if (result.value === "hard") {
+        return true;
+    }
+    if (result.value === "normal") {
+        return false;
+    }
+    return DEFAULT_HARD_MODE;
+}
+
+export function writeDifficultyPreference(hardMode: boolean, isAuthorized: () => boolean): boolean {
+    return isAuthorized() && difficultyStorage.write(hardMode ? "hard" : "normal");
+}
+
 function clearDifficultyPreference(): boolean {
     return difficultyStorage.remove();
 }
