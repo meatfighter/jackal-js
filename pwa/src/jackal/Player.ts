@@ -92,6 +92,20 @@ export class Player {
     public inSwamp: boolean = false;
 
     /** Reconnects browser/runtime-only links after constructor-free save restoration. */
+    public resyncInputAfterBrowserResume(): void {
+        const fireDown = this.input.isFire();
+        const shootDown = this.input.isShoot();
+        this.fireReleased = !fireDown;
+        this.shootReleased = !shootDown;
+        if (shootDown) {
+            if (this.gunArmed === 0) {
+                this.gunArmed = Player.GUN_ARMED_DELAY;
+            }
+        } else {
+            this.gunArmed = 0;
+        }
+    }
+
     public restoreRuntimeReferences(main: Main, gameMode: GameMode): void {
         this.main = main;
         this.gameMode = gameMode;
