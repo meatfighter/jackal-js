@@ -26,6 +26,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public static readonly I_FADE_TIME: number = javaFloat(1 / InputMode.FADE_TIME);
     public static readonly DONE_DELAY: number = 30;
     public static readonly ARM_DELAY: number = 8;
+    public static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = 64;
 
     public static readonly INPUT_TITLE: string = "INPUT";
     public static readonly INPUT_TITLE_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2);
@@ -474,7 +475,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         for (let controller = 0; controller < controllerCount; controller++) {
             length = Math.max(length, input.getButtonCount(controller));
         }
-        length = Math.min(length, 64);
+        length = Math.min(length, InputMode.GAMEPAD_BUTTON_INDEX_LIMIT);
         if (this.controllerButtonDown.length < length) {
             const previousLength = this.controllerButtonDown.length;
             this.controllerButtonDown.length = length;
