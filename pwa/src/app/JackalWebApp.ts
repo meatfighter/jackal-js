@@ -513,6 +513,7 @@ export class JackalWebApp {
         const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
         appContainer.setPreserveAudioCacheOnDestroy(true);
         appContainer.setLoopSuspended(true);
+        appContainer.getInput().pause();
         appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
         appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
         this.container = appContainer;
@@ -575,6 +576,7 @@ export class JackalWebApp {
         if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer) {
             return;
         }
+        appContainer.getInput().resume();
         mainGame.clearInputPressedRecords();
         if (!this.isStartingGameSession(session, audio)) {
             return;
