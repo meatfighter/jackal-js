@@ -356,6 +356,14 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const unsafeVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
     assert.equal(validator.isSupportedGameStateSnapshot(unsafeVelocity), false);
 
+    const unsafePlayerFieldName = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    unsafePlayerFieldName.playerFields = JSON.parse('{"__proto__":{"kind":"nullRef"}}');
+    assert.equal(validator.isSupportedGameStateSnapshot(unsafePlayerFieldName), false);
+
+    const unsafeEntityFieldName = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    unsafeEntityFieldName.gameMode.entities[0].fields = JSON.parse('{"constructor":{"kind":"nullRef"}}');
+    assert.equal(validator.isSupportedGameStateSnapshot(unsafeEntityFieldName), false);
+
     const mismatchedStage = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     mismatchedStage.gameMode.fields.stageIndex = 1;
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedStage), false);
