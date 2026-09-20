@@ -3,6 +3,7 @@ import { MainConstants } from "../../java/MainConstants.js";
 import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
 import { ButtonMapping } from "../ButtonMapping.js";
 import { InputMode } from "../InputMode.js";
+import { TILE_TYPE_CONVEYOR } from "../GameTileTypes.js";
 import {
     type AudioStateSnapshot,
     type ButtonMappingSnapshot,
@@ -263,15 +264,10 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     ) {
         return false;
     }
-    if (gameMode.fields.stageIndex !== mainFields.stageIndex) {
-        return false;
-    }
-    const bossCameraPan = gameMode.fields.bossCameraPan;
-    const endingCameraPan = gameMode.fields.endingCameraPan;
-    if (typeof bossCameraPan !== "boolean" || typeof endingCameraPan !== "boolean" || (bossCameraPan && endingCameraPan)) {
-        return false;
-    }
-    if ((bossCameraPan || endingCameraPan) && !isCameraPanListenerReference(gameMode.fields.cameraPanListener, entityIds, entityTypes)) {
+    if (
+        gameMode.fields.stageIndex !== mainFields.stageIndex ||
+        !isGameModeFieldsValid(gameMode.fields, entityIds, entityTypes)
+    ) {
         return false;
     }
     const paused = gameMode.fields.paused;
@@ -297,6 +293,98 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         }
     }
     return isElementLayers(gameMode.elements, entityIds);
+}
+
+function isGameModeFieldsValid(
+    fields: EncodedRecord,
+    entityIds: ReadonlySet<number>,
+    entityTypes: ReadonlyMap<number, GameElementTypeId>
+): boolean {
+    if (
+        !isEncodedIntegerMatrix(fields.tileMap, 0, 32_767) ||
+        !isEncodedIntegerMatrix(fields.typesMap, 0, TILE_TYPE_CONVEYOR) ||
+        !isEncodedBooleanArray(fields.triggedGroups) ||
+        !isIntegerInRange(fields.waterAlphaIndex, 0, 135) ||
+        !isFiniteNumberInRange(fields.conveyorOffset, 0, 16, false) ||
+        !isIntegerInRange(fields.conveyorLastIndex, 0, 15) ||
+        !isFiniteNumberInRange(fields.conveyorDelta, 0, 16, false) ||
+        !isFiniteNumberInRange(fields.cameraX, 0, MAX_POSITION_MAGNITUDE) ||
+        !isFiniteNumberInRange(fields.cameraY, 0, MAX_POSITION_MAGNITUDE) ||
+        !isFiniteNumberInRange(fields.maxCameraX, 0, MAX_POSITION_MAGNITUDE) ||
+        !isFiniteNumberInRange(fields.maxCameraY, 0, MAX_POSITION_MAGNITUDE) ||
+        typeof fields.paused !== "boolean" ||
+        !isIntegerInRange(fields.triggerY, 0, 32_767) ||
+        typeof fields.bossCameraPan !== "boolean" ||
+        typeof fields.endingCameraPan !== "boolean" ||
+        (fields.bossCameraPan && fields.endingCameraPan) ||
+        typeof fields.playing !== "boolean" ||
+        !isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) ||
+        typeof fields.stageCompletedFlag !== "boolean" ||
+        !isIntegerInRange(fields.stageCompletedDelay, 0, 228)
+    ) {
+        return false;
+    }
+
+    const cameraPanListener = fields.cameraPanListener;
+    if (
+        cameraPanListener !== null &&
+        !isCameraPanListenerReference(cameraPanListener, entityIds, entityTypes)
+    ) {
+        return false;
+    }
+    return !(fields.bossCameraPan || fields.endingCameraPan) || cameraPanListener !== null;
+}
+
+function isEncodedIntegerMatrix(value: unknown, min: number, max: number): boolean {
+    const rows = encodedArrayItems(value);
+    if (rows === null || rows.length === 0) {
+        return false;
+    }
+    let width = -1;
+    for (const row of rows) {
+        const items = encodedArrayItems(row);
+        if (items === null || items.length === 0 || (width >= 0 && items.length !== width)) {
+            return false;
+        }
+        width = items.length;
+        for (const item of items) {
+            if (!isIntegerInRange(item, min, max)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function isEncodedBooleanArray(value: unknown): boolean {
+    const items = encodedArrayItems(value);
+    return items !== null && items.every((item) => typeof item === "boolean");
+}
+
+function encodedArrayItems(value: unknown): readonly unknown[] | null {
+    return (
+        isRecord(value) &&
+        hasExactFields(value, ["kind", "items"]) &&
+        value.kind === "array" &&
+        Array.isArray(value.items) &&
+        value.items.length <= MAX_ENCODED_ARRAY_LENGTH
+    )
+        ? value.items
+        : null;
+}
+
+function isFiniteNumberInRange(
+    value: unknown,
+    min: number,
+    max: number,
+    inclusiveMax: boolean = true
+): value is number {
+    return (
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value >= min &&
+        (inclusiveMax ? value <= max : value < max)
+    );
 }
 
 function isCameraPanListenerReference(
