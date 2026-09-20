@@ -26,7 +26,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public static readonly I_FADE_TIME: number = javaFloat(1 / InputMode.FADE_TIME);
     public static readonly DONE_DELAY: number = 30;
     public static readonly ARM_DELAY: number = 8;
-    public static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = 64;
+    public static readonly GAMEPAD_BUTTON_INDEX_LIMIT: number = Input.BROWSER_CONTROLLER_BUTTON_LIMIT;
 
     public static readonly INPUT_TITLE: string = "INPUT";
     public static readonly INPUT_TITLE_X: number = javaFloat((MainConstants.DISPLAY_WIDTH - (InputMode.INPUT_TITLE.length << 5)) / 2);
@@ -71,11 +71,11 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public assignedControllerButtons: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
-    private controllerButtonDown: boolean[] = [];
-    private controllerUpDown: boolean = false;
-    private controllerDownDown: boolean = false;
-    private controllerLeftDown: boolean = false;
-    private controllerRightDown: boolean = false;
+    private controllerButtonDown: boolean[][] = [];
+    private controllerDirectionDown: boolean[][] = [];
+    private controllerConnectionGenerations: number[] = [];
+    private lastControllerSampleSequence: number = -1;
+    private blockedKeyboardKeys: Set<number> = new Set();
     public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
@@ -141,11 +141,22 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         this.assignedControllerButtons.clear();
         this.message = "";
         this.armDelay = InputMode.ARM_DELAY;
-        this.gc.getInput().resetAdditionalControllerDirectionAxisCalibration();
+        const input = this.gc.getInput();
+        input.resetAdditionalControllerDirectionAxisCalibration();
         this.addInputListeners();
+        this.controllerButtonDown.length = 0;
+        this.controllerDirectionDown.length = 0;
+        this.controllerConnectionGenerations.length = 0;
+        this.lastControllerSampleSequence = -1;
+        this.blockedKeyboardKeys.clear();
+        for (let key = 0; key < Input.BROWSER_KEY_CODE_LIMIT; key++) {
+            if (Input.isBrowserKeyCodeSupported(key) && input.isKeyDown(key)) {
+                this.blockedKeyboardKeys.add(key);
+            }
+        }
         this.syncControllerInputState();
-        this.gc.getInput().clearKeyPressedRecord();
-        this.gc.getInput().clearControlPressedRecord();
+        input.clearKeyPressedRecord();
+        input.clearControlPressedRecord();
     }
 
     /** Makes the browser listener registration match the restored mode state. */
@@ -201,11 +212,15 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     public keyPressed(i: number, c: string): void {
-        if (this.state !== InputMode.STATE_READING) {
+        void c;
+        if (!Input.isBrowserKeyCodeSupported(i) || ButtonMapping.isReservedKey(i)) {
             return;
         }
-
-        if (ButtonMapping.isReservedKey(i)) {
+        if (this.state !== InputMode.STATE_READING || this.armDelay > 0) {
+            this.blockedKeyboardKeys.add(i);
+            return;
+        }
+        if (this.blockedKeyboardKeys.has(i)) {
             return;
         }
 
@@ -214,10 +229,14 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
             return;
         }
 
+        this.blockedKeyboardKeys.add(i);
         this.advance();
     }
 
-    public keyReleased(i: number, c: string): void {}
+    public keyReleased(i: number, c: string): void {
+        void c;
+        this.blockedKeyboardKeys.delete(i);
+    }
 
     private bindDraftKeyboardKey(i: number): boolean {
         if (this.assignedKeys.has(i)) {
@@ -375,59 +394,91 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     private bindControllerInputPressed(): void {
-        if (this.state !== InputMode.STATE_READING) {
-            this.syncControllerInputState();
+        const candidate = this.sampleControllerInput(true);
+        if (candidate === ButtonMapping.NO_BINDING) {
             return;
         }
 
-        const direction = this.getPressedControllerDirection();
-        if (direction !== ButtonMapping.NO_BINDING && !this.isActionStep()) {
-            this.bindControllerDirection(direction);
+        if (!this.bindDraftControllerButton(candidate)) {
+            this.message = "ALREADY USED";
             return;
         }
-
-        const button = this.getPressedNonDirectionalControllerButton();
-        if (button !== ButtonMapping.NO_BINDING) {
-            if (!this.bindDraftControllerButton(button)) {
-                this.message = "ALREADY USED";
-                return;
-            }
-            this.advance();
-        }
+        this.advance();
     }
 
-    private getPressedControllerDirection(): number {
-        if (this.isControllerUpPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_UP;
-        }
-        if (this.isControllerDownPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
-        }
-        if (this.isControllerLeftPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
-        }
-        if (this.isControllerRightPressed()) {
-            return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-        }
-        return ButtonMapping.NO_BINDING;
-    }
-
-    private getPressedNonDirectionalControllerButton(): number {
+    private sampleControllerInput(selectCandidate: boolean, forceBaseline: boolean = false): number {
         const input = this.gc.getInput();
-        this.resizeControllerButtonState(input);
+        const status = input.getControllerSampleStatus();
+        if (!status.valid) {
+            return ButtonMapping.NO_BINDING;
+        }
+
+        const firstSample = this.lastControllerSampleSequence < 0;
+        this.lastControllerSampleSequence = status.sequence;
+        const controllerCount = input.getControllerCount();
+        this.controllerButtonDown.length = controllerCount;
+        this.controllerDirectionDown.length = controllerCount;
+        this.controllerConnectionGenerations.length = controllerCount;
+
+        const directionPressed = [false, false, false, false];
         let pressedButton = ButtonMapping.NO_BINDING;
-        for (let button = 0; button < this.controllerButtonDown.length; button++) {
-            const down = input.isButtonPressed(button, Input.ANY_CONTROLLER);
-            const pressed = down && !this.controllerButtonDown[button];
-            this.controllerButtonDown[button] = down;
-            if (
-                pressedButton === ButtonMapping.NO_BINDING &&
-                pressed &&
-                !this.isDirectionalGamepadButton(button) &&
-                !this.isDraftDirectionButton(button)
-            ) {
-                pressedButton = button;
+        for (let controller = 0; controller < controllerCount; controller++) {
+            const generation = input.getControllerConnectionGeneration(controller);
+            const previousGeneration = this.controllerConnectionGenerations[controller] ?? 0;
+            const ownerChanged = generation === 0 || generation !== previousGeneration;
+            this.controllerConnectionGenerations[controller] = generation;
+            const baseline = forceBaseline || firstSample || status.baselineOnly || ownerChanged;
+
+            let directions = this.controllerDirectionDown[controller];
+            if (directions === undefined) {
+                directions = [false, false, false, false];
+                this.controllerDirectionDown[controller] = directions;
             }
+            const directionLevels = [
+                input.isControllerUp(controller),
+                input.isControllerDown(controller),
+                input.isControllerLeft(controller),
+                input.isControllerRight(controller)
+            ];
+            for (let direction = 0; direction < directionLevels.length; direction++) {
+                const down = directionLevels[direction]!;
+                if (selectCandidate && !baseline && down && !directions[direction]) {
+                    directionPressed[direction] = true;
+                }
+                directions[direction] = down;
+            }
+
+            const buttonCount = Math.min(input.getButtonCount(controller), InputMode.GAMEPAD_BUTTON_INDEX_LIMIT);
+            let buttons = this.controllerButtonDown[controller];
+            if (buttons === undefined) {
+                buttons = [];
+                this.controllerButtonDown[controller] = buttons;
+            }
+            buttons.length = buttonCount;
+            for (let button = 0; button < buttonCount; button++) {
+                const down = input.isButtonPressed(button, controller);
+                const wasDown = buttons[button] ?? false;
+                const pressed = selectCandidate && !baseline && down && !wasDown;
+                buttons[button] = down;
+                if (
+                    pressedButton === ButtonMapping.NO_BINDING &&
+                    pressed &&
+                    !input.isControllerButtonDirectional(button, controller) &&
+                    !this.isDraftDirectionButton(button)
+                ) {
+                    pressedButton = button;
+                }
+            }
+        }
+
+        if (!selectCandidate) {
+            return ButtonMapping.NO_BINDING;
+        }
+        if (!this.isActionStep()) {
+            if (directionPressed[0]) return ButtonMapping.CONTROLLER_DIRECTION_UP;
+            if (directionPressed[1]) return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
+            if (directionPressed[2]) return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
+            if (directionPressed[3]) return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
         }
         return pressedButton;
     }
@@ -441,64 +492,8 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         );
     }
 
-    private isControllerUpPressed(): boolean {
-        const down = this.gc.getInput().isControllerUp(Input.ANY_CONTROLLER);
-        const pressed = down && !this.controllerUpDown;
-        this.controllerUpDown = down;
-        return pressed;
-    }
-
-    private isControllerDownPressed(): boolean {
-        const down = this.gc.getInput().isControllerDown(Input.ANY_CONTROLLER);
-        const pressed = down && !this.controllerDownDown;
-        this.controllerDownDown = down;
-        return pressed;
-    }
-
-    private isControllerLeftPressed(): boolean {
-        const down = this.gc.getInput().isControllerLeft(Input.ANY_CONTROLLER);
-        const pressed = down && !this.controllerLeftDown;
-        this.controllerLeftDown = down;
-        return pressed;
-    }
-
-    private isControllerRightPressed(): boolean {
-        const down = this.gc.getInput().isControllerRight(Input.ANY_CONTROLLER);
-        const pressed = down && !this.controllerRightDown;
-        this.controllerRightDown = down;
-        return pressed;
-    }
-
-    private resizeControllerButtonState(input: Input): void {
-        let length = 0;
-        const controllerCount = input.getControllerCount();
-        for (let controller = 0; controller < controllerCount; controller++) {
-            length = Math.max(length, input.getButtonCount(controller));
-        }
-        length = Math.min(length, InputMode.GAMEPAD_BUTTON_INDEX_LIMIT);
-        if (this.controllerButtonDown.length < length) {
-            const previousLength = this.controllerButtonDown.length;
-            this.controllerButtonDown.length = length;
-            this.controllerButtonDown.fill(false, previousLength);
-        } else if (this.controllerButtonDown.length > length) {
-            this.controllerButtonDown.length = length;
-        }
-    }
-
     private syncControllerInputState(): void {
-        const input = this.gc.getInput();
-        this.resizeControllerButtonState(input);
-        this.controllerUpDown = input.isControllerUp(Input.ANY_CONTROLLER);
-        this.controllerDownDown = input.isControllerDown(Input.ANY_CONTROLLER);
-        this.controllerLeftDown = input.isControllerLeft(Input.ANY_CONTROLLER);
-        this.controllerRightDown = input.isControllerRight(Input.ANY_CONTROLLER);
-        for (let button = 0; button < this.controllerButtonDown.length; button++) {
-            this.controllerButtonDown[button] = input.isButtonPressed(button, Input.ANY_CONTROLLER);
-        }
-    }
-
-    private isDirectionalGamepadButton(button: number): boolean {
-        return button >= ButtonMapping.DEFAULT_CONTROLLER_UP && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+        this.sampleControllerInput(false, true);
     }
 
     private getCurrentAction(): number {
@@ -530,9 +525,9 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
                     if (++this.nameIndex === InputMode.NAMES.length) {
                         this.removeInputListeners();
                         this.commitDraftButtonMapping();
-                        this.main.notifyInputMappingChanged();
+                        const writeResult = this.main.notifyInputMappingChanged();
                         this.main.clearInputPressedRecords();
-                        this.message = "SAVED";
+                        this.message = writeResult.saved ? "SAVED" : "NOT SAVED";
                         this.delay = InputMode.DONE_DELAY;
                         this.state = InputMode.STATE_SAVED;
                     } else {
