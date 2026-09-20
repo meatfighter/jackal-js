@@ -394,6 +394,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             nameIndex < InputMode.ACTIONS.length &&
             delay === 0 &&
             assignmentCount === nameIndex &&
+            assignmentsMatchInputDraft(value, nameIndex) &&
             (message === "" || message === "ALREADY USED")
         );
     }
@@ -404,6 +405,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             delay <= InputMode.FADE_TIME &&
             armDelay === 0 &&
             assignmentCount === nameIndex + 1 &&
+            assignmentsMatchInputDraft(value, nameIndex + 1) &&
             message === ""
         );
     }
@@ -425,6 +427,38 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         (assignmentCount === 0 || assignmentCount === InputMode.ACTIONS.length) &&
         message === ""
     );
+}
+
+function assignmentsMatchInputDraft(snapshot: InputModeExtraSnapshot, completedSteps: number): boolean {
+    const draft = snapshot.draftButtonMapping;
+    if (draft === null) {
+        return false;
+    }
+    const assignedKeys = new Set(snapshot.assignedKeys);
+    const assignedControllers = new Set(snapshot.assignedControllerButtons);
+    const fields = [
+        ["keyUp", "controllerUp"],
+        ["keyDown", "controllerDown"],
+        ["keyLeft", "controllerLeft"],
+        ["keyRight", "controllerRight"],
+        ["keyGrenade", "controllerGrenade"],
+        ["keyGun", "controllerGun"],
+        ["keyStart", "controllerStart"]
+    ] as const;
+
+    for (let i = 0; i < fields.length; i++) {
+        const [keyField, controllerField] = fields[i];
+        const ownsKey = assignedKeys.has(draft.fields[keyField] as number);
+        const ownsController = assignedControllers.has(draft.fields[controllerField] as number);
+        if (i < completedSteps) {
+            if (ownsKey === ownsController) {
+                return false;
+            }
+        } else if (ownsKey || ownsController) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtraSnapshot {
