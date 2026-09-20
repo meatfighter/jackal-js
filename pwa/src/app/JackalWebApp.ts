@@ -690,11 +690,15 @@ export class JackalWebApp {
     }
 
     private clearStoredGameState(): void {
-        if (!this.getOwnership().owned) {
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        const isAuthorized = (): boolean => owner.owned && owner.isCurrent(epoch);
+        if (!isAuthorized()) {
             return;
         }
-        if (!clearStoredGameState()) {
+        if (!clearStoredGameState(isAuthorized)) {
             this.persistenceWarnings.report("The previous saved game could not be cleared.");
+            return;
         }
         this.gameStateStore = null;
     }
