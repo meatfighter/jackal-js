@@ -335,7 +335,7 @@ function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot
 
     const fields = value.fields;
     for (const key of ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"]) {
-        if (!isBinding(fields[key], MAX_INPUT_CODE)) {
+        if (!isKeyBinding(fields[key])) {
             return false;
         }
     }
@@ -669,6 +669,13 @@ function isUniqueIntegerArray(value: unknown, maxLength: number, maximum: number
         value.length <= maxLength &&
         new Set(value).size === value.length &&
         value.every((entry) => isIntegerInRange(entry, 0, maximum))
+    );
+}
+
+function isKeyBinding(value: unknown): value is number {
+    return (
+        value === ButtonMapping.NO_BINDING ||
+        (isIntegerInRange(value, 0, MAX_INPUT_CODE) && !ButtonMapping.isReservedKey(value))
     );
 }
 
