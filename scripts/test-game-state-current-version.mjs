@@ -5,6 +5,57 @@ import ts from "typescript";
 
 const slickModuleUrl = import.meta.resolve("slick2d-ts");
 
+const PLAYER_DURABLE_FIELDS = [
+    "x", "y", "angle", "nextAngle", "displayAngle", "angleVelocity", "angleSteps", "diagonalDelay",
+    "targetAngle", "lastTargetAngle", "fireAngle", "rumble", "invincible", "invincibleColor",
+    "weaponArmed", "gunArmed", "longRange", "respawning", "pows", "releaseablePows", "inSwamp"
+];
+const GAME_ELEMENT_DURABLE_FIELDS = ["removeFlag", "enemy", "enemyBullet", "x", "y", "layer", "changeLayerValue"];
+const HIT_ELEMENT_DURABLE_FIELDS = ["hitField", "hitX1", "hitY1", "hitX2", "hitY2", "trail", "trailIndex"];
+const ENEMY_DURABLE_FIELDS = [
+    "solid", "mine", "solidX1", "solidY1", "solidX2", "solidY2", "mineX1", "mineY1", "mineX2", "mineY2",
+    "bulletHits", "points", "explosionX", "explosionY", "playSoundOnRemove"
+];
+const TEST_ENTITY_DURABLE_FIELDS = {
+    Bomb: [...GAME_ELEMENT_DURABLE_FIELDS, ...HIT_ELEMENT_DURABLE_FIELDS, ...ENEMY_DURABLE_FIELDS, "vx", "vy", "scale", "angle", "t", "airplane"],
+    BossSuperTank: [
+        ...GAME_ELEMENT_DURABLE_FIELDS,
+        ...HIT_ELEMENT_DURABLE_FIELDS,
+        ...ENEMY_DURABLE_FIELDS,
+        "colorIndex", "wheelAngle", "treadOffset", "vx", "targetX", "ax", "hits", "smashed", "exploding",
+        "superFire", "state", "appearingDelay", "delay"
+    ],
+    EnemyBullet: [...GAME_ELEMENT_DURABLE_FIELDS, "travelTime", "vx", "vy"]
+};
+const BOOLEAN_DURABLE_FIELDS = new Set([
+    "removeFlag", "enemy", "enemyBullet", "hitField", "solid", "mine", "playSoundOnRemove", "airplane",
+    "weaponArmed", "longRange", "inSwamp"
+]);
+
+function validPlayerFields(overrides = {}) {
+    const result = {};
+    for (const name of PLAYER_DURABLE_FIELDS) {
+        result[name] = BOOLEAN_DURABLE_FIELDS.has(name) ? false : 0;
+    }
+    return Object.assign(result, overrides);
+}
+
+function validEntityFields(type, overrides = {}) {
+    const names = TEST_ENTITY_DURABLE_FIELDS[type];
+    assert.ok(names, `test helper has no durable descriptor for ${type}`);
+    const result = {};
+    for (const name of names) {
+        if (name === "trail") {
+            result[name] = { kind: "array", items: [0, -1, -2, -3, -4, -5, -6, -7] };
+        } else if (name === "superFire") {
+            result[name] = null;
+        } else {
+            result[name] = BOOLEAN_DURABLE_FIELDS.has(name) ? false : 0;
+        }
+    }
+    return Object.assign(result, overrides);
+}
+
 function compileModule(source) {
     const output = ts.transpileModule(source, {
         compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
@@ -43,6 +94,31 @@ async function loadPersistenceValidation() {
         }
     `);
     const runtimeFieldsUrl = compileModule(source("EntityRuntimeFields.ts").replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`));
+    const fieldPoliciesUrl = compileModule(`
+        const PLAYER_FIELDS = ${JSON.stringify(PLAYER_DURABLE_FIELDS)};
+        const ENTITY_FIELDS = ${JSON.stringify(TEST_ENTITY_DURABLE_FIELDS)};
+        const BOOLEAN_FIELDS = new Set(${JSON.stringify([...new Set(["removeFlag","enemy","enemyBullet","hitField","solid","mine","playSoundOnRemove","airplane","weaponArmed","longRange","inSwamp"])])});
+        const exact = (value, names) =>
+            value !== null && typeof value === "object" && !Array.isArray(value) &&
+            Object.keys(value).length === names.length && names.every((name) => Object.hasOwn(value, name));
+        const scalar = (name, value) => BOOLEAN_FIELDS.has(name) ? typeof value === "boolean" : typeof value === "number" && Number.isFinite(value);
+        export function isPlayerDurableFields(value) {
+            return exact(value, PLAYER_FIELDS) && PLAYER_FIELDS.every((name) => scalar(name, value[name]));
+        }
+        export function isEntityDurableFields(type, value) {
+            const names = ENTITY_FIELDS[type];
+            if (!names || !exact(value, names)) return false;
+            return names.every((name) => {
+                const entry = value[name];
+                if (name === "trail") {
+                    return entry && entry.kind === "array" && Array.isArray(entry.items) && entry.items.length === 8 &&
+                        entry.items.every((item) => Number.isInteger(item));
+                }
+                if (name === "superFire") return entry === null || (entry && entry.kind === "entityRef" && Number.isInteger(entry.id));
+                return scalar(name, entry);
+            });
+        }
+    `);
     const validatorUrl = compileModule(
         source("GameStateSnapshotValidator.ts")
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
@@ -52,6 +128,7 @@ async function loadPersistenceValidation() {
             .replace(`from "../InputMode.js"`, `from "${inputModeUrl}"`)
             .replace(`from "./GameStateSchema.js"`, `from "${schemaUrl}"`)
             .replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`)
+            .replace(`from "./GameStateFieldPolicies.js"`, `from "${fieldPoliciesUrl}"`)
             .replace(`from "./EntityRuntimeFields.js"`, `from "${runtimeFieldsUrl}"`)
             .replace(`from "./GameStateFields.js"`, `from "${fieldsUrl}"`)
     );
@@ -208,6 +285,10 @@ function inputModeSnapshot(fields, version) {
 }
 
 function gameSnapshot(fields, version, entity) {
+    const normalizedEntity = {
+        ...entity,
+        fields: validEntityFields(entity.type, entity.fields)
+    };
     return {
         ...baseSnapshot(fields, version),
         kind: "game",
@@ -218,10 +299,10 @@ function gameSnapshot(fields, version, entity) {
                 endingCameraPan: false,
                 cameraPanListener: { kind: "nullRef" }
             }),
-            elements: [[entity.id], [], [], [], [], [], [], []],
-            entities: [entity]
+            elements: [[normalizedEntity.id], [], [], [], [], [], [], []],
+            entities: [normalizedEntity]
         },
-        playerFields: {}
+        playerFields: validPlayerFields()
     };
 }
 
