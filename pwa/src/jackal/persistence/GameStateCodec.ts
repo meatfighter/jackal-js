@@ -3,7 +3,6 @@ import type { GameElement } from "../GameElement.js";
 import type { GameMode } from "../GameMode.js";
 import type { Main } from "../Main.js";
 import type { Player } from "../Player.js";
-import { SKIPPED_INSTANCE_FIELDS } from "./GameStateFields.js";
 import type { EncodedRecord, EncodedValue } from "./GameStateSnapshot.js";
 import { normalizeJavaFloatFields, type JavaFloatStateSpec } from "./JavaFloatState.js";
 
@@ -54,21 +53,6 @@ export function encodeNullableNamedFields(source: object | null, names: readonly
     return source === null ? null : encodeNamedFields(source, names, context);
 }
 
-export function encodeObjectFields(source: object, context: GameStateEncodeContext): EncodedRecord {
-    const record: EncodedRecord = {};
-    for (const key of Object.keys(source)) {
-        if (SKIPPED_INSTANCE_FIELDS.has(key)) {
-            continue;
-        }
-        const value = Reflect.get(source, key);
-        if (typeof value === "function" || typeof value === "undefined") {
-            continue;
-        }
-        record[key] = encodeValue(value, context);
-    }
-    return record;
-}
-
 export function encodeValue(value: unknown, context: GameStateEncodeContext): EncodedValue {
     if (typeof value === "number") {
         if (Number.isFinite(value)) {
@@ -110,9 +94,12 @@ export function encodeValue(value: unknown, context: GameStateEncodeContext): En
     }
     if (typeof value === "object") {
         const id = context.ids.get(value);
-        return id === undefined ? { kind: "nullRef" } : { kind: "entityRef", id };
+        if (id === undefined) {
+            throw new Error("Unregistered object reference in durable Jackal game state.");
+        }
+        return { kind: "entityRef", id };
     }
-    return null;
+    throw new Error(`Unsupported durable Jackal game-state value: ${typeof value}`);
 }
 
 export function decodeFieldsInto(target: object, fields: EncodedRecord, context: GameStateDecodeContext, javaFloatFields: JavaFloatStateSpec = []): void {
