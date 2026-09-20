@@ -295,7 +295,7 @@ function encodedRecordForDescriptor(descriptor, entityTypes) {
                 result[name] = false;
                 break;
             case "number":
-                result[name] = 0;
+                result[name] = field.allowedValues?.[0] ?? field.min ?? 0;
                 break;
             case "reference":
                 result[name] = null;
