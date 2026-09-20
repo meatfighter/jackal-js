@@ -91,7 +91,7 @@ export class Player {
     public releaseablePows: number = 0;
     public inSwamp: boolean = false;
 
-    /** Reconnects browser/runtime-only links after constructor-free save restoration. */
+    /** Rebuilds physical action-release gates from the currently held browser controls. */
     public resyncInputAfterBrowserResume(): void {
         const fireDown = this.input.isFire();
         const shootDown = this.input.isShoot();
@@ -106,6 +106,7 @@ export class Player {
         }
     }
 
+    /** Reconnects browser/runtime-only links after constructor-free save restoration. */
     public restoreRuntimeReferences(main: Main, gameMode: GameMode): void {
         this.main = main;
         this.gameMode = gameMode;
