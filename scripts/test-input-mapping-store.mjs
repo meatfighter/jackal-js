@@ -147,7 +147,7 @@ test("reserved keys, duplicate bindings, missing actions, and out-of-range contr
     assert.deepEqual(new JackalInputMappingStore().save(rawButton12, authorized), { saved: true });
 });
 
-test("same-version mappings with extra fields are rejected and discarded on restore", async () => {
+test("same-version invalid mappings are rejected but preserved for explicit reset", async () => {
     resetStorage();
     const href = "https://example.test/stage/pwa/";
     setLocation(href);
@@ -156,10 +156,11 @@ test("same-version mappings with extra fields are rejected and discarded on rest
 
     storage.set(key, JSON.stringify({ version: 3, ...createMapping(), obsoleteField: true }));
     assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
-    assert.equal(storage.has(key), false);
+    assert.equal(storage.has(key), true);
+    assert.deepEqual(new JackalInputMappingStore().save(createMapping(), authorized), { saved: false, reason: "protected" });
 });
 
-test("browser-unreachable keyboard mappings are rejected on restore", async () => {
+test("browser-unreachable keyboard mappings are rejected and preserved on restore", async () => {
     resetStorage();
     const href = "https://example.test/stage/pwa/";
     setLocation(href);
@@ -169,7 +170,8 @@ test("browser-unreachable keyboard mappings are rejected on restore", async () =
     for (const keyGun of [999, 0x90]) {
         storage.set(key, JSON.stringify({ version: 3, ...createMapping(), keyGun }));
         assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
-        assert.equal(storage.has(key), false);
+        assert.equal(storage.has(key), true);
+        assert.deepEqual(new JackalInputMappingStore().save(createMapping(), authorized), { saved: false, reason: "protected" });
     }
 });
 
@@ -201,6 +203,21 @@ test("obsolete pre-public mappings are discarded instead of migrated", async () 
 
     assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
     assert.equal(storage.has(key), false);
+});
+
+test("malformed input-mapping bytes are protected from automatic overwrite", async () => {
+    resetStorage();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+    storage.set(key, "{");
+
+    const store = new JackalInputMappingStore();
+    assert.equal(store.restore(createMapping()), false);
+    assert.equal(storage.get(key), "{");
+    assert.deepEqual(store.save(createMapping(), authorized), { saved: false, reason: "protected" });
+    assert.equal(storage.get(key), "{");
 });
 
 test("future public input mappings are preserved and protected from overwrite", async () => {
@@ -296,7 +313,7 @@ test("input mappings are isolated by deployment path and stable across cache-bus
     assert.deepEqual(productionRestored, productionSaved);
 });
 
-test("corrupted staging mapping cleanup preserves production mapping", async () => {
+test("corrupted staging mapping is preserved without affecting production mapping", async () => {
     resetStorage();
     const { JackalInputMappingStore } = await loadStore();
     const stageHref = "https://example.test/stage/pwa/?v=old";
@@ -310,6 +327,7 @@ test("corrupted staging mapping cleanup preserves production mapping", async () 
 
     setLocation(stageHref);
     assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
-    assert.equal(storage.has(storageKey("jackal.input-mapping", stageHref)), false);
+    assert.equal(storage.has(storageKey("jackal.input-mapping", stageHref)), true);
+    assert.deepEqual(new JackalInputMappingStore().save(createMapping(), authorized), { saved: false, reason: "protected" });
     assert.equal(storage.has(productionKey), true);
 });
