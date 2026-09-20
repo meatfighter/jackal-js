@@ -251,7 +251,7 @@ test("future public input mappings are preserved and protected from overwrite", 
     assert.deepEqual(store.save(createMapping({ keyGun: -1 }), authorized), { saved: false, reason: "protected" });
     assert.equal(storage.get(key), futureSnapshot);
 
-    assert.equal(store.clear(), true);
+    assert.equal(store.clear(authorized), true);
     assert.deepEqual(store.save(createMapping({ keyGun: -1 }), authorized), { saved: true });
     assert.notEqual(storage.get(key), futureSnapshot);
 });
