@@ -94,6 +94,21 @@ try {
     await server.close();
 }
 
+test("Jackal browser InputMode retains the maintained Java polling architecture", () => {
+    const tsSource = readFileSync(resolve(rootDir, "pwa/src/jackal/InputMode.ts"), "utf8");
+    const javaSource = readFileSync(resolve(rootDir, "desktop/src/jackal/InputMode.java"), "utf8");
+
+    for (const source of [tsSource, javaSource]) {
+        assert.match(source, /syncControllerInputState/);
+        assert.match(source, /getPressedControllerDirection/);
+        assert.match(source, /getPressedNonDirectionalControllerButton/);
+        assert.match(source, /armDelay/);
+    }
+    assert.doesNotMatch(tsSource, /ControllerListener|addControllerListener|controllerButtonPressed/);
+    assert.match(javaSource, /if \(armDelay > 0\) \{[\s\S]*?syncControllerInputState\(\);[\s\S]*?armDelay--;/);
+    assert.match(tsSource, /if \(this\.armDelay > 0\) \{[\s\S]*?this\.syncControllerInputState\(\);[\s\S]*?this\.armDelay--;/);
+});
+
 test("Jackal Main re-baselines InputMode controller edges before browser gameplay resumes", () => {
     const source = readFileSync(resolve(rootDir, "pwa/src/jackal/Main.ts"), "utf8");
     const start = source.indexOf("public setBrowserSuspended");
@@ -107,6 +122,7 @@ test("Jackal Main re-baselines InputMode controller edges before browser gamepla
 function createInputModeFixture(InputMode, ButtonMapping) {
     const mapping = new ButtonMapping();
     const controls = { heldButton: -1 };
+    const queriedButtons = [];
     const input = {
         getControllerCount: () => 1,
         getButtonCount: () => 17,
@@ -114,7 +130,11 @@ function createInputModeFixture(InputMode, ButtonMapping) {
         isControllerDown: () => false,
         isControllerLeft: () => false,
         isControllerRight: () => false,
-        isButtonPressed: (button) => button === controls.heldButton,
+        isButtonPressed: (button) => {
+            queriedButtons.push(button);
+            assert.ok(button >= 0 && button < 17, `InputMode queried out-of-range controller button ${button}`);
+            return button === controls.heldButton;
+        },
         addKeyListener() {},
         removeKeyListener() {},
         clearKeyPressedRecord() {},
@@ -140,5 +160,5 @@ function createInputModeFixture(InputMode, ButtonMapping) {
     mode.assignedControllerButtons.clear();
     mode.message = "";
 
-    return { controls, input, main, mode };
+    return { controls, input, main, mode, queriedButtons };
 }
