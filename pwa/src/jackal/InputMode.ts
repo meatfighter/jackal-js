@@ -487,12 +487,12 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     private syncControllerInputState(): void {
         const input = this.gc.getInput();
         this.resizeControllerButtonState(input);
-        this.controllerUpDown = ControllerSupport.isUpDown(input);
-        this.controllerDownDown = ControllerSupport.isDownDown(input);
-        this.controllerLeftDown = ControllerSupport.isLeftDown(input);
-        this.controllerRightDown = ControllerSupport.isRightDown(input);
+        this.controllerUpDown = input.isControllerUp(Input.ANY_CONTROLLER);
+        this.controllerDownDown = input.isControllerDown(Input.ANY_CONTROLLER);
+        this.controllerLeftDown = input.isControllerLeft(Input.ANY_CONTROLLER);
+        this.controllerRightDown = input.isControllerRight(Input.ANY_CONTROLLER);
         for (let button = 0; button < this.controllerButtonDown.length; button++) {
-            this.controllerButtonDown[button] = ControllerSupport.isButtonDown(input, button);
+            this.controllerButtonDown[button] = input.isButtonPressed(button, Input.ANY_CONTROLLER);
         }
     }
 
