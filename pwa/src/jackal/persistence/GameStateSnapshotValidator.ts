@@ -86,6 +86,7 @@ const MAX_MUSIC_POSITION_SECONDS = 86_400;
 const MAX_SOUND_POSITION_SECONDS = 86_400;
 const MAX_TOTAL_SOUND_VOICES = 62;
 const JAVA_INT_MAX = 2_147_483_647;
+const FORBIDDEN_STATE_FIELD_NAMES = new Set(["__proto__", "constructor", "prototype"]);
 const CAMERA_PAN_LISTENER_TYPES = new Set([
     "BossBlueTanksManager",
     "BossGarageManager",
@@ -485,7 +486,9 @@ function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth = 0): va
     if (!isRecord(value) || depth > MAX_ENCODED_DEPTH || Object.keys(value).length > MAX_ENCODED_RECORD_FIELDS) {
         return false;
     }
-    return Object.entries(value).every(([key, entry]) => isEncodedValue(entry, entityIds, depth + 1, key));
+    return Object.entries(value).every(
+        ([key, entry]) => !FORBIDDEN_STATE_FIELD_NAMES.has(key) && isEncodedValue(entry, entityIds, depth + 1, key)
+    );
 }
 
 function isEncodedValue(value: unknown, entityIds: Set<number> | undefined, depth: number, fieldName: string): value is EncodedValue {
