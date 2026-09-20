@@ -146,7 +146,23 @@ test("same-version input mappings with extra fields are rejected rather than par
     assert.equal(storage.has(key), false);
 });
 
-test("controller mappings outside the runtime 64-button scan range are rejected", async () => {
+test("controller mappings outside the runtime 64-button scan range are rejected", async () => {test("browser-unreachable keyboard mappings are rejected", async () => {
+    storage.clear();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), keyGun: 999 }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), keyGun: 0x90 }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+});
+
+
     storage.clear();
     const href = "https://example.test/stage/pwa/";
     setLocation(href);
