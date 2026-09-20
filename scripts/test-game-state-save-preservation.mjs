@@ -189,7 +189,7 @@ test("game-state inspection preserves data when storage reads fail", async () =>
         const key = gameStateStorageKey();
         storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true }));
         throwOnGet = true;
-        assert.equal(new JackalGameStateStore("1.0.0").hasValidSave(), { saved: false, reason: "unsupported-future" });
+        assert.equal(new JackalGameStateStore("1.0.0").hasValidSave(), false);
         assert.equal(storage.has(key), true);
     });
 });
