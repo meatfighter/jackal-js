@@ -1106,6 +1106,15 @@ export class Main extends BasicGame {
         this.requestedSong = song;
     }
 
+    public reconcileStateAfterRestore(): void {
+        this.extraLivesStr = this.extraLives.toString();
+        this.scoreStr = Main.formatScore(this.score);
+        this.closeRequestedFlag = false;
+        this.controllerGrenadePressed = false;
+        this.controllerGunPressed = false;
+        this.unitVector.fill(0);
+    }
+
     public resetNextFrameTime(): void {
         this.nextFrameTime = Sys.getTime();
     }
