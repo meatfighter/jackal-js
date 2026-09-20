@@ -2,7 +2,6 @@ import { Color, type GameContainer, type Graphics, type Input, type KeyListener 
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
-import { ControllerSupport } from "./ControllerSupport.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMenuListener } from "./IMenuListener.js";
 import type { IMode } from "./IMode.js";
@@ -417,13 +416,13 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         this.resizeControllerButtonState(input);
         let pressedButton = ButtonMapping.NO_BINDING;
         for (let button = 0; button < this.controllerButtonDown.length; button++) {
-            const down = ControllerSupport.isButtonDown(input, button);
+            const down = input.isButtonPressed(button, Input.ANY_CONTROLLER);
             const pressed = down && !this.controllerButtonDown[button];
             this.controllerButtonDown[button] = down;
             if (
                 pressedButton === ButtonMapping.NO_BINDING &&
                 pressed &&
-                !ControllerSupport.isDirectionalButton(button) &&
+                !this.isDirectionalGamepadButton(button) &&
                 !this.isDraftDirectionButton(button)
             ) {
                 pressedButton = button;
@@ -442,35 +441,40 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     private isControllerUpPressed(): boolean {
-        const down = ControllerSupport.isUpDown(this.gc.getInput());
+        const down = this.gc.getInput().isControllerUp(Input.ANY_CONTROLLER);
         const pressed = down && !this.controllerUpDown;
         this.controllerUpDown = down;
         return pressed;
     }
 
     private isControllerDownPressed(): boolean {
-        const down = ControllerSupport.isDownDown(this.gc.getInput());
+        const down = this.gc.getInput().isControllerDown(Input.ANY_CONTROLLER);
         const pressed = down && !this.controllerDownDown;
         this.controllerDownDown = down;
         return pressed;
     }
 
     private isControllerLeftPressed(): boolean {
-        const down = ControllerSupport.isLeftDown(this.gc.getInput());
+        const down = this.gc.getInput().isControllerLeft(Input.ANY_CONTROLLER);
         const pressed = down && !this.controllerLeftDown;
         this.controllerLeftDown = down;
         return pressed;
     }
 
     private isControllerRightPressed(): boolean {
-        const down = ControllerSupport.isRightDown(this.gc.getInput());
+        const down = this.gc.getInput().isControllerRight(Input.ANY_CONTROLLER);
         const pressed = down && !this.controllerRightDown;
         this.controllerRightDown = down;
         return pressed;
     }
 
     private resizeControllerButtonState(input: Input): void {
-        const length = ControllerSupport.getButtonScanLimit(input);
+        let length = 0;
+        const controllerCount = input.getControllerCount();
+        for (let controller = 0; controller < controllerCount; controller++) {
+            length = Math.max(length, input.getButtonCount(controller));
+        }
+        length = Math.min(length, 64);
         if (this.controllerButtonDown.length < length) {
             const previousLength = this.controllerButtonDown.length;
             this.controllerButtonDown.length = length;
@@ -490,6 +494,10 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         for (let button = 0; button < this.controllerButtonDown.length; button++) {
             this.controllerButtonDown[button] = ControllerSupport.isButtonDown(input, button);
         }
+    }
+
+    private isDirectionalGamepadButton(button: number): boolean {
+        return button >= ButtonMapping.DEFAULT_CONTROLLER_UP && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
     }
 
     private getCurrentAction(): number {
