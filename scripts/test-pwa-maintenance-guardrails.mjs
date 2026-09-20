@@ -144,6 +144,12 @@ test("stale launch cleanup withdraws ownership before independent teardown", () 
     assert.doesNotMatch(stale, /try\s*\{[\s\S]*mainGame\.disposeBrowserRuntime\(\)[\s\S]*finally/);
 });
 
+test("controller hot path does not allocate a mapping signature each refresh", () => {
+    const source = read("pwa/src/jackal/HumanInput.ts");
+    assert.doesNotMatch(source, /lastControllerMappingSignature/);
+    assert.doesNotMatch(source, /controllerGun\s*\]\s*\.join/);
+});
+
 test("browser binding validity has one Jackal policy owner", () => {
     const mapping = read("pwa/src/jackal/ButtonMapping.ts");
     const store = read("pwa/src/app/JackalInputMappingStore.ts");
