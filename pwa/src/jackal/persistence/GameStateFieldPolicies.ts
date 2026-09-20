@@ -60,7 +60,7 @@ const PLAYER_BOOLEAN_FIELDS = ["weaponArmed", "longRange", "inSwamp"] as const;
 const PLAYER_FLOAT_FIELDS = new Set(PLAYER_JAVA_FLOAT_FIELDS.filter(([, depth]) => depth === 0).map(([name]) => name));
 
 export const PLAYER_DURABLE_FIELD_DESCRIPTOR: DurableFieldDescriptor = Object.freeze({
-    ...Object.fromEntries(PLAYER_NUMBER_FIELDS.map((name) => [name, Object.freeze({ kind: "number", integer: !PLAYER_FLOAT_FIELDS.has(name) })])),
+    ...Object.fromEntries(PLAYER_NUMBER_FIELDS.map((name) => [name, playerNumberPolicy(name)])),
     ...Object.fromEntries(PLAYER_BOOLEAN_FIELDS.map((name) => [name, Object.freeze({ kind: "boolean" })]))
 });
 
@@ -175,7 +175,22 @@ export function getPlayerDurableFieldNames(): readonly string[] {
 }
 
 export function isPlayerDurableFields(value: unknown): value is EncodedRecord {
-    return isFieldsValid(value, PLAYER_DURABLE_FIELD_DESCRIPTOR, new Map<number, GameElementTypeId>());
+    if (!isFieldsValid(value, PLAYER_DURABLE_FIELD_DESCRIPTOR, new Map<number, GameElementTypeId>())) {
+        return false;
+    }
+    const fields = value as EncodedRecord;
+    const logicalAngles = ["angle", "nextAngle", "lastTargetAngle", "fireAngle"] as const;
+    if (!logicalAngles.every((name) => isDiscretePlayerAngle(fields[name]))) {
+        return false;
+    }
+    if (!(fields.targetAngle === -1 || isDiscretePlayerAngle(fields.targetAngle))) {
+        return false;
+    }
+    return (
+        typeof fields.pows === "number" &&
+        typeof fields.releaseablePows === "number" &&
+        fields.releaseablePows <= fields.pows
+    );
 }
 
 export function isEntityDurableFields(
@@ -303,6 +318,45 @@ function isTypedEntityReference(
 
 function isTaggedItems(value: unknown, kind: "array" | "arrayList"): value is { readonly kind: typeof kind; readonly items: EncodedValue[] } {
     return isRecord(value) && Object.keys(value).length === 2 && value.kind === kind && Array.isArray(value.items);
+}
+
+function playerNumberPolicy(name: (typeof PLAYER_NUMBER_FIELDS)[number]): DurableFieldPolicy {
+    switch (name) {
+        case "angle":
+        case "nextAngle":
+        case "lastTargetAngle":
+        case "fireAngle":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 315 });
+        case "targetAngle":
+            return Object.freeze({ kind: "number", integer: true, min: -1, max: 315 });
+        case "displayAngle":
+            return Object.freeze({ kind: "number", integer: false, min: -45, max: 360 });
+        case "angleVelocity":
+            return Object.freeze({ kind: "number", integer: false, min: -45, max: 45 });
+        case "angleSteps":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 8 });
+        case "diagonalDelay":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 4 });
+        case "rumble":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 84 });
+        case "invincible":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 3 * 91 });
+        case "invincibleColor":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 3 });
+        case "gunArmed":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 45 });
+        case "respawning":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 2 * 91 });
+        case "pows":
+        case "releaseablePows":
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: 4096 });
+        default:
+            return Object.freeze({ kind: "number", integer: !PLAYER_FLOAT_FIELDS.has(name) });
+    }
+}
+
+function isDiscretePlayerAngle(value: unknown): value is number {
+    return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 315 && value % 45 === 0;
 }
 
 function numberPolicy(type: GameElementTypeId, name: string, integer: boolean): DurableFieldPolicy {
