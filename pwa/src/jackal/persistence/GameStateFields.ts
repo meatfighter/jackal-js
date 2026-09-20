@@ -24,7 +24,6 @@ function fieldsOf<T extends object>() {
 }
 
 export const MAIN_FIELD_NAMES = fieldsOf<Main>()(
-    "loadIndex",
     "fading",
     "fadeIndex",
     "fadeOut",
