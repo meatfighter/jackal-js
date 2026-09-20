@@ -19,7 +19,8 @@ import {
     type SongSnapshot
 } from "./GameStateSnapshot.js";
 import { isSupportedGameStateVersion } from "./GameStateSchema.js";
-import { isGameElementTypeId } from "./GameElementTypeIds.js";
+import { isGameElementTypeId, type GameElementTypeId } from "./GameElementTypeIds.js";
+import { isEntityDurableFields, isPlayerDurableFields } from "./GameStateFieldPolicies.js";
 import { isEntityRuntimeFields } from "./EntityRuntimeFields.js";
 import {
     BUTTON_MAPPING_FIELD_NAMES,
@@ -163,12 +164,12 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         !Array.isArray(gameMode.entities) ||
         gameMode.entities.length > MAX_ENTITY_COUNT ||
         !Array.isArray(gameMode.elements) ||
-        !isEncodedRecord(snapshot.playerFields)
+        !isRecord(snapshot.playerFields)
     ) {
         return false;
     }
     const entityIds = new Set<number>();
-    const entityTypes = new Map<number, string>();
+    const entityTypes = new Map<number, GameElementTypeId>();
     for (const entitySnapshot of gameMode.entities) {
         if (
             !isRecord(entitySnapshot) ||
@@ -184,9 +185,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     }
     const mainFields = snapshot.mainFields;
     if (
-        !isEncodedRecord(snapshot.playerFields, entityIds) ||
-        Object.hasOwn(snapshot.playerFields, "fireReleased") ||
-        Object.hasOwn(snapshot.playerFields, "shootReleased") ||
+        !isPlayerDurableFields(snapshot.playerFields) ||
         !isEncodedRecord(gameMode.fields, entityIds) ||
         !isEncodedRecord(mainFields)
     ) {
@@ -219,7 +218,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         if (
             !isRecord(entitySnapshot) ||
             !isGameElementTypeId(entitySnapshot.type) ||
-            !isEncodedRecord(entitySnapshot.fields, entityIds) ||
+            !isEntityDurableFields(entitySnapshot.type, entitySnapshot.fields, entityTypes) ||
             !isEntityRuntimeFields(entitySnapshot.type, entitySnapshot.runtimeFields)
         ) {
             return false;
@@ -231,7 +230,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
 function isCameraPanListenerReference(
     value: unknown,
     entityIds: ReadonlySet<number>,
-    entityTypes: ReadonlyMap<number, string>
+    entityTypes: ReadonlyMap<number, GameElementTypeId>
 ): boolean {
     if (
         !isRecord(value) ||
