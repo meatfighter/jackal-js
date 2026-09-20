@@ -117,6 +117,9 @@ export function encodeValue(value: unknown, context: GameStateEncodeContext): En
 
 export function decodeFieldsInto(target: object, fields: EncodedRecord, context: GameStateDecodeContext, javaFloatFields: JavaFloatStateSpec = []): void {
     for (const [key, value] of Object.entries(fields)) {
+        if (key === "__proto__" || key === "constructor" || key === "prototype") {
+            throw new Error(`Unsafe saved field name: ${key}`);
+        }
         Reflect.set(target, key, decodeValue(value, context));
     }
     normalizeJavaFloatFields(target, javaFloatFields);
