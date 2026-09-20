@@ -13,6 +13,7 @@ import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
 import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { MainConstants } from "../java/MainConstants.js";
 import type { Main } from "../jackal/Main.js";
+import type { MappingWriteResult } from "../jackal/ButtonMapping.js";
 import { clearStoredGameState, hasCurrentStoredGameState } from "../jackal/persistence/GameStateStorage.js";
 import type { JackalGameStateStore } from "../jackal/persistence/JackalGameStateStore.js";
 import {
@@ -297,7 +298,7 @@ export class JackalWebApp {
         this.liveMenuOpen = true;
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
         this.suspendGameForMenu();
-        this.sessionCleanup.trySave(() => this.saveCurrentInputMapping());
+        this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved);
         const saved = this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         this.sessionCleanup.run(
             () => this.viewport.stopHamburgerVisibilityMonitor(),
@@ -525,9 +526,10 @@ export class JackalWebApp {
             }
         });
         mainGame.inputMappingChangedHandler = () => {
-            if (this.isCurrentGameSession(session)) {
-                this.saveCurrentInputMapping();
+            if (!this.isCurrentGameSession(session)) {
+                return { saved: false, reason: "stale-session" };
             }
+            return this.saveCurrentInputMapping();
         };
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
@@ -692,15 +694,15 @@ export class JackalWebApp {
         this.gameStateStore = null;
     }
 
-    private saveCurrentInputMapping(): boolean {
+    private saveCurrentInputMapping(): MappingWriteResult {
         if (!this.getOwnership().owned || this.game === null) {
-            return false;
+            return { saved: false, reason: "stale-session" };
         }
-        const saved = this.inputMappingStore.save(this.game.buttonMapping);
-        if (!saved) {
+        const result = this.inputMappingStore.save(this.game.buttonMapping);
+        if (!result.saved) {
             this.persistenceWarnings.report("Control changes could not be saved.");
         }
-        return saved;
+        return result;
     }
 
     private renderLoading(progress: number): void {
@@ -805,7 +807,7 @@ export class JackalWebApp {
             () => oldContainer?.getInput().pause(),
             () => releaseGameAudio(),
             () => {
-                this.sessionCleanup.trySave(() => this.saveCurrentInputMapping());
+                this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved);
             },
             () => this.removeMenuOverlay(),
             () => this.viewport.stopHamburgerVisibilityMonitor(),
