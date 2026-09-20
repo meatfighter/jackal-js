@@ -51,6 +51,18 @@ async function loadStore() {
             static NO_BINDING = -1;
             static isReservedKey(key) { return key === 1; }
             static isLogicalControllerDirection(value) { return value >= -5 && value <= -2; }
+            static isValidKeyBinding(value) {
+                return Number.isInteger(value) && (value === -1 || (value >= 0 && value < 256 && value !== 1 && value !== 0x90 && value !== 999));
+            }
+            static isValidRawControllerButton(value) {
+                return Number.isInteger(value) && value >= 0 && value < 64;
+            }
+            static isValidControllerBinding(value) {
+                return value === -1 || this.isLogicalControllerDirection(value) || this.isValidRawControllerButton(value);
+            }
+            static isValidControllerActionBinding(value) {
+                return value === -1 || this.isValidRawControllerButton(value);
+            }
         }
     `);
     const source = readFileSync(new URL("../pwa/src/app/JackalInputMappingStore.ts", import.meta.url), "utf8")
