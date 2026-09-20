@@ -130,8 +130,27 @@ export class JackalInputMappingStore {
     }
 
     private isSupportedSnapshot(snapshot: unknown): snapshot is JackalInputMappingSnapshot {
+        const expectedFields = [
+            "version",
+            "keyUp",
+            "keyDown",
+            "keyLeft",
+            "keyRight",
+            "keyGrenade",
+            "keyGun",
+            "keyStart",
+            "controllerUp",
+            "controllerDown",
+            "controllerLeft",
+            "controllerRight",
+            "controllerGrenade",
+            "controllerGun",
+            "controllerStart"
+        ] as const;
         return (
             this.isRecord(snapshot) &&
+            Object.keys(snapshot).length === expectedFields.length &&
+            expectedFields.every((key) => Object.hasOwn(snapshot, key)) &&
             snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
             this.isKeyBinding(snapshot.keyUp) &&
             this.isKeyBinding(snapshot.keyDown) &&
