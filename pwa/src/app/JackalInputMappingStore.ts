@@ -1,4 +1,4 @@
-import type { ButtonMapping } from "../jackal/ButtonMapping.js";
+import { ButtonMapping } from "../jackal/ButtonMapping.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 const NO_BINDING = -1;
 const MAX_CONTROLLER_BUTTON_INDEX = 63;
@@ -166,7 +166,10 @@ export class JackalInputMappingStore {
     }
 
     private isKeyBinding(value: unknown): value is number {
-        return value === NO_BINDING || (typeof value === "number" && Number.isInteger(value) && value >= 0);
+        return (
+            value === NO_BINDING ||
+            (typeof value === "number" && Number.isInteger(value) && value >= 0 && !ButtonMapping.isReservedKey(value))
+        );
     }
 
     private isControllerBinding(value: unknown): value is number {
