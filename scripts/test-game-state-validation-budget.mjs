@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { createServer } from "vite";
 
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const server = await createServer({
-    root: new URL("../pwa/", import.meta.url).pathname,
+    root: resolve(rootDir, "pwa"),
     appType: "custom",
     logLevel: "silent",
     server: { middlewareMode: true }
