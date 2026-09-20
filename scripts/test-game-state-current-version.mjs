@@ -136,6 +136,37 @@ function modeSnapshot(fields, version) {
     };
 }
 
+function optionsModeSnapshot(fields, version) {
+    return {
+        ...baseSnapshot(fields, version),
+        modeId: "OPTIONS",
+        modeFields: encodedFields(fields.SIMPLE_MENU_MODE_FIELD_NAMES, {
+            state: 0,
+            optionSelectedFlag: false,
+            selectedIndex: 0
+        }),
+        modeExtra: {
+            menu: {
+                fields: encodedFields(fields.MENU_FIELD_NAMES, {
+                    x: 0,
+                    y: 0,
+                    iconY: 16,
+                    selectedIndex: 0,
+                    icon: 0,
+                    selectState: 0,
+                    iconVy: 0,
+                    iconMidY: 16,
+                    iconA: 0,
+                    targetY: 16,
+                    selectionMade: false,
+                    inputEnabled: true,
+                    konamiCodeTest: false
+                })
+            }
+        }
+    };
+}
+
 function inputModeSnapshot(fields, version) {
     return {
         ...baseSnapshot(fields, version),
@@ -256,6 +287,21 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const badAudioShape = modeSnapshot(fields, currentVersion);
     badAudioShape.audioState.extra = true;
     assert.equal(validator.isSupportedGameStateSnapshot(badAudioShape), false);
+
+    const validMenuMode = optionsModeSnapshot(fields, currentVersion);
+    assert.equal(validator.isSupportedGameStateSnapshot(validMenuMode), true);
+
+    const numericMenuBoolean = structuredClone(validMenuMode);
+    numericMenuBoolean.modeExtra.menu.fields.selectionMade = 0;
+    assert.equal(validator.isSupportedGameStateSnapshot(numericMenuBoolean), false);
+
+    const outOfRangeMenuSelection = structuredClone(validMenuMode);
+    outOfRangeMenuSelection.modeExtra.menu.fields.selectedIndex = 3;
+    assert.equal(validator.isSupportedGameStateSnapshot(outOfRangeMenuSelection), false);
+
+    const outOfRangeMenuState = structuredClone(validMenuMode);
+    outOfRangeMenuState.modeExtra.menu.fields.selectState = 3;
+    assert.equal(validator.isSupportedGameStateSnapshot(outOfRangeMenuState), false);
 
     const obsoleteAudioPolicy = modeSnapshot(fields, currentVersion);
     obsoleteAudioPolicy.audioState.musicOn = false;
