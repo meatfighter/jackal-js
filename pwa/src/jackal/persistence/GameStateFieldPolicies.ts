@@ -1,4 +1,6 @@
+import { ArrayList } from "../../java/JavaRuntime.js";
 import { Enemy } from "../Enemy.js";
+import type { GameElement } from "../GameElement.js";
 import { GAME_ELEMENT_TYPE_IDS, type GameElementTypeId } from "./GameElementTypeIds.js";
 import { GAME_ELEMENT_TYPES } from "./GameElementTypeRegistry.js";
 import { SKIPPED_INSTANCE_FIELDS } from "./GameStateFields.js";
@@ -137,6 +139,35 @@ export function getEntityDurableFieldDescriptor(type: GameElementTypeId): Durabl
 
 export function getEntityDurableFieldNames(type: GameElementTypeId): readonly string[] {
     return Object.keys(getEntityDurableFieldDescriptor(type));
+}
+
+export function getDurableEntityReferences(type: GameElementTypeId, entity: GameElement): readonly GameElement[] {
+    const descriptor = getEntityDurableFieldDescriptor(type);
+    const references: GameElement[] = [];
+    for (const [name, policy] of Object.entries(descriptor)) {
+        if (policy.kind === "reference") {
+            const value = Reflect.get(entity, name);
+            if (value !== null) {
+                if (typeof value !== "object") {
+                    throw new Error(`Durable Jackal reference ${type}.${name} is not an object or null.`);
+                }
+                references.push(value as GameElement);
+            }
+        } else if (policy.kind === "referenceList") {
+            const value = Reflect.get(entity, name);
+            if (!(value instanceof ArrayList)) {
+                throw new Error(`Durable Jackal reference list ${type}.${name} is not an ArrayList.`);
+            }
+            for (let i = 0; i < value.size(); i++) {
+                const item = value.get(i);
+                if (item === null || typeof item !== "object") {
+                    throw new Error(`Durable Jackal reference list ${type}.${name} contains a non-entity value.`);
+                }
+                references.push(item as GameElement);
+            }
+        }
+    }
+    return references;
 }
 
 export function getPlayerDurableFieldNames(): readonly string[] {
