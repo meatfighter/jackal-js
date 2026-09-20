@@ -144,6 +144,24 @@ test("stale launch cleanup withdraws ownership before independent teardown", () 
     assert.doesNotMatch(stale, /try\s*\{[\s\S]*mainGame\.disposeBrowserRuntime\(\)[\s\S]*finally/);
 });
 
+test("browser binding validity has one Jackal policy owner", () => {
+    const mapping = read("pwa/src/jackal/ButtonMapping.ts");
+    const store = read("pwa/src/app/JackalInputMappingStore.ts");
+    const inputMode = read("pwa/src/jackal/InputMode.ts");
+
+    assert.match(mapping, /Input\.isBrowserKeyCodeSupported\(value\)/);
+    assert.match(mapping, /value < Input\.BROWSER_CONTROLLER_BUTTON_LIMIT/);
+    assert.match(mapping, /public static isValidControllerBinding/);
+    assert.match(mapping, /public static isValidControllerActionBinding/);
+
+    assert.match(store, /ButtonMapping\.isValidKeyBinding/);
+    assert.match(store, /ButtonMapping\.isValidControllerBinding/);
+    assert.match(store, /ButtonMapping\.isValidControllerActionBinding/);
+    assert.doesNotMatch(store, /MAX_CONTROLLER_BUTTON_INDEX|Input\.isBrowserKeyCodeSupported/);
+
+    assert.match(inputMode, /ButtonMapping\.isValidKeyBinding\(i\)/);
+});
+
 test("obsolete controller selection flags do not survive in shared mappings", () => {
     const sources = [
         read("pwa/src/jackal/ButtonMapping.ts"),
