@@ -112,6 +112,6 @@ export function writeStoredGameState(snapshot: JackalGameStateSnapshot, isAuthor
     }
 }
 
-export function clearStoredGameState(): boolean {
-    return gameStateStorage.remove();
+export function clearStoredGameState(isAuthorized: () => boolean): boolean {
+    return isAuthorized() && gameStateStorage.remove();
 }
