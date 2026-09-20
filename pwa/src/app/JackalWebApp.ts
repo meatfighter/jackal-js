@@ -700,10 +700,14 @@ export class JackalWebApp {
     }
 
     private saveCurrentInputMapping(): MappingWriteResult {
-        if (!this.getOwnership().owned || this.game === null) {
+        const mainGame = this.game;
+        if (!this.getOwnership().owned || mainGame === null) {
             return { saved: false, reason: "stale-session" };
         }
-        const result = this.inputMappingStore.save(this.game.buttonMapping);
+        const result = this.inputMappingStore.save(
+            mainGame.buttonMapping,
+            () => this.getOwnership().owned && this.game === mainGame
+        );
         if (!result.saved) {
             this.persistenceWarnings.report("Control changes could not be saved.");
         }
