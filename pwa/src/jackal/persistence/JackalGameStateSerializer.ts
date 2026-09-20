@@ -61,7 +61,6 @@ import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
 import { captureAudioStateSnapshot, captureSongSnapshot, restoreAudioPlayback, songIdFor } from "./GameStateAudio.js";
 import {
     createUninitialized,
-    decodeFieldsInto,
     decodeNamedFieldsInto,
     encodeNamedFields,
     encodeNullableNamedFields,
