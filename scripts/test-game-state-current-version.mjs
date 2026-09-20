@@ -213,6 +213,44 @@ function modeSnapshot(fields, version) {
     };
 }
 
+function introModeSnapshot(fields, version) {
+    return {
+        ...baseSnapshot(fields, version),
+        modeId: "INTRO",
+        modeFields: encodedFields(fields.INTRO_MODE_FIELD_NAMES, {
+            state: 4,
+            delay: 600,
+            scrollOffsetX: 0,
+            upperSolderX: 0,
+            lowerSolderX: 0,
+            namesIndex: 0,
+            nameLength: 0,
+            soldierSet: 0,
+            selectionMade: false,
+            selectedIndex: 0
+        }),
+        modeExtra: {
+            menu: {
+                fields: encodedFields(fields.MENU_FIELD_NAMES, {
+                    x: 416,
+                    y: 608,
+                    iconY: 16,
+                    selectedIndex: 0,
+                    icon: 0,
+                    selectState: 0,
+                    iconVy: 0,
+                    iconMidY: 16,
+                    iconA: 0,
+                    targetY: 16,
+                    selectionMade: false,
+                    inputEnabled: true,
+                    konamiCodeTest: true
+                })
+            }
+        }
+    };
+}
+
 function optionsModeSnapshot(fields, version) {
     return {
         ...baseSnapshot(fields, version),
@@ -409,6 +447,28 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const badAudioShape = modeSnapshot(fields, currentVersion);
     badAudioShape.audioState.extra = true;
     assert.equal(validator.isSupportedGameStateSnapshot(badAudioShape), false);
+
+    const validIntro = introModeSnapshot(fields, currentVersion);
+    assert.equal(validator.isSupportedGameStateSnapshot(validIntro), true);
+
+    const introSelectionMismatch = structuredClone(validIntro);
+    introSelectionMismatch.modeFields.selectionMade = true;
+    introSelectionMismatch.modeFields.selectedIndex = 1;
+    introSelectionMismatch.modeExtra.menu.fields.selectionMade = true;
+    introSelectionMismatch.modeExtra.menu.fields.selectedIndex = 0;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(introSelectionMismatch),
+        false,
+        "Intro mode and Menu must agree on the committed selection"
+    );
+
+    const introMenuSelectedWithoutMode = structuredClone(validIntro);
+    introMenuSelectedWithoutMode.modeExtra.menu.fields.selectionMade = true;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(introMenuSelectedWithoutMode),
+        false,
+        "Intro Menu cannot claim a committed selection when IntroMode does not"
+    );
 
     const validMenuMode = optionsModeSnapshot(fields, currentVersion);
     assert.equal(validator.isSupportedGameStateSnapshot(validMenuMode), true);
