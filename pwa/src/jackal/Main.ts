@@ -289,6 +289,7 @@ export class Main extends BasicGame {
     public loadingFinishedHandler: (() => void) | null = null;
     public loadingCompleteHandler: ((gc: GameContainer) => boolean) | null = null;
     public inputMappingChangedHandler: (() => MappingWriteResult) | null = null;
+    public difficultyChangedHandler: ((hardMode: boolean) => boolean) | null = null;
     public browserSuspended: boolean = false;
     private loadingFinishedNotified: boolean = false;
     private browserRuntimeActive: boolean = false;
@@ -1983,6 +1984,7 @@ export class Main extends BasicGame {
         this.browserRuntimeActive = false;
         clearMainRuntime(this);
         this.inputMappingChangedHandler = null;
+        this.difficultyChangedHandler = null;
         this.loadingCompleteHandler = null;
         this.loadingFinishedHandler = null;
     }
@@ -2055,6 +2057,10 @@ export class Main extends BasicGame {
             return { saved: false, reason: "unavailable" };
         }
         return this.inputMappingChangedHandler();
+    }
+
+    public notifyDifficultyChanged(): boolean {
+        return this.difficultyChangedHandler?.(this.hardMode) ?? false;
     }
 
     public static rotate(x: number, y: number, angle: number): InstanceType<typeof Point2D.Float> {
