@@ -1,4 +1,4 @@
-import { Color, type GameContainer, type Graphics, type Input, type KeyListener } from "slick2d-ts";
+import { Color, Input, type GameContainer, type Graphics, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
 import { ButtonMapping } from "./ButtonMapping.js";
