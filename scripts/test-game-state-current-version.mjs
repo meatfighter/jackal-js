@@ -353,6 +353,15 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
         "keyboard callbacks remain reachable while Jackal controller arm-delay is active"
     );
 
+    const mismatchedCompletedMenu = structuredClone(validInput);
+    mismatchedCompletedMenu.modeFields.state = 1;
+    mismatchedCompletedMenu.modeFields.nameIndex = 0;
+    mismatchedCompletedMenu.modeFields.armDelay = 0;
+    mismatchedCompletedMenu.modeExtra.input.menu = { fields: encodedFields(fields.MENU_FIELD_NAMES) };
+    mismatchedCompletedMenu.modeExtra.input.draftButtonMapping = null;
+    mismatchedCompletedMenu.modeExtra.input.assignedKeys = [200, 208, 203, 205, 45, 44, 28];
+    assert.equal(validator.isSupportedGameStateSnapshot(mismatchedCompletedMenu), false);
+
     const unsafeVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
     assert.equal(validator.isSupportedGameStateSnapshot(unsafeVelocity), false);
 
