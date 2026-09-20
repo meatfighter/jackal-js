@@ -38,7 +38,7 @@ export class JackalGameStateStore {
         return inspectStoredGameState().status === "current";
     }
 
-    public clear(): void {
-        clearStoredGameState();
+    public clear(isAuthorized: () => boolean): boolean {
+        return clearStoredGameState(isAuthorized);
     }
 }
