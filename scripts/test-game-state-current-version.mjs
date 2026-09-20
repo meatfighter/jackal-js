@@ -303,6 +303,29 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     outOfRangeMenuState.modeExtra.menu.fields.selectState = 3;
     assert.equal(validator.isSupportedGameStateSnapshot(outOfRangeMenuState), false);
 
+    const selectedMenuSameTick = structuredClone(validMenuMode);
+    selectedMenuSameTick.modeFields.state = 1;
+    selectedMenuSameTick.modeFields.optionSelectedFlag = true;
+    selectedMenuSameTick.modeFields.selectedIndex = 2;
+    assert.equal(validator.isSupportedGameStateSnapshot(selectedMenuSameTick), true);
+
+    const impossibleUnselectedMenuIndex = structuredClone(validMenuMode);
+    impossibleUnselectedMenuIndex.modeFields.state = 1;
+    impossibleUnselectedMenuIndex.modeFields.optionSelectedFlag = false;
+    impossibleUnselectedMenuIndex.modeFields.selectedIndex = 2;
+    assert.equal(validator.isSupportedGameStateSnapshot(impossibleUnselectedMenuIndex), false);
+
+    const validMenuFadeOut = structuredClone(validMenuMode);
+    validMenuFadeOut.modeFields.state = 2;
+    validMenuFadeOut.modeFields.optionSelectedFlag = true;
+    validMenuFadeOut.modeFields.selectedIndex = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(validMenuFadeOut), true);
+
+    const impossibleMenuFadeOut = structuredClone(validMenuMode);
+    impossibleMenuFadeOut.modeFields.state = 2;
+    impossibleMenuFadeOut.modeFields.optionSelectedFlag = false;
+    assert.equal(validator.isSupportedGameStateSnapshot(impossibleMenuFadeOut), false);
+
     const obsoleteAudioPolicy = modeSnapshot(fields, currentVersion);
     obsoleteAudioPolicy.audioState.musicOn = false;
     obsoleteAudioPolicy.audioState.soundOn = true;
