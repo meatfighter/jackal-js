@@ -12,6 +12,8 @@ const fieldsPath = join(jackalRoot, "persistence", "GameStateFields.ts");
 const fieldsSource = readFileSync(fieldsPath, "utf8");
 const fieldsFile = ts.createSourceFile(fieldsPath, fieldsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 const codecSource = readFileSync(join(jackalRoot, "persistence", "GameStateCodec.ts"), "utf8");
+const fieldPolicySource = readFileSync(join(jackalRoot, "persistence", "GameStateFieldPolicies.ts"), "utf8");
+const validatorSource = readFileSync(join(jackalRoot, "persistence", "GameStateSnapshotValidator.ts"), "utf8");
 const runtimePath = join(jackalRoot, "persistence", "EntityRuntimePersistence.ts");
 const runtimeSource = readFileSync(runtimePath, "utf8");
 const runtimeFile = ts.createSourceFile(runtimePath, runtimeSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -216,7 +218,7 @@ test("Main save fields exclude loader/runtime caches and derived display strings
     }
 });
 
-test("generic object serialization explicitly excludes reconstructed and runtime-only state", () => {
+test("durable entity and Player persistence is descriptor-driven and excludes runtime-only state", () => {
     const skipped = persistenceConstant("SKIPPED_INSTANCE_FIELDS");
     assert.equal(new Set(skipped).size, skipped.length, "SKIPPED_INSTANCE_FIELDS contains duplicates.");
 
@@ -237,30 +239,33 @@ test("generic object serialization explicitly excludes reconstructed and runtime
         "fireReleased",
         "shootReleased"
     ]) {
-        assert.ok(skipped.includes(field), `${field} must remain reconstructed or runtime-only rather than generically persisted.`);
+        assert.ok(skipped.includes(field), `${field} must remain reconstructed or runtime-only rather than durable state.`);
     }
 
-    assert.match(codecSource, /for\s*\(const key of Object\.keys\(source\)\)/);
-    assert.match(codecSource, /SKIPPED_INSTANCE_FIELDS\.has\(key\)/);
-    assert.match(codecSource, /typeof value === "function" \|\| typeof value === "undefined"/);
-    assert.match(codecSource, /record\[key\] = encodeValue\(value, context\)/);
+    assert.doesNotMatch(codecSource, /encodeObjectFields|Object\.keys\(source\)/);
+    assert.match(codecSource, /throw new Error\("Unregistered object reference in durable Jackal game state\."\)/);
+    assert.match(serializerSource, /getPlayerDurableFieldNames\(\)/);
+    assert.match(serializerSource, /getEntityDurableFieldNames\(type\)/);
+    assert.match(serializerSource, /getDurableEntityReferences\(type, entity\)/);
+    assert.match(validatorSource, /isPlayerDurableFields\(snapshot\.playerFields\)/);
+    assert.match(validatorSource, /isEntityDurableFields\(entitySnapshot\.type, entitySnapshot\.fields, entityTypes\)/);
+    assert.match(fieldPolicySource, /Unclassified durable Jackal field/);
 });
 
 test("current save snapshots preserve translated hidden fields without legacy aliases", () => {
     const schema = readFileSync(join(jackalRoot, "persistence", "GameStateSchema.ts"), "utf8");
-    const codec = readFileSync(join(jackalRoot, "persistence", "GameStateCodec.ts"), "utf8");
 
     assert.match(schema, /GAME_STATE_VERSION\s*=\s*15/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
-    assert.match(serializerSource, /const fields = encodeObjectFields\(entity, context\)/);
-    assert.match(codec, /for \(const key of Object\.keys\(source\)\)/);
+    assert.match(serializerSource, /const fields = encodeNamedFields\(entity, getEntityDurableFieldNames\(type\), context\)/);
+    assert.match(serializerSource, /decodeNamedFieldsInto\([\s\S]*getEntityDurableFieldNames\(entitySnapshot\.type\)/);
     assert.doesNotMatch(serializerSource, /record\.enemy =|delete record\.sourceEnemy|removeFlag alias|normalizeLegacy|normalizeTranslated/);
+    assert.doesNotMatch(codecSource, /return id === undefined \? \{ kind: "nullRef" \}/);
 });
 
 test("runtime-only entity descriptors are required exact current-format data", () => {
     const snapshotSource = readFileSync(join(jackalRoot, "persistence", "GameStateSnapshot.ts"), "utf8");
     const runtimeFieldsSource = readFileSync(join(jackalRoot, "persistence", "EntityRuntimeFields.ts"), "utf8");
-    const validatorSource = readFileSync(join(jackalRoot, "persistence", "GameStateSnapshotValidator.ts"), "utf8");
 
     assert.match(serializerSource, /captureEntityRuntimeFields\(entity, context\.main, context\.gameMode\)/);
     assert.match(serializerSource, /runtimeFields\s*\n?\s*\}/);
