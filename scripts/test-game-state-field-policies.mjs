@@ -20,7 +20,10 @@ const server = await createServer({
 try {
     const policy = await server.ssrLoadModule("/src/jackal/persistence/GameStateFieldPolicies.ts");
     const typeIds = await server.ssrLoadModule("/src/jackal/persistence/GameElementTypeIds.ts");
+    const typeRegistry = await server.ssrLoadModule("/src/jackal/persistence/GameElementTypeRegistry.ts");
     const stateFields = await server.ssrLoadModule("/src/jackal/persistence/GameStateFields.ts");
+    const { JackalGameStateSerializer } = await server.ssrLoadModule("/src/jackal/persistence/JackalGameStateSerializer.ts");
+    const { ArrayList } = await server.ssrLoadModule("/src/java/JavaRuntime.ts");
 
     test("durable entity descriptors exactly cover declared persistent fields", () => {
         const model = buildClassModel();
@@ -64,6 +67,23 @@ try {
 
         const fractional = { ...valid, angleSteps: 0.5 };
         assert.equal(policy.isPlayerDurableFields(fractional), false, "Java int fields must reject fractional values");
+    });
+
+    test("snapshot discovery preserves detached cyclic durable references exactly once", () => {
+        const tank = Object.create(typeRegistry.GAME_ELEMENT_TYPES.BossSuperTank.prototype);
+        const fire = Object.create(typeRegistry.GAME_ELEMENT_TYPES.SuperFire.prototype);
+        tank.superFire = fire;
+        fire.bossSuperTank = tank;
+
+        const layers = Array.from({ length: 8 }, () => new ArrayList());
+        layers[3].add(tank);
+        const gameMode = { elements: layers };
+        const serializer = new JackalGameStateSerializer();
+        const context = serializer.createGameStateEncodeContext({}, gameMode, {});
+
+        assert.deepEqual(context.entities, [tank, fire]);
+        assert.equal(context.ids.get(tank), 0);
+        assert.equal(context.ids.get(fire), 1);
     });
 
     test("typed references, unique lists, arrays and matrices reject malformed values", () => {
