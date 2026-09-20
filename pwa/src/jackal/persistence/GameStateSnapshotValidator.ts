@@ -334,25 +334,22 @@ function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot
     }
 
     const fields = value.fields;
-    for (const key of ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"]) {
-        if (!isKeyBinding(fields[key])) {
-            return false;
-        }
+    const keyNames = ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"] as const;
+    const controllerDirectionNames = ["controllerUp", "controllerDown", "controllerLeft", "controllerRight"] as const;
+    const controllerActionNames = ["controllerGrenade", "controllerGun", "controllerStart"] as const;
+    if (!keyNames.every((key) => isKeyBinding(fields[key]))) {
+        return false;
     }
-    for (const key of [
-        "controllerUp",
-        "controllerDown",
-        "controllerLeft",
-        "controllerRight",
-        "controllerGrenade",
-        "controllerGun",
-        "controllerStart"
-    ]) {
-        if (!isBinding(fields[key], MAX_CONTROLLER_BUTTON_INDEX)) {
-            return false;
-        }
+    if (!controllerDirectionNames.every((key) => isBinding(fields[key], MAX_CONTROLLER_BUTTON_INDEX))) {
+        return false;
     }
-    return true;
+    if (!controllerActionNames.every((key) => isControllerActionBinding(fields[key]))) {
+        return false;
+    }
+    return (
+        hasUniqueNonBindingValues(keyNames.map((key) => fields[key])) &&
+        hasUniqueNonBindingValues([...controllerDirectionNames.map((key) => fields[key]), ...controllerActionNames.map((key) => fields[key])])
+    );
 }
 
 function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): value is InputModeExtraSnapshot {
@@ -681,6 +678,20 @@ function isKeyBinding(value: unknown): value is number {
 
 function isBinding(value: unknown, maximum: number): value is number {
     return value === ButtonMapping.NO_BINDING || isIntegerInRange(value, 0, maximum);
+}
+
+function isControllerActionBinding(value: unknown): value is number {
+    return (
+        isBinding(value, MAX_CONTROLLER_BUTTON_INDEX) &&
+        (value === ButtonMapping.NO_BINDING ||
+            value < ButtonMapping.DEFAULT_CONTROLLER_UP ||
+            value > ButtonMapping.DEFAULT_CONTROLLER_RIGHT)
+    );
+}
+
+function hasUniqueNonBindingValues(values: readonly unknown[]): boolean {
+    const assigned = values.filter((value): value is number => typeof value === "number" && value !== ButtonMapping.NO_BINDING);
+    return new Set(assigned).size === assigned.length;
 }
 
 function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
