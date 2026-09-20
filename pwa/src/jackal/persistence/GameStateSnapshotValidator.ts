@@ -25,6 +25,7 @@ import {
     BUTTON_MAPPING_FIELD_NAMES,
     GAME_MODE_FIELD_NAMES,
     GAME_MODE_LAYER_COUNT,
+    KONAMI_CODE_FIELD_NAMES,
     MAIN_FIELD_NAMES,
     MENU_FIELD_NAMES,
     STAGE_COUNT,
@@ -110,13 +111,28 @@ function isBaseSnapshot(snapshot: UnknownRecord): boolean {
         snapshot.savedAt.length <= MAX_SAVED_AT_LENGTH &&
         Number.isFinite(Date.parse(snapshot.savedAt)) &&
         isRestorableMainFields(mainFields) &&
-        (snapshot.konamiCodeFields === null || isEncodedRecord(snapshot.konamiCodeFields, new Set<number>())) &&
+        isKonamiCodeFields(snapshot.konamiCodeFields) &&
         isRandomSnapshot(snapshot.random) &&
         isIntegerInRange(snapshot.friendlySoldierCount, 0, MAX_FRIENDLY_SOLDIER_COUNT) &&
         isNullableSongId(snapshot.requestedSongId) &&
         isSongSnapshot(snapshot.currentSongState) &&
         isAudioStateSnapshot(snapshot.audioState)
     );
+}
+
+function isKonamiCodeFields(value: unknown): value is EncodedRecord | null {
+    if (value === null) {
+        return true;
+    }
+    if (!isRecord(value) || !isEncodedRecord(value, new Set<number>()) || !hasExactFields(value, KONAMI_CODE_FIELD_NAMES)) {
+        return false;
+    }
+    const enabled = value.enabled;
+    const sequenceIndex = value.sequenceIndex;
+    if (typeof enabled !== "boolean" || !isIntegerInRange(sequenceIndex, 0, 10)) {
+        return false;
+    }
+    return enabled ? sequenceIndex === 10 : sequenceIndex < 10;
 }
 
 function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameModeStateSnapshot {
