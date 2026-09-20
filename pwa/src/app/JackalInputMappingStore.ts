@@ -203,6 +203,7 @@ export class JackalInputMappingStore {
         return (
             typeof version === "number" &&
             Number.isInteger(version) &&
+            version >= 1 &&
             version < JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION
         );
     }
