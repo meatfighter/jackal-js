@@ -86,6 +86,15 @@ const MAX_MUSIC_POSITION_SECONDS = 86_400;
 const MAX_SOUND_POSITION_SECONDS = 86_400;
 const MAX_TOTAL_SOUND_VOICES = 62;
 const JAVA_INT_MAX = 2_147_483_647;
+const CAMERA_PAN_LISTENER_TYPES = new Set([
+    "BossBlueTanksManager",
+    "BossGarageManager",
+    "BossHeadquartersManager",
+    "BossHelicopterManager",
+    "BossShipManager",
+    "BossStatuesManager",
+    "BossSuperTank"
+]);
 
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
     if (!isRecord(snapshot) || !isSupportedGameStateVersion(snapshot.version) || (snapshot.kind !== "game" && snapshot.kind !== "mode")) {
@@ -157,6 +166,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         return false;
     }
     const entityIds = new Set<number>();
+    const entityTypes = new Map<number, string>();
     for (const entitySnapshot of gameMode.entities) {
         if (
             !isRecord(entitySnapshot) ||
@@ -168,6 +178,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
             return false;
         }
         entityIds.add(entitySnapshot.id);
+        entityTypes.set(entitySnapshot.id, entitySnapshot.type);
     }
     const mainFields = snapshot.mainFields;
     if (!isEncodedRecord(snapshot.playerFields, entityIds) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
@@ -181,7 +192,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (typeof bossCameraPan !== "boolean" || typeof endingCameraPan !== "boolean" || (bossCameraPan && endingCameraPan)) {
         return false;
     }
-    if ((bossCameraPan || endingCameraPan) && !isEntityReference(gameMode.fields.cameraPanListener, entityIds)) {
+    if ((bossCameraPan || endingCameraPan) && !isCameraPanListenerReference(gameMode.fields.cameraPanListener, entityIds, entityTypes)) {
         return false;
     }
     const paused = gameMode.fields.paused;
@@ -209,14 +220,22 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     return isElementLayers(gameMode.elements, entityIds);
 }
 
-function isEntityReference(value: unknown, entityIds: ReadonlySet<number>): boolean {
-    return (
-        isRecord(value) &&
-        Object.keys(value).length === 2 &&
-        value.kind === "entityRef" &&
-        isIntegerInRange(value.id, 0, MAX_ENTITY_COUNT - 1) &&
-        entityIds.has(value.id)
-    );
+function isCameraPanListenerReference(
+    value: unknown,
+    entityIds: ReadonlySet<number>,
+    entityTypes: ReadonlyMap<number, string>
+): boolean {
+    if (
+        !isRecord(value) ||
+        Object.keys(value).length !== 2 ||
+        value.kind !== "entityRef" ||
+        !isIntegerInRange(value.id, 0, MAX_ENTITY_COUNT - 1) ||
+        !entityIds.has(value.id)
+    ) {
+        return false;
+    }
+    const type = entityTypes.get(value.id);
+    return type !== undefined && CAMERA_PAN_LISTENER_TYPES.has(type);
 }
 
 function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalStandaloneModeStateSnapshot {
