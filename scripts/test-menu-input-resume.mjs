@@ -81,6 +81,16 @@ test("Jackal save fields exclude physical Menu and Konami release latches", () =
     assert.doesNotMatch(fields.match(/KONAMI_CODE_FIELD_NAMES[^\n]*/)?.[0] ?? "", /keyReleased/);
 });
 
+test("Jackal durable restore also rebuilds Menu and Konami release baselines", () => {
+    const serializer = readFileSync(resolve(rootDir, "pwa/src/jackal/persistence/JackalGameStateSerializer.ts"), "utf8");
+
+    const restoreMenu = serializer.slice(serializer.indexOf("private restoreMenuRuntimePointers"), serializer.indexOf("private isModeWithMenu"));
+    assert.match(restoreMenu, /menu\.resyncInputAfterBrowserResume\(\)/);
+
+    const restoreKonami = serializer.slice(serializer.indexOf("private restoreKonamiCode"), serializer.indexOf("private restoreFadeListener"));
+    assert.match(restoreKonami, /konamiCode\.resyncInputAfterBrowserResume\(\)/);
+});
+
 test("Jackal browser resume rebaselines InputMode, Menu, and Konami input boundaries", () => {
     const source = readFileSync(resolve(rootDir, "pwa/src/jackal/Main.ts"), "utf8");
     const start = source.indexOf("public setBrowserSuspended");
