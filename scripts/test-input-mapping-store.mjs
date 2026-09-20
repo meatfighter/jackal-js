@@ -134,6 +134,18 @@ test("reserved keys, duplicate bindings, and D-pad action bindings are rejected 
     assert.equal(new JackalInputMappingStore().save(directionOnDpad), true);
 });
 
+test("same-version input mappings with extra fields are rejected rather than partially accepted", async () => {
+    storage.clear();
+    const href = "https://example.test/stage/pwa/";
+    setLocation(href);
+    const { JackalInputMappingStore } = await loadStore();
+    const key = storageKey("jackal.input-mapping", href);
+
+    storage.set(key, JSON.stringify({ version: 2, ...createMapping(), obsoleteField: true }));
+    assert.equal(new JackalInputMappingStore().restore(createMapping()), false);
+    assert.equal(storage.has(key), false);
+});
+
 test("controller mappings outside the runtime 64-button scan range are rejected", async () => {
     storage.clear();
     const href = "https://example.test/stage/pwa/";
