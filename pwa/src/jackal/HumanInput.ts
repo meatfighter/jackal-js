@@ -22,7 +22,12 @@ export class HumanInput implements IInput {
     private readonly controllerConnectionGenerations: number[] = [];
     private readonly controllerBlockedControls: boolean[][] = [];
     private lastControllerSampleSequence = -1;
-    private lastControllerMappingSignature = "";
+    private lastControllerMappingUp = Number.NaN;
+    private lastControllerMappingDown = Number.NaN;
+    private lastControllerMappingLeft = Number.NaN;
+    private lastControllerMappingRight = Number.NaN;
+    private lastControllerMappingGrenade = Number.NaN;
+    private lastControllerMappingGun = Number.NaN;
 
     public constructor(buttonMapping: ButtonMapping, gc: GameContainer) {
         this.buttonMapping = buttonMapping;
@@ -45,17 +50,20 @@ export class HumanInput implements IInput {
             return;
         }
 
-        const mappingSignature = [
-            this.buttonMapping.controllerUp,
-            this.buttonMapping.controllerDown,
-            this.buttonMapping.controllerLeft,
-            this.buttonMapping.controllerRight,
-            this.buttonMapping.controllerGrenade,
-            this.buttonMapping.controllerGun
-        ].join(",");
-        const mappingChanged = mappingSignature !== this.lastControllerMappingSignature;
+        const mappingChanged =
+            this.buttonMapping.controllerUp !== this.lastControllerMappingUp ||
+            this.buttonMapping.controllerDown !== this.lastControllerMappingDown ||
+            this.buttonMapping.controllerLeft !== this.lastControllerMappingLeft ||
+            this.buttonMapping.controllerRight !== this.lastControllerMappingRight ||
+            this.buttonMapping.controllerGrenade !== this.lastControllerMappingGrenade ||
+            this.buttonMapping.controllerGun !== this.lastControllerMappingGun;
         const firstSample = this.lastControllerSampleSequence < 0;
-        this.lastControllerMappingSignature = mappingSignature;
+        this.lastControllerMappingUp = this.buttonMapping.controllerUp;
+        this.lastControllerMappingDown = this.buttonMapping.controllerDown;
+        this.lastControllerMappingLeft = this.buttonMapping.controllerLeft;
+        this.lastControllerMappingRight = this.buttonMapping.controllerRight;
+        this.lastControllerMappingGrenade = this.buttonMapping.controllerGrenade;
+        this.lastControllerMappingGun = this.buttonMapping.controllerGun;
         this.lastControllerSampleSequence = status.sequence;
 
         let up = false;
