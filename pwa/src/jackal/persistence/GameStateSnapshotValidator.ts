@@ -363,6 +363,7 @@ function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRe
         case "INPUT":
             return true; // Input-mode fields are checked together with its logical extra snapshot.
     }
+    return false;
 }
 
 function hasPrimitiveFieldTypes(
