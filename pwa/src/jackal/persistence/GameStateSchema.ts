@@ -1,4 +1,4 @@
-// Development cutover: only the current logical-audio schema is supported.
+// Current save schema: only this exact format is supported; earlier internal schemas are not migrated.
 export const GAME_STATE_VERSION = 15 as const;
 export type SupportedGameStateVersion = typeof GAME_STATE_VERSION;
 export const GAME_STATE_STORAGE_KEY = "jackal.game-state-v15";
