@@ -1,6 +1,7 @@
 import type { ButtonMapping } from "../jackal/ButtonMapping.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 const NO_BINDING = -1;
+const MAX_CONTROLLER_BUTTON_INDEX = 63;
 
 interface JackalInputMappingSnapshot {
     version: number;
@@ -130,20 +131,20 @@ export class JackalInputMappingStore {
         return (
             this.isRecord(snapshot) &&
             snapshot.version === JackalInputMappingStore.SNAPSHOT_VERSION &&
-            this.isBinding(snapshot.keyUp) &&
-            this.isBinding(snapshot.keyDown) &&
-            this.isBinding(snapshot.keyLeft) &&
-            this.isBinding(snapshot.keyRight) &&
-            this.isBinding(snapshot.keyGrenade) &&
-            this.isBinding(snapshot.keyGun) &&
-            this.isBinding(snapshot.keyStart) &&
-            this.isBinding(snapshot.controllerUp) &&
-            this.isBinding(snapshot.controllerDown) &&
-            this.isBinding(snapshot.controllerLeft) &&
-            this.isBinding(snapshot.controllerRight) &&
-            this.isBinding(snapshot.controllerGrenade) &&
-            this.isBinding(snapshot.controllerGun) &&
-            this.isBinding(snapshot.controllerStart)
+            this.isKeyBinding(snapshot.keyUp) &&
+            this.isKeyBinding(snapshot.keyDown) &&
+            this.isKeyBinding(snapshot.keyLeft) &&
+            this.isKeyBinding(snapshot.keyRight) &&
+            this.isKeyBinding(snapshot.keyGrenade) &&
+            this.isKeyBinding(snapshot.keyGun) &&
+            this.isKeyBinding(snapshot.keyStart) &&
+            this.isControllerBinding(snapshot.controllerUp) &&
+            this.isControllerBinding(snapshot.controllerDown) &&
+            this.isControllerBinding(snapshot.controllerLeft) &&
+            this.isControllerBinding(snapshot.controllerRight) &&
+            this.isControllerBinding(snapshot.controllerGrenade) &&
+            this.isControllerBinding(snapshot.controllerGun) &&
+            this.isControllerBinding(snapshot.controllerStart)
         );
     }
 
@@ -164,11 +165,14 @@ export class JackalInputMappingStore {
         return value !== null && typeof value === "object" && !Array.isArray(value);
     }
 
-    private isInteger(value: unknown): value is number {
-        return typeof value === "number" && Number.isInteger(value) && value >= 0;
+    private isKeyBinding(value: unknown): value is number {
+        return value === NO_BINDING || (typeof value === "number" && Number.isInteger(value) && value >= 0);
     }
 
-    private isBinding(value: unknown): value is number {
-        return value === NO_BINDING || this.isInteger(value);
+    private isControllerBinding(value: unknown): value is number {
+        return (
+            value === NO_BINDING ||
+            (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_CONTROLLER_BUTTON_INDEX)
+        );
     }
 }
