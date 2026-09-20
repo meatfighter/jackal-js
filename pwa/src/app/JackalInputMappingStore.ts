@@ -27,7 +27,7 @@ export class JackalInputMappingStore {
     private static readonly FIRST_PUBLIC_SNAPSHOT_VERSION = 3;
     private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
 
-    public save(buttonMapping: ButtonMapping): MappingWriteResult {
+    public save(buttonMapping: ButtonMapping, isAuthorized: () => boolean): MappingWriteResult {
         try {
             const blockedReason = this.writeBlockedReason();
             if (blockedReason !== null) {
@@ -53,7 +53,11 @@ export class JackalInputMappingStore {
             if (!this.isSupportedSnapshot(snapshot)) {
                 return { saved: false, reason: "invalid" };
             }
-            return this.storage.write(JSON.stringify(snapshot)) ? { saved: true } : { saved: false, reason: "unavailable" };
+            const text = JSON.stringify(snapshot);
+            if (!isAuthorized()) {
+                return { saved: false, reason: "stale-session" };
+            }
+            return this.storage.write(text) ? { saved: true } : { saved: false, reason: "unavailable" };
         } catch (error) {
             console.warn("Unable to encode Jackal input mapping.", error);
             return { saved: false, reason: "invalid" };
