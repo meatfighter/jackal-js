@@ -31,25 +31,27 @@ export class JackalInputMappingStore {
             if (this.hasProtectedStoredSnapshot()) {
                 return false;
             }
-            return this.storage.write(
-                JSON.stringify({
-                    version: JackalInputMappingStore.SNAPSHOT_VERSION,
-                    keyUp: buttonMapping.keyUp,
-                    keyDown: buttonMapping.keyDown,
-                    keyLeft: buttonMapping.keyLeft,
-                    keyRight: buttonMapping.keyRight,
-                    keyGrenade: buttonMapping.keyGrenade,
-                    keyGun: buttonMapping.keyGun,
-                    keyStart: buttonMapping.keyStart,
-                    controllerUp: buttonMapping.controllerUp,
-                    controllerDown: buttonMapping.controllerDown,
-                    controllerLeft: buttonMapping.controllerLeft,
-                    controllerRight: buttonMapping.controllerRight,
-                    controllerGrenade: buttonMapping.controllerGrenade,
-                    controllerGun: buttonMapping.controllerGun,
-                    controllerStart: buttonMapping.controllerStart
-                } satisfies JackalInputMappingSnapshot)
-            );
+            const snapshot = {
+                version: JackalInputMappingStore.SNAPSHOT_VERSION,
+                keyUp: buttonMapping.keyUp,
+                keyDown: buttonMapping.keyDown,
+                keyLeft: buttonMapping.keyLeft,
+                keyRight: buttonMapping.keyRight,
+                keyGrenade: buttonMapping.keyGrenade,
+                keyGun: buttonMapping.keyGun,
+                keyStart: buttonMapping.keyStart,
+                controllerUp: buttonMapping.controllerUp,
+                controllerDown: buttonMapping.controllerDown,
+                controllerLeft: buttonMapping.controllerLeft,
+                controllerRight: buttonMapping.controllerRight,
+                controllerGrenade: buttonMapping.controllerGrenade,
+                controllerGun: buttonMapping.controllerGun,
+                controllerStart: buttonMapping.controllerStart
+            } satisfies JackalInputMappingSnapshot;
+            if (!this.isSupportedSnapshot(snapshot)) {
+                return false;
+            }
+            return this.storage.write(JSON.stringify(snapshot));
         } catch (error) {
             console.warn("Unable to encode Jackal input mapping.", error);
             return false;
@@ -142,9 +144,27 @@ export class JackalInputMappingStore {
             this.isControllerBinding(snapshot.controllerDown) &&
             this.isControllerBinding(snapshot.controllerLeft) &&
             this.isControllerBinding(snapshot.controllerRight) &&
-            this.isControllerBinding(snapshot.controllerGrenade) &&
-            this.isControllerBinding(snapshot.controllerGun) &&
-            this.isControllerBinding(snapshot.controllerStart)
+            this.isControllerActionBinding(snapshot.controllerGrenade) &&
+            this.isControllerActionBinding(snapshot.controllerGun) &&
+            this.isControllerActionBinding(snapshot.controllerStart) &&
+            this.hasUniqueNonBindingValues([
+                snapshot.keyUp,
+                snapshot.keyDown,
+                snapshot.keyLeft,
+                snapshot.keyRight,
+                snapshot.keyGrenade,
+                snapshot.keyGun,
+                snapshot.keyStart
+            ]) &&
+            this.hasUniqueNonBindingValues([
+                snapshot.controllerUp,
+                snapshot.controllerDown,
+                snapshot.controllerLeft,
+                snapshot.controllerRight,
+                snapshot.controllerGrenade,
+                snapshot.controllerGun,
+                snapshot.controllerStart
+            ])
         );
     }
 
@@ -177,5 +197,14 @@ export class JackalInputMappingStore {
             value === NO_BINDING ||
             (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_CONTROLLER_BUTTON_INDEX)
         );
+    }
+
+    private isControllerActionBinding(value: unknown): value is number {
+        return this.isControllerBinding(value) && (value === NO_BINDING || value < ButtonMapping.DEFAULT_CONTROLLER_UP || value > ButtonMapping.DEFAULT_CONTROLLER_RIGHT);
+    }
+
+    private hasUniqueNonBindingValues(values: readonly number[]): boolean {
+        const assigned = values.filter((value) => value !== NO_BINDING);
+        return new Set(assigned).size === assigned.length;
     }
 }
