@@ -291,6 +291,22 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     const validMenuMode = optionsModeSnapshot(fields, currentVersion);
     assert.equal(validator.isSupportedGameStateSnapshot(validMenuMode), true);
 
+    const missingRequiredOptionsMenu = structuredClone(validMenuMode);
+    missingRequiredOptionsMenu.modeExtra.menu = null;
+    assert.equal(
+        validator.isSupportedGameStateSnapshot(missingRequiredOptionsMenu),
+        false,
+        "OptionsMode dereferences its menu and must reject a null menu before restore"
+    );
+
+    const mismatchedCommittedMenuSelection = structuredClone(validMenuMode);
+    mismatchedCommittedMenuSelection.modeFields.state = 2;
+    mismatchedCommittedMenuSelection.modeFields.optionSelectedFlag = true;
+    mismatchedCommittedMenuSelection.modeFields.selectedIndex = 2;
+    mismatchedCommittedMenuSelection.modeExtra.menu.fields.selectedIndex = 1;
+    mismatchedCommittedMenuSelection.modeExtra.menu.fields.selectionMade = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(mismatchedCommittedMenuSelection), false);
+
     const numericMenuBoolean = structuredClone(validMenuMode);
     numericMenuBoolean.modeExtra.menu.fields.selectionMade = 0;
     assert.equal(validator.isSupportedGameStateSnapshot(numericMenuBoolean), false);
@@ -307,6 +323,8 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     selectedMenuSameTick.modeFields.state = 1;
     selectedMenuSameTick.modeFields.optionSelectedFlag = true;
     selectedMenuSameTick.modeFields.selectedIndex = 2;
+    selectedMenuSameTick.modeExtra.menu.fields.selectedIndex = 2;
+    selectedMenuSameTick.modeExtra.menu.fields.selectionMade = true;
     assert.equal(validator.isSupportedGameStateSnapshot(selectedMenuSameTick), true);
 
     const impossibleUnselectedMenuIndex = structuredClone(validMenuMode);
@@ -319,6 +337,8 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     validMenuFadeOut.modeFields.state = 2;
     validMenuFadeOut.modeFields.optionSelectedFlag = true;
     validMenuFadeOut.modeFields.selectedIndex = 1;
+    validMenuFadeOut.modeExtra.menu.fields.selectedIndex = 1;
+    validMenuFadeOut.modeExtra.menu.fields.selectionMade = true;
     assert.equal(validator.isSupportedGameStateSnapshot(validMenuFadeOut), true);
 
     const impossibleMenuFadeOut = structuredClone(validMenuMode);
