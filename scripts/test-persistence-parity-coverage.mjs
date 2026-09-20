@@ -200,6 +200,22 @@ test("global Player input-release skips do not collide with other runtime classe
     }
 });
 
+test("Main save fields exclude loader/runtime caches and derived display strings", () => {
+    const mainFields = persistenceConstant("MAIN_FIELD_NAMES");
+    for (const field of [
+        "loadIndex",
+        "nextFrameTime",
+        "extraLivesStr",
+        "scoreStr",
+        "closeRequestedFlag",
+        "controllerGrenadePressed",
+        "controllerGunPressed",
+        "unitVector"
+    ]) {
+        assert.ok(!mainFields.includes(field), `${field} must remain runtime/reconstructed rather than durable Main state`);
+    }
+});
+
 test("generic object serialization explicitly excludes reconstructed and runtime-only state", () => {
     const skipped = persistenceConstant("SKIPPED_INSTANCE_FIELDS");
     assert.equal(new Set(skipped).size, skipped.length, "SKIPPED_INSTANCE_FIELDS contains duplicates.");
