@@ -1,3 +1,4 @@
+import { Input } from "slick2d-ts";
 import { ButtonMapping } from "../jackal/ButtonMapping.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 const NO_BINDING = -1;
@@ -207,7 +208,10 @@ export class JackalInputMappingStore {
     private isKeyBinding(value: unknown): value is number {
         return (
             value === NO_BINDING ||
-            (typeof value === "number" && Number.isInteger(value) && value >= 0 && !ButtonMapping.isReservedKey(value))
+            (typeof value === "number" &&
+                Number.isInteger(value) &&
+                Input.isBrowserKeyCodeSupported(value) &&
+                !ButtonMapping.isReservedKey(value))
         );
     }
 
