@@ -1,6 +1,13 @@
 import { Input } from "slick2d-ts";
+export type MappingWriteFailureReason = "unavailable" | "protected" | "invalid" | "stale-session";
+export type MappingWriteResult = { readonly saved: true } | { readonly saved: false; readonly reason: MappingWriteFailureReason };
+
 export class ButtonMapping {
     public static readonly NO_BINDING: number = -1;
+    public static readonly CONTROLLER_DIRECTION_UP: number = -2;
+    public static readonly CONTROLLER_DIRECTION_DOWN: number = -3;
+    public static readonly CONTROLLER_DIRECTION_LEFT: number = -4;
+    public static readonly CONTROLLER_DIRECTION_RIGHT: number = -5;
     public static readonly ACTION_UP: number = 0;
     public static readonly ACTION_DOWN: number = 1;
     public static readonly ACTION_LEFT: number = 2;
@@ -17,10 +24,10 @@ export class ButtonMapping {
     public static readonly DEFAULT_KEY_GUN: number = Input.KEY_Z;
     public static readonly DEFAULT_KEY_START: number = Input.KEY_ENTER;
 
-    public static readonly DEFAULT_CONTROLLER_UP: number = 12;
-    public static readonly DEFAULT_CONTROLLER_DOWN: number = 13;
-    public static readonly DEFAULT_CONTROLLER_LEFT: number = 14;
-    public static readonly DEFAULT_CONTROLLER_RIGHT: number = 15;
+    public static readonly DEFAULT_CONTROLLER_UP: number = ButtonMapping.CONTROLLER_DIRECTION_UP;
+    public static readonly DEFAULT_CONTROLLER_DOWN: number = ButtonMapping.CONTROLLER_DIRECTION_DOWN;
+    public static readonly DEFAULT_CONTROLLER_LEFT: number = ButtonMapping.CONTROLLER_DIRECTION_LEFT;
+    public static readonly DEFAULT_CONTROLLER_RIGHT: number = ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
     public static readonly DEFAULT_CONTROLLER_GRENADE: number = 0;
     public static readonly DEFAULT_CONTROLLER_GUN: number = 2;
     public static readonly DEFAULT_CONTROLLER_START: number = 9;
@@ -155,6 +162,14 @@ export class ButtonMapping {
             return "GP-NONE";
         }
         switch (button) {
+            case ButtonMapping.CONTROLLER_DIRECTION_UP:
+                return "GP-UP";
+            case ButtonMapping.CONTROLLER_DIRECTION_DOWN:
+                return "GP-DOWN";
+            case ButtonMapping.CONTROLLER_DIRECTION_LEFT:
+                return "GP-LEFT";
+            case ButtonMapping.CONTROLLER_DIRECTION_RIGHT:
+                return "GP-RIGHT";
             case 0:
                 return "GP-A";
             case 1:
@@ -179,19 +194,20 @@ export class ButtonMapping {
                 return "GP-LS";
             case 11:
                 return "GP-RS";
-            case 12:
-                return "GP-UP";
-            case 13:
-                return "GP-DOWN";
-            case 14:
-                return "GP-LEFT";
-            case 15:
-                return "GP-RIGHT";
             case 16:
                 return "GP-HOME";
             default:
                 return "GP-" + button;
         }
+    }
+
+    public static isLogicalControllerDirection(binding: number): boolean {
+        return (
+            binding === ButtonMapping.CONTROLLER_DIRECTION_UP ||
+            binding === ButtonMapping.CONTROLLER_DIRECTION_DOWN ||
+            binding === ButtonMapping.CONTROLLER_DIRECTION_LEFT ||
+            binding === ButtonMapping.CONTROLLER_DIRECTION_RIGHT
+        );
     }
 
     private static padLabel(label: string): string {
