@@ -120,7 +120,11 @@ export function decodeNamedFieldsInto(
         if (!Object.hasOwn(fields, key)) {
             throw new Error(`Missing saved field: ${key}`);
         }
-        Reflect.set(target, key, decodeValue(fields[key]!, context));
+        const encoded = fields[key];
+        if (encoded === undefined) {
+            throw new Error(`Missing encoded game-state value for ${key}.`);
+        }
+        Reflect.set(target, key, decodeValue(encoded, context));
     }
     normalizeJavaFloatFields(target, javaFloatFields);
 }
