@@ -73,7 +73,12 @@ async function loadPersistenceValidation() {
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
     const audioRegistryUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8"));
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
-    const buttonMappingUrl = compileModule("export class ButtonMapping { static NO_BINDING = -1; }");
+    const buttonMappingUrl = compileModule(
+        readFileSync(new URL("../pwa/src/jackal/ButtonMapping.ts", import.meta.url), "utf8").replace(
+            `from "slick2d-ts"`,
+            `from "${slickModuleUrl}"`
+        )
+    );
     const tileTypesUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/GameTileTypes.ts", import.meta.url), "utf8"));
     const inputModeUrl = compileModule(`
         export class InputMode {
