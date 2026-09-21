@@ -159,6 +159,28 @@ try {
         bossBlue.bossBlueTanksManager = { kind: "entityRef", id: 7 };
         assert.equal(policy.isEntityDurableFields("BossBlueTank", bossBlue, bossBlueTypes), true);
 
+        const requiredOwnerDescriptor = policy.getEntityDurableFieldDescriptor("BossShipGun");
+        const requiredOwnerTypes = new Map([[8, "BossShipManager"]]);
+        const requiredOwner = encodedRecordForDescriptor(requiredOwnerDescriptor, requiredOwnerTypes);
+        requiredOwner.bossShipManager = { kind: "entityRef", id: 8 };
+        assert.equal(policy.isEntityDurableFields("BossShipGun", requiredOwner, requiredOwnerTypes), true);
+        const missingRequiredOwner = structuredClone(requiredOwner);
+        missingRequiredOwner.bossShipManager = null;
+        assert.equal(
+            policy.isEntityDurableFields("BossShipGun", missingRequiredOwner, requiredOwnerTypes),
+            false,
+            "constructor-required manager links must not restore as null"
+        );
+
+        const optionalTrackerDescriptor = policy.getEntityDurableFieldDescriptor("BrownTank");
+        const optionalTracker = encodedRecordForDescriptor(optionalTrackerDescriptor, new Map());
+        optionalTracker.tankTracker = null;
+        assert.equal(
+            policy.isEntityDurableFields("BrownTank", optionalTracker, new Map()),
+            true,
+            "BrownTank tracker is legitimately optional"
+        );
+
         const wrongTargetTypes = new Map([[7, "Bomb"]]);
         assert.equal(policy.isEntityDurableFields("BossBlueTank", bossBlue, wrongTargetTypes), false);
 
