@@ -305,7 +305,7 @@ export class JackalWebApp {
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
         this.suspendGameForMenu();
         this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved);
-        const saved = this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        const saved = this.sessionCleanup.trySave(() => this.saveCurrentGameState(false));
         this.sessionCleanup.run(
             () => this.viewport.stopHamburgerVisibilityMonitor(),
             () => this.viewport.hideHamburger(),
@@ -685,7 +685,7 @@ export class JackalWebApp {
         }
     };
 
-    private saveCurrentGameState(): boolean {
+    private saveCurrentGameState(reportFailure = true): boolean {
         const mainGame = this.game;
         const runtime = this.runtimeLoader.preparedRuntime;
         if (!this.getOwnership().owned || mainGame === null || runtime === null || !mainGame.isStateSaveReady()) {
@@ -693,7 +693,10 @@ export class JackalWebApp {
         }
         const result = this.getGameStateStore(runtime).save(mainGame, () => this.getOwnership().owned && this.game === mainGame);
         if (!result.saved) {
-            this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
+            console.warn("Unable to save Jackal game state.", result.reason);
+            if (reportFailure) {
+                this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
+            }
         }
         return result.saved;
     }
