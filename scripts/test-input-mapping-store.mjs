@@ -102,7 +102,7 @@ test("input mappings with unbound controls survive save and restore", async () =
     setLocation("https://example.test/stage/pwa/?v=old");
     const { JackalInputMappingStore } = await loadStore();
     const store = new JackalInputMappingStore();
-    const saved = createMapping({ keyGun: -1, controllerLeft: -1, controllerGun: -1 });
+    const saved = createMapping({ keyGun: -1, controllerLeft: -1 });
     const restored = createMapping();
 
     assert.deepEqual(store.save(saved, authorized), { saved: true });
@@ -308,8 +308,8 @@ test("storage failures produce unavailable without destroying the previous mappi
 test("input mappings are isolated by deployment path and stable across cache-bust queries", async () => {
     resetStorage();
     const { JackalInputMappingStore } = await loadStore();
-    const stageSaved = createMapping({ keyGun: -1, controllerGun: -1 });
-    const productionSaved = createMapping({ keyGrenade: -1, controllerGrenade: -1 });
+    const stageSaved = createMapping({ keyGun: -1 });
+    const productionSaved = createMapping({ controllerGrenade: -1 });
 
     setLocation("https://example.test/stage/pwa/?v=old");
     assert.deepEqual(new JackalInputMappingStore().save(stageSaved, authorized), { saved: true });
