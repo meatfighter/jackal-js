@@ -76,6 +76,9 @@ async function loadPersistenceModules() {
     const serializerUrl = compileModule(`
         export class JackalGameStateSerializer {
             createSnapshot(main, appVersion) {
+                if (main.throwOnSnapshot === true) {
+                    throw new Error("snapshot creation must not run for protected storage");
+                }
                 return { version: ${currentGameStateVersion}, kind: "mode", supported: true, appVersion, marker: main.marker ?? "saved" };
             }
             restoreSnapshot(main, gc, snapshot) {
@@ -99,6 +102,23 @@ test("restore exceptions preserve the current stored game-state snapshot", async
         storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "keep", throwOnRestore: true }));
         assert.equal(new JackalGameStateStore("1.0.0").restore({}, {}), false);
         assert.equal(storage.has(key), true);
+    });
+});
+
+test("store inspects protected existing data before attempting snapshot creation", async () => {
+    await withMutedConsoleWarn(async () => {
+        resetStorage();
+        const { JackalGameStateStore } = await loadPersistenceModules();
+        const key = gameStateStorageKey();
+        const futureSnapshot = JSON.stringify({ version: currentGameStateVersion + 1, kind: "game", futureShape: true });
+        storage.set(key, futureSnapshot);
+
+        const store = new JackalGameStateStore("1.0.0");
+        assert.deepEqual(
+            store.save({ isStateSaveReady: () => true, throwOnSnapshot: true }, () => true),
+            { saved: false, reason: "unsupported-future" }
+        );
+        assert.equal(storage.get(key), futureSnapshot);
     });
 });
 
