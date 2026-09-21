@@ -28,8 +28,9 @@ test("input-mapping schema 3 is explicitly the first public mapping format", () 
     const mappingStore = read("pwa/src/app/JackalInputMappingStore.ts");
     assert.match(mappingStore, /SNAPSHOT_VERSION = 3/);
     assert.match(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION = 3/);
-    assert.match(mappingStore, /version >= JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
-    assert.match(mappingStore, /version !== JackalInputMappingStore\.SNAPSHOT_VERSION/);
+    assert.match(mappingStore, /version >= 1/);
+    assert.match(mappingStore, /version < JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
+    assert.match(mappingStore, /snapshot\.version === JackalInputMappingStore\.SNAPSHOT_VERSION/);
     assert.match(mappingStore, /hasProtectedStoredSnapshot/);
 });
 
