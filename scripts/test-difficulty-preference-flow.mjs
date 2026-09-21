@@ -41,16 +41,13 @@ test("Jackal difficulty is persisted independently for fresh Java and browser ga
     assert.match(tsPreferences, /DIFFICULTY_STORAGE_KEY\s*=\s*"jackal-difficulty"/);
     assert.match(tsPreferences, /readDifficultyPreference\(\)/);
     assert.match(tsPreferences, /writeDifficultyPreference\(hardMode:\s*boolean, isAuthorized:\s*\(\) => boolean\)/);
-    assert.match(tsPreferences, /clearDifficultyPreference\(\)/);
-    assert.match(tsPersistenceActions, /persistDifficultyPreference\([\s\S]*?writeDifficultyPreference\(value, isAuthorized\)/);
-    assert.match(
-        tsWebApp,
-        /mainGame\.difficultyChangedHandler = \(hardMode\) => \{[\s\S]*?persistDifficultyPreference\([\s\S]*?this\.isCurrentGameSession\(session\) && this\.game === mainGame/
-    );
-
-    assert.match(tsIntro, /if \(main\.loadIndex < 42\) \{\s*main\.hardMode = readDifficultyPreference\(\);/s);
+    assert.match(tsPreferences, /DIFFICULTY_STORAGE_KEY[\s\S]*removePreference/);
+    assert.doesNotMatch(tsPersistenceActions, /persistDifficultyPreference/);
+    assert.match(tsWebApp, /this\.preferredHardMode = readDifficultyPreference\(\)/);
+    assert.match(tsWebApp, /mainGame\.hardMode = this\.preferredHardMode/);
+    assert.match(tsWebApp, /this\.preferredHardMode = hardMode;[\s\S]*writeDifficultyPreference\(hardMode/);
+    assert.doesNotMatch(tsIntro, /readDifficultyPreference|localStorage/);
     assert.match(tsDifficulty, /this\.main\.hardMode = this\.selectedIndex === 1;\s*this\.main\.notifyDifficultyChanged\(\);/s);
-
     assert.match(javaLoading, /main\.hardMode = java\.util\.prefs\.Preferences[\s\S]*getBoolean\("jackal-difficulty", false\)/);
     assert.match(javaDifficulty, /main\.hardMode = \(selectedIndex == 1\);[\s\S]*putBoolean\("jackal-difficulty", main\.hardMode\)/);
 });

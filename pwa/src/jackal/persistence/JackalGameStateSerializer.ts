@@ -479,6 +479,8 @@ export class JackalGameStateSerializer {
         mode.assignedKeys = new Set(snapshot.assignedKeys);
         mode.assignedControllerButtons = new Set(snapshot.assignedControllerButtons);
         mode.syncInputListenerState();
+    
+        mode.restorePersistencePresentation();
     }
 
     private restoreJeepYeahModeExtraSnapshot(mode: JeepYeahMode, snapshot: JeepYeahModeExtraSnapshot, context: RestoreContext): void {

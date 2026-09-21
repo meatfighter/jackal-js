@@ -1,3 +1,4 @@
+import { snapshotWriteFailure } from "../../app/BrowserPersistence.js";
 import type { GameContainer } from "slick2d-ts";
 import type { Main } from "../Main.js";
 import { clearStoredGameState, inspectStoredGameState, writeStoredGameState, type GameStateWriteResult } from "./GameStateStorage.js";
@@ -9,27 +10,14 @@ export class JackalGameStateStore {
     public constructor(private readonly appVersion: string) {}
 
     public save(main: Main, isAuthorized: () => boolean): GameStateWriteResult {
-        if (!main.isStateSaveReady()) {
-            return { saved: false, reason: "invalid-snapshot" };
-        }
+        if (!main.isStateSaveReady()) return { saved: false, reason: "invalid-snapshot" };
+        let snapshot: ReturnType<JackalGameStateSerializer["createSnapshot"]>;
         try {
-            const existing = inspectStoredGameState();
-            switch (existing.status) {
-                case "read-failed":
-                    return { saved: false, reason: "read-failed" };
-                case "invalid":
-                    return { saved: false, reason: "invalid-existing" };
-                case "unsupported-future":
-                    return { saved: false, reason: "unsupported-future" };
-                case "missing":
-                case "current":
-                    break;
-            }
-            return writeStoredGameState(this.serializer.createSnapshot(main, this.appVersion), isAuthorized);
+            snapshot = this.serializer.createSnapshot(main, this.appVersion);
         } catch (error) {
-            console.warn("Unable to save Jackal game state.", error);
-            return { saved: false, reason: "encode-failed" };
+            return snapshotWriteFailure("Jackal game state", "capture-failed", error);
         }
+        return writeStoredGameState(snapshot, isAuthorized);
     }
 
     public restore(main: Main, gc: GameContainer): boolean {

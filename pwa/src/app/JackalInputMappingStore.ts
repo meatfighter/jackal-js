@@ -1,5 +1,6 @@
-import { ButtonMapping, type MappingWriteFailureReason, type MappingWriteResult } from "../jackal/ButtonMapping.js";
-import { DeploymentStorageEntry } from "./DeploymentStorage.js";
+import { ButtonMapping, type MappingWriteResult } from "../jackal/ButtonMapping.js";
+import { captureAndWriteSnapshot, readCurrentJson, removePreference } from "./BrowserPersistence.js";
+import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
 const NO_BINDING = ButtonMapping.NO_BINDING;
 
 interface JackalInputMappingSnapshot {
@@ -22,44 +23,32 @@ interface JackalInputMappingSnapshot {
 
 export class JackalInputMappingStore {
     private static readonly SNAPSHOT_VERSION = 3;
-    private static readonly FIRST_PUBLIC_SNAPSHOT_VERSION = 3;
-    private readonly storage = new DeploymentStorageEntry("jackal.input-mapping", "Jackal input mapping");
+    
+    
 
     public save(buttonMapping: ButtonMapping, isAuthorized: () => boolean): MappingWriteResult {
-        try {
-            const blockedReason = this.writeBlockedReason();
-            if (blockedReason !== null) {
-                return { saved: false, reason: blockedReason };
-            }
-            const snapshot = {
+        const result = captureAndWriteSnapshot("Jackal input mapping", getDeploymentStorageKey("jackal.input-mapping"),
+            () => ({
                 version: JackalInputMappingStore.SNAPSHOT_VERSION,
                 keyUp: buttonMapping.keyUp,
-                keyDown: buttonMapping.keyDown,
-                keyLeft: buttonMapping.keyLeft,
-                keyRight: buttonMapping.keyRight,
-                keyGrenade: buttonMapping.keyGrenade,
-                keyGun: buttonMapping.keyGun,
-                keyStart: buttonMapping.keyStart,
-                controllerUp: buttonMapping.controllerUp,
-                controllerDown: buttonMapping.controllerDown,
-                controllerLeft: buttonMapping.controllerLeft,
-                controllerRight: buttonMapping.controllerRight,
-                controllerGrenade: buttonMapping.controllerGrenade,
-                controllerGun: buttonMapping.controllerGun,
-                controllerStart: buttonMapping.controllerStart
-            } satisfies JackalInputMappingSnapshot;
-            if (!this.isSupportedSnapshot(snapshot)) {
-                return { saved: false, reason: "invalid" };
-            }
-            const text = JSON.stringify(snapshot);
-            if (!isAuthorized()) {
-                return { saved: false, reason: "stale-session" };
-            }
-            return this.storage.write(text) ? { saved: true } : { saved: false, reason: "unavailable" };
-        } catch (error) {
-            console.warn("Unable to encode Jackal input mapping.", error);
-            return { saved: false, reason: "invalid" };
-        }
+              keyDown: buttonMapping.keyDown,
+              keyLeft: buttonMapping.keyLeft,
+              keyRight: buttonMapping.keyRight,
+              keyGrenade: buttonMapping.keyGrenade,
+              keyGun: buttonMapping.keyGun,
+              keyStart: buttonMapping.keyStart,
+              controllerUp: buttonMapping.controllerUp,
+              controllerDown: buttonMapping.controllerDown,
+              controllerLeft: buttonMapping.controllerLeft,
+              controllerRight: buttonMapping.controllerRight,
+              controllerGrenade: buttonMapping.controllerGrenade,
+              controllerGun: buttonMapping.controllerGun,
+              controllerStart: buttonMapping.controllerStart,
+            } satisfies JackalInputMappingSnapshot),
+            (snapshot) => this.isSupportedSnapshot(snapshot), JackalInputMappingStore.MAX_TEXT_LENGTH, isAuthorized);
+        if (result.saved) return result;
+        return { saved: false, reason: result.reason === "not-authorized" ? "stale-session" :
+            result.reason === "write-failed" ? "unavailable" : "invalid" };
     }
 
     public restore(buttonMapping: ButtonMapping): boolean {
@@ -90,51 +79,15 @@ export class JackalInputMappingStore {
     }
 
     public clear(isAuthorized: () => boolean): boolean {
-        return isAuthorized() && this.storage.remove();
+        return removePreference("Jackal input mapping", getDeploymentStorageKey("jackal.input-mapping"), isAuthorized);
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
-        const stored = this.storage.read();
-        if (!stored.available || stored.value === null) {
-            return null;
-        }
-
-        let snapshot: unknown;
-        try {
-            snapshot = JSON.parse(stored.value);
-        } catch {
-            return null;
-        }
-
-        if (!this.isSupportedSnapshot(snapshot)) {
-            if (this.isObsoletePrepublicSnapshot(snapshot)) {
-                this.storage.remove();
-            }
-            return null;
-        }
-
-        return snapshot;
+        return readCurrentJson(getDeploymentStorageKey("jackal.input-mapping"), JackalInputMappingStore.MAX_TEXT_LENGTH,
+            (value): value is JackalInputMappingSnapshot => this.isSupportedSnapshot(value));
     }
 
-    private writeBlockedReason(): MappingWriteFailureReason | null {
-        const stored = this.storage.read();
-        if (!stored.available) {
-            return "unavailable";
-        }
-        if (stored.value === null) {
-            return null;
-        }
-
-        try {
-            const snapshot = JSON.parse(stored.value) as unknown;
-            if (this.isSupportedSnapshot(snapshot) || this.isObsoletePrepublicSnapshot(snapshot)) {
-                return null;
-            }
-            return "protected";
-        } catch {
-            return "protected";
-        }
-    }
+    
 
     private isSupportedSnapshot(snapshot: unknown): snapshot is JackalInputMappingSnapshot {
         const expectedFields = [
@@ -195,13 +148,7 @@ export class JackalInputMappingStore {
         );
     }
 
-    private isObsoletePrepublicSnapshot(snapshot: unknown): boolean {
-        if (!this.isRecord(snapshot)) {
-            return false;
-        }
-        const version = snapshot.version;
-        return typeof version === "number" && Number.isInteger(version) && version >= 1 && version < JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION;
-    }
+    
 
     private isRecord(value: unknown): value is Record<string, unknown> {
         return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -223,4 +170,6 @@ export class JackalInputMappingStore {
         const assigned = values.filter((value) => value !== NO_BINDING);
         return new Set(assigned).size === assigned.length;
     }
+
+    public static readonly MAX_TEXT_LENGTH = 4096;
 }

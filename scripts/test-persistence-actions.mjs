@@ -1,68 +1,27 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import ts from "typescript";
-
-function compileModule(source) {
-    const compiled = ts.transpileModule(source, {
-        compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 }
-    }).outputText;
-    return `data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`;
-}
-
-test("Reset threads one authorization callback through every destructive persistence boundary", async () => {
-    const events = [];
-    const preferencesUrl = compileModule(`
-        export function clearPreferences(isAuthorized) {
-            globalThis.__persistenceEvents.push(["preferences", isAuthorized()]);
-            return false;
-        }
-        export function writeDifficultyPreference() { return true; }
-        export function writeFullscreenPreference() { return true; }
-        export function writeScalingPreference() { return true; }
-        export function writeVolume() { return true; }
-    `);
-    const gameStateUrl = compileModule(`
-        export function clearStoredGameState(isAuthorized) {
-            globalThis.__persistenceEvents.push(["game-state", isAuthorized()]);
-            return false;
-        }
-    `);
-
-    globalThis.__persistenceEvents = events;
-    try {
-        const source = readFileSync(new URL("../pwa/src/app/PersistenceActions.ts", import.meta.url), "utf8")
-            .replace(`from "../jackal/persistence/GameStateStorage.js";`, `from "${gameStateUrl}";`)
-            .replace(`from "./AppPreferences.js";`, `from "${preferencesUrl}";`);
-        const actions = await import(compileModule(source));
-
-        let authorizationChecks = 0;
-        const isAuthorized = () => {
-            authorizationChecks++;
-            return authorizationChecks === 1;
-        };
-        const inputMappings = {
-            clear(callback) {
-                events.push(["mapping", callback()]);
-                return false;
-            }
-        };
-        const warnings = {
-            messages: [],
-            report(message) {
-                this.messages.push(message);
-            }
-        };
-
-        actions.clearPersistedPwaState(inputMappings, warnings, isAuthorized);
-
-        assert.deepEqual(events, [
-            ["preferences", true],
-            ["game-state", false],
-            ["mapping", false]
-        ]);
-        assert.deepEqual(warnings.messages, ["Some saved Jackal settings could not be cleared."]);
-    } finally {
-        delete globalThis.__persistenceEvents;
-    }
+import { loadTypeScript } from "./persistence-test-loader.mjs";
+const events=[];
+globalThis.__resetEvents=events;
+const actions=await loadTypeScript("pwa/src/app/PersistenceActions.ts",{
+    "pwa/src/app/AppPreferences.ts":`export function clearPreferences(a){globalThis.__resetEvents.push(["preferences",a()]);return false;}`,
+    "pwa/src/jackal/persistence/GameStateStorage.ts":`export function clearStoredGameState(a){globalThis.__resetEvents.push(["game",a()]);return false;}`
+});
+test("Reset aggregates partial failures without skipping later authorized slots",()=>{
+    events.length=0;
+    const mappings={clear(a){events.push(["mapping",a()]);return false;}};
+    assert.equal(actions.clearPersistedPwaState(mappings,()=>true),false);
+    assert.deepEqual(events,[["preferences",true],["game",true],["mapping",true]]);
+});
+test("Reset stops invoking further mutation boundaries once ownership is lost",()=>{
+    events.length=0;
+    const mappings={clear(){throw new Error("must not reach mapping after revocation");}};
+    let allowed=true;
+    const authorized=()=>allowed;
+    // The first mutation revokes authority, rather than relying on a brittle number of predicate calls.
+    const originalPush=events.push;
+    events.push=function(...items){const result=originalPush.apply(this,items);allowed=false;return result;};
+    try {assert.equal(actions.clearPersistedPwaState(mappings,authorized),false);}
+    finally {delete events.push;}
+    assert.deepEqual(events,[["preferences",true]]);
 });

@@ -1,6 +1,6 @@
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 
-import { readDifficultyPreference } from "../app/AppPreferences.js";
+
 import { MainConstants } from "../java/MainConstants.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMenuListener } from "./IMenuListener.js";
@@ -96,10 +96,6 @@ export class IntroMode implements IMode, IFadeListener, IMenuListener {
         this.main = main;
         this.gc = gc;
         this.input = main.input;
-
-        if (main.loadIndex < 42) {
-            main.hardMode = readDifficultyPreference();
-        }
 
         main.startFade(false, this);
 

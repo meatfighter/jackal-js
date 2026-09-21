@@ -1,3 +1,5 @@
+import { writePreference, removePreference } from "./BrowserPersistence.js";
+import { getDeploymentStorageKey } from "./DeploymentStorageKeys.js";
 import { DeploymentStorageEntry } from "./DeploymentStorage.js";
 
 export const VOLUME_STORAGE_KEY = "jackal-volume";
@@ -33,12 +35,10 @@ export function readVolume(): number {
 }
 
 export function writeVolume(value: number, isAuthorized: () => boolean): boolean {
-    return isAuthorized() && volumeStorage.write(String(Math.round(value * 100)));
-}
+     return writePreference("Jackal volume", getDeploymentStorageKey(VOLUME_STORAGE_KEY), String(Math.round(clampVolume(value, DEFAULT_VOLUME) * 100)), isAuthorized);
+ }
 
-function clearVolume(): boolean {
-    return volumeStorage.remove();
-}
+
 
 export function readScalingPreference(): JackalScalingPreference {
     const result = scalingStorage.read();
@@ -52,12 +52,10 @@ export function readScalingPreference(): JackalScalingPreference {
 }
 
 export function writeScalingPreference(value: JackalScalingPreference, isAuthorized: () => boolean): boolean {
-    return isAuthorized() && scalingStorage.write(value);
-}
+     return writePreference("Jackal scaling", getDeploymentStorageKey(SCALING_STORAGE_KEY), value, isAuthorized);
+ }
 
-function clearScalingPreference(): boolean {
-    return scalingStorage.remove();
-}
+
 
 export function readFullscreenPreference(): boolean {
     const result = fullscreenStorage.read();
@@ -74,12 +72,10 @@ export function readFullscreenPreference(): boolean {
 }
 
 export function writeFullscreenPreference(value: boolean, isAuthorized: () => boolean): boolean {
-    return isAuthorized() && fullscreenStorage.write(String(value));
-}
+     return writePreference("Jackal fullscreen", getDeploymentStorageKey(FULLSCREEN_STORAGE_KEY), String(value), isAuthorized);
+ }
 
-function clearFullscreenPreference(): boolean {
-    return fullscreenStorage.remove();
-}
+
 
 export function readDifficultyPreference(): boolean {
     const result = difficultyStorage.read();
@@ -96,25 +92,18 @@ export function readDifficultyPreference(): boolean {
 }
 
 export function writeDifficultyPreference(hardMode: boolean, isAuthorized: () => boolean): boolean {
-    return isAuthorized() && difficultyStorage.write(hardMode ? "hard" : "normal");
-}
+     return writePreference("Jackal difficulty", getDeploymentStorageKey(DIFFICULTY_STORAGE_KEY), hardMode ? "hard" : "normal", isAuthorized);
+ }
 
-function clearDifficultyPreference(): boolean {
-    return difficultyStorage.remove();
-}
+
 
 export function clearPreferences(isAuthorized: () => boolean): boolean {
-    if (!isAuthorized()) {
-        return false;
+    let success = true;
+    for (const key of [VOLUME_STORAGE_KEY, SCALING_STORAGE_KEY, FULLSCREEN_STORAGE_KEY, DIFFICULTY_STORAGE_KEY]) {
+        if (!isAuthorized()) return false;
+        success = removePreference("Jackal setting", getDeploymentStorageKey(key), isAuthorized) && success;
     }
-    const volumeCleared = clearVolume();
-    if (!isAuthorized()) return false;
-    const scalingCleared = clearScalingPreference();
-    if (!isAuthorized()) return false;
-    const fullscreenCleared = clearFullscreenPreference();
-    if (!isAuthorized()) return false;
-    const difficultyCleared = clearDifficultyPreference();
-    return volumeCleared && scalingCleared && fullscreenCleared && difficultyCleared;
+    return success;
 }
 
 export function isScalingPreference(value: unknown): value is JackalScalingPreference {

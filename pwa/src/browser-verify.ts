@@ -1,3 +1,6 @@
+import { GAME_STATE_STORAGE_KEY } from "./jackal/persistence/GameStateSchema.js";
+import { getDeploymentStorageKey } from "./app/DeploymentStorageKeys.js";
+import { verifyAuthoritativeSave } from "./PersistenceContractVerification.js";
 import { JackalRuntimeLoader, type PreparedRuntime } from "./app/JackalRuntimeLoader.js";
 import { Modes } from "./jackal/Modes.js";
 
@@ -90,6 +93,7 @@ async function verify(): Promise<void> {
 
     try {
         first = await mountGame(runtime, false);
+        verifyAuthoritativeSave(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), first.main, (main) => store.save(main, () => true));
         first.main.requestMode(Modes.GAME, first.container);
         first.main.score = 123450;
         first.main.scoreStr = "123450";

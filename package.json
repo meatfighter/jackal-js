@@ -71,7 +71,8 @@
         "verify:ownership-transfer": "node scripts/run-ownership-transfer-qualification.mjs",
         "verify:persistence-failure": "node scripts/run-persistence-failure-qualification.mjs",
         "verify:lifecycle-stress": "node scripts/run-lifecycle-stress-qualification.mjs",
-        "release:archive": "node scripts/archive-release.mjs"
+        "release:archive": "node scripts/archive-release.mjs",
+        "test:persistence-contract": "node --test scripts/test-persistence-contract.mjs scripts/test-persistence-shell-contract.mjs scripts/test-persistence-settings-contract.mjs scripts/test-game-state-save-preservation.mjs scripts/test-mapping-persistence-contract.mjs"
     },
     "dependencies": {
         "slick2d-ts": "https://codeload.github.com/meatfighter/slick2d-ts/tar.gz/55332709786a2657e5231b1fd5ea0963097a4534"

@@ -12,8 +12,8 @@ test("starting a game requires boot-prepared runtime before fresh playback activ
     assert.match(startGame, /const runtime = this\.runtimeLoader\.preparedRuntime;/);
     assert.match(startGame, /if \(runtime === null\) \{\s*this\.showMenu\(\);\s*return;\s*\}/);
     assert.ok(startGame.indexOf("if (!this.destroyGameSession())") > startGame.indexOf("const runtime = this.runtimeLoader.preparedRuntime;"));
-    assert.ok(startGame.indexOf("if (!this.destroyGameSession())") < startGame.indexOf("const audio = beginGameAudio();"));
-    assert.ok(startGame.indexOf('this.pwaSessionState = "starting";') < startGame.indexOf("const audio = beginGameAudio();"));
+    assert.ok(startGame.indexOf("if (!this.destroyGameSession())") < startGame.indexOf("audio = beginGameAudio();"));
+    assert.ok(startGame.indexOf('this.pwaSessionState = "starting";') < startGame.indexOf("audio = beginGameAudio();"));
     assert.match(startGame, /await audio\.ready/);
     assert.doesNotMatch(startGame, /unlockGameAudio|ensurePrepared|renderLoading/);
     assert.match(source, /public showMenu[\s\S]*?this\.runtimeLoader\s*\.ensurePrepared/);
@@ -46,12 +46,8 @@ test("graphics lifecycle is exit-only and restoration never resumes gameplay", (
 test("live-menu transition freezes and retires playback before serializing progress", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
-    assert.notEqual(liveMenu.length, 0, "showLiveMenuOverlay source slice is empty");
-    const suspension = liveMenu.indexOf("this.suspendGameForMenu();");
-    const inputSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved)");
-    const gameSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState(false))");
-    assert.ok(suspension >= 0 && inputSave > suspension);
-    assert.ok(suspension >= 0 && gameSave > suspension);
+    assert.ok(liveMenu.indexOf("suspendGameForMenu()") < liveMenu.indexOf("saveCurrentGameState()"));
+    assert.doesNotMatch(liveMenu, /saveCurrentInputMapping/);
     const suspend = source.slice(source.indexOf("private suspendGameForMenu"), source.indexOf("private showCleanupFailure"));
     assert.match(suspend, /setLoopSuspended\(true\)/);
     assert.match(suspend, /setBrowserSuspended\(true\)/);
@@ -59,30 +55,26 @@ test("live-menu transition freezes and retires playback before serializing progr
     assert.match(suspend, /releaseGameAudio\(\)/);
 });
 
-test("failed persistence keeps the initialized live game continuable", () => {
+test("failed persistence keeps the initialized live game continuable without persistence UI", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
-    assert.notEqual(liveMenu.length, 0, "showLiveMenuOverlay source slice is empty");
-    assert.match(liveMenu, /const saved = this\.sessionCleanup\.trySave\(\(\) => this\.saveCurrentGameState\(false\)\)/);
-    assert.match(liveMenu, /Progress could not be saved\. Continue still preserves this live game\./);
-    assert.match(liveMenu, /this\.pwaSessionState = "menu";/);
-    assert.doesNotMatch(liveMenu, /destroyGame\(/);
+    assert.match(liveMenu, /trySave/);
+    assert.match(liveMenu, /renderMenu\(this\.root, true, null, true\)/);
+    assert.doesNotMatch(source, /Progress could not be saved|persistenceWarnings/);
 });
 
-test("live-menu save failure is contextual once while other save paths retain the generic warning", () => {
+test("saving and retained continuation have independent eligibility", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
-    const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
-    const saveMethod = source.slice(source.indexOf("private saveCurrentGameState"), source.indexOf("private clearStoredGameState"));
-    assert.match(liveMenu, /saveCurrentGameState\(false\)/);
-    assert.match(saveMethod, /private saveCurrentGameState\(reportFailure = true\)/);
-    assert.match(saveMethod, /console\.warn\("Unable to save Jackal game state\.", result\.reason\)/);
-    assert.match(saveMethod, /if \(reportFailure\) \{\s*this\.persistenceWarnings\.report\("Progress could not be saved\. Your last successful save is unchanged\."\);\s*\}/);
+    const save = source.slice(source.indexOf("private saveCurrentGameState"), source.indexOf("private clearStoredGameState"));
+    assert.match(save, /persistence\.canSave/);
+    assert.doesNotMatch(save, /canReadStored|inspectStoredGameState|reportFailure/);
+    assert.match(source, /suspended && !retainExistingOverlay/);
 });
 
 test("ownership relinquishment performs the final save before destructive cleanup", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const release = source.slice(source.indexOf("public releaseSession"), source.indexOf("private destroyGame"));
-    assert.ok(release.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState());") < release.indexOf("this.destroyGame();"));
+    assert.ok(release.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState())") < release.indexOf("this.destroyGame();"));
 });
 
 test("Jackal Song sequencing uses logical transport and has no browser recovery authority", () => {

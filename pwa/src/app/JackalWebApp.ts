@@ -1,3 +1,6 @@
+import { PersistenceSession, RestoreAttempt } from "./PersistenceSession.js";
+import { ButtonMapping } from "../jackal/ButtonMapping.js";
+import { DEFAULT_HARD_MODE, readDifficultyPreference, writeVolume, writeScalingPreference, writeFullscreenPreference, writeDifficultyPreference } from "./AppPreferences.js";
 import { SessionCleanup } from "./SessionCleanup.js";
 import {
     beginGameAudio,
@@ -32,14 +35,8 @@ import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
-import {
-    clearPersistedPwaState,
-    persistDifficultyPreference,
-    persistFullscreenPreference,
-    persistScalingPreference,
-    persistVolumePreference
-} from "./PersistenceActions.js";
-import { PersistenceWarningController } from "./PersistenceWarningController.js";
+import { clearPersistedPwaState } from "./PersistenceActions.js";
+
 import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
@@ -59,7 +56,7 @@ export class JackalWebApp {
     private readonly pageLifecycle = new PageLifecycleMonitor(() => this.requestPwaMenu("page-lifecycle"));
     private readonly screenWakeLock = new ScreenWakeLockManager();
     private readonly viewport: GameViewportController;
-    private readonly persistenceWarnings: PersistenceWarningController;
+    
     private gameLaunchInProgress = false;
     private pwaSessionState: PwaSessionState = "booting";
     private container: AppGameContainer | null = null;
@@ -69,9 +66,9 @@ export class JackalWebApp {
     private menuRequestSerial = 0;
     private menuOverlay: HTMLElement | null = null;
     private liveMenuOpen = false;
-    private volume = readVolume();
-    private scalingPreference = readScalingPreference();
-    private fullscreenPreference = readFullscreenPreference();
+    private volume = DEFAULT_VOLUME;
+    private scalingPreference = DEFAULT_SCALING_PREFERENCE;
+    private fullscreenPreference = DEFAULT_FULLSCREEN_PREFERENCE;
 
     public constructor(
         root: HTMLElement,
@@ -91,12 +88,6 @@ export class JackalWebApp {
                 this.showError("Unable to resize the game. Reload the page and try again.");
             }
         });
-        this.persistenceWarnings = new PersistenceWarningController(
-            root,
-            () => this.viewport.gameShell,
-            () => this.liveMenuOpen,
-            () => this.pageLifecycle.suspended
-        );
         setGameAudioInterruptionHandler((reason) => this.requestPwaMenu(reason));
         document.addEventListener("keydown", this.handleBrowserReservedKey, true);
         registerServiceWorker(BUILD_STAMP);
@@ -108,6 +99,7 @@ export class JackalWebApp {
         if (!owner.isCurrent(epoch)) {
             return;
         }
+        this.refreshOwnedSettings();
         if (!this.destroyGame()) {
             return;
         }
@@ -175,13 +167,13 @@ export class JackalWebApp {
                 </div>
                 <button id="reset-button" class="reset-button" type="button">Reset</button>
                 ${errorMessage ? `<p class="error-message">${escapeHtml(errorMessage)}</p>` : ""}
-                ${this.persistenceWarnings.takePendingHtml()}
             </section>
         `;
         if (!overlay) {
             parent.innerHTML = "";
         }
         parent.appendChild(menu);
+        this.guardMenuEvents(menu);
         this.bindMenuControls(menu);
         menu.style.visibility = "";
         return menu;
@@ -208,7 +200,7 @@ export class JackalWebApp {
         };
         const commitVolume = (): void => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
-            persistVolumePreference(this.volume, this.persistenceWarnings, () => this.getOwnership().owned);
+            writeVolume(this.volume, () => this.getOwnership().isCurrent(this.getOwnership().epoch));
         };
         volumeInput.addEventListener("input", () => {
             this.setAudioVolume(Number(volumeInput.value) / 100);
@@ -217,7 +209,7 @@ export class JackalWebApp {
         volumeInput.addEventListener("change", commitVolume);
         fullscreenSwitch.addEventListener("click", () => {
             this.fullscreenPreference = !this.fullscreenPreference;
-            persistFullscreenPreference(this.fullscreenPreference, this.persistenceWarnings, () => this.getOwnership().owned);
+            writeFullscreenPreference(this.fullscreenPreference, () => this.getOwnership().isCurrent(this.getOwnership().epoch));
             updateFullscreenUi();
         });
         updateVolumeUi();
@@ -233,14 +225,12 @@ export class JackalWebApp {
                 return;
             }
             this.clearStoredGameState();
-            commitVolume();
             void this.startGame(false);
         });
         menu.querySelector<HTMLButtonElement>("#continue-button")?.addEventListener("click", () => {
             if (!this.canActivateFromMenu()) {
                 return;
             }
-            commitVolume();
             if (this.hasLiveSuspendedGame()) {
                 void this.resumeLiveGameFromMenu();
                 return;
@@ -263,31 +253,36 @@ export class JackalWebApp {
 
     private setScalingPreference(value: JackalScalingPreference): void {
         this.scalingPreference = value;
-        persistScalingPreference(value, this.persistenceWarnings, () => this.getOwnership().owned);
+        writeScalingPreference(value, () => this.getOwnership().isCurrent(this.getOwnership().epoch));
         if (this.runtimeLoader.preparedRuntime !== null) {
             this.viewport.setScalingMode(bufferedScalingModeForPreference(this.runtimeLoader.preparedRuntime.slick, this.scalingPreference));
         }
     }
 
     private resetPwaState(): void {
-        if (!this.canActivateFromMenu()) {
-            return;
-        }
-        if (!this.destroyGame()) {
-            return;
-        }
-        this.clearPwaStorage();
+        if (!this.canActivateFromMenu()) return;
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        this.persistence.abandonStored();
+        if (!this.destroyGame()) return;
+        const cleared = this.clearPwaStorage();
+        if (!owner.isCurrent(epoch)) return;
         this.volume = DEFAULT_VOLUME;
         this.scalingPreference = DEFAULT_SCALING_PREFERENCE;
         this.fullscreenPreference = DEFAULT_FULLSCREEN_PREFERENCE;
+        this.preferredHardMode = DEFAULT_HARD_MODE;
+        this.sessionMapping.resetToDefaults();
         this.applyApplicationAudioPreferences();
         this.pwaSessionState = "menu";
-        this.renderMenu(this.root, false, null, false);
+        this.renderMenu(this.root, false, cleared ? null : "Some settings could not be reset.", false);
     }
 
-    private clearPwaStorage(): void {
-        clearPersistedPwaState(this.inputMappingStore, this.persistenceWarnings, () => this.getOwnership().owned);
+    private clearPwaStorage(): boolean {
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        const cleared = clearPersistedPwaState(this.inputMappingStore, () => owner.isCurrent(epoch));
         this.gameStateStore = null;
+        return cleared;
     }
 
     private hasLiveSuspendedGame(): boolean {
@@ -296,41 +291,21 @@ export class JackalWebApp {
 
     private async showLiveMenuOverlay(): Promise<void> {
         const shell = this.viewport.gameShell;
-        if (this.pwaSessionState !== "running" || this.game === null || this.container === null || shell === null) {
-            return;
-        }
+        if (this.pwaSessionState !== "running" || this.game === null || this.container === null || shell === null) return;
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.liveMenuOpen = true;
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        this.suspendGameForMenu();
-        this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved);
-        const saved = this.sessionCleanup.trySave(() => this.saveCurrentGameState(false));
+        if (this.suspendGameForMenu()) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         this.sessionCleanup.run(
             () => this.viewport.stopHamburgerVisibilityMonitor(),
             () => this.viewport.hideHamburger(),
             () => this.viewport.stopCursorAutoHide()
         );
-        if (!this.sessionCleanup.safe) {
-            this.destroyGameSession();
-            return;
-        }
-        if (!(await this.viewport.exitFullscreenForMenu())) {
-            return;
-        }
-        if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "stopping" || this.game === null || this.container === null) {
-            return;
-        }
-        if (
-            !this.sessionCleanup.run(() => {
-                this.menuOverlay = this.renderMenu(
-                    this.root,
-                    true,
-                    saved ? null : "Progress could not be saved. Continue still preserves this live game.",
-                    true
-                );
-            })
-        ) {
+        if (!this.sessionCleanup.safe) { this.destroyGameSession(); return; }
+        if (!(await this.viewport.exitFullscreenForMenu())) return;
+        if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "stopping" || this.game === null || this.container === null) return;
+        if (!this.sessionCleanup.run(() => { this.menuOverlay = this.renderMenu(this.root, true, null, true); })) {
             this.destroyGameSession();
             return;
         }
@@ -413,7 +388,6 @@ export class JackalWebApp {
             if (!this.isCurrentGameSession(session) || !isGameAudioCurrent(audio) || this.pwaSessionState !== "running") {
                 return;
             }
-            this.persistenceWarnings.showPending();
             this.syncScreenWakeLock();
         } catch (error) {
             if (isGameAudioLatest(audio) && this.isCurrentGameSession(session)) {
@@ -442,63 +416,50 @@ export class JackalWebApp {
     }
 
     private async startGame(restoreSavedGame: boolean): Promise<void> {
-        if (!this.canActivateFromMenu()) {
-            return;
-        }
+        if (!this.canActivateFromMenu()) return;
         const runtime = this.runtimeLoader.preparedRuntime;
-        if (runtime === null) {
-            this.showMenu();
-            return;
-        }
-        if (!this.destroyGameSession()) {
-            return;
-        }
-        this.applyApplicationAudioPreferences();
+        if (runtime === null) { this.showMenu(); return; }
+        if (!this.destroyGameSession()) return;
         this.gameOwnershipEpoch = this.getOwnership().epoch;
         this.pwaSessionState = "starting";
         this.gameLaunchInProgress = true;
         const session = this.gameSessionGeneration;
-        this.syncScreenWakeLock();
-        if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "starting") {
-            return;
-        }
-        const host = this.viewport.createShell(session);
-        runtime.slick.Display.setParent(host);
-        const audio = beginGameAudio();
-        this.requestPreferredFullscreen();
-
+        const restoreAttempt = new RestoreAttempt();
+        let audio: GameAudioAttempt | null = null;
         try {
-            if (!(await audio.ready) || !this.isStartingGameSession(session, audio)) {
-                return;
-            }
+            this.applyApplicationAudioPreferences();
+            this.syncScreenWakeLock();
+            if (!this.isCurrentGameSession(session)) return;
+            const host = this.viewport.createShell(session);
+            runtime.slick.Display.setParent(host);
+            audio = beginGameAudio();
+            this.requestPreferredFullscreen();
+            if (!(await audio.ready) || !this.isStartingGameSession(session, audio)) return;
             this.setAudioVolume(this.volume);
-            await this.launchPreparedGame(runtime, restoreSavedGame, session, audio);
+            await this.launchPreparedGame(runtime, restoreSavedGame, session, audio, restoreAttempt);
         } catch (error) {
-            if (!this.isCurrentGameSession(session)) {
-                return;
+            if (!this.isCurrentGameSession(session)) return;
+            if (restoreAttempt.rejected) {
+                this.persistence.rejectStored();
+                this.showMenu();
+            } else {
+                console.error(error);
+                if (error instanceof ResourceLoadException) this.showResourceLoadError(error);
+                else this.showLoadError("Unable to start.", "The game could not be started. Try again.", () => this.showMenu());
             }
-            console.error(error);
-            if (error instanceof ResourceLoadException) {
-                this.showResourceLoadError(error);
-                return;
-            }
-            if (restoreSavedGame) {
-                this.showMenu("Unable to restore the saved game. Start a new game and try again.");
-                return;
-            }
-            this.showLoadError("Unable to start.", "The game encountered an unexpected startup error. Reload the page and try again.", () => this.showMenu());
         } finally {
-            if (isGameAudioLatest(audio) && this.isCurrentGameSession(session) && this.pwaSessionState === "starting") {
-                this.requestPwaMenu("start-failed");
-            }
+            if (this.isCurrentGameSession(session) && this.pwaSessionState === "starting" &&
+                (audio === null || isGameAudioLatest(audio))) this.requestPwaMenu("start-not-accepted");
         }
     }
 
-    private async launchPreparedGame(runtime: PreparedRuntime, restoreSavedGame: boolean, session: number, audio: GameAudioAttempt): Promise<void> {
+    private async launchPreparedGame(runtime: PreparedRuntime, restoreSavedGame: boolean, session: number, audio: GameAudioAttempt, restoreAttempt: RestoreAttempt): Promise<void>
+ {
         if (!this.isStartingGameSession(session, audio)) {
             return;
         }
-        if (restoreSavedGame && !this.getGameStateStore(runtime).hasValidSave()) {
+        if (restoreSavedGame && !this.hasPotentialSavedGameState())
+ {
             this.showMenu();
             return;
         }
@@ -510,7 +471,9 @@ export class JackalWebApp {
 
         const mainGame = new runtime.Main();
         mainGame.reserveBrowserRuntime();
-        this.inputMappingStore.restore(mainGame.buttonMapping);
+        mainGame.buttonMapping.copyFrom(this.sessionMapping);
+        mainGame.hardMode = this.preferredHardMode;
+
 
         const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
             maintainAspect: true,
@@ -541,7 +504,9 @@ export class JackalWebApp {
             if (!this.isCurrentGameSession(session)) {
                 return false;
             }
-            return persistDifficultyPreference(hardMode, this.persistenceWarnings, () => this.isCurrentGameSession(session) && this.game === mainGame);
+            this.preferredHardMode = hardMode;
+            return writeDifficultyPreference(hardMode, () => this.isCurrentGameSession(session) && this.game === mainGame);
+
         };
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
@@ -549,7 +514,8 @@ export class JackalWebApp {
                     return false;
                 }
                 if (!this.getGameStateStore(runtime).restore(mainGame, gc)) {
-                    throw new Error("Saved game could not be restored.");
+                    restoreAttempt.reject();
+
                 }
                 return true;
             };
@@ -575,7 +541,8 @@ export class JackalWebApp {
                 return;
             }
             console.error(error);
-            this.showLoadError("Game error.", "The game encountered an unexpected error. Reload the page and try again.", () => {
+            this.showLoadError("Game error.", "The game encountered an unexpected error. Try again.
+", () => {
                 this.showMenu();
             });
         });
@@ -608,8 +575,9 @@ export class JackalWebApp {
         ) {
             return;
         }
+        this.persistence.accept(mainGame);
         appContainer.setLoopSuspended(false);
-        this.persistenceWarnings.showPending();
+
         this.syncScreenWakeLock();
         this.pageLifecycle.sync(true);
     }
@@ -643,9 +611,10 @@ export class JackalWebApp {
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        this.suspendGameForMenu();
-        this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        const suspended = this.suspendGameForMenu();
+        if (suspended && !retainExistingOverlay) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         if (!this.sessionCleanup.safe) {
+
             this.destroyGameSession();
             return;
         }
@@ -685,46 +654,33 @@ export class JackalWebApp {
         }
     };
 
-    private saveCurrentGameState(reportFailure = true): boolean {
+    private saveCurrentGameState(): boolean {
         const mainGame = this.game;
         const runtime = this.runtimeLoader.preparedRuntime;
-        if (!this.getOwnership().owned || mainGame === null || runtime === null || !mainGame.isStateSaveReady()) {
-            return false;
-        }
-        const result = this.getGameStateStore(runtime).save(mainGame, () => this.getOwnership().owned && this.game === mainGame);
-        if (!result.saved) {
-            console.warn("Unable to save Jackal game state.", result.reason);
-            if (reportFailure) {
-                this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
-            }
-        }
+        if (!this.sessionCleanup.safe || !this.getOwnership().owned || mainGame === null || runtime === null ||
+            !this.persistence.canSave(mainGame) || this.container?.isLoopSuspended() !== true || !mainGame.isStateSaveReady()) return false;
+        const result = this.getGameStateStore(runtime).save(mainGame,
+            () => this.getOwnership().owned && this.game === mainGame && this.persistence.canSave(mainGame));
+        if (result.saved) this.persistence.didSave();
         return result.saved;
     }
 
     private clearStoredGameState(): void {
         const owner = this.getOwnership();
         const epoch = owner.epoch;
-        const isAuthorized = (): boolean => owner.owned && owner.isCurrent(epoch);
-        if (!isAuthorized()) {
-            return;
-        }
-        if (!clearStoredGameState(isAuthorized)) {
-            this.persistenceWarnings.report("The previous saved game could not be cleared.");
-            return;
-        }
+        if (!owner.isCurrent(epoch)) return;
+        this.persistence.abandonStored();
+        clearStoredGameState(() => owner.isCurrent(epoch));
         this.gameStateStore = null;
     }
 
     private saveCurrentInputMapping(): MappingWriteResult {
         const mainGame = this.game;
-        if (!this.getOwnership().owned || mainGame === null) {
-            return { saved: false, reason: "stale-session" };
-        }
-        const result = this.inputMappingStore.save(mainGame.buttonMapping, () => this.getOwnership().owned && this.game === mainGame);
-        if (!result.saved) {
-            this.persistenceWarnings.report("Control changes could not be saved.");
-        }
-        return result;
+        const session = this.gameSessionGeneration;
+        if (mainGame === null || !this.isCurrentGameSession(session)) return { saved: false, reason: "stale-session" };
+        this.sessionMapping.copyFrom(mainGame.buttonMapping);
+        return this.inputMappingStore.save(this.sessionMapping,
+            () => this.isCurrentGameSession(session) && this.game === mainGame);
     }
 
     private renderLoading(progress: number): void {
@@ -738,7 +694,7 @@ export class JackalWebApp {
     }
 
     private showError(message: string): void {
-        this.showLoadError("Unable to start.", message, () => this.showMenu());
+        this.showLoadError("Game error.", message, () => window.location.reload(), "Reload");
     }
 
     private showResourceLoadError(error: unknown): void {
@@ -755,13 +711,15 @@ export class JackalWebApp {
         this.showLoadError("Unable to load the game.", message, () => this.showMenu());
     }
 
-    private showLoadError(title: string, message: string, retryHandler: () => void): void {
+    private showLoadError(title: string, message: string, retryHandler: () => void, action: "Retry" | "Reload" = "Retry"): void
+ {
         if (!this.destroyGame()) {
             return;
         }
         this.pwaSessionState = "menu";
         if (this.getOwnership().owned) {
-            renderLoadErrorScreen(this.root, title, message)?.addEventListener("click", retryHandler);
+            renderLoadErrorScreen(this.root, title, message, action)
+?.addEventListener("click", retryHandler);
         }
     }
 
@@ -801,9 +759,9 @@ export class JackalWebApp {
         this.gameSessionGeneration++;
         this.menuRequestSerial++;
         this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        this.suspendGameForMenu();
-        this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        if (this.suspendGameForMenu()) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
         this.destroyGame();
+
         if (this.sessionCleanup.safe) {
             this.pwaSessionState = "menu";
         }
@@ -821,6 +779,9 @@ export class JackalWebApp {
         this.gameSessionGeneration++;
         this.gameLaunchInProgress = false;
         const oldGame = this.game;
+        this.persistence.retire(oldGame);
+        this.activeMenu = null;
+
         const oldContainer = this.container;
         this.sessionCleanup.run(
             () => this.syncScreenWakeLock(),
@@ -828,9 +789,7 @@ export class JackalWebApp {
             () => oldGame?.setBrowserSuspended(true),
             () => oldContainer?.getInput().pause(),
             () => releaseGameAudio(),
-            () => {
-                this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved);
-            },
+
             () => this.removeMenuOverlay(),
             () => this.viewport.stopHamburgerVisibilityMonitor(),
             () => this.viewport.stopCursorAutoHide(),
@@ -844,7 +803,6 @@ export class JackalWebApp {
                     SoundStore.get().stopAllPlayback();
                 }
             },
-            () => this.persistenceWarnings.clearToast(),
             () => this.viewport.clear(),
             () => this.runtimeLoader.preparedRuntime?.slick.Display.setParent(null)
         );
@@ -866,7 +824,7 @@ export class JackalWebApp {
     }
 
     private hasPotentialSavedGameState(): boolean {
-        return hasCurrentStoredGameState();
+        return this.persistence.canReadStored() && hasCurrentStoredGameState();
     }
 
     private syncScreenWakeLock(): void {
@@ -921,5 +879,33 @@ export class JackalWebApp {
         } catch (error) {
             console.error("Unable to display the reload message.", error);
         }
+    }
+
+    private readonly persistence = new PersistenceSession<Main>();
+    private readonly sessionMapping = new ButtonMapping();
+    private preferredHardMode = DEFAULT_HARD_MODE;
+    private activeMenu: HTMLElement | null = null;
+
+    private refreshOwnedSettings(): void {
+        const owner = this.getOwnership();
+        if (!owner.isCurrent(owner.epoch) || !this.persistence.beginOwnership(owner.epoch)) return;
+        this.volume = readVolume();
+        this.scalingPreference = readScalingPreference();
+        this.fullscreenPreference = readFullscreenPreference();
+        this.preferredHardMode = readDifficultyPreference();
+        this.sessionMapping.resetToDefaults();
+        this.inputMappingStore.restore(this.sessionMapping);
+    }
+
+    private guardMenuEvents(menu: HTMLElement): void {
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        this.activeMenu = menu;
+        const guard = (event: Event): void => {
+            if (this.activeMenu === menu && menu.isConnected && owner.isCurrent(epoch) && this.pwaSessionState === "menu") return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        };
+        for (const name of ["click", "input", "change", "keydown", "pointerdown"]) menu.addEventListener(name, guard, true);
     }
 }

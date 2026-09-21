@@ -1,3 +1,4 @@
+import type { MappingWriteResult } from "./ButtonMapping.js";
 import { Color, Input, type GameContainer, type Graphics, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -79,6 +80,23 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
+    private static readonly restoredCompletion = new WeakSet<InputMode>();
+    private static readonly resetResults = new WeakMap<InputMode, string>();
+
+    public restorePersistencePresentation(): void {
+        InputMode.resetResults.delete(this);
+        if (this.state === InputMode.STATE_SAVED) InputMode.restoredCompletion.add(this);
+        else InputMode.restoredCompletion.delete(this);
+    }
+
+    public completionMessage(): string {
+        return InputMode.restoredCompletion.has(this) ? "DONE" : this.message;
+    }
+
+    private presentResetResult(result: MappingWriteResult): void {
+        InputMode.resetResults.set(this, result.saved ? "SAVED" : "NOT SAVED");
+    }
+
     public init(main: Main, gc: GameContainer): void {
         this.main = main;
         this.gc = gc;
@@ -120,11 +138,12 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
             case InputMode.OPTION_RESET:
                 this.buttonMapping.resetToDefaults();
                 this.refreshInputMappingLines();
-                this.main.notifyInputMappingChanged();
+                this.presentResetResult(this.main.notifyInputMappingChanged());
                 this.createMenu(InputMode.OPTION_RESET);
+
                 break;
             case InputMode.OPTION_DONE:
-                this.main.notifyInputMappingChanged();
+
                 this.state = InputMode.STATE_FADE_OUT;
                 this.main.startFade(true, this);
                 break;
@@ -132,6 +151,8 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     private startReading(): void {
+        InputMode.restoredCompletion.delete(this);
+        InputMode.resetResults.delete(this);
         this.state = InputMode.STATE_READING;
         this.nameIndex = 0;
         this.delay = 0;
@@ -550,6 +571,8 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         if (this.menu !== null) {
             this.menu.render();
         }
+        const status = InputMode.resetResults.get(this);
+        if (status !== undefined) this.main.drawString(status, this.centerStringX(status), 864, MainConstants.FONT_GRAY);
     }
 
     private getInputMappingX(): number {
@@ -570,7 +593,9 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
 
     private renderReading(gc: GameContainer, g: Graphics): void {
         if (this.state === InputMode.STATE_SAVED) {
-            this.main.drawString(this.message, this.centerStringX(this.message), 464, MainConstants.FONT_GRAY);
+            const message = this.completionMessage();
+            this.main.drawString(message, this.centerStringX(message), 464, MainConstants.FONT_GRAY);
+
             return;
         }
 
