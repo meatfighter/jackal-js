@@ -17,6 +17,7 @@ test("Reset threads one authorization callback through every destructive persist
             globalThis.__persistenceEvents.push(["preferences", isAuthorized()]);
             return false;
         }
+        export function writeDifficultyPreference() { return true; }
         export function writeFullscreenPreference() { return true; }
         export function writeScalingPreference() { return true; }
         export function writeVolume() { return true; }
