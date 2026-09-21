@@ -15,7 +15,7 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
     assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/);
 });
 
-test("schema 15 is explicitly the development cutover saved-game format", () => {
+test("schema 16 is explicitly the development cutover saved-game format", () => {
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
     assert.match(schema, /GAME_STATE_VERSION = 16 as const/);
     assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v15"/);
