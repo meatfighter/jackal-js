@@ -91,7 +91,7 @@ async function runCycle(index: number): Promise<void> {
 
     main.score = 100000 + index;
     main.scoreStr = String(main.score).padStart(6, "0");
-    assert(stateStore.save(main), "Memory smoke Main did not save successfully.");
+    assert(stateStore.save(main, () => true).saved, "Memory smoke Main did not save successfully.");
 }
 
 function destroyCycle(): void {
@@ -109,7 +109,7 @@ function destroyCycle(): void {
 
 function cleanup(): void {
     destroyCycle();
-    store?.clear();
+    store?.clear(() => true);
     store = null;
     runtime = null;
     localStorage.clear();
