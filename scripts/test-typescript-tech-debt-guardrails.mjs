@@ -80,7 +80,14 @@ test("save-state persistence stays modular, shared, current-schema, public-versi
     const serializerLineCount = serializer.split(/\r?\n/).length;
     assert.ok(serializerLineCount < 800, `Serializer has regrown into a monolith (${serializerLineCount} lines).`);
 
-    for (const moduleName of ["EntityRuntimePersistence.js", "GameStateAudio.js", "GameStateCodec.js", "GameStateFields.js", "GameStateSnapshotValidator.js"]) {
+    for (const moduleName of [
+        "EntityRuntimePersistence.js",
+        "GameStateAudio.js",
+        "GameStateCodec.js",
+        "GameStateFields.js",
+        "GameStateResourcePreflight.js",
+        "GameStateSnapshotValidator.js"
+    ]) {
         assert.match(serializer, new RegExp(moduleName.replace(".", "\\.")), `Serializer must delegate to ${moduleName}.`);
     }
     assert.doesNotMatch(serializer, /\bas unknown as\b|\bas Record<string, unknown>\b/);
