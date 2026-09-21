@@ -115,7 +115,7 @@ function javaDeclaration(source, className) {
         const fieldPattern =
             /\b(?:public|protected|private)\s+(?:(?:static|final|transient|volatile)\s+)*(?:[A-Za-z_$][\w$]*(?:\s*<[^;{}()]*>)?(?:\s*\[\s*\])?(?:\s*\.\.\.)?\s+)+([A-Za-z_$][\w$]*)\s*(?:=[^;{}]*)?;/g;
         for (const match of stripped.matchAll(fieldPattern)) {
-            if (depths[match.index] === 1 && !match[0].includes("(")) {
+            if (depths[match.index] === 1) {
                 fields.add(match[1]);
             }
         }
