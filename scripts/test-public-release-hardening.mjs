@@ -18,7 +18,7 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
 test("schema 16 is explicitly the development cutover saved-game format", () => {
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
     assert.match(schema, /GAME_STATE_VERSION = 16 as const/);
-    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v15"/);
+    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v16"/);
     assert.match(schema, /return value === GAME_STATE_VERSION/);
     assert.doesNotMatch(schema, /FIRST_PUBLIC_GAME_STATE_VERSION|MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(schema, /MAX_GAME_STATE_TEXT_LENGTH = 2_000_000/);
