@@ -121,8 +121,8 @@ test("Jackal Main re-baselines InputMode controller edges before browser gamepla
     const end = source.indexOf("public stopAllSounds", start);
     const method = source.slice(start, end);
 
-    assert.match(method, /!suspended && this\.mode instanceof InputMode/);
-    assert.match(method, /this\.mode\.resyncControllerStateAfterBrowserResume\(\)/);
+    assert.match(method, /if \(!suspended\) \{[\s\S]*?sampleControllersForBaseline\(\)/);
+    assert.match(method, /else if \(this\.mode instanceof InputMode\) \{[\s\S]*?this\.mode\.resyncControllerStateAfterBrowserResume\(\)/);
 });
 
 function createInputModeFixture(InputMode, ButtonMapping) {
