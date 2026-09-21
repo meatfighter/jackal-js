@@ -219,10 +219,10 @@ function policyForZeroState(type: GameElementTypeId, name: string, value: unknow
         return Object.freeze({ kind: "booleanArray", length: 3 });
     }
     if (type === "BossGarageManager" && name === "garages") {
-        return Object.freeze({ kind: "referenceList", targets: ["BossGarage"], minLength: 4, maxLength: 4 });
+        return Object.freeze({ kind: "referenceList", targets: ["BossGarage"] as const, minLength: 4, maxLength: 4 });
     }
     if (type === "BossShipManager" && name === "shipGuns") {
-        return Object.freeze({ kind: "referenceList", targets: ["BossShipGun"], minLength: 0, maxLength: 6 });
+        return Object.freeze({ kind: "referenceList", targets: ["BossShipGun"] as const, minLength: 0, maxLength: 6 });
     }
 
     const targets = REFERENCE_TARGETS[type]?.[name];
