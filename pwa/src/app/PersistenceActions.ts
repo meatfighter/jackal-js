@@ -1,5 +1,12 @@
 import { clearStoredGameState } from "../jackal/persistence/GameStateStorage.js";
-import { clearPreferences, writeFullscreenPreference, writeScalingPreference, writeVolume, type JackalScalingPreference } from "./AppPreferences.js";
+import {
+    clearPreferences,
+    writeDifficultyPreference,
+    writeFullscreenPreference,
+    writeScalingPreference,
+    writeVolume,
+    type JackalScalingPreference
+} from "./AppPreferences.js";
 import type { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import type { PersistenceWarningController } from "./PersistenceWarningController.js";
 
@@ -23,6 +30,14 @@ export function persistFullscreenPreference(value: boolean, warnings: Persistenc
     if (!writeFullscreenPreference(value, isAuthorized)) {
         warnings.report("Fullscreen setting could not be saved.");
     }
+}
+
+export function persistDifficultyPreference(value: boolean, warnings: PersistenceWarningController, isAuthorized: () => boolean): boolean {
+    if (!writeDifficultyPreference(value, isAuthorized)) {
+        warnings.report("Difficulty setting could not be saved.");
+        return false;
+    }
+    return true;
 }
 
 export function clearPersistedPwaState(
