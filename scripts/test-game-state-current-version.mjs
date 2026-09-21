@@ -74,6 +74,7 @@ async function loadPersistenceValidation() {
     const audioRegistryUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8"));
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
     const buttonMappingUrl = compileModule("export class ButtonMapping { static NO_BINDING = -1; }");
+    const tileTypesUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/GameTileTypes.ts", import.meta.url), "utf8"));
     const inputModeUrl = compileModule(`
         export class InputMode {
             static STATE_FADE_IN = 0;
@@ -126,6 +127,7 @@ async function loadPersistenceValidation() {
             .replace(`from "../AudioRegistry.js"`, `from "${audioRegistryUrl}"`)
             .replace(`from "../ButtonMapping.js"`, `from "${buttonMappingUrl}"`)
             .replace(`from "../InputMode.js"`, `from "${inputModeUrl}"`)
+            .replace(`from "../GameTileTypes.js"`, `from "${tileTypesUrl}"`)
             .replace(`from "./GameStateSchema.js"`, `from "${schemaUrl}"`)
             .replace(`from "./GameElementTypeIds.js"`, `from "${idsUrl}"`)
             .replace(`from "./GameStateFieldPolicies.js"`, `from "${fieldPoliciesUrl}"`)
