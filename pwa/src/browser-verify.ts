@@ -118,7 +118,7 @@ async function verify(): Promise<void> {
         assert(expectedMachineGun.voices.length === 1, "Browser fixture did not install machine-gun Sound state.");
         assert(expectedExplode.voices.length === 2 && expectedExplode.activeVoiceIndex === null, "Browser fixture did not install overlapping Sound state.");
 
-        assert(store.save(first.main), "Real Jackal browser Main did not save successfully.");
+        assert(store.save(first.main, () => true).saved, "Real Jackal browser Main did not save successfully.");
         assert(store.hasValidSave(), "Saved real Jackal browser state did not validate.");
         first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Linear);
         first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Integer);
@@ -153,7 +153,7 @@ async function verify(): Promise<void> {
     } finally {
         destroyMounted(runtime, first);
         destroyMounted(runtime, second);
-        store.clear();
+        store.clear(() => true);
         localStorage.clear();
     }
 }
