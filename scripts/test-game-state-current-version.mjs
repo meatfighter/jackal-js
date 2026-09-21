@@ -107,7 +107,12 @@ async function loadPersistenceValidation() {
         const exact = (value, names) =>
             value !== null && typeof value === "object" && !Array.isArray(value) &&
             Object.keys(value).length === names.length && names.every((name) => Object.hasOwn(value, name));
-        const scalar = (name, value) => BOOLEAN_FIELDS.has(name) ? typeof value === "boolean" : typeof value === "number" && Number.isFinite(value);
+        const scalar = (name, value) => {
+            if (BOOLEAN_FIELDS.has(name)) return typeof value === "boolean";
+            if (typeof value !== "number" || !Number.isFinite(value)) return false;
+            if (name === "vx" || name === "vy") return Math.abs(value) <= 10_000;
+            return true;
+        };
         export function isPlayerDurableFields(value) {
             return exact(value, PLAYER_FIELDS) && PLAYER_FIELDS.every((name) => scalar(name, value[name]));
         }
