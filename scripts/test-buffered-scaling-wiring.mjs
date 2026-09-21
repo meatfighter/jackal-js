@@ -68,7 +68,10 @@ test("Jackal PWA reset clears persisted state and restores menu defaults", () =>
     const render = reset.indexOf("this.renderMenu(this.root, false, null, false);");
     assert.ok(destroy >= 0 && clear > destroy && volume > clear && scaling > volume && render > scaling);
 
-    assert.match(webAppSource, /clearPersistedPwaState\(this\.inputMappingStore, this\.persistenceWarnings\)/);
+    assert.match(
+        webAppSource,
+        /clearPersistedPwaState\(this\.inputMappingStore, this\.persistenceWarnings, \(\) => this\.getOwnership\(\)\.owned\)/
+    );
     assert.doesNotMatch(webAppSource, /clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)/);
     assert.match(webAppSource, /this\.gameStateStore = null;/);
     assert.match(stylesSource, /\.reset-button\s*\{/);
