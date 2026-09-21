@@ -31,7 +31,8 @@ test("input-mapping schema 3 is explicitly the first public mapping format", () 
     assert.match(mappingStore, /version >= 1/);
     assert.match(mappingStore, /version < JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
     assert.match(mappingStore, /snapshot\.version === JackalInputMappingStore\.SNAPSHOT_VERSION/);
-    assert.match(mappingStore, /hasProtectedStoredSnapshot/);
+    assert.match(mappingStore, /private writeBlockedReason\(\): MappingWriteFailureReason \| null/);
+    assert.match(mappingStore, /return "protected"/);
 });
 
 test("PWA manifest has a dedicated maskable application icon", () => {
