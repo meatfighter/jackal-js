@@ -150,7 +150,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         this.lastControllerSampleSequence = -1;
         this.blockedKeyboardKeys.clear();
         for (let key = 0; key < Input.BROWSER_KEY_CODE_LIMIT; key++) {
-            if (Input.isBrowserKeyCodeSupported(key) && input.isKeyDown(key)) {
+            if (ButtonMapping.isValidKeyBinding(key) && key !== ButtonMapping.NO_BINDING && input.isKeyDown(key)) {
                 this.blockedKeyboardKeys.add(key);
             }
         }
