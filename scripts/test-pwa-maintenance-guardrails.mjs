@@ -48,7 +48,7 @@ test("live-menu transition freezes and retires playback before serializing progr
     const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
     assert.notEqual(liveMenu.length, 0, "showLiveMenuOverlay source slice is empty");
     const suspension = liveMenu.indexOf("this.suspendGameForMenu();");
-    const inputSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentInputMapping())");
+    const inputSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentInputMapping().saved)");
     const gameSave = liveMenu.indexOf("this.sessionCleanup.trySave(() => this.saveCurrentGameState())");
     assert.ok(suspension >= 0 && inputSave > suspension);
     assert.ok(suspension >= 0 && gameSave > suspension);
