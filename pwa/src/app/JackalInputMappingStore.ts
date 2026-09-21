@@ -207,7 +207,7 @@ export class JackalInputMappingStore {
         return value !== null && typeof value === "object" && !Array.isArray(value);
     }
 
-    private hasRequiredActionBindings(snapshot: JackalInputMappingSnapshot): boolean {
+    private hasRequiredActionBindings(snapshot: Readonly<Record<string, unknown>>): boolean {
         return (
             (snapshot.keyUp !== NO_BINDING || snapshot.controllerUp !== NO_BINDING) &&
             (snapshot.keyDown !== NO_BINDING || snapshot.controllerDown !== NO_BINDING) &&
