@@ -175,9 +175,6 @@
         "Main.setNativeDisplayMode": {
             "reason": "Desktop display mode logic is replaced by browser display management."
         },
-        "Main.updateControllerRefreshPolicy": {
-            "reason": "Browser gamepad discovery is managed by the input runtime."
-        },
         "Main.loadClasses": {
             "reason": "ES module evaluation initializes imported class tables; the browser does not need Java Class.forName calls."
         },
