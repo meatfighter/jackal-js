@@ -26,6 +26,8 @@ function methodBody(text, marker) {
 }
 
 const tsPreferences = source("pwa/src/app/AppPreferences.ts");
+const tsPersistenceActions = source("pwa/src/app/PersistenceActions.ts");
+const tsWebApp = source("pwa/src/app/JackalWebApp.ts");
 const tsIntro = source("pwa/src/jackal/IntroMode.ts");
 const tsDifficulty = source("pwa/src/jackal/DifficultyMode.ts");
 const tsMain = source("pwa/src/jackal/Main.ts");
@@ -38,11 +40,13 @@ const javaMain = source("desktop/src/jackal/Main.java");
 test("Jackal difficulty is persisted independently for fresh Java and browser games", () => {
     assert.match(tsPreferences, /DIFFICULTY_STORAGE_KEY\s*=\s*"jackal-difficulty"/);
     assert.match(tsPreferences, /readDifficultyPreference\(\)/);
-    assert.match(tsPreferences, /writeDifficultyPreference\(hardMode:\s*boolean\)/);
+    assert.match(tsPreferences, /writeDifficultyPreference\(hardMode:\s*boolean, isAuthorized:\s*\(\) => boolean\)/);
     assert.match(tsPreferences, /clearDifficultyPreference\(\)/);
+    assert.match(tsPersistenceActions, /persistDifficultyPreference\([\s\S]*?writeDifficultyPreference\(value, isAuthorized\)/);
+    assert.match(tsWebApp, /mainGame\.difficultyChangedHandler = \(hardMode\) => \{[\s\S]*?persistDifficultyPreference\([\s\S]*?this\.isCurrentGameSession\(session\) && this\.game === mainGame/);
 
     assert.match(tsIntro, /if \(main\.loadIndex < 42\) \{\s*main\.hardMode = readDifficultyPreference\(\);/s);
-    assert.match(tsDifficulty, /this\.main\.hardMode = this\.selectedIndex === 1;\s*writeDifficultyPreference\(this\.main\.hardMode\);/s);
+    assert.match(tsDifficulty, /this\.main\.hardMode = this\.selectedIndex === 1;\s*this\.main\.notifyDifficultyChanged\(\);/s);
 
     assert.match(javaLoading, /main\.hardMode = java\.util\.prefs\.Preferences[\s\S]*getBoolean\("jackal-difficulty", false\)/);
     assert.match(javaDifficulty, /main\.hardMode = \(selectedIndex == 1\);[\s\S]*putBoolean\("jackal-difficulty", main\.hardMode\)/);
@@ -53,7 +57,7 @@ test("saved Jackal runs retain their own difficulty and restore it after mode in
 
     const createModeIndex = tsSerializer.indexOf("const mode = this.createStandaloneMode(snapshot.modeId);");
     const initIndex = tsSerializer.indexOf("mode.init(main, gc);", createModeIndex);
-    const restoredMainIndex = tsSerializer.indexOf("decodeFieldsInto(main, snapshot.mainFields", initIndex);
+    const restoredMainIndex = tsSerializer.indexOf("decodeNamedFieldsInto(main, snapshot.mainFields", initIndex);
     assert.ok(createModeIndex >= 0 && initIndex > createModeIndex && restoredMainIndex > initIndex);
 });
 
