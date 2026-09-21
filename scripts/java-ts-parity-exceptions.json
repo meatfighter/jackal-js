@@ -109,6 +109,18 @@
         },
         "Main.hiddenCursor": {
             "reason": "The Java desktop keeps a hidden cursor for its legacy fullscreen lifecycle; browser cursor/fullscreen presentation is owned by the PWA shell."
+        },
+        "InputMode.controllerUpDown": {
+            "reason": "The browser mapper tracks direction levels per logical controller so reconnect generations and multiple controllers can be baselined independently; Java desktop keeps one aggregate direction latch."
+        },
+        "InputMode.controllerDownDown": {
+            "reason": "The browser mapper tracks direction levels per logical controller so reconnect generations and multiple controllers can be baselined independently; Java desktop keeps one aggregate direction latch."
+        },
+        "InputMode.controllerLeftDown": {
+            "reason": "The browser mapper tracks direction levels per logical controller so reconnect generations and multiple controllers can be baselined independently; Java desktop keeps one aggregate direction latch."
+        },
+        "InputMode.controllerRightDown": {
+            "reason": "The browser mapper tracks direction levels per logical controller so reconnect generations and multiple controllers can be baselined independently; Java desktop keeps one aggregate direction latch."
         }
     },
     "methodExceptions": {
@@ -189,6 +201,27 @@
         },
         "IInput.isEscape": {
             "reason": "The Java input interface exposes its legacy Escape fullscreen control; browser Escape is reserved by the PWA shell for returning to the menu."
+        },
+        "InputMode.bindControllerDirection": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.getPressedControllerDirection": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.getPressedNonDirectionalControllerButton": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.isControllerUpPressed": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.isControllerDownPressed": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.isControllerLeftPressed": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
+        },
+        "InputMode.isControllerRightPressed": {
+            "reason": "The browser mapper consolidates this Java desktop polling helper into generation-aware sampleControllerInput() so one complete Gamepad sample owns edge selection and reconnect baselining."
         }
     },
     "enumMemberExceptions": {
