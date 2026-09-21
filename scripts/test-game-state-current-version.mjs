@@ -464,7 +464,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 15);
+    assert.equal(currentVersion, 16);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
