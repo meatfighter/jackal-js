@@ -1,4 +1,4 @@
-import { Input, isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
+import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
 import { ButtonMapping } from "../ButtonMapping.js";
@@ -91,7 +91,6 @@ const MAX_TOTAL_SNAPSHOT_CONTAINERS = 65_536;
 const MAX_TOTAL_SNAPSHOT_CHILDREN = 524_288;
 const MAX_TOTAL_SNAPSHOT_STRING_CHARS = 1_500_000;
 const MAX_INPUT_ASSIGNMENTS = InputMode.ACTIONS.length;
-const MAX_CONTROLLER_BUTTON_INDEX = InputMode.GAMEPAD_BUTTON_INDEX_LIMIT - 1;
 const MAX_JEEP_YEAH_BULLETS = 4096;
 const MAX_FRIENDLY_SOLDIER_COUNT = 4096;
 const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
@@ -656,13 +655,13 @@ function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot
     const keyNames = ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"] as const;
     const controllerDirectionNames = ["controllerUp", "controllerDown", "controllerLeft", "controllerRight"] as const;
     const controllerActionNames = ["controllerGrenade", "controllerGun", "controllerStart"] as const;
-    if (!keyNames.every((key) => isKeyBinding(fields[key]))) {
+    if (!keyNames.every((key) => ButtonMapping.isValidKeyBinding(fields[key]))) {
         return false;
     }
-    if (!controllerDirectionNames.every((key) => isBinding(fields[key], MAX_CONTROLLER_BUTTON_INDEX))) {
+    if (!controllerDirectionNames.every((key) => ButtonMapping.isValidControllerBinding(fields[key]))) {
         return false;
     }
-    if (!controllerActionNames.every((key) => isControllerActionBinding(fields[key]))) {
+    if (!controllerActionNames.every((key) => ButtonMapping.isValidControllerActionBinding(fields[key]))) {
         return false;
     }
     return (
@@ -678,7 +677,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         !isMenuSnapshot(value.menu, 2) ||
         !isButtonMappingSnapshot(value.draftButtonMapping) ||
         !isUniqueKeyArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS) ||
-        !isUniqueIntegerArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS, MAX_CONTROLLER_BUTTON_INDEX)
+        !isUniqueControllerButtonArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS)
     ) {
         return false;
     }
@@ -1007,39 +1006,16 @@ function isUniqueKeyArray(value: unknown, maxLength: number): value is number[] 
         Array.isArray(value) &&
         value.length <= maxLength &&
         new Set(value).size === value.length &&
-        value.every((entry) => isKeyBinding(entry) && entry !== ButtonMapping.NO_BINDING)
+        value.every((entry) => ButtonMapping.isValidKeyBinding(entry) && entry !== ButtonMapping.NO_BINDING)
     );
 }
 
-function isUniqueIntegerArray(value: unknown, maxLength: number, maximum: number): value is number[] {
+function isUniqueControllerButtonArray(value: unknown, maxLength: number): value is number[] {
     return (
         Array.isArray(value) &&
         value.length <= maxLength &&
         new Set(value).size === value.length &&
-        value.every((entry) => isIntegerInRange(entry, 0, maximum))
-    );
-}
-
-function isKeyBinding(value: unknown): value is number {
-    return (
-        value === ButtonMapping.NO_BINDING ||
-        (typeof value === "number" &&
-            Number.isInteger(value) &&
-            Input.isBrowserKeyCodeSupported(value) &&
-            !ButtonMapping.isReservedKey(value))
-    );
-}
-
-function isBinding(value: unknown, maximum: number): value is number {
-    return value === ButtonMapping.NO_BINDING || isIntegerInRange(value, 0, maximum);
-}
-
-function isControllerActionBinding(value: unknown): value is number {
-    return (
-        isBinding(value, MAX_CONTROLLER_BUTTON_INDEX) &&
-        (value === ButtonMapping.NO_BINDING ||
-            value < ButtonMapping.DEFAULT_CONTROLLER_UP ||
-            value > ButtonMapping.DEFAULT_CONTROLLER_RIGHT)
+        value.every((entry) => ButtonMapping.isValidRawControllerButton(entry))
     );
 }
 
