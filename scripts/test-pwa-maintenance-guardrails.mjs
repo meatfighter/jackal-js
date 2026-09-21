@@ -154,6 +154,7 @@ test("browser binding validity has one Jackal policy owner", () => {
     const mapping = read("pwa/src/jackal/ButtonMapping.ts");
     const store = read("pwa/src/app/JackalInputMappingStore.ts");
     const inputMode = read("pwa/src/jackal/InputMode.ts");
+    const stateValidator = read("pwa/src/jackal/persistence/GameStateSnapshotValidator.ts");
 
     assert.match(mapping, /Input\.isBrowserKeyCodeSupported\(value\)/);
     assert.match(mapping, /value < Input\.BROWSER_CONTROLLER_BUTTON_LIMIT/);
@@ -166,6 +167,13 @@ test("browser binding validity has one Jackal policy owner", () => {
     assert.doesNotMatch(store, /MAX_CONTROLLER_BUTTON_INDEX|Input\.isBrowserKeyCodeSupported/);
 
     assert.match(inputMode, /ButtonMapping\.isValidKeyBinding\(i\)/);
+    assert.match(inputMode, /ButtonMapping\.isValidKeyBinding\(key\)/);
+
+    assert.match(stateValidator, /ButtonMapping\.isValidKeyBinding/);
+    assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding/);
+    assert.match(stateValidator, /ButtonMapping\.isValidControllerActionBinding/);
+    assert.match(stateValidator, /ButtonMapping\.isValidRawControllerButton/);
+    assert.doesNotMatch(stateValidator, /Input\.isBrowserKeyCodeSupported|MAX_CONTROLLER_BUTTON_INDEX/);
 });
 
 test("obsolete controller selection flags do not survive in shared mappings", () => {
