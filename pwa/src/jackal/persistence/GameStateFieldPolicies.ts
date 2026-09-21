@@ -277,7 +277,10 @@ function isFieldsValid(
     if (keys.length !== names.length || !names.every((name) => Object.hasOwn(value, name))) {
         return false;
     }
-    return names.every((name) => isEncodedValueForPolicy(value[name], descriptor[name]!, name, entityTypes));
+    return names.every((name) => {
+        const policy = descriptor[name];
+        return policy !== undefined && isEncodedValueForPolicy(value[name], policy, name, entityTypes);
+    });
 }
 
 function isEncodedValueForPolicy(
@@ -417,7 +420,7 @@ function inferStaticEnumValues(type: GameElementTypeId, name: string): number[] 
     if (prefix === null) {
         return null;
     }
-    const constructor = GAME_ELEMENT_TYPES[type] as unknown as Record<string, unknown>;
+    const constructor = GAME_ELEMENT_TYPES[type];
     const values = Object.entries(constructor)
         .filter(([key, value]) => key.startsWith(prefix) && typeof value === "number" && Number.isInteger(value))
         .map(([, value]) => value as number);
