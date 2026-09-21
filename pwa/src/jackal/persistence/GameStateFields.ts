@@ -34,7 +34,7 @@ export const MAIN_FIELD_NAMES = fieldsOf<Main>()(
     "missilePower",
     "friendlySoldiersPickedUp",
     "hardMode",
-    "continued",
+    "continued"
 );
 
 export const GAME_MODE_FIELD_NAMES = fieldsOf<GameMode>()(

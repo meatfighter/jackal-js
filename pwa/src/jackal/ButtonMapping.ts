@@ -214,18 +214,12 @@ export class ButtonMapping {
         return (
             typeof value === "number" &&
             Number.isInteger(value) &&
-            (value === ButtonMapping.NO_BINDING ||
-                (Input.isBrowserKeyCodeSupported(value) && !ButtonMapping.isReservedKey(value)))
+            (value === ButtonMapping.NO_BINDING || (Input.isBrowserKeyCodeSupported(value) && !ButtonMapping.isReservedKey(value)))
         );
     }
 
     public static isValidRawControllerButton(value: unknown): value is number {
-        return (
-            typeof value === "number" &&
-            Number.isInteger(value) &&
-            value >= 0 &&
-            value < Input.BROWSER_CONTROLLER_BUTTON_LIMIT
-        );
+        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value < Input.BROWSER_CONTROLLER_BUTTON_LIMIT;
     }
 
     public static isValidControllerBinding(value: unknown): value is number {

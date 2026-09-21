@@ -111,19 +111,28 @@ test("shared game-state preflight preserves incompatible saves and blocks overwr
         storage.set(key, futureSnapshot);
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
         assert.equal(storage.get(key), futureSnapshot);
-        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "unsupported-future" });
+        assert.deepEqual(
+            gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true),
+            { saved: false, reason: "unsupported-future" }
+        );
         assert.equal(storage.get(key), futureSnapshot);
 
         const oversizedSnapshot = "x".repeat(maxGameStateTextLength + 1);
         storage.set(key, oversizedSnapshot);
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
         assert.equal(storage.get(key), oversizedSnapshot);
-        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "invalid-existing" });
+        assert.deepEqual(
+            gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true),
+            { saved: false, reason: "invalid-existing" }
+        );
         assert.equal(storage.get(key), oversizedSnapshot);
 
         throwOnGet = true;
         assert.equal(gameStorage.hasCurrentStoredGameState(), false);
-        assert.deepEqual(gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true), { saved: false, reason: "read-failed" });
+        assert.deepEqual(
+            gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true }, () => true),
+            { saved: false, reason: "read-failed" }
+        );
         assert.equal(storage.get(key), oversizedSnapshot);
     });
 });
@@ -135,18 +144,12 @@ test("game-state write authority is rechecked at the actual storage boundary", a
     storage.set(key, JSON.stringify({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "keep" }));
 
     let authorized = false;
-    const result = gameStorage.writeStoredGameState(
-        { version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" },
-        () => authorized
-    );
+    const result = gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" }, () => authorized);
     assert.deepEqual(result, { saved: false, reason: "not-authorized" });
     assert.equal(JSON.parse(storage.get(key)).marker, "keep");
 
     authorized = true;
-    const saved = gameStorage.writeStoredGameState(
-        { version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" },
-        () => authorized
-    );
+    const saved = gameStorage.writeStoredGameState({ version: currentGameStateVersion, kind: "mode", supported: true, marker: "replace" }, () => authorized);
     assert.deepEqual(saved, { saved: true });
     assert.equal(JSON.parse(storage.get(key)).marker, "replace");
 });

@@ -264,12 +264,18 @@ test("mapping write authority is rechecked immediately before storage write", as
     const key = storageKey("jackal.input-mapping", href);
     const store = new JackalInputMappingStore();
 
-    assert.deepEqual(store.save(createMapping(), () => false), { saved: false, reason: "stale-session" });
+    assert.deepEqual(
+        store.save(createMapping(), () => false),
+        { saved: false, reason: "stale-session" }
+    );
     assert.equal(storage.has(key), false);
 
     assert.deepEqual(store.save(createMapping({ keyGun: 57 }), authorized), { saved: true });
     const previous = storage.get(key);
-    assert.deepEqual(store.save(createMapping({ keyGun: 44 }), () => false), { saved: false, reason: "stale-session" });
+    assert.deepEqual(
+        store.save(createMapping({ keyGun: 44 }), () => false),
+        { saved: false, reason: "stale-session" }
+    );
     assert.equal(storage.get(key), previous);
 });
 

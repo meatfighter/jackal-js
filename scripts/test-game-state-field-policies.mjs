@@ -99,12 +99,7 @@ try {
     test("GameMode restore preflight matches mutable maps to the loaded stage resource", () => {
         const serializer = new JackalGameStateSerializer();
         const stage = createStageResource(40, 40);
-        const snapshot = createGameModeSnapshot(
-            GAME_STATE_VERSION,
-            stateFields,
-            policy,
-            stage
-        );
+        const snapshot = createGameModeSnapshot(GAME_STATE_VERSION, stateFields, policy, stage);
 
         assert.equal(serializer.isSupportedSnapshot(snapshot), true);
         assert.equal(serializer.isSupportedSnapshotForLoadedResources({ stages: [stage] }, snapshot), true);
@@ -175,11 +170,7 @@ try {
         const optionalTrackerDescriptor = policy.getEntityDurableFieldDescriptor("BrownTank");
         const optionalTracker = encodedRecordForDescriptor(optionalTrackerDescriptor, new Map());
         optionalTracker.tankTracker = null;
-        assert.equal(
-            policy.isEntityDurableFields("BrownTank", optionalTracker, new Map()),
-            true,
-            "BrownTank tracker is legitimately optional"
-        );
+        assert.equal(policy.isEntityDurableFields("BrownTank", optionalTracker, new Map()), true, "BrownTank tracker is legitimately optional");
 
         const wrongTargetTypes = new Map([[7, "Bomb"]]);
         assert.equal(policy.isEntityDurableFields("BossBlueTank", bossBlue, wrongTargetTypes), false);

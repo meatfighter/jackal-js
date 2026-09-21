@@ -200,12 +200,7 @@ export class JackalInputMappingStore {
             return false;
         }
         const version = snapshot.version;
-        return (
-            typeof version === "number" &&
-            Number.isInteger(version) &&
-            version >= 1 &&
-            version < JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION
-        );
+        return typeof version === "number" && Number.isInteger(version) && version >= 1 && version < JackalInputMappingStore.FIRST_PUBLIC_SNAPSHOT_VERSION;
     }
 
     private isRecord(value: unknown): value is Record<string, unknown> {

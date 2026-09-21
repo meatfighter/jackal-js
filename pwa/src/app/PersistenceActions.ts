@@ -16,11 +16,7 @@ export function persistVolumePreference(value: number, warnings: PersistenceWarn
     }
 }
 
-export function persistScalingPreference(
-    value: JackalScalingPreference,
-    warnings: PersistenceWarningController,
-    isAuthorized: () => boolean
-): void {
+export function persistScalingPreference(value: JackalScalingPreference, warnings: PersistenceWarningController, isAuthorized: () => boolean): void {
     if (!writeScalingPreference(value, isAuthorized)) {
         warnings.report("Scaling setting could not be saved.");
     }
@@ -40,11 +36,7 @@ export function persistDifficultyPreference(value: boolean, warnings: Persistenc
     return true;
 }
 
-export function clearPersistedPwaState(
-    inputMappings: JackalInputMappingStore,
-    warnings: PersistenceWarningController,
-    isAuthorized: () => boolean
-): void {
+export function clearPersistedPwaState(inputMappings: JackalInputMappingStore, warnings: PersistenceWarningController, isAuthorized: () => boolean): void {
     const preferencesCleared = clearPreferences(isAuthorized);
     const gameStateCleared = clearStoredGameState(isAuthorized);
     const inputMappingCleared = inputMappings.clear(isAuthorized);

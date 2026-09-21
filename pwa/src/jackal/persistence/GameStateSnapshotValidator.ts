@@ -256,17 +256,10 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
         entityTypes.set(entitySnapshot.id, entitySnapshot.type);
     }
     const mainFields = snapshot.mainFields;
-    if (
-        !isPlayerDurableFields(snapshot.playerFields) ||
-        !isEncodedRecord(gameMode.fields, entityIds) ||
-        !isEncodedRecord(mainFields)
-    ) {
+    if (!isPlayerDurableFields(snapshot.playerFields) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
         return false;
     }
-    if (
-        gameMode.fields.stageIndex !== mainFields.stageIndex ||
-        !isGameModeFieldsValid(gameMode.fields, entityIds, entityTypes)
-    ) {
+    if (gameMode.fields.stageIndex !== mainFields.stageIndex || !isGameModeFieldsValid(gameMode.fields, entityIds, entityTypes)) {
         return false;
     }
     const paused = gameMode.fields.paused;
@@ -294,11 +287,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     return isElementLayers(gameMode.elements, entityIds);
 }
 
-function isGameModeFieldsValid(
-    fields: EncodedRecord,
-    entityIds: ReadonlySet<number>,
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): boolean {
+function isGameModeFieldsValid(fields: EncodedRecord, entityIds: ReadonlySet<number>, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
     if (
         !isEncodedIntegerMatrix(fields.tileMap, 0, 32_767) ||
         !isEncodedIntegerMatrix(fields.typesMap, 0, TILE_TYPE_CONVEYOR) ||
@@ -325,10 +314,7 @@ function isGameModeFieldsValid(
     }
 
     const cameraPanListener = fields.cameraPanListener;
-    if (
-        cameraPanListener !== null &&
-        !isCameraPanListenerReference(cameraPanListener, entityIds, entityTypes)
-    ) {
+    if (cameraPanListener !== null && !isCameraPanListenerReference(cameraPanListener, entityIds, entityTypes)) {
         return false;
     }
     return !(fields.bossCameraPan || fields.endingCameraPan) || cameraPanListener !== null;
@@ -361,36 +347,20 @@ function isEncodedBooleanArray(value: unknown): boolean {
 }
 
 function encodedArrayItems(value: unknown): readonly unknown[] | null {
-    return (
-        isRecord(value) &&
+    return isRecord(value) &&
         hasExactFields(value, ["kind", "items"]) &&
         value.kind === "array" &&
         Array.isArray(value.items) &&
         value.items.length <= MAX_ENCODED_ARRAY_LENGTH
-    )
         ? value.items
         : null;
 }
 
-function isFiniteNumberInRange(
-    value: unknown,
-    min: number,
-    max: number,
-    inclusiveMax: boolean = true
-): value is number {
-    return (
-        typeof value === "number" &&
-        Number.isFinite(value) &&
-        value >= min &&
-        (inclusiveMax ? value <= max : value < max)
-    );
+function isFiniteNumberInRange(value: unknown, min: number, max: number, inclusiveMax: boolean = true): value is number {
+    return typeof value === "number" && Number.isFinite(value) && value >= min && (inclusiveMax ? value <= max : value < max);
 }
 
-function isCameraPanListenerReference(
-    value: unknown,
-    entityIds: ReadonlySet<number>,
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): boolean {
+function isCameraPanListenerReference(value: unknown, entityIds: ReadonlySet<number>, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
     if (
         !isRecord(value) ||
         Object.keys(value).length !== 2 ||
@@ -434,10 +404,7 @@ function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRe
         case "SUNSET":
             return hasPrimitiveFieldTypes(fields, SUNSET_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 9);
         case "HARD_ENDING":
-            return (
-                hasPrimitiveFieldTypes(fields, HARD_ENDING_MODE_FIELD_NAMES, [], ["finalScore"]) &&
-                isIntegerInRange(fields.state, 0, 9)
-            );
+            return hasPrimitiveFieldTypes(fields, HARD_ENDING_MODE_FIELD_NAMES, [], ["finalScore"]) && isIntegerInRange(fields.state, 0, 9);
         case "MAP":
             return hasPrimitiveFieldTypes(fields, MAP_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 5);
         case "INTRO_MAP":
@@ -481,11 +448,7 @@ function isSimpleMenuModeFields(fields: EncodedRecord, maximumSelectedIndex: num
     const state = fields.state;
     const optionSelected = fields.optionSelectedFlag;
     const selectedIndex = fields.selectedIndex;
-    if (
-        !isIntegerInRange(state, 0, 3) ||
-        typeof optionSelected !== "boolean" ||
-        !isIntegerInRange(selectedIndex, 0, maximumSelectedIndex)
-    ) {
+    if (!isIntegerInRange(state, 0, 3) || typeof optionSelected !== "boolean" || !isIntegerInRange(selectedIndex, 0, maximumSelectedIndex)) {
         return false;
     }
     if (state === 0) {
@@ -536,24 +499,12 @@ function isElementLayers(value: unknown, entityIds: Set<number>): boolean {
 function isModeExtraSnapshot(modeId: StandaloneModeId, modeFields: EncodedRecord, extra: unknown): boolean {
     switch (modeId) {
         case "INTRO":
-            return (
-                isExactObject(extra, "menu") &&
-                isRequiredMenuSnapshot(extra.menu, 1) &&
-                isIntroMenuSnapshotConsistent(modeFields, extra.menu)
-            );
+            return isExactObject(extra, "menu") && isRequiredMenuSnapshot(extra.menu, 1) && isIntroMenuSnapshotConsistent(modeFields, extra.menu);
         case "CONTINUE":
         case "DIFFICULTY":
-            return (
-                isExactObject(extra, "menu") &&
-                isRequiredMenuSnapshot(extra.menu, 1) &&
-                isSimpleMenuSnapshotConsistent(modeFields, extra.menu)
-            );
+            return isExactObject(extra, "menu") && isRequiredMenuSnapshot(extra.menu, 1) && isSimpleMenuSnapshotConsistent(modeFields, extra.menu);
         case "OPTIONS":
-            return (
-                isExactObject(extra, "menu") &&
-                isRequiredMenuSnapshot(extra.menu, 2) &&
-                isSimpleMenuSnapshotConsistent(modeFields, extra.menu)
-            );
+            return isExactObject(extra, "menu") && isRequiredMenuSnapshot(extra.menu, 2) && isSimpleMenuSnapshotConsistent(modeFields, extra.menu);
         case "INPUT":
             return isExactObject(extra, "input") && isInputModeExtraSnapshot(modeFields, extra.input);
         case "YEAH":
@@ -616,9 +567,7 @@ function isIntroMenuSnapshotConsistent(modeFields: EncodedRecord, menu: MenuSnap
     ) {
         return false;
     }
-    return selectionMade
-        ? menuSelectionMade && menuSelectedIndex === selectedIndex
-        : !menuSelectionMade;
+    return selectionMade ? menuSelectionMade && menuSelectedIndex === selectedIndex : !menuSelectionMade;
 }
 
 function isSimpleMenuSnapshotConsistent(modeFields: EncodedRecord, menu: MenuSnapshot): boolean {
@@ -741,8 +690,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
 
     return (
         delay === 0 &&
-        ((nameIndex === 0 && assignmentCount === 0) ||
-            (nameIndex === InputMode.ACTIONS.length && assignmentCount === InputMode.ACTIONS.length)) &&
+        ((nameIndex === 0 && assignmentCount === 0) || (nameIndex === InputMode.ACTIONS.length && assignmentCount === InputMode.ACTIONS.length)) &&
         message === ""
     );
 }
@@ -784,11 +732,7 @@ function isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtra
         return false;
     }
     if (
-        !isNullablePrimitiveRecord(
-            value.explosion,
-            JEEP_YEAH_EXPLOSION_FIELD_NAMES,
-            ["grenadeExplosion", "damagesEnemies", "tiny", "remove"]
-        ) ||
+        !isNullablePrimitiveRecord(value.explosion, JEEP_YEAH_EXPLOSION_FIELD_NAMES, ["grenadeExplosion", "damagesEnemies", "tiny", "remove"]) ||
         !isNullablePrimitiveRecord(value.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, ["left"]) ||
         !isNullablePrimitiveRecord(value.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, ["left"]) ||
         !isNullablePrimitiveRecord(value.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES) ||
@@ -796,9 +740,7 @@ function isJeepYeahModeExtraSnapshot(value: unknown): value is JeepYeahModeExtra
     ) {
         return false;
     }
-    return value.bullets.every((bullet) =>
-        isPrimitiveRecord(bullet, JEEP_YEAH_BULLET_FIELD_NAMES, ["remove"])
-    );
+    return value.bullets.every((bullet) => isPrimitiveRecord(bullet, JEEP_YEAH_BULLET_FIELD_NAMES, ["remove"]));
 }
 
 function isNullablePrimitiveRecord(
@@ -827,9 +769,7 @@ function isEncodedRecord(value: unknown, entityIds?: Set<number>, depth = 0): va
     if (!isRecord(value) || depth > MAX_ENCODED_DEPTH || Object.keys(value).length > MAX_ENCODED_RECORD_FIELDS) {
         return false;
     }
-    return Object.entries(value).every(
-        ([key, entry]) => !FORBIDDEN_STATE_FIELD_NAMES.has(key) && isEncodedValue(entry, entityIds, depth + 1, key)
-    );
+    return Object.entries(value).every(([key, entry]) => !FORBIDDEN_STATE_FIELD_NAMES.has(key) && isEncodedValue(entry, entityIds, depth + 1, key));
 }
 
 function isEncodedValue(value: unknown, entityIds: Set<number> | undefined, depth: number, fieldName: string): value is EncodedValue {

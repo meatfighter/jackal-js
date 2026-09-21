@@ -6,15 +6,46 @@ import ts from "typescript";
 const slickModuleUrl = import.meta.resolve("slick2d-ts");
 
 const PLAYER_DURABLE_FIELDS = [
-    "x", "y", "angle", "nextAngle", "displayAngle", "angleVelocity", "angleSteps", "diagonalDelay",
-    "targetAngle", "lastTargetAngle", "fireAngle", "rumble", "invincible", "invincibleColor",
-    "weaponArmed", "gunArmed", "longRange", "respawning", "pows", "releaseablePows", "inSwamp"
+    "x",
+    "y",
+    "angle",
+    "nextAngle",
+    "displayAngle",
+    "angleVelocity",
+    "angleSteps",
+    "diagonalDelay",
+    "targetAngle",
+    "lastTargetAngle",
+    "fireAngle",
+    "rumble",
+    "invincible",
+    "invincibleColor",
+    "weaponArmed",
+    "gunArmed",
+    "longRange",
+    "respawning",
+    "pows",
+    "releaseablePows",
+    "inSwamp"
 ];
 const GAME_ELEMENT_DURABLE_FIELDS = ["removeFlag", "enemy", "enemyBullet", "x", "y", "layer", "changeLayerValue"];
 const HIT_ELEMENT_DURABLE_FIELDS = ["hitField", "hitX1", "hitY1", "hitX2", "hitY2", "trail", "trailIndex"];
 const ENEMY_DURABLE_FIELDS = [
-    "solid", "mine", "solidX1", "solidY1", "solidX2", "solidY2", "mineX1", "mineY1", "mineX2", "mineY2",
-    "bulletHits", "points", "explosionX", "explosionY", "playSoundOnRemove"
+    "solid",
+    "mine",
+    "solidX1",
+    "solidY1",
+    "solidX2",
+    "solidY2",
+    "mineX1",
+    "mineY1",
+    "mineX2",
+    "mineY2",
+    "bulletHits",
+    "points",
+    "explosionX",
+    "explosionY",
+    "playSoundOnRemove"
 ];
 const TEST_ENTITY_DURABLE_FIELDS = {
     Bomb: [...GAME_ELEMENT_DURABLE_FIELDS, ...HIT_ELEMENT_DURABLE_FIELDS, ...ENEMY_DURABLE_FIELDS, "vx", "vy", "scale", "angle", "t", "airplane"],
@@ -22,14 +53,34 @@ const TEST_ENTITY_DURABLE_FIELDS = {
         ...GAME_ELEMENT_DURABLE_FIELDS,
         ...HIT_ELEMENT_DURABLE_FIELDS,
         ...ENEMY_DURABLE_FIELDS,
-        "colorIndex", "wheelAngle", "treadOffset", "vx", "targetX", "ax", "hits", "smashed", "exploding",
-        "superFire", "state", "appearingDelay", "delay"
+        "colorIndex",
+        "wheelAngle",
+        "treadOffset",
+        "vx",
+        "targetX",
+        "ax",
+        "hits",
+        "smashed",
+        "exploding",
+        "superFire",
+        "state",
+        "appearingDelay",
+        "delay"
     ],
     EnemyBullet: [...GAME_ELEMENT_DURABLE_FIELDS, "travelTime", "vx", "vy"]
 };
 const BOOLEAN_DURABLE_FIELDS = new Set([
-    "removeFlag", "enemy", "enemyBullet", "hitField", "solid", "mine", "playSoundOnRemove", "airplane",
-    "weaponArmed", "longRange", "inSwamp"
+    "removeFlag",
+    "enemy",
+    "enemyBullet",
+    "hitField",
+    "solid",
+    "mine",
+    "playSoundOnRemove",
+    "airplane",
+    "weaponArmed",
+    "longRange",
+    "inSwamp"
 ]);
 
 function validPlayerFields(overrides = {}) {
@@ -74,10 +125,7 @@ async function loadPersistenceValidation() {
     const audioRegistryUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8"));
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
     const buttonMappingUrl = compileModule(
-        readFileSync(new URL("../pwa/src/jackal/ButtonMapping.ts", import.meta.url), "utf8").replace(
-            `from "slick2d-ts"`,
-            `from "${slickModuleUrl}"`
-        )
+        readFileSync(new URL("../pwa/src/jackal/ButtonMapping.ts", import.meta.url), "utf8").replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
     );
     const tileTypesUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/GameTileTypes.ts", import.meta.url), "utf8"));
     const inputModeUrl = compileModule(`
@@ -103,7 +151,7 @@ async function loadPersistenceValidation() {
     const fieldPoliciesUrl = compileModule(`
         const PLAYER_FIELDS = ${JSON.stringify(PLAYER_DURABLE_FIELDS)};
         const ENTITY_FIELDS = ${JSON.stringify(TEST_ENTITY_DURABLE_FIELDS)};
-        const BOOLEAN_FIELDS = new Set(${JSON.stringify([...new Set(["removeFlag","enemy","enemyBullet","hitField","solid","mine","playSoundOnRemove","airplane","weaponArmed","longRange","inSwamp"])])});
+        const BOOLEAN_FIELDS = new Set(${JSON.stringify([...new Set(["removeFlag", "enemy", "enemyBullet", "hitField", "solid", "mine", "playSoundOnRemove", "airplane", "weaponArmed", "longRange", "inSwamp"])])});
         const exact = (value, names) =>
             value !== null && typeof value === "object" && !Array.isArray(value) &&
             Object.keys(value).length === names.length && names.every((name) => Object.hasOwn(value, name));
@@ -440,7 +488,6 @@ test("save-state validator accepts only the current schema", async () => {
     const impossibleEnabledKonami = modeSnapshot(fields, currentVersion);
     impossibleEnabledKonami.konamiCodeFields = { enabled: true, sequenceIndex: 9 };
     assert.equal(validator.isSupportedGameStateSnapshot(impossibleEnabledKonami), false);
-
 });
 
 test("save-state validator rejects corrupt but superficially shaped state", async () => {
@@ -484,11 +531,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     introSelectionMismatch.modeFields.selectedIndex = 1;
     introSelectionMismatch.modeExtra.menu.fields.selectionMade = true;
     introSelectionMismatch.modeExtra.menu.fields.selectedIndex = 0;
-    assert.equal(
-        validator.isSupportedGameStateSnapshot(introSelectionMismatch),
-        false,
-        "Intro mode and Menu must agree on the committed selection"
-    );
+    assert.equal(validator.isSupportedGameStateSnapshot(introSelectionMismatch), false, "Intro mode and Menu must agree on the committed selection");
 
     const introMenuSelectedWithoutMode = structuredClone(validIntro);
     introMenuSelectedWithoutMode.modeExtra.menu.fields.selectionMade = true;
@@ -566,38 +609,22 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
 
     const wrongStandaloneState = modeSnapshot(fields, currentVersion);
     wrongStandaloneState.modeFields.state = 4;
-    assert.equal(
-        validator.isSupportedGameStateSnapshot(wrongStandaloneState),
-        false,
-        "IntroMap state must stay within the reachable 0..3 state domain"
-    );
+    assert.equal(validator.isSupportedGameStateSnapshot(wrongStandaloneState), false, "IntroMap state must stay within the reachable 0..3 state domain");
 
     const validJeepYeah = jeepYeahModeSnapshot(fields, currentVersion);
     assert.equal(validator.isSupportedGameStateSnapshot(validJeepYeah), true);
 
     const numericJeepPlaneBoolean = structuredClone(validJeepYeah);
     numericJeepPlaneBoolean.modeExtra.jeepYeah.leftPlane.left = 0;
-    assert.equal(
-        validator.isSupportedGameStateSnapshot(numericJeepPlaneBoolean),
-        false,
-        "Jeep-Yeah plane boolean fields must reject numeric aliases"
-    );
+    assert.equal(validator.isSupportedGameStateSnapshot(numericJeepPlaneBoolean), false, "Jeep-Yeah plane boolean fields must reject numeric aliases");
 
     const shadowedJeepBulletMethod = structuredClone(validJeepYeah);
     shadowedJeepBulletMethod.modeExtra.jeepYeah.bullets[0].update = 0;
-    assert.equal(
-        validator.isSupportedGameStateSnapshot(shadowedJeepBulletMethod),
-        false,
-        "Jeep-Yeah auxiliary records must reject method-shadow/extra fields"
-    );
+    assert.equal(validator.isSupportedGameStateSnapshot(shadowedJeepBulletMethod), false, "Jeep-Yeah auxiliary records must reject method-shadow/extra fields");
 
     const wrongJeepModeBoolean = structuredClone(validJeepYeah);
     wrongJeepModeBoolean.modeFields.yeah = 1;
-    assert.equal(
-        validator.isSupportedGameStateSnapshot(wrongJeepModeBoolean),
-        false,
-        "Jeep-Yeah mode booleans must be true booleans"
-    );
+    assert.equal(validator.isSupportedGameStateSnapshot(wrongJeepModeBoolean), false, "Jeep-Yeah mode booleans must be true booleans");
 
     const obsoleteAudioPolicy = modeSnapshot(fields, currentVersion);
     obsoleteAudioPolicy.audioState.musicOn = false;
@@ -689,8 +716,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     assert.equal(validator.isSupportedGameStateSnapshot(reservedKeyDraft), false);
 
     const duplicateDraftKey = structuredClone(validInput);
-    duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGun =
-        duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGrenade;
+    duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGun = duplicateDraftKey.modeExtra.input.draftButtonMapping.fields.keyGrenade;
     assert.equal(validator.isSupportedGameStateSnapshot(duplicateDraftKey), false);
 
     const duplicateDraftController = structuredClone(validInput);

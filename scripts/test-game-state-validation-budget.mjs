@@ -13,9 +13,7 @@ const server = await createServer({
 });
 
 try {
-    const { isWithinGameStateValidationBudget } = await server.ssrLoadModule(
-        "/src/jackal/persistence/GameStateSnapshotValidator.ts"
-    );
+    const { isWithinGameStateValidationBudget } = await server.ssrLoadModule("/src/jackal/persistence/GameStateSnapshotValidator.ts");
 
     test("Jackal snapshot validation budget accepts ordinary bounded object graphs", () => {
         assert.equal(

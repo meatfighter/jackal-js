@@ -496,46 +496,22 @@ export class JackalGameStateSerializer {
         Reflect.set(
             mode,
             "leftPlane",
-            this.restoreNullableTypedRecord(
-                JeepYeahPlane,
-                snapshot.leftPlane,
-                JEEP_YEAH_PLANE_FIELD_NAMES,
-                context,
-                JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS
-            )
+            this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.leftPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS)
         );
         Reflect.set(
             mode,
             "rightPlane",
-            this.restoreNullableTypedRecord(
-                JeepYeahPlane,
-                snapshot.rightPlane,
-                JEEP_YEAH_PLANE_FIELD_NAMES,
-                context,
-                JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS
-            )
+            this.restoreNullableTypedRecord(JeepYeahPlane, snapshot.rightPlane, JEEP_YEAH_PLANE_FIELD_NAMES, context, JEEP_YEAH_PLANE_JAVA_FLOAT_FIELDS)
         );
         Reflect.set(
             mode,
             "fireLeft",
-            this.restoreNullableTypedRecord(
-                JeepYeahFireLeft,
-                snapshot.fireLeft,
-                JEEP_YEAH_FIRE_FIELD_NAMES,
-                context,
-                JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS
-            )
+            this.restoreNullableTypedRecord(JeepYeahFireLeft, snapshot.fireLeft, JEEP_YEAH_FIRE_FIELD_NAMES, context, JEEP_YEAH_FIRE_LEFT_JAVA_FLOAT_FIELDS)
         );
         Reflect.set(
             mode,
             "fireRight",
-            this.restoreNullableTypedRecord(
-                JeepYeahFireRight,
-                snapshot.fireRight,
-                JEEP_YEAH_FIRE_FIELD_NAMES,
-                context,
-                JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS
-            )
+            this.restoreNullableTypedRecord(JeepYeahFireRight, snapshot.fireRight, JEEP_YEAH_FIRE_FIELD_NAMES, context, JEEP_YEAH_FIRE_RIGHT_JAVA_FLOAT_FIELDS)
         );
         mode.bullets = new ArrayList<JeepYeahBullet>(snapshot.bullets.length);
         for (const bulletSnapshot of snapshot.bullets) {

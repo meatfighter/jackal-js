@@ -541,11 +541,7 @@ export class JackalWebApp {
             if (!this.isCurrentGameSession(session)) {
                 return false;
             }
-            return persistDifficultyPreference(
-                hardMode,
-                this.persistenceWarnings,
-                () => this.isCurrentGameSession(session) && this.game === mainGame
-            );
+            return persistDifficultyPreference(hardMode, this.persistenceWarnings, () => this.isCurrentGameSession(session) && this.game === mainGame);
         };
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
@@ -695,10 +691,7 @@ export class JackalWebApp {
         if (!this.getOwnership().owned || mainGame === null || runtime === null || !mainGame.isStateSaveReady()) {
             return false;
         }
-        const result = this.getGameStateStore(runtime).save(
-            mainGame,
-            () => this.getOwnership().owned && this.game === mainGame
-        );
+        const result = this.getGameStateStore(runtime).save(mainGame, () => this.getOwnership().owned && this.game === mainGame);
         if (!result.saved) {
             this.persistenceWarnings.report("Progress could not be saved. Your last successful save is unchanged.");
         }
@@ -724,10 +717,7 @@ export class JackalWebApp {
         if (!this.getOwnership().owned || mainGame === null) {
             return { saved: false, reason: "stale-session" };
         }
-        const result = this.inputMappingStore.save(
-            mainGame.buttonMapping,
-            () => this.getOwnership().owned && this.game === mainGame
-        );
+        const result = this.inputMappingStore.save(mainGame.buttonMapping, () => this.getOwnership().owned && this.game === mainGame);
         if (!result.saved) {
             this.persistenceWarnings.report("Control changes could not be saved.");
         }

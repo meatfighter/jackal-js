@@ -43,7 +43,10 @@ test("Jackal difficulty is persisted independently for fresh Java and browser ga
     assert.match(tsPreferences, /writeDifficultyPreference\(hardMode:\s*boolean, isAuthorized:\s*\(\) => boolean\)/);
     assert.match(tsPreferences, /clearDifficultyPreference\(\)/);
     assert.match(tsPersistenceActions, /persistDifficultyPreference\([\s\S]*?writeDifficultyPreference\(value, isAuthorized\)/);
-    assert.match(tsWebApp, /mainGame\.difficultyChangedHandler = \(hardMode\) => \{[\s\S]*?persistDifficultyPreference\([\s\S]*?this\.isCurrentGameSession\(session\) && this\.game === mainGame/);
+    assert.match(
+        tsWebApp,
+        /mainGame\.difficultyChangedHandler = \(hardMode\) => \{[\s\S]*?persistDifficultyPreference\([\s\S]*?this\.isCurrentGameSession\(session\) && this\.game === mainGame/
+    );
 
     assert.match(tsIntro, /if \(main\.loadIndex < 42\) \{\s*main\.hardMode = readDifficultyPreference\(\);/s);
     assert.match(tsDifficulty, /this\.main\.hardMode = this\.selectedIndex === 1;\s*this\.main\.notifyDifficultyChanged\(\);/s);

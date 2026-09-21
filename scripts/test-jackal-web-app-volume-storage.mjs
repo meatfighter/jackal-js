@@ -59,7 +59,10 @@ test("web app volume storage is isolated by deployment path", async () => {
     storage.set(productionKey, "72");
     setLocation(stagingHref);
     assert.equal(preferences.readVolume(), 0.1);
-    assert.equal(preferences.writeVolume(0.35, () => true), true);
+    assert.equal(
+        preferences.writeVolume(0.35, () => true),
+        true
+    );
     assert.equal(storage.get(stagingKey), "35");
     assert.equal(storage.get(productionKey), "72");
 
@@ -82,7 +85,10 @@ test("web app scaling preference storage is isolated by deployment path", async 
     storage.set(productionKey, "crisp");
     setLocation(stagingHref);
     assert.equal(preferences.readScalingPreference(), "smooth");
-    assert.equal(preferences.writeScalingPreference("pixel-perfect", () => true), true);
+    assert.equal(
+        preferences.writeScalingPreference("pixel-perfect", () => true),
+        true
+    );
     assert.equal(storage.get(stagingKey), "pixel-perfect");
     assert.equal(storage.get(productionKey), "crisp");
 
@@ -110,7 +116,10 @@ test("web app fullscreen preference defaults on and is isolated by deployment pa
     setLocation(stagingHref);
     assert.equal(preferences.DEFAULT_FULLSCREEN_PREFERENCE, true);
     assert.equal(preferences.readFullscreenPreference(), true);
-    assert.equal(preferences.writeFullscreenPreference(false, () => true), true);
+    assert.equal(
+        preferences.writeFullscreenPreference(false, () => true),
+        true
+    );
     assert.equal(storage.get(stagingKey), "false");
     assert.equal(storage.get(productionKey), "false");
 
@@ -119,7 +128,10 @@ test("web app fullscreen preference defaults on and is isolated by deployment pa
 
     setLocation(productionHref);
     assert.equal(preferences.readFullscreenPreference(), false);
-    assert.equal(preferences.writeFullscreenPreference(true, () => true), true);
+    assert.equal(
+        preferences.writeFullscreenPreference(true, () => true),
+        true
+    );
     assert.equal(storage.get(productionKey), "true");
 
     storage.set(productionKey, "unsupported");
@@ -139,7 +151,10 @@ test("web app difficulty preference storage is isolated by deployment path", asy
     storage.set(productionKey, "normal");
     setLocation(stagingHref);
     assert.equal(preferences.readDifficultyPreference(), false);
-    assert.equal(preferences.writeDifficultyPreference(true, () => true), true);
+    assert.equal(
+        preferences.writeDifficultyPreference(true, () => true),
+        true
+    );
     assert.equal(storage.get(stagingKey), "hard");
     assert.equal(storage.get(productionKey), "normal");
 
@@ -148,7 +163,10 @@ test("web app difficulty preference storage is isolated by deployment path", asy
 
     setLocation(productionHref);
     assert.equal(preferences.readDifficultyPreference(), false);
-    assert.equal(preferences.writeDifficultyPreference(true, () => true), true);
+    assert.equal(
+        preferences.writeDifficultyPreference(true, () => true),
+        true
+    );
     assert.equal(storage.get(productionKey), "hard");
 
     storage.set(productionKey, "unsupported");
@@ -167,7 +185,10 @@ test("preference writes and clears fail closed when authorization is revoked", a
     storage.set(volumeKey, "45");
     storage.set(fullscreenKey, "false");
 
-    assert.equal(preferences.writeVolume(0.9, () => false), false);
+    assert.equal(
+        preferences.writeVolume(0.9, () => false),
+        false
+    );
     assert.equal(storage.get(volumeKey), "45");
 
     let calls = 0;
@@ -193,7 +214,10 @@ test("clearing preferences resets fullscreen and difficulty without touching ano
     storage.set(productionFullscreenKey, "false");
     setLocation(stagingHref);
 
-    assert.equal(preferences.clearPreferences(() => true), true);
+    assert.equal(
+        preferences.clearPreferences(() => true),
+        true
+    );
     assert.equal(preferences.readDifficultyPreference(), false);
     assert.equal(preferences.readFullscreenPreference(), true);
     assert.equal(storage.has(stagingDifficultyKey), false);

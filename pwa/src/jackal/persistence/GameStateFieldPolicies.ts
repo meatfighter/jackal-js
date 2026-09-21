@@ -70,9 +70,7 @@ export const PLAYER_DURABLE_FIELD_DESCRIPTOR: DurableFieldDescriptor = Object.fr
     ...Object.fromEntries(PLAYER_BOOLEAN_FIELDS.map((name) => [name, Object.freeze({ kind: "boolean" })]))
 });
 
-const ENEMY_ENTITY_TYPES = Object.freeze(
-    GAME_ELEMENT_TYPE_IDS.filter((type) => GAME_ELEMENT_TYPES[type].prototype instanceof Enemy)
-);
+const ENEMY_ENTITY_TYPES = Object.freeze(GAME_ELEMENT_TYPE_IDS.filter((type) => GAME_ELEMENT_TYPES[type].prototype instanceof Enemy));
 const ITANK_TRACKER_ENTITY_TYPES = Object.freeze(["BossGarageManager", "BossHeadquartersManager", "BossShipManager", "BossStatuesManager"] as const);
 
 const REFERENCE_TARGETS: Partial<Record<GameElementTypeId, Readonly<Record<string, readonly GameElementTypeId[]>>>> = {
@@ -140,9 +138,7 @@ export function getEntityDurableFieldDescriptor(type: GameElementTypeId): Durabl
         Reflect.apply(initialize, zeroState, []);
     }
 
-    const floatFields = new Set(
-        GAME_ELEMENT_JAVA_FLOAT_FIELDS[type].filter(([, depth]) => depth === 0).map(([name]) => name)
-    );
+    const floatFields = new Set(GAME_ELEMENT_JAVA_FLOAT_FIELDS[type].filter(([, depth]) => depth === 0).map(([name]) => name));
     const descriptor: Record<string, DurableFieldPolicy> = {};
     for (const name of Object.keys(zeroState)) {
         if (SKIPPED_INSTANCE_FIELDS.has(name)) {
@@ -205,27 +201,14 @@ export function isPlayerDurableFields(value: unknown): value is EncodedRecord {
     if (!(fields.targetAngle === -1 || isDiscretePlayerAngle(fields.targetAngle))) {
         return false;
     }
-    return (
-        typeof fields.pows === "number" &&
-        typeof fields.releaseablePows === "number" &&
-        fields.releaseablePows <= fields.pows
-    );
+    return typeof fields.pows === "number" && typeof fields.releaseablePows === "number" && fields.releaseablePows <= fields.pows;
 }
 
-export function isEntityDurableFields(
-    type: GameElementTypeId,
-    value: unknown,
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): value is EncodedRecord {
+export function isEntityDurableFields(type: GameElementTypeId, value: unknown, entityTypes: ReadonlyMap<number, GameElementTypeId>): value is EncodedRecord {
     return isFieldsValid(value, getEntityDurableFieldDescriptor(type), entityTypes);
 }
 
-function policyForZeroState(
-    type: GameElementTypeId,
-    name: string,
-    value: unknown,
-    floatFields: ReadonlySet<string>
-): DurableFieldPolicy {
+function policyForZeroState(type: GameElementTypeId, name: string, value: unknown, floatFields: ReadonlySet<string>): DurableFieldPolicy {
     if (name === "trail") {
         return Object.freeze({ kind: "numberArray", integer: true, length: 8 });
     }
@@ -264,11 +247,7 @@ function policyForZeroState(
     }
 }
 
-function isFieldsValid(
-    value: unknown,
-    descriptor: DurableFieldDescriptor,
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): value is EncodedRecord {
+function isFieldsValid(value: unknown, descriptor: DurableFieldDescriptor, entityTypes: ReadonlyMap<number, GameElementTypeId>): value is EncodedRecord {
     if (!isRecord(value)) {
         return false;
     }
@@ -283,21 +262,14 @@ function isFieldsValid(
     });
 }
 
-function isEncodedValueForPolicy(
-    value: unknown,
-    policy: DurableFieldPolicy,
-    fieldName: string,
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): boolean {
+function isEncodedValueForPolicy(value: unknown, policy: DurableFieldPolicy, fieldName: string, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
     switch (policy.kind) {
         case "boolean":
             return typeof value === "boolean";
         case "number":
             return isReasonableNumber(value, fieldName, policy.integer, policy.min, policy.max, policy.allowedValues);
         case "reference":
-            return value === null
-                ? policy.nullable
-                : isTypedEntityReference(value, policy.targets, entityTypes);
+            return value === null ? policy.nullable : isTypedEntityReference(value, policy.targets, entityTypes);
         case "referenceList":
             if (
                 !isTaggedItems(value, "arrayList") ||
@@ -330,11 +302,7 @@ function isEncodedValueForPolicy(
     }
 }
 
-function isTypedEntityReference(
-    value: unknown,
-    targets: readonly GameElementTypeId[],
-    entityTypes: ReadonlyMap<number, GameElementTypeId>
-): boolean {
+function isTypedEntityReference(value: unknown, targets: readonly GameElementTypeId[], entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
     if (!isRecord(value) || Object.keys(value).length !== 2 || value.kind !== "entityRef" || !Number.isInteger(value.id)) {
         return false;
     }
@@ -412,11 +380,7 @@ function explicitIntegerRange(type: GameElementTypeId, name: string): readonly [
 
 function inferStaticEnumValues(type: GameElementTypeId, name: string): number[] | null {
     const prefix =
-        name === "state" ? "STATE_" :
-        name === "type" ? "TYPE_" :
-        name === "spriteIndex" ? "SPRITE_" :
-        name === "orientation" ? "ORIENTATION_" :
-        null;
+        name === "state" ? "STATE_" : name === "type" ? "TYPE_" : name === "spriteIndex" ? "SPRITE_" : name === "orientation" ? "ORIENTATION_" : null;
     if (prefix === null) {
         return null;
     }

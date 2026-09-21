@@ -22,10 +22,7 @@ test("Fullscreen and Scaling share a wrapping responsive row", () => {
 
 test("Scaling preference is applied both to fresh and retained gameplay", () => {
     assert.match(webAppSource, /scalingMode:\s*bufferedScalingModeForPreference\(runtime\.slick, this\.scalingPreference\)/);
-    assert.match(
-        webAppSource,
-        /persistScalingPreference\(value, this\.persistenceWarnings, \(\) => this\.getOwnership\(\)\.owned\)/
-    );
+    assert.match(webAppSource, /persistScalingPreference\(value, this\.persistenceWarnings, \(\) => this\.getOwnership\(\)\.owned\)/);
     assert.match(
         webAppSource,
         /this\.viewport\.setScalingMode\(bufferedScalingModeForPreference\(this\.runtimeLoader\.preparedRuntime\.slick, this\.scalingPreference\)\)/

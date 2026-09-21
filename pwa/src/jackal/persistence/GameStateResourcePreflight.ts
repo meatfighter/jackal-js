@@ -117,9 +117,7 @@ export function isSupportedSnapshotForLoadedResources(main: Main, snapshot: Jack
 }
 
 function encodedArrayValues(value: EncodedValue | undefined): readonly EncodedValue[] | null {
-    return value !== null && typeof value === "object" && !Array.isArray(value) && value.kind === "array" && Array.isArray(value.items)
-        ? value.items
-        : null;
+    return value !== null && typeof value === "object" && !Array.isArray(value) && value.kind === "array" && Array.isArray(value.items) ? value.items : null;
 }
 
 function encodedMatrixRows(value: EncodedValue | undefined): readonly (readonly EncodedValue[])[] | null {

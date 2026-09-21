@@ -89,12 +89,48 @@ export class HumanInput implements IInput {
             }
 
             const establishBaseline = firstSample || status.baselineOnly || ownerChanged || mappingChanged;
-            up ||= this.sampleControllerControl(controller, 0, this.isControllerBindingDown(this.buttonMapping.controllerUp, controller), establishBaseline, blocked);
-            down ||= this.sampleControllerControl(controller, 1, this.isControllerBindingDown(this.buttonMapping.controllerDown, controller), establishBaseline, blocked);
-            left ||= this.sampleControllerControl(controller, 2, this.isControllerBindingDown(this.buttonMapping.controllerLeft, controller), establishBaseline, blocked);
-            right ||= this.sampleControllerControl(controller, 3, this.isControllerBindingDown(this.buttonMapping.controllerRight, controller), establishBaseline, blocked);
-            fire ||= this.sampleControllerControl(controller, 4, this.isControllerButtonDown(this.buttonMapping.controllerGrenade, controller), establishBaseline, blocked);
-            shoot ||= this.sampleControllerControl(controller, 5, this.isControllerButtonDown(this.buttonMapping.controllerGun, controller), establishBaseline, blocked);
+            up ||= this.sampleControllerControl(
+                controller,
+                0,
+                this.isControllerBindingDown(this.buttonMapping.controllerUp, controller),
+                establishBaseline,
+                blocked
+            );
+            down ||= this.sampleControllerControl(
+                controller,
+                1,
+                this.isControllerBindingDown(this.buttonMapping.controllerDown, controller),
+                establishBaseline,
+                blocked
+            );
+            left ||= this.sampleControllerControl(
+                controller,
+                2,
+                this.isControllerBindingDown(this.buttonMapping.controllerLeft, controller),
+                establishBaseline,
+                blocked
+            );
+            right ||= this.sampleControllerControl(
+                controller,
+                3,
+                this.isControllerBindingDown(this.buttonMapping.controllerRight, controller),
+                establishBaseline,
+                blocked
+            );
+            fire ||= this.sampleControllerControl(
+                controller,
+                4,
+                this.isControllerButtonDown(this.buttonMapping.controllerGrenade, controller),
+                establishBaseline,
+                blocked
+            );
+            shoot ||= this.sampleControllerControl(
+                controller,
+                5,
+                this.isControllerButtonDown(this.buttonMapping.controllerGun, controller),
+                establishBaseline,
+                blocked
+            );
         }
 
         this.controllerUp = up;
