@@ -98,12 +98,18 @@ test("Jackal browser InputMode retains the maintained Java polling architecture"
     const tsSource = readFileSync(resolve(rootDir, "pwa/src/jackal/InputMode.ts"), "utf8");
     const javaSource = readFileSync(resolve(rootDir, "desktop/src/jackal/InputMode.java"), "utf8");
 
-    for (const source of [tsSource, javaSource]) {
-        assert.match(source, /syncControllerInputState/);
-        assert.match(source, /getPressedControllerDirection/);
-        assert.match(source, /getPressedNonDirectionalControllerButton/);
-        assert.match(source, /armDelay/);
-    }
+    assert.match(javaSource, /syncControllerInputState/);
+    assert.match(javaSource, /getPressedControllerDirection/);
+    assert.match(javaSource, /getPressedNonDirectionalControllerButton/);
+    assert.match(javaSource, /armDelay/);
+
+    assert.match(tsSource, /syncControllerInputState/);
+    assert.match(tsSource, /sampleControllerInput/);
+    assert.match(tsSource, /getControllerSampleStatus/);
+    assert.match(tsSource, /getControllerConnectionGeneration/);
+    assert.match(tsSource, /isControllerButtonDirectional/);
+    assert.match(tsSource, /armDelay/);
+    assert.doesNotMatch(tsSource, /getPressedControllerDirection|getPressedNonDirectionalControllerButton/);
     assert.doesNotMatch(tsSource, /ControllerListener|addControllerListener|controllerButtonPressed/);
     assert.match(javaSource, /if \(armDelay > 0\) \{[\s\S]*?syncControllerInputState\(\);[\s\S]*?armDelay--;/);
     assert.match(tsSource, /if \(this\.armDelay > 0\) \{[\s\S]*?this\.syncControllerInputState\(\);[\s\S]*?this\.armDelay--;/);
@@ -124,8 +130,11 @@ function createInputModeFixture(InputMode, ButtonMapping) {
     const controls = { heldButton: -1 };
     const queriedButtons = [];
     const input = {
+        getControllerSampleStatus: () => ({ sequence: 1, available: true, valid: true, topologyGeneration: 1, baselineOnly: false }),
+        getControllerConnectionGeneration: () => 1,
         getControllerCount: () => 1,
         getButtonCount: () => 17,
+        isControllerButtonDirectional: () => false,
         isControllerUp: () => false,
         isControllerDown: () => false,
         isControllerLeft: () => false,
