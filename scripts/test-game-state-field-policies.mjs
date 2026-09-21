@@ -320,7 +320,13 @@ function encodedRecordForDescriptor(descriptor, entityTypes) {
                 result[name] = field.allowedValues?.[0] ?? field.min ?? 0;
                 break;
             case "reference":
-                result[name] = null;
+                if (field.nullable) {
+                    result[name] = null;
+                } else {
+                    const id = nextId++;
+                    entityTypes.set(id, field.targets[0]);
+                    result[name] = { kind: "entityRef", id };
+                }
                 break;
             case "referenceList": {
                 const items = [];
