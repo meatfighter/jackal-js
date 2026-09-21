@@ -105,6 +105,19 @@ const REFERENCE_TARGETS: Partial<Record<GameElementTypeId, Readonly<Record<strin
     SuperFire: { bossSuperTank: ["BossSuperTank"] }
 };
 
+const REQUIRED_REFERENCE_FIELDS = new Set<string>([
+    "BossBlueTank.bossBlueTanksManager",
+    "BossGarage.bossGarageManager",
+    "BossHeadquarters.bossHeadquartersManager",
+    "BossShipGun.bossShipManager",
+    "BossStatue.bossStatuesManager",
+    "BossSuperTankGun.bossSuperTank",
+    "Fire.sourceEnemy",
+    "IntroPlayer.chinook",
+    "Parachute.bossHelicopter",
+    "SuperFire.bossSuperTank"
+]);
+
 const NULLABLE_NUMERIC_FIELDS: Partial<Record<GameElementTypeId, ReadonlySet<string>>> = {
     BossSuperTankGun: new Set(["state"]),
     EnemySoldier: new Set(["type"]),
@@ -231,7 +244,11 @@ function policyForZeroState(
 
     const targets = REFERENCE_TARGETS[type]?.[name];
     if (targets !== undefined) {
-        return Object.freeze({ kind: "reference", targets, nullable: true });
+        return Object.freeze({
+            kind: "reference",
+            targets,
+            nullable: !REQUIRED_REFERENCE_FIELDS.has(`${type}.${name}`)
+        });
     }
     if (NULLABLE_NUMERIC_FIELDS[type]?.has(name) === true) {
         return numberPolicy(type, name, true);
