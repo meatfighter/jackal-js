@@ -94,6 +94,22 @@ async function loadPersistenceModules() {
     return Promise.all([import(gameStorageUrl), import(storeUrl)]).then(([gameStorage, store]) => ({ gameStorage, ...store }));
 }
 
+test("prior development schema storage cannot block the current schema save", async () => {
+    resetStorage();
+    const { JackalGameStateStore } = await loadPersistenceModules();
+    const currentKey = gameStateStorageKey();
+    const priorBaseKey = gameStateBaseKey.replace(/v\d+$/, `v${currentGameStateVersion - 1}`);
+    const priorKey = `${priorBaseKey}:${encodeURIComponent(new URL("./", globalThis.location.href).pathname)}`;
+    const priorText = JSON.stringify({ version: currentGameStateVersion - 1, obsoleteShape: true });
+    storage.set(priorKey, priorText);
+
+    const store = new JackalGameStateStore("1.0.0");
+    assert.deepEqual(store.save({ isStateSaveReady: () => true, marker: "fresh" }, () => true), { saved: true });
+    assert.equal(storage.get(priorKey), priorText, "prior schema bytes must remain untouched");
+    assert.equal(JSON.parse(storage.get(currentKey)).version, currentGameStateVersion);
+    assert.equal(JSON.parse(storage.get(currentKey)).marker, "fresh");
+});
+
 test("restore exceptions preserve the current stored game-state snapshot", async () => {
     await withMutedConsoleWarn(async () => {
         resetStorage();
