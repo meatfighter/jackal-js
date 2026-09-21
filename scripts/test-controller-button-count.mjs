@@ -12,5 +12,5 @@ test("HumanInput scans only physical buttons reported by each controller", () =>
     assert.doesNotMatch(source, /GAMEPAD_BUTTON_INDEX_LIMIT/);
     assert.match(source, /const buttonCount = this\.input\.getButtonCount\(controller\);/);
     assert.match(source, /for \(let button = 0; button < buttonCount; button\+\+\)/);
-    assert.match(source, /!this\.isDirectionalGamepadButton\(button\) && !this\.isMappedDirectionButton\(button\)/);
+    assert.match(source, /!this\.input\.isControllerButtonDirectional\(button, controller\) && !this\.isMappedDirectionButton\(button\)/);
 });
