@@ -664,7 +664,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             nameIndex < InputMode.ACTIONS.length &&
             delay === 0 &&
             assignmentCount === nameIndex &&
-            assignmentsMatchInputDraft(value, nameIndex) &&
+            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerButtons, nameIndex) &&
             (message === "" || (message === "ALREADY USED" && armDelay === 0))
         );
     }
@@ -674,7 +674,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             delay >= 1 &&
             delay <= InputMode.FADE_TIME &&
             assignmentCount === nameIndex + 1 &&
-            assignmentsMatchInputDraft(value, nameIndex + 1) &&
+            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerButtons, nameIndex + 1) &&
             message === ""
         );
     }
@@ -695,13 +695,17 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
     );
 }
 
-function assignmentsMatchInputDraft(snapshot: InputModeExtraSnapshot, completedSteps: number): boolean {
-    const draft = snapshot.draftButtonMapping;
+function assignmentsMatchInputDraft(
+    draft: ButtonMappingSnapshot | null,
+    assignedKeyValues: readonly number[],
+    assignedControllerValues: readonly number[],
+    completedSteps: number
+): boolean {
     if (draft === null) {
         return false;
     }
-    const assignedKeys = new Set(snapshot.assignedKeys);
-    const assignedControllers = new Set(snapshot.assignedControllerButtons);
+    const assignedKeys = new Set(assignedKeyValues);
+    const assignedControllers = new Set(assignedControllerValues);
     const fields = [
         ["keyUp", "controllerUp"],
         ["keyDown", "controllerDown"],
