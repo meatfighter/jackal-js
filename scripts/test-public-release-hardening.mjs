@@ -15,19 +15,19 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
     assert.match(packageLock.packages["node_modules/slick2d-ts"].resolved, /^https:\/\/codeload\.github\.com\/meatfighter\/slick2d-ts\/tar\.gz\/[0-9a-f]{40}$/);
 });
 
-test("schema 14 is explicitly the development cutover saved-game format", () => {
+test("schema 15 is explicitly the development cutover saved-game format", () => {
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
-    assert.match(schema, /GAME_STATE_VERSION = 14 as const/);
-    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v14"/);
+    assert.match(schema, /GAME_STATE_VERSION = 15 as const/);
+    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v15"/);
     assert.match(schema, /return value === GAME_STATE_VERSION/);
     assert.doesNotMatch(schema, /FIRST_PUBLIC_GAME_STATE_VERSION|MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(schema, /MAX_GAME_STATE_TEXT_LENGTH = 2_000_000/);
 });
 
-test("input-mapping schema 2 is explicitly the first public mapping format", () => {
+test("input-mapping schema 3 is explicitly the first public mapping format", () => {
     const mappingStore = read("pwa/src/app/JackalInputMappingStore.ts");
-    assert.match(mappingStore, /SNAPSHOT_VERSION = 2/);
-    assert.match(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION = 2/);
+    assert.match(mappingStore, /SNAPSHOT_VERSION = 3/);
+    assert.match(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION = 3/);
     assert.match(mappingStore, /version >= JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
     assert.match(mappingStore, /version !== JackalInputMappingStore\.SNAPSHOT_VERSION/);
     assert.match(mappingStore, /hasProtectedStoredSnapshot/);
