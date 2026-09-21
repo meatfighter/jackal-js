@@ -32,7 +32,13 @@ import { JackalInputMappingStore } from "./JackalInputMappingStore.js";
 import { JackalRuntimeLoader, isRuntimePreparationAbort, type PreparedRuntime } from "./JackalRuntimeLoader.js";
 import { escapeHtml, renderLoadErrorScreen, renderLoadingScreen, volumeIconSvg } from "./JackalScreens.js";
 import { PageLifecycleMonitor } from "./PageLifecycleMonitor.js";
-import { clearPersistedPwaState, persistFullscreenPreference, persistScalingPreference, persistVolumePreference } from "./PersistenceActions.js";
+import {
+    clearPersistedPwaState,
+    persistDifficultyPreference,
+    persistFullscreenPreference,
+    persistScalingPreference,
+    persistVolumePreference
+} from "./PersistenceActions.js";
 import { PersistenceWarningController } from "./PersistenceWarningController.js";
 import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
@@ -530,6 +536,16 @@ export class JackalWebApp {
                 return { saved: false, reason: "stale-session" };
             }
             return this.saveCurrentInputMapping();
+        };
+        mainGame.difficultyChangedHandler = (hardMode) => {
+            if (!this.isCurrentGameSession(session)) {
+                return false;
+            }
+            return persistDifficultyPreference(
+                hardMode,
+                this.persistenceWarnings,
+                () => this.isCurrentGameSession(session) && this.game === mainGame
+            );
         };
         if (restoreSavedGame) {
             mainGame.loadingCompleteHandler = (gc) => {
