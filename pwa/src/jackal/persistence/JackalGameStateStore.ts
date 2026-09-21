@@ -13,6 +13,18 @@ export class JackalGameStateStore {
             return { saved: false, reason: "invalid-snapshot" };
         }
         try {
+            const existing = inspectStoredGameState();
+            switch (existing.status) {
+                case "read-failed":
+                    return { saved: false, reason: "read-failed" };
+                case "invalid":
+                    return { saved: false, reason: "invalid-existing" };
+                case "unsupported-future":
+                    return { saved: false, reason: "unsupported-future" };
+                case "missing":
+                case "current":
+                    break;
+            }
             return writeStoredGameState(this.serializer.createSnapshot(main, this.appVersion), isAuthorized);
         } catch (error) {
             console.warn("Unable to save Jackal game state.", error);
