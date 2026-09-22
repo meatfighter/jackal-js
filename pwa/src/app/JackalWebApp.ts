@@ -122,8 +122,14 @@ export class JackalWebApp {
                     if (request !== this.menuRequestSerial || !owner.isCurrent(epoch) || this.pwaSessionState !== "booting") {
                         return;
                     }
-                    this.pwaSessionState = "menu";
-                    this.renderMenu(this.root, this.hasPotentialSavedGameState(), errorMessage, false);
+                    try {
+                        this.pwaSessionState = "menu";
+                        this.renderMenu(this.root, this.hasPotentialSavedGameState(), errorMessage, false);
+                    } catch (error) {
+                        if (request !== this.menuRequestSerial || !owner.isCurrent(epoch)) return;
+                        console.error("Unable to display the game menu.", error);
+                        this.showLoadError("Unable to start.", "The menu could not be displayed. Reload this tab.", () => window.location.reload(), "Reload");
+                    }
                 })
                 .catch((error) => {
                     if (
@@ -527,6 +533,10 @@ export class JackalWebApp {
             this.container = appContainer;
             this.game = mainGame;
             publishedToShell = true;
+            const initializationOwner = {
+                signal: appContainer.getBrowserLifetimeSignal(),
+                isCurrent: () => this.isStartingGameSession(session, audio) && this.game === mainGame && this.container === appContainer
+            };
             this.viewport.attach(appContainer, bufferedGame, session);
             appContainer.setGraphicsLifecycleHandler((state) => {
                 if (state === "lost" && this.isCurrentGameSession(session)) {
@@ -557,17 +567,21 @@ export class JackalWebApp {
                     return true;
                 };
             }
-            await initializeWithDeadline(Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false)), this.sessionCleanup);
+            await initializeWithDeadline(
+                Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false)),
+                this.sessionCleanup,
+                initializationOwner
+            );
             if (!this.isStartingGameSession(session, audio)) {
                 this.disposeStaleLaunch(mainGame, appContainer);
                 return;
             }
-            await initializeWithDeadline(appContainer.start(), this.sessionCleanup);
+            await initializeWithDeadline(appContainer.start(), this.sessionCleanup, initializationOwner);
             if (!this.isStartingGameSession(session, audio)) {
                 this.disposeStaleLaunch(mainGame, appContainer);
                 return;
             }
-            await initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup);
+            await initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup, initializationOwner);
             if (!this.isStartingGameSession(session, audio)) {
                 this.disposeStaleLaunch(mainGame, appContainer);
                 return;
