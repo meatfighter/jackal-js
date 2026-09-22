@@ -312,6 +312,7 @@ export class ButtonMapping {
         this.controllerGun = source.controllerGun;
         this.controllerStart = source.controllerStart;
     }
+
     public clone(): ButtonMapping {
         const mapping = new ButtonMapping();
         mapping.copyFrom(this);

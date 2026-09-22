@@ -11,24 +11,31 @@ export class PersistenceSession<T extends object> {
         this.rejected = false;
         return true;
     }
+
     public accept(runtime: T): void {
         this.accepted = runtime;
     }
+
     public retire(runtime: T | null): void {
         if (runtime === this.accepted) this.accepted = null;
     }
+
     public canSave(runtime: T): boolean {
         return runtime === this.accepted;
     }
+
     public rejectStored(): void {
         this.rejected = true;
     }
+
     public abandonStored(): void {
         this.rejected = true;
     }
+
     public didSave(): void {
         this.rejected = false;
     }
+
     public canReadStored(): boolean {
         return !this.rejected;
     }
