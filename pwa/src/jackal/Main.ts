@@ -1,4 +1,5 @@
-import { BasicGame, Color, GL11, Image, Log, Music, Sound, SoundStore, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
+import { SoundCooldownClock } from "./SoundCooldownClock.js";
+import { BasicGame, Color, GL11, Image, Music, Sound, SoundStore, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
 import {
     ArrayList,
     JAVA_LONG_LOW_3_BITS,
@@ -282,6 +283,12 @@ export class Main extends BasicGame {
 
     public triggerSizes: number[][] = null!;
     public unitVector: number[] = javaArray(3, 0);
+    private readonly soundCooldownClock = new SoundCooldownClock();
+
+    public getSoundCooldownTime(): number {
+        return this.soundCooldownClock.now();
+    }
+
     public lastPlayTime: Map<Sound, number> = new Map<Sound, number>();
     public konamiCode: KonamiCode | null = null;
 
@@ -310,11 +317,7 @@ export class Main extends BasicGame {
         gc.setShowFPS(false);
         gc.setClearEachFrame(true);
 
-        try {
-            this.loadFont();
-        } catch (t) {
-            Log.error("Loading error", t);
-        }
+        this.loadFont();
 
         gc.getInput().setAdditionalControllerDirectionAxes([
             { horizontalAxis: 2, verticalAxis: 3 },
@@ -543,15 +546,11 @@ export class Main extends BasicGame {
     }
 
     public setMode(mode: IMode, gc: GameContainer): void {
-        try {
-            this.input.clearKeyPressedRecord();
-            this.mode = mode;
-            mode.init(this, gc);
-            mode.update(gc);
-            this.resetNextFrameTime();
-        } catch (t) {
-            Log.error("setMode error", t);
-        }
+        this.input.clearKeyPressedRecord();
+        this.mode = mode;
+        mode.init(this, gc);
+        mode.update(gc);
+        this.resetNextFrameTime();
     }
 
     public addPoints(points: number): void {
@@ -679,10 +678,10 @@ export class Main extends BasicGame {
             return;
         }
         let time = this.lastPlayTime.get(sound);
-        let now = Date.now();
+        const now = this.getSoundCooldownTime();
         if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play();
-            this.lastPlayTime.set(sound, Date.now());
+            this.lastPlayTime.set(sound, now);
         }
     }
 
@@ -700,10 +699,10 @@ export class Main extends BasicGame {
             return;
         }
         let time = this.lastPlayTime.get(sound);
-        let now = Date.now();
+        const now = this.getSoundCooldownTime();
         if (time === undefined || now - time > Main.MINIMUM_SOUND_TIME) {
             sound.play(1, volume);
-            this.lastPlayTime.set(sound, Date.now());
+            this.lastPlayTime.set(sound, now);
         }
     }
 
@@ -1991,6 +1990,7 @@ export class Main extends BasicGame {
 
     /** PWA suspension controls simulation/input, never logical audio preferences. */
     public setBrowserSuspended(suspended: boolean): void {
+        this.soundCooldownClock.setPaused(suspended);
         this.browserSuspended = suspended;
         this.clearInputPressedRecords();
         if (!suspended) {

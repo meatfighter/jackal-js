@@ -11,7 +11,8 @@
         "PlayerMotionConstants": "Cycle-safe source of truth for Player motion constants and precomputed rumble values used by cutscenes.",
         "index": "Browser module export surface.",
         "JackalMath": "Provides a cycle-safe, Java-float-compatible rotation helper shared by Main and Player.",
-        "JackalResources": "Provides the browser resource-loading boundary for Jackal packed data files."
+        "JackalResources": "Provides the browser resource-loading boundary for Jackal packed data files.",
+        "SoundCooldownClock": "Browser-only monotonic cooldown clock freezes during PWA suspension; the durable contract remains relative remaining milliseconds."
     },
     "fieldExceptions": {
         "ButtonMapping.VERSION": {

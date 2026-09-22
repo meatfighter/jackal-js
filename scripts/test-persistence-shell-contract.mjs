@@ -34,6 +34,7 @@ function fixture() {
         ownership,
         persistence,
         RestoreAttempt,
+        ReloadRequiredError: class ReloadRequiredError extends Error {},
         ResourceLoadException: class ResourceLoadException extends Error {},
         root: {},
         app: {},
@@ -98,6 +99,7 @@ function fixture() {
             }
         },
         viewport: {
+            focusMenuPanel() {},
             gameShell: {},
             gameHost: {},
             createShell() {
@@ -277,4 +279,19 @@ test("actual shell has no warning/toast subsystem and teardown no longer saves m
     assert.doesNotMatch(source, /Progress could not be saved|persistenceWarnings|saveCurrentInputMapping/);
     const save = sourceMember(path, "saveCurrentGameState", owner);
     assert.doesNotMatch(save, /getItem|hasValidSave|inspectStored|canReadStored|reportFailure/);
+});
+
+test("retained resume contains a policy failure before allocating audio", async () => {
+    const env = fixture();
+    env.hasLiveSuspendedGame = () => true;
+    env.container.isGraphicsContextLost = () => false;
+    env.applyApplicationAudioPreferences = () => {
+        throw new Error("policy failed");
+    };
+    const { methods, state } = subject("resumeLiveGameFromMenu", env);
+    await methods.resumeLiveGameFromMenu();
+    assert.equal(state.pwaSessionState, "menu");
+    assert.equal(env.events.includes("audio"), false);
+    assert.equal(env.events.includes("save"), false);
+    assert.equal(env.events.filter((event) => event === "cancel").length, 1);
 });

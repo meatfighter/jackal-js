@@ -149,10 +149,10 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
     assert.match(main, /setAdditionalControllerDirectionAxes/);
 
     const runtimeLoader = read("pwa/src/app/JackalRuntimeLoader.ts");
-    assert.match(runtimeLoader, /private cancellationBarrier: Promise<void>/);
-    assert.match(runtimeLoader, /Promise\.allSettled\(\[previousBarrier, pending\]\)/);
-    assert.match(runtimeLoader, /ResourceLoader\.preloadResources\(resourceRefs, \{\s*signal,/);
-    assert.match(runtimeLoader, /preloadAudioBuffers\(audioRefs, \{\s*signal,/);
+    assert.match(runtimeLoader, /prepareWithDeadline/);
+    assert.match(runtimeLoader, /await this\.pending\.catch/);
+    assert.match(runtimeLoader, /ResourceLoader\.loadResource\(ref, \{ signal \}\)/);
+    assert.match(runtimeLoader, /preloadAudioBuffer\(ref, \{ signal \}\)/);
     assert.match(runtimeLoader, /ResourceLoader\.setCacheVersionResolver\(/);
     assert.match(webApp, /error instanceof ResourceLoadException/);
     assert.match(webApp, /The game encountered an unexpected error\. Try again\./);

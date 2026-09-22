@@ -1,3 +1,4 @@
+import { focusOwnedPanel } from "./FocusOwnership.js";
 import type { AppGameContainer } from "slick2d-ts/slick/AppGameContainer";
 import type { BufferedScalableGame, BufferedScalingMode } from "slick2d-ts";
 import {
@@ -38,6 +39,8 @@ interface GameViewportCallbacks {
 
 /** Owns responsive sizing, shell fullscreen, hamburger visibility, and cursor idling for the active canvas. */
 export class GameViewportController {
+    private menuHost: HTMLElement | null = null;
+    private menuHostWasInert = false;
     private shell: HTMLElement | null = null;
     private host: HTMLElement | null = null;
     private resizeObserver: ResizeObserver | null = null;
@@ -145,22 +148,43 @@ export class GameViewportController {
         this.stopResponsiveSizing();
         this.shellWasFullscreen = false;
         this.shell = null;
+        this.restoreMenuHost();
         this.host = null;
         this.container = null;
         this.bufferedGame = null;
         this.presentationGeneration++;
 
         if (fullscreenExit !== null && targetShell !== null) {
-            void fullscreenExit.finally(() => {
+            const settled = (): void => {
                 this.retiredFullscreenShells.delete(targetShell);
                 if (visibilityTransition === this.visibilityTransitionSerial) {
                     this.root.style.visibility = "";
                 }
-            });
+            };
+            void fullscreenExit.then(settled, settled).catch((error: unknown) => this.callbacks.reportResizeError(error));
         }
     }
 
+    public focusMenuPanel(panel: HTMLElement): void {
+        if (!panel.isConnected || !this.root.contains(panel)) return;
+        if (this.host !== null) {
+            if (this.menuHost !== this.host) {
+                this.restoreMenuHost();
+                this.menuHost = this.host;
+                this.menuHostWasInert = this.host.inert;
+            }
+            this.host.inert = true;
+        }
+        focusOwnedPanel(panel, () => this.root.contains(panel));
+    }
+
+    private restoreMenuHost(): void {
+        if (this.menuHost !== null) this.menuHost.inert = this.menuHostWasInert;
+        this.menuHost = null;
+    }
+
     public focusCanvas(): void {
+        this.restoreMenuHost();
         this.host?.querySelector<HTMLCanvasElement>("canvas")?.focus();
     }
 
@@ -315,9 +339,10 @@ export class GameViewportController {
 
         const pending: PendingFullscreenRequest = { shell, presentation, promise };
         this.pendingFullscreenRequests.add(pending);
-        void promise.finally(() => {
+        const settled = (): void => {
             this.pendingFullscreenRequests.delete(pending);
-        });
+        };
+        void promise.then(settled, settled).catch((error: unknown) => this.callbacks.reportResizeError(error));
         this.clearFullscreenSuppressionWhenSettled(promise, shell, presentation);
         return promise;
     }
@@ -422,13 +447,14 @@ export class GameViewportController {
     }
 
     private clearFullscreenSuppressionWhenSettled(promise: Promise<boolean>, shell: HTMLElement, presentation: number): void {
-        void promise.finally(() => {
+        const settled = (): void => {
             if (this.fullscreenSuppressedPresentation === presentation && this.presentationGeneration === presentation && this.shell === shell) {
                 // The browser finally settled the abandoned native request. A later
                 // explicit Continue may optimistically try fullscreen again.
                 this.fullscreenSuppressedPresentation = null;
             }
-        });
+        };
+        void promise.then(settled, settled).catch((error: unknown) => this.callbacks.reportResizeError(error));
     }
 
     private discardPendingFullscreenRequests(targetShell: HTMLElement | null, targetPresentation: number): void {
@@ -481,13 +507,16 @@ export class GameViewportController {
         this.fullscreenEntryAuthorized = false;
         const visibilityTransition = ++this.visibilityTransitionSerial;
         this.root.style.visibility = "hidden";
-        void this.requestExitForSpecificShell(shell).finally(() => {
+        const settled = (): void => {
             this.retiredFullscreenShells.delete(shell);
             if (visibilityTransition === this.visibilityTransitionSerial) {
                 this.root.style.visibility = "";
                 this.reconcileDisplayModeNow();
             }
-        });
+        };
+        void this.requestExitForSpecificShell(shell)
+            .then(settled, settled)
+            .catch((error: unknown) => this.callbacks.reportResizeError(error));
     }
 
     private applyDisplayMode(): void {

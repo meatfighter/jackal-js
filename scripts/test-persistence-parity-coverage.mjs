@@ -206,6 +206,7 @@ test("Main save fields exclude loader/runtime caches and derived display strings
     const mainFields = persistenceConstant("MAIN_FIELD_NAMES");
     for (const field of [
         "loadIndex",
+        "soundCooldownClock",
         "nextFrameTime",
         "extraLivesStr",
         "scoreStr",

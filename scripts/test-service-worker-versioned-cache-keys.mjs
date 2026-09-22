@@ -41,6 +41,12 @@ function loadServiceWorker({
     };
     const context = {
         URL,
+        AbortController,
+        Request,
+        Response,
+        Headers,
+        setTimeout,
+        clearTimeout,
         caches: cacheBackend.caches,
         fetch: fetchHandler,
         self
@@ -70,6 +76,7 @@ function createCacheBackend(initialEntries = [], initialCacheNames = []) {
     const putUrls = [];
     const cache = {
         async addAll(urls) {
+            urls = urls.map((url) => (typeof url === "string" ? url : url.url));
             addedUrls.push(...urls);
             for (const url of urls) {
                 entries.set(url, createResponse(`precache:${url}`));
@@ -93,6 +100,7 @@ function createCacheBackend(initialEntries = [], initialCacheNames = []) {
         openedNames,
         putUrls,
         caches: {
+            match: async (url) => cache.match(url),
             open: async (name) => {
                 openedNames.push(name);
                 cacheNames.add(name);
@@ -107,15 +115,10 @@ function createCacheBackend(initialEntries = [], initialCacheNames = []) {
     };
 }
 
-function createResponse(label, { ok = true, type = "basic" } = {}) {
-    return {
-        label,
-        ok,
-        type,
-        clone() {
-            return createResponse(`${label}:clone`, { ok, type });
-        }
-    };
+function createResponse(label, { ok = true } = {}) {
+    const response = new Response(label, { status: ok ? 200 : 503, headers: { "Content-Type": "text/html" } });
+    response.label = label;
+    return response;
 }
 
 async function runInstall(worker) {
@@ -143,6 +146,7 @@ async function runActivate(worker) {
 }
 
 function runFetchIfHandled(worker, request) {
+    request.signal ??= new AbortController().signal;
     let responsePromise = null;
     const listener = worker.listeners.get("fetch");
     assert.equal(typeof listener, "function");
@@ -408,7 +412,7 @@ test("runtime fetches do not mutate immutable build-resource caches", async () =
         url: `${SCOPE}resources/images/map.dat?v=current`
     });
 
-    assert.equal(navigationResult, navigationResponse);
+    assert.equal(await navigationResult.text(), "network-index");
     assert.equal(resourceResult, resourceResponse);
     assert.deepEqual(cacheBackend.putUrls, []);
 });

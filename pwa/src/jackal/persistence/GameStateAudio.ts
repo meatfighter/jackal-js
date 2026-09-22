@@ -88,7 +88,7 @@ function captureSoundSnapshots(sounds: readonly RegisteredSound[]): SoundSnapsho
 
 function captureSoundCooldownSnapshots(main: Main, sounds: readonly RegisteredSound[]): SoundCooldownSnapshot[] {
     const snapshots: SoundCooldownSnapshot[] = [];
-    const now = Date.now();
+    const now = main.getSoundCooldownTime();
     const minimumSoundTime = MainConstants.MINIMUM_SOUND_TIME;
 
     for (const { id, sound } of sounds) {
@@ -138,7 +138,7 @@ function restoreSoundState(main: Main, snapshots: readonly SoundSnapshot[]): voi
 }
 
 function restoreSoundCooldownState(main: Main, snapshots: readonly SoundCooldownSnapshot[]): void {
-    const now = Date.now();
+    const now = main.getSoundCooldownTime();
     const minimumSoundTime = MainConstants.MINIMUM_SOUND_TIME;
     for (const snapshot of snapshots) {
         const elapsedMs = minimumSoundTime - snapshot.remainingMs;

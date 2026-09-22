@@ -101,7 +101,7 @@ test("MENU exit starts exact-shell exit before bounded pending-entry wait", () =
 
 test("suppression clears only after the abandoned request settles", () => {
     const helper = viewport.match(/private clearFullscreenSuppressionWhenSettled\([\s\S]*?\n {4}\}/)?.[0] ?? "";
-    assert.match(helper, /promise\.finally/);
+    assert.match(helper, /promise\.then\(settled, settled\)/);
     assert.match(helper, /this\.fullscreenSuppressedPresentation === presentation/);
     assert.match(helper, /this\.presentationGeneration === presentation/);
     assert.match(helper, /this\.shell === shell/);

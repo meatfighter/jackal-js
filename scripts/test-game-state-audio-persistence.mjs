@@ -104,6 +104,7 @@ class FakeSound {
 
 function fakeMain(soundIds) {
     const main = {
+        getSoundCooldownTime: () => 1000,
         lastPlayTime: new Map(),
         currentSong: null,
         requestedSong: null,
@@ -213,9 +214,9 @@ test("audio capture is sparse, preserves overlaps and snapshots independent rema
     main.helicopterSound.state = playback([voice({ looped: true, positionSeconds: 1.25 })], 0);
     main.explodeSound.state = playback([voice({ positionSeconds: 0.1 }), voice({ positionSeconds: 0.2 })], null);
     main.machineGunSound.state = playback([voice({ positionSeconds: 0.03 })], 0);
-    main.lastPlayTime.set(main.extraLifeSound, Date.now() - 20);
-    main.lastPlayTime.set(main.machineGunSound, Date.now() - 40);
-    main.lastPlayTime.set(main.missileSound, Date.now() - 500);
+    main.lastPlayTime.set(main.extraLifeSound, main.getSoundCooldownTime() - 20);
+    main.lastPlayTime.set(main.machineGunSound, main.getSoundCooldownTime() - 40);
+    main.lastPlayTime.set(main.missileSound, main.getSoundCooldownTime() - 500);
 
     const snapshot = audio.captureAudioStateSnapshot(main);
     assert.deepEqual(
@@ -242,7 +243,7 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
     const { registry, audio } = await loadAudioModules();
     const main = fakeMain(registry.SOUND_FIELD_NAMES);
     main.extraLifeSound.state = playback([voice()], 0);
-    main.lastPlayTime.set(main.extraLifeSound, Date.now());
+    main.lastPlayTime.set(main.extraLifeSound, main.getSoundCooldownTime());
 
     const helicopter = playback([voice({ looped: true, positionSeconds: 1.75 })], 0);
     const machineGun = playback([voice({ looped: true, positionSeconds: 0.04 })], 0);
@@ -270,12 +271,12 @@ test("audio restore is exhaustive and reconstructs repeat suppression without a 
     }
 
     assert.equal(main.lastPlayTime.size, 1);
-    const reconstructedElapsed = Date.now() - main.lastPlayTime.get(main.machineGunSound);
+    const reconstructedElapsed = main.getSoundCooldownTime() - main.lastPlayTime.get(main.machineGunSound);
     assert.ok(reconstructedElapsed >= 45 && reconstructedElapsed < 70, `unexpected reconstructed cooldown elapsed time: ${reconstructedElapsed}`);
 
     const beforeVoices = main.machineGunSound.state.voices.length;
     const lastPlayTime = main.lastPlayTime.get(main.machineGunSound);
-    const now = Date.now();
+    const now = main.getSoundCooldownTime();
     if (lastPlayTime === undefined || now - lastPlayTime > 125) {
         main.machineGunSound.play();
         main.lastPlayTime.set(main.machineGunSound, now);
@@ -488,8 +489,8 @@ test("live-menu lifecycle freezes before save and commits audio before resume", 
 test("fresh durable restore completes before audio commit and gameplay resume", () => {
     const launch = webAppSource.slice(webAppSource.indexOf("private async launchPreparedGame"), webAppSource.indexOf("private returnToMenu"));
     const restoreHook = launch.indexOf("mainGame.loadingCompleteHandler");
-    const start = launch.indexOf("await appContainer.start()");
-    const resources = launch.indexOf("await ResourceLoader.waitForAll()");
+    const start = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup)");
+    const resources = launch.indexOf("initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup)");
     const commit = launch.indexOf("commitGameAudio(audio)");
     const gameResume = launch.indexOf("mainGame.setBrowserSuspended(false)");
     const loopResume = launch.indexOf("appContainer.setLoopSuspended(false)");

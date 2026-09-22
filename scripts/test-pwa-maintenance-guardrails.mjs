@@ -98,7 +98,7 @@ test("Jackal Main owns game state, not browser audio recovery policy", () => {
 test("playback activation is attempt-scoped and stale Continue cleanup cannot target a replacement", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const resume = source.slice(source.indexOf("private async resumeLiveGameFromMenu"), source.indexOf("private removeMenuOverlay"));
-    assert.match(resume, /const audio = beginGameAudio\(\)/);
+    assert.match(resume, /audio = beginGameAudio\(\)/);
     assert.match(resume, /commitGameAudio\(audio\)/);
     assert.match(resume, /isGameAudioLatest\(audio\)/);
     assert.equal((resume.match(/isGameAudioLatest\(audio\)/g) ?? []).length, 2, "Continue catch and finally must both reject stale attempts.");
@@ -109,7 +109,7 @@ test("synchronous post-commit UI hooks are rechecked before RUNNING", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
     const launchPause = launch.indexOf("appContainer.getInput().pause();");
-    const launchStart = launch.indexOf("await appContainer.start();");
+    const launchStart = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup)");
     const launchFocus = launch.indexOf("this.viewport.focusCanvas();");
     const launchGuard = launch.indexOf(
         "if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)",
@@ -213,5 +213,5 @@ test("first-run service worker readiness is bounded before runtime resource prel
     assert.match(registrar, /navigator\.serviceWorker\.ready/);
     assert.match(registrar, /controllerchange/);
     assert.doesNotMatch(registrar, /window\.addEventListener\("load"/);
-    assert.match(loader, /await waitForServiceWorkerReadiness\(\);/);
+    assert.match(loader, /await waitForServiceWorkerStartupGrace\(\);/);
 });

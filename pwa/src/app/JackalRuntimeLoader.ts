@@ -1,8 +1,10 @@
+import { runSettledBatch } from "slick2d-ts/slick/util/BatchLoader";
+import { prepareWithDeadline, ReloadRequiredError, settleRequired } from "./PreparationDeadline.js";
 import { SoundStore } from "slick2d-ts/slick/openal/SoundStore";
-import { ResourceLoadException, ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
+import { ResourceLoader } from "slick2d-ts/slick/util/ResourceLoader";
 import { BUILD_STAMP } from "./BuildInfo.js";
 import { RESOURCE_VERSIONS } from "./ResourceVersions.js";
-import { waitForServiceWorkerReadiness } from "./ServiceWorkerRegistrar.js";
+import { waitForServiceWorkerStartupGrace } from "./ServiceWorkerRegistrar.js";
 
 const RESOURCE_CACHE_RETRY_COUNT = 5;
 const RESOURCE_CACHE_RETRY_DELAY_MS = 250;
@@ -13,10 +15,6 @@ type SlickRuntimeModule = typeof import("slick2d-ts");
 type MainConstructor = typeof import("../jackal/Main.js").Main;
 type JackalGameStateStoreConstructor = typeof import("../jackal/persistence/JackalGameStateStore.js").JackalGameStateStore;
 
-interface ResourceLoadProgress {
-    readonly loaded: number;
-}
-
 export interface PreparedRuntime {
     readonly slick: SlickRuntimeModule;
     readonly Main: MainConstructor;
@@ -24,26 +22,18 @@ export interface PreparedRuntime {
 }
 
 /** Owns lazy module loading and cancellable resource preloading independently of a game session. */
-export class JackalRuntimeLoader {
-    private prepared: PreparedRuntime | null = null;
-    private pending: Promise<PreparedRuntime> | null = null;
-    private preparationAbortController: AbortController | null = null;
-    private cancellationBarrier: Promise<void> = Promise.resolve();
-    private failure: unknown = null;
-    private loadedFraction = 0;
 
+export class JackalRuntimeLoader {
+    public prepared: PreparedRuntime | null = null;
+    public error: unknown = null;
+    public progress = 0;
+    private pending: Promise<PreparedRuntime> | null = null;
+    private controller: AbortController | null = null;
+    private reloadFailure: ReloadRequiredError | null = null;
     public constructor(private readonly progressChanged: () => void) {}
 
     public get preparedRuntime(): PreparedRuntime | null {
         return this.prepared;
-    }
-
-    public get progress(): number {
-        return this.loadedFraction;
-    }
-
-    public get error(): unknown {
-        return this.failure;
     }
 
     public get isPreparing(): boolean {
@@ -51,146 +41,99 @@ export class JackalRuntimeLoader {
     }
 
     public cancelPreparation(): void {
-        const pending = this.pending;
-        this.preparationAbortController?.abort();
-        if (pending !== null) {
-            const previousBarrier = this.cancellationBarrier;
-            this.cancellationBarrier = Promise.allSettled([previousBarrier, pending]).then(() => undefined);
-        }
-        this.preparationAbortController = null;
-        this.pending = null;
+        this.controller?.abort(new DOMException("Preparation cancelled", "AbortError"));
     }
 
-    public async ensurePrepared(forceRetry: boolean): Promise<PreparedRuntime> {
-        if (this.prepared !== null) {
-            return this.prepared;
+    public async ensurePrepared(forceRetry = false): Promise<PreparedRuntime> {
+        if (this.reloadFailure !== null) throw this.reloadFailure;
+        if (this.prepared !== null) return this.prepared;
+        if (forceRetry && this.pending !== null) {
+            this.controller?.abort(new DOMException("Preparation superseded", "AbortError"));
+            await this.pending.catch(() => undefined);
+            return this.ensurePrepared(true);
         }
-        if (forceRetry) {
-            this.cancelPreparation();
-            this.failure = null;
-        }
-        if (this.pending === null) {
-            const controller = new AbortController();
-            const cancellationBarrier = this.cancellationBarrier;
-            this.preparationAbortController = controller;
-            const preparation = this.prepareAfterCancellation(cancellationBarrier, controller.signal)
-                .then((runtime) => {
-                    if (controller.signal.aborted) {
-                        throw createAbortError();
-                    }
-                    this.prepared = runtime;
-                    Reflect.set(window, "__gameResourcesPrepared", true);
-                    this.failure = null;
-                    this.setProgress(1);
-                    return runtime;
-                })
-                .catch((error) => {
-                    if (controller.signal.aborted) {
-                        throw createAbortError();
-                    }
-                    // A resource deadline aborts its fetch, not this preparation.
-                    // Only cancellation requested by this loader may suppress Retry.
-                    this.failure = isAbortFailure(error) ? new Error("Resource loading timed out or was interrupted.", { cause: error }) : error;
-                    throw this.failure;
-                })
-                .finally(() => {
-                    if (this.pending === preparation) {
-                        this.pending = null;
-                    }
-                    if (this.preparationAbortController === controller) {
-                        this.preparationAbortController = null;
-                    }
-                });
-            this.pending = preparation;
-        }
-        return this.pending;
-    }
-
-    private async prepareAfterCancellation(cancellationBarrier: Promise<void>, signal: AbortSignal): Promise<PreparedRuntime> {
-        await cancellationBarrier;
-        throwIfAborted(signal);
-        // On a first visit, let the bounded service-worker install settle before
-        // runtime preload starts fetching the same release resources itself.
-        await waitForServiceWorkerReadiness();
-        throwIfAborted(signal);
-        ResourceLoader.clearFailures();
-        this.configureResourceLoader();
-        this.setProgress(0);
-        return this.prepare(signal);
-    }
-
-    private async prepare(signal: AbortSignal): Promise<PreparedRuntime> {
-        const [slick, resourceManifestModule] = await Promise.all([import("slick2d-ts"), import("./ResourceManifest.js")]);
-        throwIfAborted(signal);
-        const [mainModule, gameStateStoreModule] = await Promise.all([import("../jackal/Main.js"), import("../jackal/persistence/JackalGameStateStore.js")]);
-        throwIfAborted(signal);
-        await this.preloadResources(resourceManifestModule.RESOURCE_MANIFEST, signal);
-        return {
-            slick,
-            Main: mainModule.Main,
-            JackalGameStateStore: gameStateStoreModule.JackalGameStateStore
-        };
-    }
-
-    private async preloadResources(resourceManifest: readonly string[], signal: AbortSignal): Promise<void> {
-        const audioRefs: string[] = [];
-        const resourceRefs: string[] = [];
-        for (const ref of resourceManifest) {
-            if (ref.endsWith(".ogg")) {
-                audioRefs.push(ref);
-            } else {
-                resourceRefs.push(ref);
-            }
-        }
-
-        const total = audioRefs.length + resourceRefs.length;
-        if (total === 0) {
-            this.setProgress(1);
-            return;
-        }
-
-        let loadedAudio = 0;
-        let loadedResources = 0;
-        const updateProgress = (): void => this.setProgress((loadedAudio + loadedResources) / total);
-        const settled = await Promise.allSettled([
-            ResourceLoader.preloadResources(resourceRefs, {
-                signal,
-                concurrency: RESOURCE_PRELOAD_CONCURRENCY,
-                onProgress: (progress: ResourceLoadProgress) => {
-                    loadedResources = progress.loaded;
-                    updateProgress();
-                }
-            }),
-            SoundStore.get().preloadAudioBuffers(audioRefs, {
-                signal,
-                concurrency: AUDIO_PRELOAD_CONCURRENCY,
-                onProgress: (progress: ResourceLoadProgress) => {
-                    loadedAudio = progress.loaded;
-                    updateProgress();
-                }
+        if (this.pending !== null) return this.pending;
+        if (!forceRetry && this.error !== null) throw this.error;
+        const controller = new AbortController();
+        this.controller = controller;
+        this.error = null;
+        const work = prepareWithDeadline(controller, async () => {
+            await waitForServiceWorkerStartupGrace();
+            controller.signal.throwIfAborted();
+            ResourceLoader.clearFailures();
+            ResourceLoader.removeAllResourceLocations();
+            ResourceLoader.addResourceLocation(getAppUrl("resources/"));
+            ResourceLoader.setCacheVersionResolver((ref) => RESOURCE_VERSIONS[ref] ?? BUILD_STAMP);
+            ResourceLoader.setRetryOptions(RESOURCE_CACHE_RETRY_COUNT, RESOURCE_CACHE_RETRY_DELAY_MS);
+            this.setProgress(0, controller.signal);
+            const [slick, manifest, mainModule, storeModule] = await settleRequired(
+                [import("slick2d-ts"), import("./ResourceManifest.js"), import("../jackal/Main.js"), import("../jackal/persistence/JackalGameStateStore.js")],
+                controller
+            );
+            controller.signal.throwIfAborted();
+            await this.preloadResources(manifest.RESOURCE_MANIFEST, controller);
+            controller.signal.throwIfAborted();
+            return { slick, Main: mainModule.Main, JackalGameStateStore: storeModule.JackalGameStateStore };
+        });
+        const pending = work
+            .then((runtime) => {
+                controller.signal.throwIfAborted();
+                if (this.controller !== controller) throw new DOMException("Preparation superseded", "AbortError");
+                this.prepared = runtime;
+                Reflect.set(window, "__gameResourcesPrepared", true);
+                this.setProgress(1, controller.signal);
+                return runtime;
             })
+            .catch((error: unknown) => {
+                if (error instanceof ReloadRequiredError) this.reloadFailure = error;
+                if (this.controller === controller) this.error = error;
+                throw error;
+            })
+            .finally(() => {
+                if (this.pending === pending) this.pending = null;
+                if (this.controller === controller) this.controller = null;
+            });
+        this.pending = pending;
+        return pending;
+    }
+
+    private async preloadResources(refs: readonly string[], controller: AbortController): Promise<void> {
+        const signal = controller.signal;
+        const unique = Array.from(new Set(refs));
+        const audio = unique.filter((ref) => ref.toLowerCase().endsWith(".ogg"));
+        const resources = unique.filter((ref) => !ref.toLowerCase().endsWith(".ogg"));
+        let loaded = 0;
+        let failed = false;
+        let firstFailure: unknown;
+        const runRequired = async (ref: string): Promise<void> => {
+            signal.throwIfAborted();
+            try {
+                if (ref.toLowerCase().endsWith(".ogg")) await SoundStore.get().preloadAudioBuffer(ref, { signal });
+                else await ResourceLoader.loadResource(ref, { signal });
+                this.setProgress(++loaded / unique.length, signal);
+            } catch (error) {
+                if (!failed) {
+                    failed = true;
+                    firstFailure = error;
+                    controller.abort(error);
+                }
+                throw error;
+            }
+        };
+        await Promise.all([
+            runSettledBatch(resources, RESOURCE_PRELOAD_CONCURRENCY, runRequired),
+            runSettledBatch(audio, AUDIO_PRELOAD_CONCURRENCY, runRequired)
         ]);
-        const failure = settled.find((entry): entry is PromiseRejectedResult => entry.status === "rejected");
-        if (failure) {
-            throw failure.reason;
-        }
-        throwIfAborted(signal);
-        this.setProgress(1);
+        if (failed) throw firstFailure;
+        signal.throwIfAborted();
     }
 
-    private configureResourceLoader(): void {
-        ResourceLoader.removeAllResourceLocations();
-        ResourceLoader.addResourceLocation(getAppUrl("resources/"));
-        ResourceLoader.setCacheVersionResolver((ref) => RESOURCE_VERSIONS[ref] ?? BUILD_STAMP);
-        ResourceLoader.setRetryOptions(RESOURCE_CACHE_RETRY_COUNT, RESOURCE_CACHE_RETRY_DELAY_MS);
-    }
-
-    private setProgress(value: number): void {
-        this.loadedFraction = value;
+    private setProgress(value: number, signal: AbortSignal): void {
+        if (signal.aborted || this.controller?.signal !== signal) return;
+        this.progress = value;
         this.progressChanged();
     }
 }
-
 export function isRuntimePreparationAbort(error: unknown): boolean {
     return isAbortFailure(error);
 }
@@ -203,19 +146,8 @@ function getAppUrl(path: string): string {
     return new URL(path, new URL(baseUrl, window.location.href)).toString();
 }
 
-function throwIfAborted(signal: AbortSignal): void {
-    if (signal.aborted) {
-        throw createAbortError();
-    }
-}
-
-function createAbortError(): DOMException {
-    return new DOMException("Jackal runtime preparation was cancelled.", "AbortError");
-}
-
 function isAbortFailure(error: unknown): boolean {
     return (
-        (error instanceof ResourceLoadException && error.kind === "abort") ||
         (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") ||
         (typeof error === "object" && error !== null && "name" in error && (error as { name?: unknown }).name === "AbortError")
     );

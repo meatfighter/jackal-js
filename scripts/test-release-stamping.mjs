@@ -21,7 +21,7 @@ const runtimeLoaderSource = readFileSync(new URL("../pwa/src/app/JackalRuntimeLo
 const webAppSource = readFileSync(new URL("../pwa/src/app/JackalWebApp.ts", import.meta.url), "utf8");
 
 function embeddedServiceWorkerCacheName(buildStamp) {
-    const header = serviceWorkerSource.slice(0, serviceWorkerSource.indexOf("const APP_ROOT"));
+    const header = serviceWorkerSource.slice(0, serviceWorkerSource.indexOf("const RESOURCE_ROOT"));
     const source = header
         .replaceAll("__APP_VERSION__", versionJson.version)
         .replaceAll("__BUILD_STAMP__", buildStamp)
@@ -111,7 +111,7 @@ test("browser runtime uses the Vite-injected release identity everywhere", () =>
     assert.match(buildInfoSource, /export const APP_VERSION(?:: string)? = __APP_VERSION__/);
     assert.match(buildInfoSource, /export const BUILD_STAMP(?:: string)? = __BUILD_STAMP__/);
     assert.match(runtimeLoaderSource, /ResourceLoader\.setCacheVersionResolver\(/);
-    assert.match(webAppSource, /registerServiceWorker\(BUILD_STAMP\)/);
+    assert.match(webAppSource, /registerServiceWorker\(\)/);
     assert.match(webAppSource, /new runtime\.JackalGameStateStore\(APP_VERSION\)/);
     assert.doesNotMatch(runtimeLoaderSource + webAppSource, /version\.json/);
 });

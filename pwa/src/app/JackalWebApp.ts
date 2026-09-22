@@ -1,3 +1,5 @@
+import { focusOwnedPanel } from "./FocusOwnership.js";
+import { initializeWithDeadline, ReloadRequiredError } from "./PreparationDeadline.js";
 import { PersistenceSession, RestoreAttempt } from "./PersistenceSession.js";
 import { ButtonMapping } from "../jackal/ButtonMapping.js";
 import {
@@ -47,7 +49,7 @@ import { clearPersistedPwaState } from "./PersistenceActions.js";
 import { ScreenWakeLockManager } from "./ScreenWakeLockManager.js";
 import { bindScalingPicker, bufferedScalingModeForPreference, scalingPickerHtml } from "./ScalingPicker.js";
 import { registerServiceWorker } from "./ServiceWorkerRegistrar.js";
-import { APP_VERSION, BUILD_STAMP } from "./BuildInfo.js";
+import { APP_VERSION } from "./BuildInfo.js";
 const GAME_DISPLAY_WIDTH = MainConstants.DISPLAY_WIDTH;
 const GAME_DISPLAY_HEIGHT = MainConstants.DISPLAY_HEIGHT;
 const HIGH_DPI_ENABLED = true;
@@ -97,7 +99,7 @@ export class JackalWebApp {
         });
         setGameAudioInterruptionHandler((reason) => this.requestPwaMenu(reason));
         document.addEventListener("keydown", this.handleBrowserReservedKey, true);
-        registerServiceWorker(BUILD_STAMP);
+        registerServiceWorker();
     }
 
     public showMenu(errorMessage: string | null = null): void {
@@ -134,7 +136,12 @@ export class JackalWebApp {
                     }
                     console.error(error);
                     this.pwaSessionState = "menu";
-                    this.showLoadError("Unable to load the game.", "Check your connection and try again.", () => this.showMenu(errorMessage));
+                    this.showLoadError(
+                        "Unable to load the game.",
+                        error instanceof ReloadRequiredError ? error.message : "Check your connection and try again.",
+                        error instanceof ReloadRequiredError ? () => window.location.reload() : () => this.showMenu(errorMessage),
+                        error instanceof ReloadRequiredError ? "Reload" : "Retry"
+                    );
                 });
             return;
         }
@@ -183,6 +190,7 @@ export class JackalWebApp {
         this.guardMenuEvents(menu);
         this.bindMenuControls(menu);
         menu.style.visibility = "";
+        this.viewport.focusMenuPanel(menu);
         return menu;
     }
 
@@ -324,6 +332,7 @@ export class JackalWebApp {
             return;
         }
         this.pwaSessionState = "menu";
+        if (this.menuOverlay !== null) this.viewport.focusMenuPanel(this.menuOverlay);
         this.syncScreenWakeLock();
     }
 
@@ -344,10 +353,13 @@ export class JackalWebApp {
         const liveHost = this.viewport.gameHost;
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "starting";
-        this.applyApplicationAudioPreferences();
-        const audio = beginGameAudio();
-        this.requestPreferredFullscreen();
+        let audio: GameAudioAttempt | null = null;
+        const ownsRetainedRuntime = (): boolean => this.isCurrentGameSession(session) && this.game === liveGame && this.container === liveContainer;
         try {
+            this.applyApplicationAudioPreferences();
+            if (!ownsRetainedRuntime() || this.pwaSessionState !== "starting") return;
+            audio = beginGameAudio();
+            this.requestPreferredFullscreen();
             if (
                 !(await audio.ready) ||
                 !this.isStartingGameSession(session, audio) ||
@@ -404,14 +416,14 @@ export class JackalWebApp {
             }
             this.syncScreenWakeLock();
         } catch (error) {
-            if (isGameAudioLatest(audio) && this.isCurrentGameSession(session)) {
+            if (ownsRetainedRuntime() && (audio === null || isGameAudioLatest(audio))) {
                 console.error("Unable to continue the playback session.", error);
                 this.requestPwaMenu("continue-failed");
             }
         } finally {
             if (
-                isGameAudioLatest(audio) &&
-                this.isCurrentGameSession(session) &&
+                ownsRetainedRuntime() &&
+                (audio === null || isGameAudioLatest(audio)) &&
                 this.pwaSessionState === "starting" &&
                 this.game === liveGame &&
                 this.container === liveContainer &&
@@ -461,7 +473,8 @@ export class JackalWebApp {
                 this.showMenu();
             } else {
                 console.error(error);
-                if (error instanceof ResourceLoadException) this.showResourceLoadError(error);
+                if (error instanceof ReloadRequiredError) this.showLoadError("Unable to start.", error.message, () => window.location.reload(), "Reload");
+                else if (error instanceof ResourceLoadException) this.showResourceLoadError(error);
                 else this.showLoadError("Unable to start.", "The game could not be started. Try again.", () => this.showMenu());
             }
         } finally {
@@ -490,113 +503,128 @@ export class JackalWebApp {
             throw new Error("Jackal game host is unavailable during startup.");
         }
 
-        const mainGame = new runtime.Main();
-        mainGame.reserveBrowserRuntime();
-        mainGame.buttonMapping.copyFrom(this.sessionMapping);
-        mainGame.hardMode = this.preferredHardMode;
+        let candidateGame: Main | null = null;
+        let candidateContainer: AppGameContainer | null = null;
+        let publishedToShell = false;
+        try {
+            const mainGame = (candidateGame = new runtime.Main());
+            mainGame.reserveBrowserRuntime();
+            mainGame.buttonMapping.copyFrom(this.sessionMapping);
+            mainGame.hardMode = this.preferredHardMode;
 
-        const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
-            maintainAspect: true,
-            scalingMode: bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)
-        });
-        const displayMode = this.viewport.getResponsiveDisplayMode();
-        const appContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false);
-        appContainer.setPreserveAudioCacheOnDestroy(true);
-        appContainer.setLoopSuspended(true);
-        appContainer.getInput().pause();
-        appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
-        appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
-        this.container = appContainer;
-        this.game = mainGame;
-        this.viewport.attach(appContainer, bufferedGame, session);
-        appContainer.setGraphicsLifecycleHandler((state) => {
-            if (state === "lost" && this.isCurrentGameSession(session)) {
-                this.requestPwaMenu("graphics-context-lost");
-            }
-        });
-        mainGame.inputMappingChangedHandler = () => {
-            if (!this.isCurrentGameSession(session)) {
-                return { saved: false, reason: "stale-session" };
-            }
-            return this.saveCurrentInputMapping();
-        };
-        mainGame.difficultyChangedHandler = (hardMode) => {
-            if (!this.isCurrentGameSession(session)) {
-                return false;
-            }
-            this.preferredHardMode = hardMode;
-            return writeDifficultyPreference(hardMode, () => this.isCurrentGameSession(session) && this.game === mainGame);
-        };
-        if (restoreSavedGame) {
-            mainGame.loadingCompleteHandler = (gc) => {
-                if (!this.isStartingGameSession(session, audio)) {
+            const bufferedGame = new runtime.slick.BufferedScalableGame(mainGame, GAME_DISPLAY_WIDTH, GAME_DISPLAY_HEIGHT, {
+                maintainAspect: true,
+                scalingMode: bufferedScalingModeForPreference(runtime.slick, this.scalingPreference)
+            });
+            const displayMode = this.viewport.getResponsiveDisplayMode();
+            const appContainer = (candidateContainer = new runtime.slick.AppGameContainer(bufferedGame, displayMode.width, displayMode.height, false));
+            appContainer.setPreserveAudioCacheOnDestroy(true);
+            appContainer.setLoopSuspended(true);
+            appContainer.getInput().pause();
+            appContainer.setHighDpiEnabled(HIGH_DPI_ENABLED);
+            appContainer.setMaxDevicePixelRatio(MAX_DEVICE_PIXEL_RATIO);
+            if (!this.isStartingGameSession(session, audio)) return;
+            this.container = appContainer;
+            this.game = mainGame;
+            publishedToShell = true;
+            this.viewport.attach(appContainer, bufferedGame, session);
+            appContainer.setGraphicsLifecycleHandler((state) => {
+                if (state === "lost" && this.isCurrentGameSession(session)) {
+                    this.requestPwaMenu("graphics-context-lost");
+                }
+            });
+            mainGame.inputMappingChangedHandler = () => {
+                if (!this.isCurrentGameSession(session)) {
+                    return { saved: false, reason: "stale-session" };
+                }
+                return this.saveCurrentInputMapping();
+            };
+            mainGame.difficultyChangedHandler = (hardMode) => {
+                if (!this.isCurrentGameSession(session)) {
                     return false;
                 }
-                if (!this.getGameStateStore(runtime).restore(mainGame, gc)) {
-                    restoreAttempt.reject();
-                }
-                return true;
+                this.preferredHardMode = hardMode;
+                return writeDifficultyPreference(hardMode, () => this.isCurrentGameSession(session) && this.game === mainGame);
             };
-        }
-        await Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false));
-        if (!this.isStartingGameSession(session, audio)) {
-            this.disposeStaleLaunch(mainGame, appContainer);
-            return;
-        }
-        await appContainer.start();
-        if (!this.isStartingGameSession(session, audio)) {
-            this.disposeStaleLaunch(mainGame, appContainer);
-            return;
-        }
-        await ResourceLoader.waitForAll();
-        if (!this.isStartingGameSession(session, audio)) {
-            this.disposeStaleLaunch(mainGame, appContainer);
-            return;
-        }
-
-        appContainer.setErrorHandler((error: unknown) => {
-            if (!this.isCurrentGameSession(session)) {
+            if (restoreSavedGame) {
+                mainGame.loadingCompleteHandler = (gc) => {
+                    if (!this.isStartingGameSession(session, audio)) {
+                        return false;
+                    }
+                    if (!this.getGameStateStore(runtime).restore(mainGame, gc)) {
+                        restoreAttempt.reject();
+                    }
+                    return true;
+                };
+            }
+            await initializeWithDeadline(Promise.resolve(appContainer.setDisplayMode(displayMode.width, displayMode.height, false)), this.sessionCleanup);
+            if (!this.isStartingGameSession(session, audio)) {
+                this.disposeStaleLaunch(mainGame, appContainer);
                 return;
             }
-            console.error(error);
-            this.showLoadError("Game error.", "The game encountered an unexpected error. Try again.", () => {
-                this.showMenu();
-            });
-        });
-        this.setAudioVolume(this.volume);
-        if (!(await commitGameAudio(audio)) || !this.isStartingGameSession(session, audio)) {
-            this.disposeStaleLaunch(mainGame, appContainer);
-            return;
-        }
-        this.viewport.startResponsiveSizing(host);
-        this.viewport.startCursorAutoHide(host);
-        this.viewport.focusCanvas();
-        if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer) {
-            return;
-        }
-        appContainer.getInput().resume();
-        mainGame.clearInputPressedRecords();
-        if (!this.isStartingGameSession(session, audio)) {
-            return;
-        }
-        this.gameLaunchInProgress = false;
-        this.pwaSessionState = "running";
-        this.viewport.startHamburgerVisibilityMonitor();
-        mainGame.setBrowserSuspended(false);
-        if (
-            !this.isCurrentGameSession(session) ||
-            !isGameAudioCurrent(audio) ||
-            this.pwaSessionState !== "running" ||
-            this.game !== mainGame ||
-            this.container !== appContainer
-        ) {
-            return;
-        }
-        this.persistence.accept(mainGame);
-        appContainer.setLoopSuspended(false);
+            await initializeWithDeadline(appContainer.start(), this.sessionCleanup);
+            if (!this.isStartingGameSession(session, audio)) {
+                this.disposeStaleLaunch(mainGame, appContainer);
+                return;
+            }
+            await initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup);
+            if (!this.isStartingGameSession(session, audio)) {
+                this.disposeStaleLaunch(mainGame, appContainer);
+                return;
+            }
 
-        this.syncScreenWakeLock();
-        this.pageLifecycle.sync(true);
+            appContainer.setErrorHandler((error: unknown) => {
+                if (!this.isCurrentGameSession(session)) {
+                    return;
+                }
+                console.error(error);
+                this.showLoadError("Game error.", "The game encountered an unexpected error. Try again.", () => {
+                    this.showMenu();
+                });
+            });
+            this.setAudioVolume(this.volume);
+            if (!(await commitGameAudio(audio)) || !this.isStartingGameSession(session, audio)) {
+                this.disposeStaleLaunch(mainGame, appContainer);
+                return;
+            }
+            this.viewport.startResponsiveSizing(host);
+            this.viewport.startCursorAutoHide(host);
+            this.viewport.focusCanvas();
+            if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer) {
+                return;
+            }
+            appContainer.getInput().resume();
+            mainGame.clearInputPressedRecords();
+            if (!this.isStartingGameSession(session, audio)) {
+                return;
+            }
+            this.gameLaunchInProgress = false;
+            this.pwaSessionState = "running";
+            this.viewport.startHamburgerVisibilityMonitor();
+            mainGame.setBrowserSuspended(false);
+            if (
+                !this.isCurrentGameSession(session) ||
+                !isGameAudioCurrent(audio) ||
+                this.pwaSessionState !== "running" ||
+                this.game !== mainGame ||
+                this.container !== appContainer
+            ) {
+                return;
+            }
+            this.persistence.accept(mainGame);
+            appContainer.setLoopSuspended(false);
+
+            this.syncScreenWakeLock();
+            this.pageLifecycle.sync(true);
+        } finally {
+            if (!publishedToShell) {
+                this.sessionCleanup.run(
+                    () => candidateContainer?.destroy(),
+                    () => candidateGame?.disposeBrowserRuntime()
+                );
+                if (!this.sessionCleanup.safe) this.showCleanupFailure();
+            }
+        }
     }
 
     private requestPreferredFullscreen(): void {
@@ -656,6 +684,7 @@ export class JackalWebApp {
             return;
         }
         this.pwaSessionState = "menu";
+        this.viewport.focusMenuPanel(this.menuOverlay);
         this.syncScreenWakeLock();
     }
 
@@ -742,7 +771,12 @@ export class JackalWebApp {
         }
         this.pwaSessionState = "menu";
         if (this.getOwnership().owned) {
-            renderLoadErrorScreen(this.root, title, message, action)?.addEventListener("click", retryHandler);
+            const button = renderLoadErrorScreen(this.root, title, message, action);
+            const epoch = this.getOwnership().epoch;
+            button?.addEventListener("click", () => {
+                if (button.isConnected && this.getOwnership().isCurrent(epoch)) retryHandler();
+            });
+            if (button !== null) focusOwnedPanel(button, () => this.getOwnership().isCurrent(epoch));
         }
     }
 
@@ -898,7 +932,11 @@ export class JackalWebApp {
         try {
             this.root.innerHTML =
                 '<main class="menu-screen" role="alert"><section class="menu-panel"><p>This session could not be stopped safely. Reload this tab before continuing.</p><button type="button" id="session-reload">Reload</button></section></main>';
-            this.root.querySelector<HTMLButtonElement>("#session-reload")?.addEventListener("click", () => window.location.reload());
+            const button = this.root.querySelector<HTMLButtonElement>("#session-reload");
+            button?.addEventListener("click", () => {
+                if (button.isConnected) window.location.reload();
+            });
+            if (button !== null) focusOwnedPanel(button, () => this.pwaSessionState === "error");
         } catch (error) {
             console.error("Unable to display the reload message.", error);
         }
