@@ -17,7 +17,10 @@ export function verifyAuthoritativeSave<T>(key: string, main: T, save: (main: T)
             let writes = 0;
             let removals = 0;
             Storage.prototype.getItem = function (this: Storage, candidate: string): string | null {
-                if (this === storage && candidate === key) { reads++; throw new Error("Read forbidden while saving."); }
+                if (this === storage && candidate === key) {
+                    reads++;
+                    throw new Error("Read forbidden while saving.");
+                }
                 return get.call(this, candidate);
             };
             Storage.prototype.setItem = function (this: Storage, candidate: string, text: string): void {
@@ -28,9 +31,11 @@ export function verifyAuthoritativeSave<T>(key: string, main: T, save: (main: T)
                 if (this === storage && candidate === key) removals++;
                 remove.call(this, candidate);
             };
-            if (!save(main).saved || reads !== 0 || writes !== 1 || removals !== 0) throw new Error("Real serializer/store failed the no-read overwrite contract.");
+            if (!save(main).saved || reads !== 0 || writes !== 1 || removals !== 0)
+                throw new Error("Real serializer/store failed the no-read overwrite contract.");
             const current = get.call(storage, key);
-            if (current === null || (JSON.parse(current) as { version: number }).version !== version) throw new Error("Current payload did not replace old data.");
+            if (current === null || (JSON.parse(current) as { version: number }).version !== version)
+                throw new Error("Current payload did not replace old data.");
         }
     } finally {
         Storage.prototype.getItem = get;

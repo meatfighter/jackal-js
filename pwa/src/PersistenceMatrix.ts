@@ -16,7 +16,22 @@ const verifyButton = document.querySelector<HTMLButtonElement>("#verify")!;
 const resumeButton = document.querySelector<HTMLButtonElement>("#resume")!;
 const casePicker = document.querySelector<HTMLSelectElement>("#case")!;
 const notes = document.querySelector<HTMLInputElement>("#notes")!;
-const cases: readonly string[] = ["Intro Map", "Intro menu/uncommitted", "Intro committed/fade", "Options", "Difficulty", "Input reading", "Input read-fade/rearm", "Input completed SAVED", "Input completed NOT SAVED", "Jeep-Yeah phases", "Active gameplay", "Paused gameplay", "Stage complete/camera pan", "Boss/projectile reference topology"];
+const cases: readonly string[] = [
+    "Intro Map",
+    "Intro menu/uncommitted",
+    "Intro committed/fade",
+    "Options",
+    "Difficulty",
+    "Input reading",
+    "Input read-fade/rearm",
+    "Input completed SAVED",
+    "Input completed NOT SAVED",
+    "Jeep-Yeah phases",
+    "Active gameplay",
+    "Paused gameplay",
+    "Stage complete/camera pan",
+    "Boss/projectile reference topology"
+];
 for (const name of cases) casePicker.add(new Option(name, name));
 const records: Array<Record<string, unknown>> = [];
 let mounted: Mounted | null = null;
@@ -39,17 +54,30 @@ type Mounted = { main: Main; container: AppGameContainer };
 const serializer = new JackalGameStateSerializer();
 type Snapshot = ReturnType<JackalGameStateSerializer["createSnapshot"]>;
 let store: InstanceType<Awaited<ReturnType<JackalRuntimeLoader["ensurePrepared"]>>["JackalGameStateStore"]>;
-async function prepare(): Promise<void> { runtime = await loader.ensurePrepared(false); store = new runtime.JackalGameStateStore(label); }
+async function prepare(): Promise<void> {
+    runtime = await loader.ensurePrepared(false);
+    store = new runtime.JackalGameStateStore(label);
+}
 async function mount(restore: boolean): Promise<Mounted> {
-    gameHost.replaceChildren(); runtime.slick.Display.setParent(gameHost);
-    const main = new runtime.Main(); main.reserveBrowserRuntime();
-    const game = new runtime.slick.BufferedScalableGame(main, runtime.Main.DISPLAY_WIDTH, runtime.Main.DISPLAY_HEIGHT,
-        { maintainAspect: true, scalingMode: runtime.slick.BufferedScalingMode.Nearest });
+    gameHost.replaceChildren();
+    runtime.slick.Display.setParent(gameHost);
+    const main = new runtime.Main();
+    main.reserveBrowserRuntime();
+    const game = new runtime.slick.BufferedScalableGame(main, runtime.Main.DISPLAY_WIDTH, runtime.Main.DISPLAY_HEIGHT, {
+        maintainAspect: true,
+        scalingMode: runtime.slick.BufferedScalingMode.Nearest
+    });
     const container = new runtime.slick.AppGameContainer(game, 800, 750, false);
-    container.setPreserveAudioCacheOnDestroy(true); container.setLoopSuspended(true);
-    if (restore) main.loadingCompleteHandler = gc => { assert(store.restore(main, gc), "Fresh Jackal restore rejected."); return true; };
+    container.setPreserveAudioCacheOnDestroy(true);
+    container.setLoopSuspended(true);
+    if (restore)
+        main.loadingCompleteHandler = (gc) => {
+            assert(store.restore(main, gc), "Fresh Jackal restore rejected.");
+            return true;
+        };
     mounted = { main, container };
-    await container.start(); await runtime.slick.ResourceLoader.waitForAll();
+    await container.start();
+    await runtime.slick.ResourceLoader.waitForAll();
     assert(main.isStateSaveReady(), "Jackal init did not become save-ready.");
     return { main, container };
 }
@@ -95,19 +123,28 @@ function controlledTrace(value: Mounted, count: number): string[] {
         }
         value.main.setBrowserSuspended(true);
         return trace;
-    } finally { Date.now = originalNow; Sys.getTime = originalTime; }
+    } finally {
+        Date.now = originalNow;
+        Sys.getTime = originalTime;
+    }
 }
 async function execute(action: () => Promise<void>): Promise<void> {
     if (busy || !lockHeld) return;
     busy = true;
     failure.textContent = "";
     startButton.disabled = verifyButton.disabled = resumeButton.disabled = true;
-    try { await action(); }
-    catch (error) {
+    try {
+        await action();
+    } catch (error) {
         console.error(error);
-        failure.textContent = error instanceof Error ? error.stack ?? error.message : String(error);
+        failure.textContent = error instanceof Error ? (error.stack ?? error.message) : String(error);
         status.textContent = "FAILED — not a passing evidence row.";
-        try { freeze(); retire(); } catch (cleanupError) { console.error(cleanupError); }
+        try {
+            freeze();
+            retire();
+        } catch (cleanupError) {
+            console.error(cleanupError);
+        }
     } finally {
         busy = false;
         startButton.disabled = false;
@@ -115,85 +152,144 @@ async function execute(action: () => Promise<void>): Promise<void> {
         resumeButton.disabled = mounted === null || mounted.container.isLoopSuspended() === false;
     }
 }
-startButton.addEventListener("click", () => void execute(async () => {
-    freeze(); retire();
-    const audio = beginGameAudio();
-    await prepare();
-    mounted = await mount(false);
-    assert(await audio.ready, "Playback preparation rejected.");
-    assert(await commitGameAudio(audio), "Playback attachment rejected.");
-    mounted.container.getInput().resume();
-    mounted.main.setBrowserSuspended(false);
-    mounted.container.setLoopSuspended(false);
-    mounted.container.getInput().clearKeyPressedRecord();
-    gameHost.querySelector<HTMLCanvasElement>("canvas")?.focus();
-    status.textContent = "Drive the real game to a listed phase, then Pause and verify. No phase is fabricated by this fixture.";
-}));
-verifyButton.addEventListener("click", () => void execute(async () => {
-    assert(mounted, "No runtime.");
-    const name = casePicker.value;
-    assert(notes.value.trim().length > 0, "Record the actual stage/phase/transition evidence before verifying.");
-    freeze();
-    assert(mounted.main.isStateSaveReady(), "This phase is not save-ready.");
-    const mappingBefore = localStorage.getItem(getDeploymentStorageKey("jackal.input-mapping"));
-    clock = originalTime();
-    wallOrigin = originalNow() - clock;
-    const baselineClock = clock;
-    Date.now = () => wallOrigin + clock;
-    Sys.getTime = () => clock;
-    let source: Snapshot;
-    try {
-        assert(store.save(mounted.main, () => lockHeld).saved, "Production store rejected the real runtime.");
-        const text = localStorage.getItem(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY));
-        assert(text !== null, "Production save is absent.");
-        source = JSON.parse(text) as Snapshot;
-    } finally { Date.now = originalNow; Sys.getTime = originalTime; }
-    const expected = controlledTrace(mounted, 12);
-    retire();
-    clock = baselineClock;
-    // Logical-only fresh restoration occurs while physical playback is deferred.
-    Date.now = () => wallOrigin + clock;
-    Sys.getTime = () => clock;
-    try { mounted = await mount(true); }
-    finally { Date.now = originalNow; Sys.getTime = originalTime; }
-    Date.now = () => wallOrigin + clock;
-    Sys.getTime = () => clock;
-    let restored: Snapshot;
-    try { restored = serializer.createSnapshot(mounted.main, label); }
-    finally { Date.now = originalNow; Sys.getTime = originalTime; }
-    assert(normalized(restored) === normalized(source), "Immediate durable recapture differs; do not discard additional fields to hide the mismatch.");
-    assert(localStorage.getItem(getDeploymentStorageKey("jackal.input-mapping")) === mappingBefore, "Restoring game state changed the mapping storage slot.");
-    const actual = controlledTrace(mounted, 12);
-    assert(JSON.stringify(actual) === JSON.stringify(expected), "Fresh runtime continuation differs from the original neutral-input trace.");
-    const entry = { case: name, evidence: notes.value.trim(), sourceMode: source.kind === "game" ? "game" : source.modeId, passed: true,
-        continuationFrames: 12, snapshot: source, capturedAt: new Date().toISOString(), userAgent: navigator.userAgent };
-    records.push(entry);
-    status.textContent = `Passed comparison for ${name}. This does not itself certify that the selected descriptive phase was reached; retain the recorded snapshot and transition notes.`;
-    notes.value = "";
-}));
-resumeButton.addEventListener("click", () => void execute(async () => {
-    assert(mounted, "No runtime.");
-    const audio = beginGameAudio();
-    assert(await audio.ready, "Playback preparation rejected.");
-    assert(await commitGameAudio(audio), "Playback attachment rejected.");
-    mounted.container.getInput().resume();
-    mounted.main.setBrowserSuspended(false);
-    mounted.container.setLoopSuspended(false);
-    gameHost.querySelector<HTMLCanvasElement>("canvas")?.focus();
-    status.textContent = "Running. Reach the next case through normal controls.";
-}));
+startButton.addEventListener(
+    "click",
+    () =>
+        void execute(async () => {
+            freeze();
+            retire();
+            const audio = beginGameAudio();
+            await prepare();
+            mounted = await mount(false);
+            assert(await audio.ready, "Playback preparation rejected.");
+            assert(await commitGameAudio(audio), "Playback attachment rejected.");
+            mounted.container.getInput().resume();
+            mounted.main.setBrowserSuspended(false);
+            mounted.container.setLoopSuspended(false);
+            mounted.container.getInput().clearKeyPressedRecord();
+            gameHost.querySelector<HTMLCanvasElement>("canvas")?.focus();
+            status.textContent = "Drive the real game to a listed phase, then Pause and verify. No phase is fabricated by this fixture.";
+        })
+);
+verifyButton.addEventListener(
+    "click",
+    () =>
+        void execute(async () => {
+            assert(mounted, "No runtime.");
+            const name = casePicker.value;
+            assert(notes.value.trim().length > 0, "Record the actual stage/phase/transition evidence before verifying.");
+            freeze();
+            assert(mounted.main.isStateSaveReady(), "This phase is not save-ready.");
+            const mappingBefore = localStorage.getItem(getDeploymentStorageKey("jackal.input-mapping"));
+            clock = originalTime();
+            wallOrigin = originalNow() - clock;
+            const baselineClock = clock;
+            Date.now = () => wallOrigin + clock;
+            Sys.getTime = () => clock;
+            let source: Snapshot;
+            try {
+                assert(store.save(mounted.main, () => lockHeld).saved, "Production store rejected the real runtime.");
+                const text = localStorage.getItem(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY));
+                assert(text !== null, "Production save is absent.");
+                source = JSON.parse(text) as Snapshot;
+            } finally {
+                Date.now = originalNow;
+                Sys.getTime = originalTime;
+            }
+            const expected = controlledTrace(mounted, 12);
+            retire();
+            clock = baselineClock;
+            // Logical-only fresh restoration occurs while physical playback is deferred.
+            Date.now = () => wallOrigin + clock;
+            Sys.getTime = () => clock;
+            try {
+                mounted = await mount(true);
+            } finally {
+                Date.now = originalNow;
+                Sys.getTime = originalTime;
+            }
+            Date.now = () => wallOrigin + clock;
+            Sys.getTime = () => clock;
+            let restored: Snapshot;
+            try {
+                restored = serializer.createSnapshot(mounted.main, label);
+            } finally {
+                Date.now = originalNow;
+                Sys.getTime = originalTime;
+            }
+            assert(normalized(restored) === normalized(source), "Immediate durable recapture differs; do not discard additional fields to hide the mismatch.");
+            assert(
+                localStorage.getItem(getDeploymentStorageKey("jackal.input-mapping")) === mappingBefore,
+                "Restoring game state changed the mapping storage slot."
+            );
+            const actual = controlledTrace(mounted, 12);
+            assert(JSON.stringify(actual) === JSON.stringify(expected), "Fresh runtime continuation differs from the original neutral-input trace.");
+            const entry = {
+                case: name,
+                evidence: notes.value.trim(),
+                sourceMode: source.kind === "game" ? "game" : source.modeId,
+                passed: true,
+                continuationFrames: 12,
+                snapshot: source,
+                capturedAt: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            };
+            records.push(entry);
+            status.textContent = `Passed comparison for ${name}. This does not itself certify that the selected descriptive phase was reached; retain the recorded snapshot and transition notes.`;
+            notes.value = "";
+        })
+);
+resumeButton.addEventListener(
+    "click",
+    () =>
+        void execute(async () => {
+            assert(mounted, "No runtime.");
+            const audio = beginGameAudio();
+            assert(await audio.ready, "Playback preparation rejected.");
+            assert(await commitGameAudio(audio), "Playback attachment rejected.");
+            mounted.container.getInput().resume();
+            mounted.main.setBrowserSuspended(false);
+            mounted.container.setLoopSuspended(false);
+            gameHost.querySelector<HTMLCanvasElement>("canvas")?.focus();
+            status.textContent = "Running. Reach the next case through normal controls.";
+        })
+);
 document.querySelector<HTMLButtonElement>("#export")!.addEventListener("click", () => {
-    const reached = new Set(records.map(record => record.case));
-    const missing = cases.filter(name => !reached.has(name));
-    const report = { game: label, sourceRevision: "Record git rev-parse HEAD alongside this evidence", missing,
-        completeCaseCoverage: missing.length === 0, phaseClassificationRequiresReview: true, records };
+    const reached = new Set(records.map((record) => record.case));
+    const missing = cases.filter((name) => !reached.has(name));
+    const report = {
+        game: label,
+        sourceRevision: "Record git rev-parse HEAD alongside this evidence",
+        missing,
+        completeCaseCoverage: missing.length === 0,
+        phaseClassificationRequiresReview: true,
+        records
+    };
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = `${label}-transition-evidence.json`; link.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${label}-transition-evidence.json`;
+    link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 if (!navigator.locks?.request) throw new Error("This fixture requires the same single-writer browser capability as the games.");
-void navigator.locks.request(`persistence-matrix:${location.pathname}`, { ifAvailable: true }, async lock => {
-    if (!lock) { status.textContent = "The matrix is already open in another tab."; startButton.disabled = true; return; }
+void navigator.locks.request(`persistence-matrix:${location.pathname}`, { ifAvailable: true }, async (lock) => {
+    if (!lock) {
+        status.textContent = "The matrix is already open in another tab.";
+        startButton.disabled = true;
+        return;
+    }
     lockHeld = true;
-    await new Promise<void>(resolve => window.addEventListener("pagehide", () => { lockHeld = false; freeze(); retire(); resolve(); }, { once: true }));
+    await new Promise<void>((resolve) =>
+        window.addEventListener(
+            "pagehide",
+            () => {
+                lockHeld = false;
+                freeze();
+                retire();
+                resolve();
+            },
+            { once: true }
+        )
+    );
 });

@@ -1,6 +1,5 @@
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 
-
 import { MainConstants } from "../java/MainConstants.js";
 import type { IFadeListener } from "./IFadeListener.js";
 import type { IMenuListener } from "./IMenuListener.js";

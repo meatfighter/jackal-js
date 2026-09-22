@@ -1,13 +1,5 @@
-export type SnapshotWriteFailure =
-    | "capture-failed"
-    | "invalid-snapshot"
-    | "encode-failed"
-    | "too-large"
-    | "not-authorized"
-    | "write-failed";
-export type SnapshotWriteResult =
-    | { readonly saved: true }
-    | { readonly saved: false; readonly reason: SnapshotWriteFailure };
+export type SnapshotWriteFailure = "capture-failed" | "invalid-snapshot" | "encode-failed" | "too-large" | "not-authorized" | "write-failed";
+export type SnapshotWriteResult = { readonly saved: true } | { readonly saved: false; readonly reason: SnapshotWriteFailure };
 
 /** The sole reporter for one failed outgoing snapshot operation. */
 export function snapshotWriteFailure(label: string, reason: SnapshotWriteFailure, error?: unknown): SnapshotWriteResult {
@@ -96,11 +88,7 @@ export function removePreference(label: string, key: string, isAuthorized: () =>
 }
 
 /** Pure read: malformed/unsupported data never causes a write or removal. */
-export function readCurrentJson<T>(
-    key: string,
-    maxTextLength: number,
-    validate: (value: unknown) => value is T
-): T | null {
+export function readCurrentJson<T>(key: string, maxTextLength: number, validate: (value: unknown) => value is T): T | null {
     try {
         const text = globalThis.localStorage.getItem(key);
         if (text === null || text.length > maxTextLength) return null;

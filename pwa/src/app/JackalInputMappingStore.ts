@@ -23,32 +23,35 @@ interface JackalInputMappingSnapshot {
 
 export class JackalInputMappingStore {
     private static readonly SNAPSHOT_VERSION = 3;
-    
-    
 
     public save(buttonMapping: ButtonMapping, isAuthorized: () => boolean): MappingWriteResult {
-        const result = captureAndWriteSnapshot("Jackal input mapping", getDeploymentStorageKey("jackal.input-mapping"),
-            () => ({
-                version: JackalInputMappingStore.SNAPSHOT_VERSION,
-                keyUp: buttonMapping.keyUp,
-              keyDown: buttonMapping.keyDown,
-              keyLeft: buttonMapping.keyLeft,
-              keyRight: buttonMapping.keyRight,
-              keyGrenade: buttonMapping.keyGrenade,
-              keyGun: buttonMapping.keyGun,
-              keyStart: buttonMapping.keyStart,
-              controllerUp: buttonMapping.controllerUp,
-              controllerDown: buttonMapping.controllerDown,
-              controllerLeft: buttonMapping.controllerLeft,
-              controllerRight: buttonMapping.controllerRight,
-              controllerGrenade: buttonMapping.controllerGrenade,
-              controllerGun: buttonMapping.controllerGun,
-              controllerStart: buttonMapping.controllerStart,
-            } satisfies JackalInputMappingSnapshot),
-            (snapshot) => this.isSupportedSnapshot(snapshot), JackalInputMappingStore.MAX_TEXT_LENGTH, isAuthorized);
+        const result = captureAndWriteSnapshot(
+            "Jackal input mapping",
+            getDeploymentStorageKey("jackal.input-mapping"),
+            () =>
+                ({
+                    version: JackalInputMappingStore.SNAPSHOT_VERSION,
+                    keyUp: buttonMapping.keyUp,
+                    keyDown: buttonMapping.keyDown,
+                    keyLeft: buttonMapping.keyLeft,
+                    keyRight: buttonMapping.keyRight,
+                    keyGrenade: buttonMapping.keyGrenade,
+                    keyGun: buttonMapping.keyGun,
+                    keyStart: buttonMapping.keyStart,
+                    controllerUp: buttonMapping.controllerUp,
+                    controllerDown: buttonMapping.controllerDown,
+                    controllerLeft: buttonMapping.controllerLeft,
+                    controllerRight: buttonMapping.controllerRight,
+                    controllerGrenade: buttonMapping.controllerGrenade,
+                    controllerGun: buttonMapping.controllerGun,
+                    controllerStart: buttonMapping.controllerStart
+                }) satisfies JackalInputMappingSnapshot,
+            (snapshot) => this.isSupportedSnapshot(snapshot),
+            JackalInputMappingStore.MAX_TEXT_LENGTH,
+            isAuthorized
+        );
         if (result.saved) return result;
-        return { saved: false, reason: result.reason === "not-authorized" ? "stale-session" :
-            result.reason === "write-failed" ? "unavailable" : "invalid" };
+        return { saved: false, reason: result.reason === "not-authorized" ? "stale-session" : result.reason === "write-failed" ? "unavailable" : "invalid" };
     }
 
     public restore(buttonMapping: ButtonMapping): boolean {
@@ -83,11 +86,12 @@ export class JackalInputMappingStore {
     }
 
     private readSnapshot(): JackalInputMappingSnapshot | null {
-        return readCurrentJson(getDeploymentStorageKey("jackal.input-mapping"), JackalInputMappingStore.MAX_TEXT_LENGTH,
-            (value): value is JackalInputMappingSnapshot => this.isSupportedSnapshot(value));
+        return readCurrentJson(
+            getDeploymentStorageKey("jackal.input-mapping"),
+            JackalInputMappingStore.MAX_TEXT_LENGTH,
+            (value): value is JackalInputMappingSnapshot => this.isSupportedSnapshot(value)
+        );
     }
-
-    
 
     private isSupportedSnapshot(snapshot: unknown): snapshot is JackalInputMappingSnapshot {
         const expectedFields = [
@@ -147,8 +151,6 @@ export class JackalInputMappingStore {
             ])
         );
     }
-
-    
 
     private isRecord(value: unknown): value is Record<string, unknown> {
         return value !== null && typeof value === "object" && !Array.isArray(value);

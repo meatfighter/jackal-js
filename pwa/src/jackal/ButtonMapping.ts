@@ -298,19 +298,19 @@ export class ButtonMapping {
 
     public copyFrom(source: ButtonMapping): void {
         this.keyUp = source.keyUp;
-       this.keyDown = source.keyDown;
-       this.keyLeft = source.keyLeft;
-       this.keyRight = source.keyRight;
-       this.keyGrenade = source.keyGrenade;
-       this.keyGun = source.keyGun;
-       this.keyStart = source.keyStart;
-       this.controllerUp = source.controllerUp;
-       this.controllerDown = source.controllerDown;
-       this.controllerLeft = source.controllerLeft;
-       this.controllerRight = source.controllerRight;
-       this.controllerGrenade = source.controllerGrenade;
-       this.controllerGun = source.controllerGun;
-       this.controllerStart = source.controllerStart;
+        this.keyDown = source.keyDown;
+        this.keyLeft = source.keyLeft;
+        this.keyRight = source.keyRight;
+        this.keyGrenade = source.keyGrenade;
+        this.keyGun = source.keyGun;
+        this.keyStart = source.keyStart;
+        this.controllerUp = source.controllerUp;
+        this.controllerDown = source.controllerDown;
+        this.controllerLeft = source.controllerLeft;
+        this.controllerRight = source.controllerRight;
+        this.controllerGrenade = source.controllerGrenade;
+        this.controllerGun = source.controllerGun;
+        this.controllerStart = source.controllerStart;
     }
     public clone(): ButtonMapping {
         const mapping = new ButtonMapping();

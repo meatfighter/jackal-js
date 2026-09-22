@@ -18,8 +18,7 @@ export function renderLoadingScreen(root: HTMLElement, progress: number): void {
     `;
 }
 
-export function renderLoadErrorScreen(root: HTMLElement, title: string, message: string, action: "Retry" | "Reload" = "Retry"): HTMLButtonElement | null
- {
+export function renderLoadErrorScreen(root: HTMLElement, title: string, message: string, action: "Retry" | "Reload" = "Retry"): HTMLButtonElement | null {
     root.innerHTML = `
         <main class="boot-screen boot-failed" role="alert">
             <section class="load-error-panel" aria-label="${escapeHtml(title)}">

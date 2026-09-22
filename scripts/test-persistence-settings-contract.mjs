@@ -7,7 +7,11 @@ const preferencesPath = "pwa/src/app/BrowserPreferences.ts";
 const quiet = async (run) => {
     const old = console.warn;
     console.warn = () => {};
-    try { await run(); } finally { console.warn = old; }
+    try {
+        await run();
+    } finally {
+        console.warn = old;
+    }
 };
 
 test("settings constructors used by shells do not read before ownership; explicit reload does", async () => {
@@ -40,7 +44,10 @@ test("a failed preference write preserves the session value; stale changes do no
         const { writeVolume } = await loadTypeScript("pwa/src/app/AppPreferences.ts");
         fake.faults.set = true;
         await quiet(() => {
-            assert.equal(writeVolume(0.7, () => true), false);
+            assert.equal(
+                writeVolume(0.7, () => true),
+                false
+            );
             assert.equal(fake.calls.get.length, 0);
         });
         const source = sourceMember("pwa/src/app/JackalWebApp.ts", "bindMenuControls", "JackalWebApp");
@@ -51,13 +58,25 @@ test("a failed preference write preserves the session value; stale changes do no
     const preferences = new BrowserPreferences(false);
     fake.faults.set = true;
     await quiet(() => {
-        assert.equal(preferences.setVolume(0.7, true, () => true), false);
+        assert.equal(
+            preferences.setVolume(0.7, true, () => true),
+            false
+        );
         assert.equal(preferences.volume, 0.7);
-        assert.equal(preferences.setVolume(0.2, true, () => false), false);
+        assert.equal(
+            preferences.setVolume(0.2, true, () => false),
+            false
+        );
         assert.equal(preferences.volume, 0.7);
-        assert.equal(preferences.setFullscreen(false, () => true), false);
+        assert.equal(
+            preferences.setFullscreen(false, () => true),
+            false
+        );
         assert.equal(preferences.fullscreen, false);
-        assert.equal(preferences.setFullscreen(true, () => false), false);
+        assert.equal(
+            preferences.setFullscreen(true, () => false),
+            false
+        );
         assert.equal(preferences.fullscreen, false);
         assert.equal(fake.calls.get.length, 0);
     });
@@ -80,7 +99,12 @@ test("partial Reset still installs coherent in-memory defaults and attempts the 
     preferences.volume = 0.9;
     preferences.fullscreen = false;
     fake.faults.remove = true;
-    await quiet(() => assert.equal(preferences.reset(() => true), false));
+    await quiet(() =>
+        assert.equal(
+            preferences.reset(() => true),
+            false
+        )
+    );
     assert.equal(preferences.volume, DEFAULT_VOLUME);
     assert.equal(preferences.scaling, DEFAULT_SCALING_PREFERENCE);
     assert.equal(preferences.fullscreen, DEFAULT_FULLSCREEN_PREFERENCE);
@@ -92,14 +116,33 @@ test("obsolete menu listeners are fenced before their target handlers can change
     const owner = game === "jackal" ? "JackalWebApp" : null;
     const path = game === "jackal" ? "pwa/src/app/JackalWebApp.ts" : game === "stickvania" ? "pwa/src/main.ts" : "pwa/src/app/main.ts";
     const handlers = new Map();
-    const menu = { isConnected: true, addEventListener(name, handler, capture) { assert.equal(capture, true); handlers.set(name, handler); } };
-    const ownership = { epoch: 1, isCurrent(epoch) { return this.epoch === epoch; } };
+    const menu = {
+        isConnected: true,
+        addEventListener(name, handler, capture) {
+            assert.equal(capture, true);
+            handlers.set(name, handler);
+        }
+    };
+    const ownership = {
+        epoch: 1,
+        isCurrent(epoch) {
+            return this.epoch === epoch;
+        }
+    };
     const env = { ownership, activeMenu: null, pwaSessionState: "menu" };
     const subject = shellSubject(path, ["guardMenuEvents"], env, owner);
-    if (owner) { subject.getOwnership = () => ownership; subject.pwaSessionState = "menu"; }
+    if (owner) {
+        subject.getOwnership = () => ownership;
+        subject.pwaSessionState = "menu";
+    }
     subject.guardMenuEvents(menu);
     let stopped = 0;
-    const event = { preventDefault() {}, stopImmediatePropagation() { stopped++; } };
+    const event = {
+        preventDefault() {},
+        stopImmediatePropagation() {
+            stopped++;
+        }
+    };
     handlers.get("change")(event);
     assert.equal(stopped, 0);
     ownership.epoch = 2;

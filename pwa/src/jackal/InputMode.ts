@@ -143,7 +143,6 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
 
                 break;
             case InputMode.OPTION_DONE:
-
                 this.state = InputMode.STATE_FADE_OUT;
                 this.main.startFade(true, this);
                 break;

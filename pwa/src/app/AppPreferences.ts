@@ -35,10 +35,13 @@ export function readVolume(): number {
 }
 
 export function writeVolume(value: number, isAuthorized: () => boolean): boolean {
-     return writePreference("Jackal volume", getDeploymentStorageKey(VOLUME_STORAGE_KEY), String(Math.round(clampVolume(value, DEFAULT_VOLUME) * 100)), isAuthorized);
- }
-
-
+    return writePreference(
+        "Jackal volume",
+        getDeploymentStorageKey(VOLUME_STORAGE_KEY),
+        String(Math.round(clampVolume(value, DEFAULT_VOLUME) * 100)),
+        isAuthorized
+    );
+}
 
 export function readScalingPreference(): JackalScalingPreference {
     const result = scalingStorage.read();
@@ -52,10 +55,8 @@ export function readScalingPreference(): JackalScalingPreference {
 }
 
 export function writeScalingPreference(value: JackalScalingPreference, isAuthorized: () => boolean): boolean {
-     return writePreference("Jackal scaling", getDeploymentStorageKey(SCALING_STORAGE_KEY), value, isAuthorized);
- }
-
-
+    return writePreference("Jackal scaling", getDeploymentStorageKey(SCALING_STORAGE_KEY), value, isAuthorized);
+}
 
 export function readFullscreenPreference(): boolean {
     const result = fullscreenStorage.read();
@@ -72,10 +73,8 @@ export function readFullscreenPreference(): boolean {
 }
 
 export function writeFullscreenPreference(value: boolean, isAuthorized: () => boolean): boolean {
-     return writePreference("Jackal fullscreen", getDeploymentStorageKey(FULLSCREEN_STORAGE_KEY), String(value), isAuthorized);
- }
-
-
+    return writePreference("Jackal fullscreen", getDeploymentStorageKey(FULLSCREEN_STORAGE_KEY), String(value), isAuthorized);
+}
 
 export function readDifficultyPreference(): boolean {
     const result = difficultyStorage.read();
@@ -92,10 +91,8 @@ export function readDifficultyPreference(): boolean {
 }
 
 export function writeDifficultyPreference(hardMode: boolean, isAuthorized: () => boolean): boolean {
-     return writePreference("Jackal difficulty", getDeploymentStorageKey(DIFFICULTY_STORAGE_KEY), hardMode ? "hard" : "normal", isAuthorized);
- }
-
-
+    return writePreference("Jackal difficulty", getDeploymentStorageKey(DIFFICULTY_STORAGE_KEY), hardMode ? "hard" : "normal", isAuthorized);
+}
 
 export function clearPreferences(isAuthorized: () => boolean): boolean {
     let success = true;

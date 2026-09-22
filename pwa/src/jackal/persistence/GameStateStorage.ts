@@ -30,8 +30,14 @@ export function hasCurrentStoredGameState(): boolean {
     return inspectStoredGameState().status === "current";
 }
 export function writeStoredGameState(snapshot: JackalGameStateSnapshot, isAuthorized: () => boolean): GameStateWriteResult {
-    return writeCurrentSnapshot("Jackal game state", getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), snapshot,
-        isSupportedGameStateSnapshot, MAX_GAME_STATE_TEXT_LENGTH, isAuthorized);
+    return writeCurrentSnapshot(
+        "Jackal game state",
+        getDeploymentStorageKey(GAME_STATE_STORAGE_KEY),
+        snapshot,
+        isSupportedGameStateSnapshot,
+        MAX_GAME_STATE_TEXT_LENGTH,
+        isAuthorized
+    );
 }
 export function clearStoredGameState(isAuthorized: () => boolean): boolean {
     return removePreference("Jackal game state", getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), isAuthorized);

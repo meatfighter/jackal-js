@@ -13,9 +13,12 @@ export async function loadTypeScript(entry, mocks = {}) {
         pending.add(path);
         const key = relative(root, path).replaceAll("\\", "/");
         const input = Object.hasOwn(mocks, key) ? mocks[key] : readFileSync(path, "utf8");
-        let output = ts.transpileModule(input, { compilerOptions: {
-            target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext
-        }}).outputText;
+        let output = ts.transpileModule(input, {
+            compilerOptions: {
+                target: ts.ScriptTarget.ES2022,
+                module: ts.ModuleKind.ESNext
+            }
+        }).outputText;
         const parsed = ts.createSourceFile(path + ".js", output, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
         const edits = [];
         for (const statement of parsed.statements) {
@@ -31,7 +34,7 @@ export async function loadTypeScript(entry, mocks = {}) {
             } else url = import.meta.resolve(node.text);
             edits.push([node.getStart(parsed), node.end, JSON.stringify(url)]);
         }
-        for (const [start, end, value] of edits.sort((a,b) => b[0]-a[0])) output = output.slice(0,start) + value + output.slice(end);
+        for (const [start, end, value] of edits.sort((a, b) => b[0] - a[0])) output = output.slice(0, start) + value + output.slice(end);
         const url = "data:text/javascript;base64," + Buffer.from(output).toString("base64");
         cache.set(path, url);
         pending.delete(path);
@@ -53,17 +56,19 @@ export function sourceMember(path, name, owner = null) {
         ts.forEachChild(node, visit);
     }
     visit(source);
-    if (found.length !== 1) throw new Error(`Expected one ${owner ? owner+'.' : ''}${name} in ${path}, got ${found.length}`);
+    if (found.length !== 1) throw new Error(`Expected one ${owner ? owner + "." : ""}${name} in ${path}, got ${found.length}`);
     return found[0].getText(source);
 }
 
 /** Execute actual shell methods against a controlled environment. This is a
  * focused control-flow test, not a substitute for browser qualification. */
 export function shellSubject(path, names, env, owner = null) {
-    const fragments = names.map(name => sourceMember(path, name, owner)).join("\n");
+    const fragments = names.map((name) => sourceMember(path, name, owner)).join("\n");
     const code = owner ? `class Subject { ${fragments} }` : fragments;
-    const js = ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }}).outputText;
-    const result = owner ? `Object.assign(new Subject(), Object.fromEntries(Object.entries(env).filter(([key]) => !${JSON.stringify(names)}.includes(key))))` : `{${names.join(",")}}`;
+    const js = ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+    const result = owner
+        ? `Object.assign(new Subject(), Object.fromEntries(Object.entries(env).filter(([key]) => !${JSON.stringify(names)}.includes(key))))`
+        : `{${names.join(",")}}`;
     return new Function("env", `with (env) { ${js}\nreturn ${result}; }`)(env);
 }
 
@@ -72,8 +77,12 @@ export function memoryStorage() {
     const calls = { get: [], set: [], remove: [] };
     const faults = { get: false, set: false, remove: false };
     return {
-        values, calls, faults,
-        clearCalls() { for (const list of Object.values(calls)) list.length = 0; },
+        values,
+        calls,
+        faults,
+        clearCalls() {
+            for (const list of Object.values(calls)) list.length = 0;
+        },
         getItem(key) {
             calls.get.push(key);
             if (faults.get) throw new Error("injected read failure");
