@@ -221,7 +221,7 @@ function verifyBuiltServiceWorkerRegistration(files) {
         .filter(({ ref }) => ref.endsWith(".js"))
         .map(({ path }) => readFileSync(path, "utf8"))
         .join("\n");
-    if (!javascript.includes("./sw.js") || !javascript.includes('updateViaCache:"none"')) {
+    if (!javascript.includes("./sw.js") || !/updateViaCache\s*:\s*(["'`])none\1/.test(javascript)) {
         throw new Error("Built JavaScript does not register the service worker with a page-relative ./sw.js URL.");
     }
     if (!/scope\s*:\s*(["'`])\.\/\1/.test(javascript)) {

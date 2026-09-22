@@ -623,6 +623,13 @@ export class JackalWebApp {
                     () => candidateGame?.disposeBrowserRuntime()
                 );
                 if (!this.sessionCleanup.safe) this.showCleanupFailure();
+            } else if (!this.sessionCleanup.safe) {
+                if (this.container === candidateContainer) {
+                    this.destroyGame();
+                } else {
+                    this.sessionCleanup.run(() => candidateContainer?.destroy());
+                    this.showCleanupFailure();
+                }
             }
         }
     }
