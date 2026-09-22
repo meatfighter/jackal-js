@@ -150,7 +150,7 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
 
     const runtimeLoader = read("pwa/src/app/JackalRuntimeLoader.ts");
     assert.match(runtimeLoader, /prepareWithDeadline/);
-    assert.match(runtimeLoader, /await this\.pending\.catch/);
+    assert.match(runtimeLoader, /await prior\.catch/);
     assert.match(runtimeLoader, /ResourceLoader\.loadResource\(ref, \{ signal \}\)/);
     assert.match(runtimeLoader, /preloadAudioBuffer\(ref, \{ signal \}\)/);
     assert.match(runtimeLoader, /ResourceLoader\.setCacheVersionResolver\(/);

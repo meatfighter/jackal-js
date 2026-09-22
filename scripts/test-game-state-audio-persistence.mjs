@@ -489,8 +489,8 @@ test("live-menu lifecycle freezes before save and commits audio before resume", 
 test("fresh durable restore completes before audio commit and gameplay resume", () => {
     const launch = webAppSource.slice(webAppSource.indexOf("private async launchPreparedGame"), webAppSource.indexOf("private returnToMenu"));
     const restoreHook = launch.indexOf("mainGame.loadingCompleteHandler");
-    const start = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup)");
-    const resources = launch.indexOf("initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup)");
+    const start = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup, initializationOwner)");
+    const resources = launch.indexOf("initializeWithDeadline(ResourceLoader.waitForAll(), this.sessionCleanup, initializationOwner)");
     const commit = launch.indexOf("commitGameAudio(audio)");
     const gameResume = launch.indexOf("mainGame.setBrowserSuspended(false)");
     const loopResume = launch.indexOf("appContainer.setLoopSuspended(false)");

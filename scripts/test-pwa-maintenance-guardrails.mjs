@@ -109,7 +109,7 @@ test("synchronous post-commit UI hooks are rechecked before RUNNING", () => {
     const source = read("pwa/src/app/JackalWebApp.ts");
     const launch = source.slice(source.indexOf("private async launchPreparedGame"), source.indexOf("private returnToMenu"));
     const launchPause = launch.indexOf("appContainer.getInput().pause();");
-    const launchStart = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup)");
+    const launchStart = launch.indexOf("initializeWithDeadline(appContainer.start(), this.sessionCleanup, initializationOwner)");
     const launchFocus = launch.indexOf("this.viewport.focusCanvas();");
     const launchGuard = launch.indexOf(
         "if (!this.isStartingGameSession(session, audio) || this.game !== mainGame || this.container !== appContainer)",
