@@ -18,21 +18,20 @@ test("public dependency metadata uses anonymous HTTPS cloning", () => {
 test("schema 16 is explicitly the development cutover saved-game format", () => {
     const schema = read("pwa/src/jackal/persistence/GameStateSchema.ts");
     assert.match(schema, /GAME_STATE_VERSION = 16 as const/);
-    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state-v16"/);
+    assert.match(schema, /GAME_STATE_STORAGE_KEY = "jackal\.game-state"/);
     assert.match(schema, /return value === GAME_STATE_VERSION/);
     assert.doesNotMatch(schema, /FIRST_PUBLIC_GAME_STATE_VERSION|MIN_SUPPORTED|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(schema, /MAX_GAME_STATE_TEXT_LENGTH = 2_000_000/);
 });
 
-test("input-mapping schema 3 is explicitly the first public mapping format", () => {
+test("input-mapping schema 3 is exact-current and has no prepublic write protection", () => {
     const mappingStore = read("pwa/src/app/JackalInputMappingStore.ts");
     assert.match(mappingStore, /SNAPSHOT_VERSION = 3/);
-    assert.match(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION = 3/);
-    assert.match(mappingStore, /version >= 1/);
-    assert.match(mappingStore, /version < JackalInputMappingStore\.FIRST_PUBLIC_SNAPSHOT_VERSION/);
     assert.match(mappingStore, /snapshot\.version === JackalInputMappingStore\.SNAPSHOT_VERSION/);
-    assert.match(mappingStore, /private writeBlockedReason\(\): MappingWriteFailureReason \| null/);
-    assert.match(mappingStore, /return "protected"/);
+    assert.match(mappingStore, /captureAndWriteSnapshot/);
+    assert.match(mappingStore, /readCurrentJson/);
+    assert.match(mappingStore, /MAX_TEXT_LENGTH = 4096/);
+    assert.doesNotMatch(mappingStore, /FIRST_PUBLIC_SNAPSHOT_VERSION|writeBlockedReason|replaceProtected|return "protected"|version\s*>=\s*1/);
 });
 
 test("PWA manifest has a dedicated maskable application icon", () => {

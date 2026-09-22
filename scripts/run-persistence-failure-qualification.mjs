@@ -4,6 +4,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 import { chromium } from "playwright";
+import { disableFullscreenPreference } from "./fullscreen-test-utils.mjs";
 const GAME = "jackal";
 const root=resolve(process.env.PWA_ROOT ?? "dist/pwa");
 assert(existsSync(resolve(root,"index.html")),`Missing built PWA: ${root}`);
@@ -40,7 +41,7 @@ try {
     const attach=page=>page.on("pageerror",error=>errors.push(error.message));attach(page);
     await page.goto(url);await menuReady(page);
     await page.waitForFunction(()=>navigator.serviceWorker.controller!==null,undefined,{timeout:120_000});
-    await page.reload();await menuReady(page);await disableFullscreen(page);
+    await page.reload();await menuReady(page);await disableFullscreenPreference(page);
     await page.locator(newSelector).first().click();await running(page);
     await page.locator(menuSelector).first().click();await menuReady(page);
     const validText=await raw(page);assert.ok(validText,"real runtime must produce a valid current save");
@@ -94,7 +95,7 @@ try {
         const before=await fullscreen.getAttribute("aria-pressed");
         await fullscreen.click();assert.notEqual(await fullscreen.getAttribute("aria-pressed"),before);
     }
-    await quiet(page);await disarm(page);await disableFullscreen(page);
+    await quiet(page);await disarm(page);await disableFullscreenPreference(page);
 
     // Reset is an explicit operation: one result notice, no resurrected Continue,
     // and no reload of failed-to-remove values into the new runtime.
@@ -104,7 +105,7 @@ try {
     assert.equal(await page.getByText("Some settings could not be reset.",{exact:true}).count(),1);
     assert.equal(await page.locator(continueSelector).first().isEnabled(),false);
     assert.equal((await faultInfo(page)).raw,validText);
-    await disarm(page);await disableFullscreen(page);
+    await disarm(page);await disableFullscreenPreference(page);
     const retiredControl=await page.locator("#fullscreen-switch-button").first().elementHandle();
     await page.locator(newSelector).first().click();await running(page);
     // Events dispatched at a detached old menu must not write settings.
@@ -123,7 +124,7 @@ try {
 }
 async function menuReady(page){await page.locator(newSelector).first().waitFor({state:"visible"});await page.bringToFront();}
 async function running(page){await page.locator("canvas").waitFor({state:"visible"});await page.locator(menuSelector).first().waitFor({state:"visible"});assert.equal(await page.locator("canvas").count(),1);}
-async function disableFullscreen(page){const control=page.locator("#fullscreen-switch-button").first();if(await control.isEnabled() && await control.getAttribute("aria-pressed")==="true")await control.click();}
+
 async function quiet(page){
     assert.equal(await page.getByText(/Progress could not be saved|Unable to restore the saved game|Unable to save settings in this browser/).count(),0);
     assert.equal(await page.locator(".persistence-warning, .warning-message").count(),0);

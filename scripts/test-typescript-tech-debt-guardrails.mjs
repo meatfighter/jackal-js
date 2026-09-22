@@ -123,11 +123,12 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
         "JackalScreens.js",
         "PageLifecycleMonitor.js",
         "PersistenceActions.js",
-        "PersistenceWarningController.js",
+        "PersistenceSession.js",
         "ScalingPicker.js"
     ]) {
         assert.match(webApp, new RegExp(moduleName.replace(".", "\\.")));
     }
+    assert.doesNotMatch(webApp, /PersistenceWarningController|persistenceWarnings/);
     assert.match(webApp, /gameSessionGeneration/);
     assert.match(webApp, /isCurrentGameSession/);
     assert.match(webApp, /mainGame\.reserveBrowserRuntime\(\)/);
@@ -154,7 +155,7 @@ test("browser orchestration is split, session-scoped, cycle-free, and independen
     assert.match(runtimeLoader, /preloadAudioBuffers\(audioRefs, \{\s*signal,/);
     assert.match(runtimeLoader, /ResourceLoader\.setCacheVersionResolver\(/);
     assert.match(webApp, /error instanceof ResourceLoadException/);
-    assert.match(webApp, /The game encountered an unexpected error\. Reload the page and try again\./);
+    assert.match(webApp, /The game encountered an unexpected error\. Try again\./);
 });
 
 test("TypeScript-native modules keep truthful nullability and stricter lint policy", () => {

@@ -50,14 +50,14 @@ test("fullscreen preference defaults on, presents unavailable as off, and preced
 
 test("New Game and live Continue initiate audio then fullscreen before the first await", () => {
     const coldStart = webApp.match(/private async startGame\([\s\S]*?\n {4}private async launchPreparedGame/)?.[0] ?? "";
-    const coldAudio = coldStart.indexOf("const audio = beginGameAudio();");
+    const coldAudio = coldStart.indexOf("audio = beginGameAudio();");
     const coldFullscreen = coldStart.indexOf("this.requestPreferredFullscreen();");
     const coldAwait = coldStart.indexOf("await audio.ready");
     assert.ok(coldAudio >= 0 && coldFullscreen > coldAudio && coldAwait > coldFullscreen);
     assert.match(coldStart, /this\.viewport\.createShell\(session\)/);
 
     const liveContinue = webApp.match(/private async resumeLiveGameFromMenu\([\s\S]*?\n {4}private removeMenuOverlay/)?.[0] ?? "";
-    const liveAudio = liveContinue.indexOf("const audio = beginGameAudio();");
+    const liveAudio = liveContinue.indexOf("audio = beginGameAudio();");
     const liveFullscreen = liveContinue.indexOf("this.requestPreferredFullscreen();");
     const liveAwait = liveContinue.indexOf("await audio.ready");
     assert.ok(liveAudio >= 0 && liveFullscreen > liveAudio && liveAwait > liveFullscreen);

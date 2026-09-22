@@ -49,31 +49,34 @@ test("Jackal PWA exposes a persisted scaling menu with Smooth as the default", (
     assert.match(stylesSource, /var\(--title-cream\)/);
 });
 
-test("Jackal PWA reset clears persisted state and restores menu defaults", () => {
+test("Jackal PWA reset clears the allowlisted persisted state, installs defaults, and reports only incomplete reset", () => {
     assert.match(webAppSource, /id="reset-button" class="reset-button" type="button">Reset<\/button>/);
     assert.match(webAppSource, /addEventListener\("click", \(\) => this\.resetPwaState\(\)\);/);
 
     const start = webAppSource.indexOf("private resetPwaState(): void");
-    const end = webAppSource.indexOf("private clearPwaStorage(): void", start);
+    const end = webAppSource.indexOf("private clearPwaStorage(): boolean", start);
     assert.ok(start >= 0 && end > start);
     const reset = webAppSource.slice(start, end);
 
-    assert.match(reset, /if \(!this\.canActivateFromMenu\(\)\) \{\s*return;\s*\}/);
-    assert.match(reset, /if \(!this\.destroyGame\(\)\) \{\s*return;\s*\}/);
+    assert.match(reset, /if \(!this\.canActivateFromMenu\(\)\) return;/);
+    assert.match(reset, /this\.persistence\.abandonStored\(\)/);
+    assert.match(reset, /if \(!this\.destroyGame\(\)\) return;/);
+    assert.match(reset, /const cleared = this\.clearPwaStorage\(\)/);
+    assert.match(reset, /if \(!owner\.isCurrent\(epoch\)\) return;/);
+    assert.match(reset, /this\.volume = DEFAULT_VOLUME;/);
+    assert.match(reset, /this\.scalingPreference = DEFAULT_SCALING_PREFERENCE;/);
+    assert.match(reset, /this\.fullscreenPreference = DEFAULT_FULLSCREEN_PREFERENCE;/);
+    assert.match(reset, /this\.preferredHardMode = DEFAULT_HARD_MODE;/);
+    assert.match(reset, /this\.sessionMapping\.resetToDefaults\(\)/);
+    assert.match(reset, /this\.applyApplicationAudioPreferences\(\)/);
+    assert.match(reset, /cleared \? null : "Some settings could not be reset\."/);
 
-    const destroy = reset.indexOf("if (!this.destroyGame())");
-    const clear = reset.indexOf("this.clearPwaStorage();");
-    const volume = reset.indexOf("this.volume = DEFAULT_VOLUME;");
-    const scaling = reset.indexOf("this.scalingPreference = DEFAULT_SCALING_PREFERENCE;");
-    const render = reset.indexOf("this.renderMenu(this.root, false, null, false);");
-    assert.ok(destroy >= 0 && clear > destroy && volume > clear && scaling > volume && render > scaling);
-
-    assert.match(webAppSource, /clearPersistedPwaState\(this\.inputMappingStore, this\.persistenceWarnings, \(\) => this\.getOwnership\(\)\.owned\)/);
+    assert.match(webAppSource, /clearPersistedPwaState\(this\.inputMappingStore, \(\) => owner\.isCurrent\(epoch\)\)/);
+    assert.doesNotMatch(webAppSource, /PersistenceWarningController|persistenceWarnings/);
     assert.doesNotMatch(webAppSource, /clearPreferences\(\)\s*&&\s*clearStoredGameState\(\)/);
     assert.match(webAppSource, /this\.gameStateStore = null;/);
     assert.match(stylesSource, /\.reset-button\s*\{/);
 });
-
 test("Jackal pins slick2d-ts to a reproducible public HTTPS revision", () => {
     const dependency = packageJson.dependencies["slick2d-ts"];
     const lockedDependency = packageLock.packages[""].dependencies["slick2d-ts"];
