@@ -31,8 +31,7 @@ export class SessionCleanup {
         try {
             return save();
         } catch (error) {
-            console.warn("Unable to save game state during session transition.
-", error);
+            console.warn("Unable to save game state during session transition.", error);
             return false;
         }
     }
