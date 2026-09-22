@@ -97,6 +97,7 @@ for (const fault of ["constructor", "setter", "stale", "unsafe", "published-time
                 cleanup.safe = false;
                 throw new Error("initialization failed");
             }
+
             destroy() {
                 events.push("container-dispose");
                 if (fault === "unsafe") throw new Error("destroy failed");
