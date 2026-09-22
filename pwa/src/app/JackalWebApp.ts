@@ -541,8 +541,7 @@ export class JackalWebApp {
                 return;
             }
             console.error(error);
-            this.showLoadError("Game error.", "The game encountered an unexpected error. Try again.
-", () => {
+            this.showLoadError("Game error.", "The game encountered an unexpected error. Try again.", () => {
                 this.showMenu();
             });
         });
