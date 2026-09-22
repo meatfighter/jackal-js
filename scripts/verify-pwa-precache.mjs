@@ -202,7 +202,7 @@ function verifyRelocatableUrls(indexHtml, manifest, listedResources) {
             assertInsidePwaRoot("manifest icon", icon.src, manifestUrl.href, pwaRoot);
         }
 
-        assertInsidePwaRoot("service worker URL", "./sw.js?v=relocation-check", pwaRoot, pwaRoot);
+        assertInsidePwaRoot("service worker URL", "./sw.js", pwaRoot, pwaRoot);
         assertInsidePwaRoot("service worker scope", "./", pwaRoot, pwaRoot);
         for (const resource of listedResources) {
             assertInsidePwaRoot("precache resource", resource, pwaRoot, pwaRoot);
@@ -221,7 +221,7 @@ function verifyBuiltServiceWorkerRegistration(files) {
         .filter(({ ref }) => ref.endsWith(".js"))
         .map(({ path }) => readFileSync(path, "utf8"))
         .join("\n");
-    if (!javascript.includes("./sw.js?v=")) {
+    if (!javascript.includes("./sw.js") || !javascript.includes('updateViaCache:"none"')) {
         throw new Error("Built JavaScript does not register the service worker with a page-relative ./sw.js URL.");
     }
     if (!/scope\s*:\s*(["'`])\.\/\1/.test(javascript)) {
