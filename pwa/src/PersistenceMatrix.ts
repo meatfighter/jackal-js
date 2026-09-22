@@ -39,7 +39,7 @@ type Mounted = { main: Main; container: AppGameContainer };
 const serializer = new JackalGameStateSerializer();
 type Snapshot = ReturnType<JackalGameStateSerializer["createSnapshot"]>;
 let store: InstanceType<Awaited<ReturnType<JackalRuntimeLoader["ensurePrepared"]>>["JackalGameStateStore"]>;
-async function prepare(): Promise<void> { runtime = await loader.ensurePrepared(); store = new runtime.JackalGameStateStore(label); }
+async function prepare(): Promise<void> { runtime = await loader.ensurePrepared(false); store = new runtime.JackalGameStateStore(label); }
 async function mount(restore: boolean): Promise<Mounted> {
     gameHost.replaceChildren(); runtime.slick.Display.setParent(gameHost);
     const main = new runtime.Main(); main.reserveBrowserRuntime();
