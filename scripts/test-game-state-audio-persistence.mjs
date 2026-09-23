@@ -500,3 +500,18 @@ test("fresh durable restore completes before audio commit and gameplay resume", 
     assert.ok(gameResume > commit, "logical game clock must not resume before audio generation commit");
     assert.ok(loopResume > commit, "RAF loop must not resume before audio generation commit");
 });
+
+test("fractional monotonic cooldowns retain the integer schema without shortening suppression", async () => {
+    const { registry, audio } = await loadAudioModules();
+    const main = fakeMain(registry.SOUND_FIELD_NAMES);
+    main.getSoundCooldownTime = () => 1000.75;
+    for (const elapsed of [0, 0.25, 40.5, 124.9, 125, 125.1]) {
+        main.lastPlayTime.set(main.machineGunSound, 1000.75 - elapsed);
+        const entry = audio.captureAudioStateSnapshot(main).cooldowns.find(({ id }) => id === "machineGunSound");
+        if (elapsed > 125) assert.equal(entry, undefined);
+        else {
+            assert.equal(entry.remainingMs, Math.ceil(125 - elapsed));
+            assert.ok(Number.isInteger(entry.remainingMs));
+        }
+    }
+});

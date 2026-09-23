@@ -105,7 +105,8 @@ function captureSoundCooldownSnapshots(main: Main, sounds: readonly RegisteredSo
         }
         snapshots.push({
             id,
-            remainingMs: Math.max(0, Math.min(minimumSoundTime, minimumSoundTime - elapsedMs))
+            // The durable schema uses integer milliseconds; never shorten a live fractional cooldown.
+            remainingMs: Math.ceil(Math.max(0, Math.min(minimumSoundTime, minimumSoundTime - elapsedMs)))
         });
     }
     return snapshots;

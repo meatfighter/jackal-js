@@ -1,3 +1,8 @@
+import { InputMode } from "./jackal/InputMode.js";
+import { ButtonMapping } from "./jackal/ButtonMapping.js";
+import { JackalInputMappingStore } from "./app/JackalInputMappingStore.js";
+import { JackalGameStateSerializer } from "./jackal/persistence/JackalGameStateSerializer.js";
+import { isSupportedGameStateSnapshot } from "./jackal/persistence/GameStateSnapshotValidator.js";
 import { GAME_STATE_STORAGE_KEY } from "./jackal/persistence/GameStateSchema.js";
 import { getDeploymentStorageKey } from "./app/DeploymentStorageKeys.js";
 import { verifyAuthoritativeSave } from "./PersistenceContractVerification.js";
@@ -154,6 +159,7 @@ async function verify(): Promise<void> {
         assert(second.main.score === 123450 && second.main.scoreStr === "123450", "Fresh Jackal Main did not restore score state.");
         assert(second.main.extraLives === 3 && second.main.extraLivesStr === "3", "Fresh Jackal Main did not restore life state.");
         assert(second.main.isBrowserRuntimeActive(), "Restored Jackal Main is not the active browser runtime.");
+        verifyInputEditor(runtime, second);
     } finally {
         destroyMounted(runtime, first);
         destroyMounted(runtime, second);
@@ -165,7 +171,7 @@ async function verify(): Promise<void> {
 void verify().then(
     () => {
         result.dataset.status = "passed";
-        result.textContent = "Real Jackal browser boot/gameplay save/restore/audio verification passed.";
+        result.textContent = "Real Jackal browser boot/gameplay save/restore/audio and input-editor storage verification passed.";
     },
     (error: unknown) => {
         console.error(error);
@@ -173,3 +179,125 @@ void verify().then(
         result.textContent = error instanceof Error ? (error.stack ?? error.message) : String(error);
     }
 );
+
+/** Drive the actual editor, serializer, validators and independent storage slots. */
+function verifyInputEditor(runtime: PreparedRuntime, mounted: MountedGame): void {
+    const { main, container } = mounted;
+    container.setLoopSuspended(true);
+    main.requestMode(Modes.INPUT, container);
+    assert(main.mode instanceof InputMode, "Expected input editor");
+    let mode = main.mode;
+    main.setBrowserSuspended(false);
+    for (let tick = 0; tick < 40 && main.fading; tick++) {
+        main.nextFrameTime = 0;
+        main.update(container, 17);
+    }
+    main.setBrowserSuspended(true);
+    assert(!main.fading && mode.state === InputMode.STATE_MENU, "Input menu fade did not complete");
+    const input = container.getInput();
+    let direction = -1;
+    const overrides = {
+        getControllerSampleStatus: () => ({ valid: true, sequence: 1, baselineOnly: false }),
+        getControllerCount: () => 1,
+        getControllerConnectionGeneration: () => 1,
+        getButtonCount: () => 0,
+        isControllerUp: () => direction === 0,
+        isControllerDown: () => direction === 1,
+        isControllerLeft: () => direction === 2,
+        isControllerRight: () => direction === 3
+    };
+    const previous = new Map(Object.keys(overrides).map((key) => [key, Object.getOwnPropertyDescriptor(input, key)]));
+    const nativeGet = Storage.prototype.getItem;
+    const nativeSet = Storage.prototype.setItem;
+    const gameKey = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const mappingKey = getDeploymentStorageKey("jackal.input-mapping");
+    const mappingStore = new JackalInputMappingStore();
+    const store = new runtime.JackalGameStateStore("editor-contract");
+    const serializer = new JackalGameStateSerializer();
+    const acceptsSnapshot: (value: unknown) => boolean = isSupportedGameStateSnapshot;
+    let mappingWrites = 0;
+    try {
+        Object.assign(input, overrides);
+        assert(mappingStore.save(main.buttonMapping, () => true).saved, "Seed committed mapping");
+        const committed = nativeGet.call(localStorage, mappingKey);
+        Storage.prototype.setItem = function (key, value) {
+            if (key === mappingKey) {
+                mappingWrites++;
+                throw new DOMException("Injected mapping quota", "QuotaExceededError");
+            }
+            nativeSet.call(this, key, value);
+        };
+        main.inputMappingChangedHandler = () => mappingStore.save(main.buttonMapping, () => true);
+        mode.optionSelected(InputMode.OPTION_CHANGE);
+        for (let step = 0; step < InputMode.ACTIONS.length; step++) {
+            direction = -1;
+            for (let tick = 0; tick < InputMode.ARM_DELAY; tick++) mode.update(container);
+            if (step < 4) {
+                direction = step;
+                mode.update(container);
+            } else mode.keyPressed([30, 31, 32][step - 4]!, "");
+            assert(mode.state === InputMode.STATE_READ_FADE, "Editor did not accept assignment " + step);
+            assert(store.save(main, () => true).saved && store.hasValidSave(), "Assignment did not survive real store " + step);
+            const snapshot = serializer.createSnapshot(main, "editor-contract");
+            assert(snapshot.kind === "mode" && snapshot.modeExtra !== null && "input" in snapshot.modeExtra, "Expected input snapshot");
+            if (step === 0) {
+                for (const invalid of [-1, -6, 64, 0.5, NaN, Infinity, -Infinity]) {
+                    const bad = structuredClone(snapshot);
+                    bad.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerButtons: [invalid] } };
+                    assert(!acceptsSnapshot(bad), "Invalid assignment accepted: " + invalid);
+                }
+                const duplicate = structuredClone(snapshot);
+                duplicate.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerButtons: [-2, -2] } };
+                assert(!acceptsSnapshot(duplicate), "Duplicate accepted");
+                const mismatch = structuredClone(snapshot);
+                assert(mismatch.modeExtra !== null && "input" in mismatch.modeExtra && mismatch.modeExtra.input.draftButtonMapping !== null, "Expected draft");
+                mismatch.modeExtra.input.draftButtonMapping.fields.controllerUp = -3;
+                assert(!acceptsSnapshot(mismatch), "Inconsistent draft accepted");
+                mismatch.modeExtra.input.draftButtonMapping.fields.controllerUp = -2;
+                mismatch.modeExtra.input.draftButtonMapping.fields.controllerGrenade = -2;
+                assert(!acceptsSnapshot(mismatch), "Logical direction accepted as raw action");
+            }
+            assert(store.restore(main, container), "Assignment reload failed");
+            assert(main.mode instanceof InputMode, "Assignment restored wrong mode");
+            mode = main.mode;
+            for (let tick = 0; tick < InputMode.FADE_TIME; tick++) mode.update(container);
+        }
+        assert(mode.message === "NOT SAVED" && mode.state === InputMode.STATE_SAVED, "Expected real mapping failure outcome");
+        assert(mappingWrites === 1 && main.buttonMapping.keyGun === 31, "Mapping failure lost active bindings");
+        assert(nativeGet.call(localStorage, mappingKey) === committed, "Failed mapping write changed committed bytes");
+        for (const raw of ["{", JSON.stringify({ version: 15 }), JSON.stringify({ version: 17 })]) {
+            nativeSet.call(localStorage, gameKey, raw);
+            let reads = 0;
+            Storage.prototype.getItem = function () {
+                reads++;
+                throw new Error("No old-slot reads allowed");
+            };
+            try {
+                assert(store.save(main, () => true).saved, "NOT SAVED game progress rejected");
+                assert(reads === 0, "Writer read old slot");
+            } finally {
+                Storage.prototype.getItem = nativeGet;
+            }
+        }
+        main.buttonMapping.resetToDefaults();
+        const authority = main.buttonMapping.clone();
+        assert(store.restore(main, container), "Completion reload failed");
+        assert(main.mode instanceof InputMode, "Completion restored wrong mode");
+        mode = main.mode;
+        assert(mode.completionMessage() === "DONE", "Restore falsely reported saved mapping");
+        assert(JSON.stringify(main.buttonMapping) === JSON.stringify(authority), "Restore replaced committed mapping authority");
+        assert(mappingWrites === 1, "Restore replayed mapping commit");
+        for (let tick = 0; tick < InputMode.DONE_DELAY; tick++) mode.update(container);
+        assert(mode.state === InputMode.STATE_MENU && store.save(main, () => true).saved, "Completed input menu rejected");
+        assert(store.restore(main, container), "Completed input menu reload failed");
+        assert(!ButtonMapping.isValidRawControllerButton(-2), "Raw physical API was broadened");
+    } finally {
+        Storage.prototype.getItem = nativeGet;
+        Storage.prototype.setItem = nativeSet;
+        main.inputMappingChangedHandler = null;
+        for (const [key, descriptor] of previous) {
+            if (descriptor) Object.defineProperty(input, key, descriptor);
+            else Reflect.deleteProperty(input, key);
+        }
+    }
+}

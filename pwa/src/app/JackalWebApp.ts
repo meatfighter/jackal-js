@@ -122,14 +122,7 @@ export class JackalWebApp {
                     if (request !== this.menuRequestSerial || !owner.isCurrent(epoch) || this.pwaSessionState !== "booting") {
                         return;
                     }
-                    try {
-                        this.pwaSessionState = "menu";
-                        this.renderMenu(this.root, this.hasPotentialSavedGameState(), errorMessage, false);
-                    } catch (error) {
-                        if (request !== this.menuRequestSerial || !owner.isCurrent(epoch)) return;
-                        console.error("Unable to display the game menu.", error);
-                        this.showLoadError("Unable to start.", "The menu could not be displayed. Reload this tab.", () => window.location.reload(), "Reload");
-                    }
+                    this.publishRootMenu(() => this.hasPotentialSavedGameState(), errorMessage);
                 })
                 .catch((error) => {
                     if (
@@ -151,8 +144,33 @@ export class JackalWebApp {
                 });
             return;
         }
-        this.pwaSessionState = "menu";
-        this.renderMenu(this.root, this.hasPotentialSavedGameState(), errorMessage, false);
+        this.publishRootMenu(() => this.hasPotentialSavedGameState(), errorMessage);
+    }
+
+    private publishRootMenu(readCanContinue: () => boolean, errorMessage: string | null = null): void {
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        const request = this.menuRequestSerial;
+        const isCurrent = (): boolean => this.sessionCleanup.safe && owner.isCurrent(epoch) && request === this.menuRequestSerial;
+        if (!isCurrent()) return;
+
+        try {
+            this.pwaSessionState = "menu";
+            const canContinue = readCanContinue();
+            if (!isCurrent() || this.pwaSessionState !== "menu") return;
+            this.renderMenu(this.root, canContinue, errorMessage, false);
+        } catch (error) {
+            if (!isCurrent()) return;
+            // A partially bound normal menu must not retain action authority.
+            this.activeMenu = null;
+            console.error("Unable to display the game menu.", error);
+            try {
+                this.showLoadError("Unable to start.", "The menu could not be displayed. Reload this tab.", () => window.location.reload(), "Reload");
+            } catch (recoveryError) {
+                // Do not recursively render, save, or tear down a replacement here.
+                console.error("Unable to display menu recovery.", recoveryError);
+            }
+        }
     }
 
     private renderMenu(parent: HTMLElement, canContinue: boolean, errorMessage: string | null, overlay: boolean): HTMLElement {
@@ -205,8 +223,19 @@ export class JackalWebApp {
         const volumeValue = menu.querySelector<HTMLElement>("#volume-value");
         const volumeIcon = menu.querySelector<HTMLElement>("#volume-icon");
         const fullscreenSwitch = menu.querySelector<HTMLButtonElement>("#fullscreen-switch-button");
-        if (volumeInput === null || volumeValue === null || volumeIcon === null || fullscreenSwitch === null) {
-            return;
+        const newGameButton = menu.querySelector<HTMLButtonElement>("#new-game-button");
+        const continueButton = menu.querySelector<HTMLButtonElement>("#continue-button");
+        const resetButton = menu.querySelector<HTMLButtonElement>("#reset-button");
+        if (
+            volumeInput === null ||
+            volumeValue === null ||
+            volumeIcon === null ||
+            fullscreenSwitch === null ||
+            newGameButton === null ||
+            continueButton === null ||
+            resetButton === null
+        ) {
+            throw new Error("Jackal menu is missing required controls.");
         }
         const updateVolumeUi = (): void => {
             const percent = Math.round(this.volume * 100);
@@ -241,14 +270,14 @@ export class JackalWebApp {
             (value) => this.setScalingPreference(value)
         );
 
-        menu.querySelector<HTMLButtonElement>("#new-game-button")?.addEventListener("click", () => {
+        newGameButton.addEventListener("click", () => {
             if (!this.canActivateFromMenu()) {
                 return;
             }
             this.clearStoredGameState();
             void this.startGame(false);
         });
-        menu.querySelector<HTMLButtonElement>("#continue-button")?.addEventListener("click", () => {
+        continueButton.addEventListener("click", () => {
             if (!this.canActivateFromMenu()) {
                 return;
             }
@@ -258,7 +287,7 @@ export class JackalWebApp {
             }
             void this.startGame(true);
         });
-        menu.querySelector<HTMLButtonElement>("#reset-button")?.addEventListener("click", () => this.resetPwaState());
+        resetButton.addEventListener("click", () => this.resetPwaState());
     }
 
     private canActivateFromMenu(): boolean {
@@ -294,8 +323,7 @@ export class JackalWebApp {
         this.preferredHardMode = DEFAULT_HARD_MODE;
         this.sessionMapping.resetToDefaults();
         this.applyApplicationAudioPreferences();
-        this.pwaSessionState = "menu";
-        this.renderMenu(this.root, false, cleared ? null : "Some settings could not be reset.", false);
+        this.publishRootMenu(() => false, cleared ? null : "Some settings could not be reset.");
     }
 
     private clearPwaStorage(): boolean {

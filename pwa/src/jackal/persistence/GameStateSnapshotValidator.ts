@@ -626,7 +626,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         !isMenuSnapshot(value.menu, 2) ||
         !isButtonMappingSnapshot(value.draftButtonMapping) ||
         !isUniqueKeyArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS) ||
-        !isUniqueControllerButtonArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS)
+        !isUniqueControllerAssignmentArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS)
     ) {
         return false;
     }
@@ -684,7 +684,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             delay >= 1 &&
             delay <= InputMode.DONE_DELAY &&
             assignmentCount === InputMode.ACTIONS.length &&
-            message === "SAVED"
+            (message === "SAVED" || message === "NOT SAVED")
         );
     }
 
@@ -954,12 +954,12 @@ function isUniqueKeyArray(value: unknown, maxLength: number): value is number[] 
     );
 }
 
-function isUniqueControllerButtonArray(value: unknown, maxLength: number): value is number[] {
+function isUniqueControllerAssignmentArray(value: unknown, maxLength: number): value is number[] {
     return (
         Array.isArray(value) &&
         value.length <= maxLength &&
         new Set(value).size === value.length &&
-        value.every((entry) => ButtonMapping.isValidRawControllerButton(entry))
+        value.every((entry) => ButtonMapping.isValidControllerBinding(entry) && entry !== ButtonMapping.NO_BINDING)
     );
 }
 
