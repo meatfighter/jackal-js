@@ -214,7 +214,7 @@ export class JackalWebApp {
         this.guardMenuEvents(menu);
         this.bindMenuControls(menu);
         menu.style.visibility = "";
-        this.viewport.focusMenuPanel(menu);
+        if (!overlay) this.viewport.focusMenuPanel(menu);
         return menu;
     }
 
@@ -355,19 +355,7 @@ export class JackalWebApp {
             this.destroyGameSession();
             return;
         }
-        if (!(await this.viewport.exitFullscreenForMenu())) return;
-        if (!this.isCurrentGameSession(session) || this.pwaSessionState !== "stopping" || this.game === null || this.container === null) return;
-        if (
-            !this.sessionCleanup.run(() => {
-                this.menuOverlay = this.renderMenu(this.root, true, null, true);
-            })
-        ) {
-            this.destroyGameSession();
-            return;
-        }
-        this.pwaSessionState = "menu";
-        if (this.menuOverlay !== null) this.viewport.focusMenuPanel(this.menuOverlay);
-        this.syncScreenWakeLock();
+        await this.finishLiveMenuPresentation(session, null);
     }
 
     private async resumeLiveGameFromMenu(): Promise<void> {
@@ -719,22 +707,91 @@ export class JackalWebApp {
     }
 
     private async restoreExistingLiveMenuAfterInterruptedResume(session: number): Promise<void> {
-        if (!(await this.viewport.exitFullscreenForMenu())) {
-            return;
+        const overlay = this.menuOverlay;
+        if (overlay === null) return;
+        await this.finishLiveMenuPresentation(session, overlay);
+    }
+
+    private async finishLiveMenuPresentation(session: number, existingOverlay: HTMLElement | null): Promise<void> {
+        const owner = this.getOwnership();
+        const epoch = owner.epoch;
+        const request = this.menuRequestSerial;
+        const liveGame = this.game;
+        const liveContainer = this.container;
+        let expectedOverlay = existingOverlay;
+        const isCurrent = (): boolean =>
+            this.isCurrentGameSession(session) &&
+            owner.isCurrent(epoch) &&
+            request === this.menuRequestSerial &&
+            this.game === liveGame &&
+            this.container === liveContainer &&
+            this.liveMenuOpen &&
+            this.menuOverlay === expectedOverlay;
+        if (liveGame === null || liveContainer === null || !isCurrent() || this.pwaSessionState !== "stopping" || this.menuOverlay !== existingOverlay) return;
+
+        try {
+            if (!(await this.viewport.exitFullscreenForMenu()) || !isCurrent() || this.pwaSessionState !== "stopping") return;
+            const overlay = existingOverlay ?? this.renderMenu(this.root, true, null, true);
+            if (!isCurrent() || this.pwaSessionState !== "stopping" || this.menuOverlay !== existingOverlay) {
+                // Only remove this attempt's unadopted new node, never a retained/replacement menu.
+                if (existingOverlay === null && this.menuOverlay !== overlay && this.activeMenu !== overlay) {
+                    try {
+                        overlay.remove();
+                    } catch (error) {
+                        console.warn("Unable to remove an obsolete menu node.", error);
+                    }
+                }
+                return;
+            }
+            if (!overlay.isConnected || !this.root.contains(overlay)) throw new Error("The live menu is no longer attached to its application.");
+            expectedOverlay = overlay;
+            this.menuOverlay = overlay;
+            this.pwaSessionState = "menu";
+            this.viewport.focusMenuPanel(overlay);
+            if (!isCurrent() || this.pwaSessionState !== "menu" || this.menuOverlay !== overlay) return;
+            this.syncScreenWakeLock();
+        } catch (error) {
+            if (!isCurrent() || (this.pwaSessionState !== "stopping" && this.pwaSessionState !== "menu")) return;
+            this.activeMenu = null;
+            console.error("Unable to display the live game menu.", error);
+
+            let stopped: boolean;
+            try {
+                stopped = this.destroyGame();
+            } catch (teardownError) {
+                // This is an actual essential teardown failure, not the UI error above.
+                this.sessionCleanup.run(() => {
+                    throw teardownError;
+                });
+                try {
+                    this.showCleanupFailure();
+                } catch (recoveryError) {
+                    console.error("Unable to display live-menu cleanup recovery.", recoveryError);
+                }
+                return;
+            }
+            if (!stopped) return; // The actual destructor already owns severe recovery.
+            if (!owner.isCurrent(epoch) || this.game !== null || this.container !== null || this.pwaSessionState !== "stopping") return;
+            const recoveryRequest = this.menuRequestSerial;
+            this.pwaSessionState = "menu";
+            const recoveryIsCurrent = (): boolean =>
+                this.sessionCleanup.safe &&
+                owner.isCurrent(epoch) &&
+                this.menuRequestSerial === recoveryRequest &&
+                this.pwaSessionState === "menu" &&
+                this.game === null &&
+                this.container === null;
+            try {
+                // Do not call showLoadError here: it would destroy the game a second time.
+                const button = renderLoadErrorScreen(this.root, "Unable to display the menu.", "The menu could not be displayed. Reload this tab.", "Reload");
+                button?.addEventListener("click", () => {
+                    if (button.isConnected && recoveryIsCurrent()) window.location.reload();
+                });
+                if (button !== null) focusOwnedPanel(button, recoveryIsCurrent);
+            } catch (recoveryError) {
+                console.error("Unable to display live-menu recovery.", recoveryError);
+            }
         }
-        if (
-            !this.isCurrentGameSession(session) ||
-            this.pwaSessionState !== "stopping" ||
-            !this.liveMenuOpen ||
-            this.menuOverlay === null ||
-            this.game === null ||
-            this.container === null
-        ) {
-            return;
-        }
-        this.pwaSessionState = "menu";
-        this.viewport.focusMenuPanel(this.menuOverlay);
-        this.syncScreenWakeLock();
     }
 
     private readonly handleBrowserReservedKey = (event: KeyboardEvent): void => {

@@ -187,8 +187,9 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         }
     }
 
-    /** Re-baselines polled controller edges after the browser shell has owned input. */
-    public resyncControllerStateAfterBrowserResume(): void {
+    /** Drop obsolete editor release bookkeeping; Slick still quarantines physically held keys. */
+    public resyncInputAfterBrowserResume(): void {
+        this.blockedKeyboardKeys.clear();
         this.syncControllerInputState();
     }
 

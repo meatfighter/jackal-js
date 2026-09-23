@@ -50,7 +50,7 @@ try {
 
         mode.armDelay = 0;
         controls.heldButton = 0;
-        mode.resyncControllerStateAfterBrowserResume();
+        mode.resyncInputAfterBrowserResume();
         mode.update({});
 
         assert.equal(mode.state, InputMode.STATE_READING);
@@ -72,7 +72,7 @@ try {
 
         mode.armDelay = 0;
         controls.heldButton = -1;
-        mode.resyncControllerStateAfterBrowserResume();
+        mode.resyncInputAfterBrowserResume();
 
         controls.heldButton = 0;
         mode.update({});
@@ -82,7 +82,7 @@ try {
         mode.nameIndex = 5;
         mode.armDelay = 0;
         controls.heldButton = -1;
-        mode.resyncControllerStateAfterBrowserResume();
+        mode.resyncInputAfterBrowserResume();
         controls.heldButton = 0;
         mode.update({});
 
@@ -122,7 +122,7 @@ test("Jackal Main re-baselines InputMode controller edges before browser gamepla
     const method = source.slice(start, end);
 
     assert.match(method, /if \(!suspended\) \{[\s\S]*?sampleControllersForBaseline\(\)/);
-    assert.match(method, /else if \(this\.mode instanceof InputMode\) \{[\s\S]*?this\.mode\.resyncControllerStateAfterBrowserResume\(\)/);
+    assert.match(method, /else if \(this\.mode instanceof InputMode\) \{[\s\S]*?this\.mode\.resyncInputAfterBrowserResume\(\)/);
 });
 
 function createInputModeFixture(InputMode, ButtonMapping) {

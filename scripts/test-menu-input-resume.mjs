@@ -97,7 +97,7 @@ test("Jackal browser resume rebaselines InputMode, Menu, and Konami input bounda
     const end = source.indexOf("public stopAllSounds", start);
     const method = source.slice(start, end);
 
-    assert.match(method, /this\.mode\.resyncControllerStateAfterBrowserResume\(\)/);
+    assert.match(method, /this\.mode\.resyncInputAfterBrowserResume\(\)/);
     assert.match(method, /menu\.resyncInputAfterBrowserResume\(\)/);
     assert.match(method, /this\.konamiCode\?\.resyncInputAfterBrowserResume\(\)/);
 });

@@ -1999,7 +1999,7 @@ export class Main extends BasicGame {
             if (this.mode instanceof GameMode) {
                 this.mode.player?.resyncInputAfterBrowserResume();
             } else if (this.mode instanceof InputMode) {
-                this.mode.resyncControllerStateAfterBrowserResume();
+                this.mode.resyncInputAfterBrowserResume();
             }
             const mode = this.mode;
             if (mode !== null && typeof mode === "object" && Reflect.has(mode, "menu")) {

@@ -1,3 +1,4 @@
+import { sourceMember } from "./persistence-test-loader.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -125,8 +126,10 @@ test("interrupted retained Continue exits fullscreen before republishing menu", 
     const requestMenu = webApp.match(/private requestPwaMenu\([\s\S]*?\n {4}\}/)?.[0] ?? "";
     assert.match(requestMenu, /restoreExistingLiveMenuAfterInterruptedResume\(session\)/);
     const restore = webApp.match(/private async restoreExistingLiveMenuAfterInterruptedResume\([\s\S]*?\n {4}\}/)?.[0] ?? "";
-    const exit = restore.indexOf("await this.viewport.exitFullscreenForMenu()");
-    const publish = restore.indexOf('this.pwaSessionState = "menu";');
+    assert.match(restore, /await this\.finishLiveMenuPresentation\(session, overlay\)/);
+    const presenter = sourceMember("pwa/src/app/JackalWebApp.ts", "finishLiveMenuPresentation", "JackalWebApp");
+    const exit = presenter.indexOf("await this.viewport.exitFullscreenForMenu()");
+    const publish = presenter.indexOf('this.pwaSessionState = "menu";');
     assert.ok(exit >= 0 && publish > exit);
 });
 

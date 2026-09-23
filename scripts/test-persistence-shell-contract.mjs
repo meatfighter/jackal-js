@@ -36,8 +36,8 @@ function fixture() {
         RestoreAttempt,
         ReloadRequiredError: class ReloadRequiredError extends Error {},
         ResourceLoadException: class ResourceLoadException extends Error {},
-        root: {},
-        app: {},
+        root: { contains: () => true },
+        app: { contains: () => true },
         menuOverlay: {},
         liveMenuOpen: true,
         pwaSessionState: "menu",
@@ -103,7 +103,7 @@ function fixture() {
             gameShell: {},
             gameHost: {},
             createShell() {
-                return {};
+                return { isConnected: true };
             },
             stopHamburgerVisibilityMonitor() {},
             hideHamburger() {},
@@ -141,15 +141,15 @@ function fixture() {
         },
         renderMenu(...args) {
             events.push(["render", ...args]);
-            return {};
+            return { isConnected: true };
         },
         renderMenuUi(...args) {
             events.push(["render", ...args]);
-            return {};
+            return { isConnected: true };
         },
         renderMenuForParent(...args) {
             events.push(["render", ...args]);
-            return {};
+            return { isConnected: true };
         },
         showMenu() {
             events.push("menu");
@@ -191,7 +191,7 @@ function fixture() {
     return env;
 }
 function subject(method, env) {
-    const methods = shellSubject(path, [method], env, owner);
+    const methods = shellSubject(path, method === "showLiveMenuOverlay" ? [method, "finishLiveMenuPresentation"] : [method], env, owner);
     return { methods, state: owner ? methods : env };
 }
 
@@ -214,6 +214,7 @@ test("actual shell save gate accepts only a frozen, accepted runtime, independen
 test("actual live-menu transition has no persistence UI and never destroys a healthy retained game after save failure", async () => {
     const env = fixture();
     env.pwaSessionState = "running";
+    env.menuOverlay = null;
     const { methods, state } = subject("showLiveMenuOverlay", env);
     await methods.showLiveMenuOverlay();
     assert.equal(state.game, env.game);
