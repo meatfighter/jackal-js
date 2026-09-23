@@ -759,6 +759,11 @@ export class JackalWebApp {
             try {
                 stopped = this.destroyGame();
             } catch (teardownError) {
+                if (!this.sessionCleanup.safe) {
+                    // Teardown already latched its real failure; do not retry a failed severe screen.
+                    console.error("Unable to display live-menu cleanup recovery.", teardownError);
+                    return;
+                }
                 // This is an actual essential teardown failure, not the UI error above.
                 this.sessionCleanup.run(() => {
                     throw teardownError;

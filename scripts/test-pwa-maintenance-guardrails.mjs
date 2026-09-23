@@ -1,3 +1,4 @@
+import { sourceMember } from "./persistence-test-loader.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -59,7 +60,8 @@ test("failed persistence keeps the initialized live game continuable without per
     const source = read("pwa/src/app/JackalWebApp.ts");
     const liveMenu = source.slice(source.indexOf("private async showLiveMenuOverlay"), source.indexOf("private async resumeLiveGameFromMenu"));
     assert.match(liveMenu, /trySave/);
-    assert.match(liveMenu, /renderMenu\(this\.root, true, null, true\)/);
+    assert.match(liveMenu, /finishLiveMenuPresentation\(session, null\)/);
+    assert.match(sourceMember("pwa/src/app/JackalWebApp.ts", "finishLiveMenuPresentation", "JackalWebApp"), /renderMenu\(this\.root, true, null, true\)/);
     assert.doesNotMatch(source, /Progress could not be saved|persistenceWarnings/);
 });
 
