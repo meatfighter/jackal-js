@@ -174,7 +174,7 @@ test("browser binding validity has one Jackal policy owner", () => {
     assert.match(stateValidator, /ButtonMapping\.isValidKeyBinding/);
     assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding/);
     assert.match(stateValidator, /ButtonMapping\.isValidControllerActionBinding/);
-    assert.match(stateValidator, /ButtonMapping\.isValidRawControllerButton/);
+    assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding\(entry\) && entry !== ButtonMapping\.NO_BINDING/);
     assert.doesNotMatch(stateValidator, /Input\.isBrowserKeyCodeSupported|MAX_CONTROLLER_BUTTON_INDEX/);
 });
 
