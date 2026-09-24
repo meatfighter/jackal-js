@@ -20,7 +20,8 @@ try {
     const output = await waitForExpression(
         browser.page,
         '(() => { const element = document.querySelector("#result"); if (element?.dataset.status === "failed") throw new Error(element.textContent || "Browser verification failed."); return element?.dataset.status === "passed" ? element.textContent : false; })()',
-        60_000
+        // Includes 92 source-save/destroy/fresh-runtime fade restores with real resources.
+        180_000
     );
     console.log(output);
     await verifySessionOwnership(appUrl, "Jackal");
