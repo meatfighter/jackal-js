@@ -213,6 +213,9 @@ async function verify(): Promise<void> {
         verifyFinalLifeTransition(runtime, second);
         verifyInputEditor(runtime, second);
         verifyEditorResume(second.main, second.container);
+        destroyMounted(runtime, second);
+        second = null;
+        await verifyFadeRestoreMatrix(runtime);
     } finally {
         destroyMounted(runtime, first);
         destroyMounted(runtime, second);
@@ -786,5 +789,129 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
             input.resume();
             main.setBrowserSuspended(false);
         }
+    }
+}
+
+/** Every source-generated active fade index survives a new Main/container. */
+async function verifyFadeRestoreMatrix(runtime: PreparedRuntime): Promise<void> {
+    const store = new runtime.JackalGameStateStore("browser-verification");
+    const serializer = new JackalGameStateSerializer();
+    const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    assert(clock !== undefined, "Missing fade clock");
+    let now = runtime.slick.Sys.getTime();
+    let mounted: MountedGame | null = null;
+    const tick = (count = 1): void => {
+        assert(mounted !== null, "Missing fade runtime");
+        mounted.container.getInput().poll(1024, 960);
+        mounted.main.nextFrameTime = now - (count - 1) * 10;
+        mounted.main.update(mounted.container, count * 10);
+        now += 10;
+    };
+    const retire = (): void => {
+        destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        for (const [stage, completion] of [
+            [0, false],
+            [1, false],
+            [1, true],
+            [5, true]
+        ] as const) {
+            mounted = await mountGame(runtime, false);
+            mounted.container.setLoopSuspended(true);
+            const source = mounted.main;
+            source.startPlayer();
+            source.stageIndex = stage;
+            source.continued = true;
+            source.fading = false;
+            source.fadeListener = null;
+            source.requestMode(Modes.GAME, mounted.container);
+            const world = source.mode;
+            assert(world instanceof GameMode, "Missing source world");
+            assert(source.fading && !source.fadeOut && source.fadeListener === null, "Source entrance ownership");
+            assert(world.playing, "PLAYER/continued CHINOOK did not activate player");
+            if (completion) {
+                while (source.fading) tick();
+                world.stageCompleted();
+                for (let i = 0; i < GameMode.STAGE_COMPLETED_DELAY; i++) tick();
+                assert(source.fading && source.fadeOut && source.fadeListener === world, "Source completion ownership");
+            }
+            const saves: Array<{ raw: string; index: number; requested: string | null }> = [];
+            while (source.mode === world && source.fading) {
+                if (completion) assert(world.stageCompletedFlag && world.stageCompletedDelay === 0, "Completion delay underflow before save");
+                const snapshot = serializer.createSnapshot(source, "fade-matrix");
+                assert(
+                    isSupportedGameStateSnapshot(snapshot) && serializer.isSupportedSnapshotForLoadedResources(source, snapshot),
+                    "Source fade snapshot invalid"
+                );
+                assert(store.save(source, () => true).saved, "Source fade store save failed");
+                const raw = localStorage.getItem(slot);
+                assert(raw !== null, "Missing saved fade bytes");
+                saves.push({ raw, index: source.fadeIndex, requested: snapshot.requestedSongId });
+                tick();
+            }
+            assert(saves.length === 23 && new Set(saves.map((s) => s.index)).size === 23, "Missing active fade indices");
+            retire();
+            for (const saved of saves) {
+                localStorage.setItem(slot, saved.raw);
+                mounted = await mountGame(runtime, true, (fresh) => {
+                    assert(fresh !== source, "Restore reused source Main");
+                    assert(fresh.mode instanceof GameMode, "Fade did not restore GameMode");
+                    assert(fresh.fading && fresh.fadeOut === completion && fresh.fadeIndex === saved.index, "Fade state changed on restore");
+                    assert(fresh.fadeListener === (completion ? fresh.mode : null), "Restored fade callback owner is wrong");
+                });
+                mounted.container.setLoopSuspended(true);
+                const fresh = mounted.main;
+                const restored = fresh.mode;
+                assert(restored instanceof GameMode, "Missing restored gameplay");
+                const requested = fresh.requestMode;
+                const destinations: Modes[] = [];
+                fresh.requestMode = (mode, gc) => {
+                    destinations.push(mode);
+                    requested.call(fresh, mode, gc);
+                };
+                try {
+                    const remaining = completion ? 23 - saved.index : saved.index + 1;
+                    // Alternating first-tick and later catch-up completion. All
+                    // elapsed ticks are real Main fixed updates with its normal cap.
+                    const catchup = remaining > 1 && saved.index % 2 === 0 ? 2 : 1;
+                    for (let i = 0; i < remaining - catchup; i++) tick();
+                    tick(catchup);
+                    if (completion) {
+                        assert(destinations.length === 1, "Completion callback did not run exactly once");
+                        assert(
+                            stage === 5 ? destinations[0] === Modes.SUNSET : [Modes.HERE, Modes.YEAH, Modes.WE_MADE_IT].includes(destinations[0]!),
+                            "Wrong completion destination"
+                        );
+                        tick();
+                        assert(destinations.length === 1, "Completion repeated");
+                    } else {
+                        assert(destinations.length === 0 && fresh.mode === restored && !fresh.fading, "Entrance became a cutscene");
+                        assert(restored.stageIndex === stage && restored.playing, "Entrance gameplay changed");
+                        const recaptured = serializer.createSnapshot(fresh, "fade-matrix");
+                        assert(
+                            recaptured.requestedSongId === saved.requested && fresh.currentSong === fresh.requestedSong,
+                            "Entrance stage song ownership changed"
+                        );
+                    }
+                    const result = serializer.createSnapshot(fresh, "fade-matrix");
+                    assert(
+                        isSupportedGameStateSnapshot(result) && serializer.isSupportedSnapshotForLoadedResources(fresh, result),
+                        "Continued fade snapshot invalid"
+                    );
+                } finally {
+                    fresh.requestMode = requested;
+                }
+                retire();
+            }
+        }
+        console.log("Jackal fade matrix passed: 92 fresh restores, every index, PLAYER/CHINOOK and ordinary/final completion.");
+    } finally {
+        retire();
+        store.clear(() => true);
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
     }
 }

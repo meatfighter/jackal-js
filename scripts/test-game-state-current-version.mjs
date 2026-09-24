@@ -919,3 +919,21 @@ test("runtime descriptor validators cover every browser-only entity asset choice
     assert.equal(runtimeFields.isEntityRuntimeFields("Bomb", null), true);
     assert.equal(runtimeFields.isEntityRuntimeFields("Bomb", {}), false);
 });
+
+test("GameMode active fade ownership is consistent with stage completion", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    for (const [fading, fadeOut, completed, delay, expected] of [
+        [true, false, false, 228, true],
+        [true, false, true, 0, false],
+        [true, true, true, 0, true],
+        [true, true, false, 0, false],
+        [true, true, true, 1, false],
+        [false, true, false, 228, true],
+        [false, false, true, 3, true]
+    ]) {
+        const s = gameSnapshot(fields, schema.GAME_STATE_VERSION, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+        Object.assign(s.mainFields, { fading, fadeOut, fadeIndex: 22 });
+        Object.assign(s.gameMode.fields, { stageCompletedFlag: completed, stageCompletedDelay: delay });
+        assert.equal(validator.isSupportedGameStateSnapshot(s), expected, JSON.stringify({ fading, fadeOut, completed, delay }));
+    }
+});

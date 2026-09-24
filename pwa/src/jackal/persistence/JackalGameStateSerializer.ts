@@ -303,7 +303,16 @@ export class JackalGameStateSerializer {
     }
 
     private restoreFadeListener(main: Main, mode: object): void {
-        main.fadeListener = main.fading && this.isFadeListener(mode) ? mode : null;
+        if (!main.fading) {
+            main.fadeListener = null;
+            return;
+        }
+        if (mode instanceof GameMode) {
+            // Entrance fades have no callback; completed-stage fade-out owns one.
+            main.fadeListener = main.fadeOut && mode.stageCompletedFlag && mode.stageCompletedDelay === 0 ? mode : null;
+            return;
+        }
+        main.fadeListener = this.isFadeListener(mode) ? mode : null;
     }
 
     private isFadeListener(value: object): value is IFadeListener {

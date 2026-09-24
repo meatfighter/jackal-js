@@ -282,6 +282,13 @@ public final class GameModeBoundaryHarness {
     require(w.cameras == 0 && w.main.fades == 0 && w.stageCompletedDelay == 1, "Stale GameMode tail");
     w = new GameMode(); w.stageCompleted = true; w.update(gc);
     require(w.cameras == 1 && w.main.fades == 1 && w.stageCompletedDelay == 0, "Normal stage-completion tail changed");
+    for(int playingCase=0;playingCase<2;playingCase++){
+      w=new GameMode();w.playing=playingCase==1;w.stageCompleted=true;w.stageCompletedDelay=3;
+      w.update(gc);require(w.stageCompletedDelay==2&&w.main.fades==0,"Early fade");
+      w.update(gc);require(w.stageCompletedDelay==1&&w.main.fades==0,"Early fade");
+      for(int i=0;i<40;i++){w.update(gc);require(w.stageCompletedDelay==0&&w.main.fades==1,"Completion counter underflow/restart");}
+    }
+    w=new GameMode();w.stageCompletedDelay=3;for(int i=0;i<40;i++)w.update(gc);require(w.stageCompletedDelay==3&&w.main.fades==0,"Nonterminal countdown");
     System.out.println("PASS Java pause and mode ownership boundaries");
   }
 }
@@ -296,4 +303,29 @@ public final class GameModeBoundaryHarness {
     } finally {
         rmSync(directory, { recursive: true, force: true });
     }
+});
+
+test("TS stage completion saturates and starts only one fade", () => {
+    for (const playing of [false, true]) {
+        const f = tsFixture();
+        f.world.playing = playing;
+        f.world.stageCompletedFlag = true;
+        f.world.stageCompletedDelay = 3;
+        f.tick();
+        assert.equal(f.world.stageCompletedDelay, 2);
+        assert.equal(f.calls.fade, 0);
+        f.tick();
+        assert.equal(f.world.stageCompletedDelay, 1);
+        assert.equal(f.calls.fade, 0);
+        for (let i = 0; i < 40; i++) {
+            f.tick();
+            assert.equal(f.world.stageCompletedDelay, 0);
+            assert.equal(f.calls.fade, 1);
+        }
+    }
+    const f = tsFixture();
+    f.world.stageCompletedDelay = 3;
+    for (let i = 0; i < 40; i++) f.tick();
+    assert.equal(f.world.stageCompletedDelay, 3);
+    assert.equal(f.calls.fade, 0);
 });

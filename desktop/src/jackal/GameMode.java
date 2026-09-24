@@ -936,7 +936,7 @@ public class GameMode implements IMode, IFadeListener {
       cameraTrackPlayer();
     }
     
-    if (stageCompleted && --stageCompletedDelay == 0) {
+    if (stageCompleted && stageCompletedDelay > 0 && --stageCompletedDelay == 0) {
       main.startFade(true, this);    
     }    
   }

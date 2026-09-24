@@ -262,6 +262,9 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (gameMode.fields.stageIndex !== mainFields.stageIndex || !isGameModeFieldsValid(gameMode.fields, entityIds, entityTypes)) {
         return false;
     }
+    if (!isGameModeFadeStateConsistent(mainFields, gameMode.fields)) {
+        return false;
+    }
     const paused = gameMode.fields.paused;
     const currentSongState = snapshot.currentSongState;
     if (typeof paused !== "boolean" || !isSongSnapshot(currentSongState)) {
@@ -987,4 +990,10 @@ function hasExactFields(value: object, fields: readonly string[]): boolean {
 
 function isRecord(value: unknown): value is UnknownRecord {
     return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isGameModeFadeStateConsistent(mainFields: EncodedRecord, gameModeFields: EncodedRecord): boolean {
+    if (mainFields.fading !== true) return true;
+    if (mainFields.fadeOut === true) return gameModeFields.stageCompletedFlag === true && gameModeFields.stageCompletedDelay === 0;
+    return gameModeFields.stageCompletedFlag === false;
 }

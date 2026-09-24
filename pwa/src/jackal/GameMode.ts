@@ -1021,7 +1021,7 @@ export class GameMode implements IMode, IFadeListener {
             this.cameraTrackPlayer();
         }
 
-        if (this.stageCompletedFlag && --this.stageCompletedDelay === 0) {
+        if (this.stageCompletedFlag && this.stageCompletedDelay > 0 && --this.stageCompletedDelay === 0) {
             this.main.startFade(true, this);
         }
     }
