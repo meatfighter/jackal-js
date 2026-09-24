@@ -45,7 +45,7 @@ function whileStatementInUpdate() {
 }
 
 async function loadTimingHarness() {
-    const methodNames = ["update", "advanceFade", "updateMusic", "applyRequestedSongChange", "startFade", "requestSong", "resetNextFrameTime"];
+    const methodNames = ["setMode", "update", "advanceFade", "updateMusic", "applyRequestedSongChange", "startFade", "requestSong", "resetNextFrameTime"];
     const methods = methodNames.map((name) => method(name).getText(mainFile)).join("\n\n");
     const source = `
 let now = 0;
@@ -69,7 +69,7 @@ class Main {
         this.currentSong = null;
         this.requestedSong = null;
         this.closeRequestedFlag = false;
-        this.input = { snap() {} };
+        this.input = { snap() {}, clearKeyPressedRecord() {} };
         this.mode = { update() {} };
     }
 
@@ -98,7 +98,7 @@ export { Main };
 
 function makeMain(Main) {
     const main = new Main();
-    main.input = { snap() {} };
+    main.input = { snap() {}, clearKeyPressedRecord() {} };
     main.mode = { update() {} };
     main.fullScreenToggleCheck = () => {};
     return main;
@@ -304,4 +304,73 @@ test("screen fading remains visually isolated from music and sound-effect volume
     assert.doesNotMatch(combined, /setVolume|volume|Music|Sound|currentSong|requestedSong/);
     assert.match(startFadeText, /this\.fadeIndex\s*=\s*0/);
     assert.match(startFadeText, /this\.fadeIndex\s*=\s*Main\.FADES\.length\s*-\s*1/);
+});
+
+for (const later of [false, true])
+    test(`real setMode primes once at ${later ? "later catch-up" : "first"} fade completion`, async () => {
+        const { Main, setNow } = await loadTimingHarness();
+        const main = makeMain(Main);
+        const events = [];
+        const song = { play: () => events.push("song.play"), update: () => events.push("song.update"), stop: () => events.push("song.stop") };
+        const destination = {
+            init() {
+                events.push("init");
+                main.requestSong(song);
+            },
+            update() {
+                events.push("destination.update");
+            }
+        };
+        main.input = { clearKeyPressedRecord: () => events.push("clear"), snap: () => events.push("snap") };
+        main.mode = { update: () => events.push("outgoing.update") };
+        main.fading = true;
+        main.fadeOut = true;
+        main.fadeIndex = later ? 21 : 22;
+        main.fadeListener = {
+            fadeCompleted() {
+                events.push("fade");
+                main.setMode(destination, {});
+            }
+        };
+        setNow(later ? 10 : 0);
+        main.update({}, 0);
+        assert.deepEqual(
+            events,
+            later
+                ? ["snap", "outgoing.update", "fade", "clear", "init", "destination.update", "song.play", "snap", "destination.update"]
+                : ["fade", "clear", "init", "destination.update", "song.play", "song.update", "snap", "destination.update"]
+        );
+        assert.equal(main.mode, destination);
+        assert.equal(main.nextFrameTime, later ? 20 : 10);
+        events.length = 0;
+        setNow(later ? 20 : 10);
+        main.update({}, 0);
+        assert.deepEqual(events, ["song.update", "snap", "destination.update"]);
+    });
+
+test("mode-driven real setMode primes the destination and resets catch-up without a second outgoing tick", async () => {
+    const { Main, setNow } = await loadTimingHarness();
+    const main = makeMain(Main);
+    const events = [];
+    main.input = { clearKeyPressedRecord: () => events.push("clear"), snap: () => events.push("snap") };
+    const destination = {
+        init() {
+            events.push("init");
+        },
+        update() {
+            events.push("prime");
+        }
+    };
+    main.mode = {
+        update() {
+            events.push("outgoing");
+            main.setMode(destination, {});
+            return;
+        }
+    };
+    setNow(100);
+    main.update({}, 0);
+    assert.deepEqual(events, ["snap", "outgoing", "clear", "init", "prime"]);
+    assert.equal(main.mode, destination);
+    assert.equal(main.nextFrameTime, 110);
 });

@@ -1,3 +1,4 @@
+import { IntroMode } from "./jackal/IntroMode.js";
 import { ContinueMode } from "./jackal/ContinueMode.js";
 import { GameMode } from "./jackal/GameMode.js";
 import { Mine } from "./jackal/Mine.js";
@@ -166,11 +167,19 @@ async function verify(): Promise<void> {
         // Save a real terminal death countdown, retain it through suspension,
         // then restore it into a fresh runtime through the production store.
         second.container.setLoopSuspended(true);
+        second.main.fading = false;
+        second.main.fadeListener = null;
         second.main.startPlayer();
         second.main.continued = true;
         second.main.requestMode(Modes.GAME, second.container);
         const deathWorld = second.main.mode;
         assert(deathWorld instanceof GameMode, "Death reload needs gameplay");
+        // Finish the actual stage entrance before killing and saving the player.
+        for (let i = 0; i < 500 && (!deathWorld.playing || second.main.fading); i++) {
+            second.main.nextFrameTime = 0;
+            second.main.update(second.container, 80);
+        }
+        assert(deathWorld.playing && !second.main.fading, "Death reload stage entrance did not finish");
         second.main.extraLives = 0;
         second.main.extraLivesStr = "0";
         deathWorld.player.explode();
@@ -194,6 +203,13 @@ async function verify(): Promise<void> {
             assert(isSupportedGameStateSnapshot(snapshot), "Restored death countdown did not recapture validly");
         });
         assert(deathRestoreObserved, "Death reload restore hook did not run");
+        verifyFinalLifeTransition(runtime, second, "yes");
+        destroyMounted(runtime, second);
+        second = null;
+        second = await mountGame(runtime, true, (main) => {
+            assert(main.mode instanceof GameMode && main.mode.player.respawning === deathCountdown, "NO case did not restore the original death countdown");
+        });
+        verifyFinalLifeTransition(runtime, second, "no");
         verifyFinalLifeTransition(runtime, second);
         verifyInputEditor(runtime, second);
         verifyEditorResume(second.main, second.container);
@@ -436,7 +452,7 @@ function verifyEditorResume(main: RuntimeMain, container: MountedGame["container
 }
 
 /** Final-life ownership must end before old movement, weapons, and collisions. */
-function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGame): void {
+function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGame, restoredChoice?: "yes" | "no"): void {
     const { main, container } = mounted;
     container.setLoopSuspended(true);
     const input = container.getInput();
@@ -467,6 +483,7 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
             ["KeyJ", "j"],
             ["KeyK", "k"],
             ["KeyD", "d"],
+            ["KeyS", "s"],
             ["Enter", "Enter"]
         ]) {
             key("keyup", code!, value!);
@@ -490,132 +507,141 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
         main.buttonMapping.keyGun = runtime.slick.Input.KEY_J;
         main.buttonMapping.keyGrenade = runtime.slick.Input.KEY_K;
         main.buttonMapping.keyRight = runtime.slick.Input.KEY_D;
+        main.buttonMapping.keyDown = runtime.slick.Input.KEY_S;
         main.buttonMapping.keyStart = runtime.slick.Input.KEY_ENTER;
 
-        for (const scenario of [
-            { name: "idle", gun: false, secondary: false, hazard: false },
-            { name: "held-gun", gun: true, secondary: false, hazard: false },
-            { name: "held-secondary", gun: false, secondary: true, hazard: false },
-            { name: "contact", gun: false, secondary: false, hazard: true },
-            { name: "held-weapons-and-contact", gun: true, secondary: true, hazard: true }
-        ]) {
+        for (const scenario of restoredChoice
+            ? [{ name: "restored-" + restoredChoice, gun: true, secondary: false, hazard: true }]
+            : [
+                  { name: "idle", gun: false, secondary: false, hazard: false },
+                  { name: "held-gun", gun: true, secondary: false, hazard: false },
+                  { name: "held-secondary", gun: false, secondary: true, hazard: false },
+                  { name: "contact", gun: false, secondary: false, hazard: true },
+                  { name: "held-weapons-and-contact", gun: true, secondary: true, hazard: true }
+              ]) {
             release();
-            main.stopAllSongs();
-            main.stopAllSoundEffects();
-            main.startPlayer();
-            main.continued = true;
-            main.requestMode(Modes.GAME, container);
+            if (!restoredChoice) {
+                main.stopAllSongs();
+                main.stopAllSoundEffects();
+                main.startPlayer();
+                main.continued = true;
+                main.requestMode(Modes.GAME, container);
+            }
             const world = currentMode();
             assert(world instanceof GameMode, scenario.name + ": GameMode not installed");
             const player = world.player;
-            // A controlled arena in a fully initialized real GameMode. No unrelated
-            // stage triggers, enemies or rewards may obscure the transition under test.
-            world.triggerY = 0;
-            world.playing = true;
-            world.paused = false;
-            world.bossCameraPan = false;
-            world.endingCameraPan = false;
-            world.stageCompletedFlag = false;
-            for (const list of world.elements) list.clear();
-            world.enemies.clear();
-            world.solids.clear();
-            world.mines.clear();
-            for (const row of world.typesMap) row.fill(GameMode.TYPE_EMPTY);
-            player.x = 512;
-            player.y = 480;
-            player.angle = player.nextAngle = player.displayAngle = 0;
-            player.angleSteps = 0;
-            player.invincible = 0;
-            player.pows = player.releaseablePows = 0;
-            main.fading = false;
-            main.fadeListener = null;
-            main.stopAllSongs();
-            main.requestSong(main.stageSong0);
-            tick();
-            assert(currentSong() === main.stageSong0, scenario.name + ": seed song not started");
-            if (scenario.name === "idle") {
-                // Real input and a live contact hazard: accepting Pause must stop
-                // every world callback before movement, weapons, or collision.
-                const pauseMine = new Mine(player.x - 16, player.y - 16);
-                pauseMine.points = 0;
-                const pauseMark = restores.length;
-                let worldCalls = 0;
-                const frozenState = (): string =>
-                    JSON.stringify([
-                        player.x,
-                        player.y,
-                        player.respawning,
-                        player.gunArmed,
-                        world.cameraX,
-                        world.cameraY,
-                        world.waterAlphaIndex,
-                        world.triggerY,
-                        world.stageCompletedDelay,
-                        world.elements.map((list) => list.size()),
-                        main.score,
-                        main.extraLives
-                    ]);
-                try {
-                    for (const [target, method] of [
-                        [world, "processTriggers"],
-                        [world, "cameraTrackPlayer"],
-                        [player, "update"],
-                        [pauseMine, "update"],
-                        [pauseMine, "bump"]
-                    ] as const) {
-                        const original = Reflect.get(target, method) as (...args: unknown[]) => unknown;
-                        replace(target, method, (...args: unknown[]): unknown => {
-                            worldCalls++;
-                            return original.apply(target, args);
-                        });
+            if (!restoredChoice) {
+                // A controlled arena in a fully initialized real GameMode. No unrelated
+                // stage triggers, enemies or rewards may obscure the transition under test.
+                world.triggerY = 0;
+                world.playing = true;
+                world.paused = false;
+                world.bossCameraPan = false;
+                world.endingCameraPan = false;
+                world.stageCompletedFlag = false;
+                for (const list of world.elements) list.clear();
+                world.enemies.clear();
+                world.solids.clear();
+                world.mines.clear();
+                for (const row of world.typesMap) row.fill(GameMode.TYPE_EMPTY);
+                player.x = 512;
+                player.y = 480;
+                player.angle = player.nextAngle = player.displayAngle = 0;
+                player.angleSteps = 0;
+                player.invincible = 0;
+                player.pows = player.releaseablePows = 0;
+                main.fading = false;
+                main.fadeListener = null;
+                main.stopAllSongs();
+                main.requestSong(main.stageSong0);
+                tick();
+                assert(currentSong() === main.stageSong0, scenario.name + ": seed song not started");
+                if (scenario.name === "idle") {
+                    // Real input and a live contact hazard: accepting Pause must stop
+                    // every world callback before movement, weapons, or collision.
+                    const pauseMine = new Mine(player.x - 16, player.y - 16);
+                    pauseMine.points = 0;
+                    const pauseMark = restores.length;
+                    let worldCalls = 0;
+                    const frozenState = (): string =>
+                        JSON.stringify([
+                            player.x,
+                            player.y,
+                            player.respawning,
+                            player.gunArmed,
+                            world.cameraX,
+                            world.cameraY,
+                            world.waterAlphaIndex,
+                            world.triggerY,
+                            world.stageCompletedDelay,
+                            world.elements.map((list) => list.size()),
+                            main.score,
+                            main.extraLives
+                        ]);
+                    try {
+                        for (const [target, method] of [
+                            [world, "processTriggers"],
+                            [world, "cameraTrackPlayer"],
+                            [player, "update"],
+                            [pauseMine, "update"],
+                            [pauseMine, "bump"]
+                        ] as const) {
+                            const original = Reflect.get(target, method) as (...args: unknown[]) => unknown;
+                            replace(target, method, (...args: unknown[]): unknown => {
+                                worldCalls++;
+                                return original.apply(target, args);
+                            });
+                        }
+                        const before = frozenState();
+                        key("keydown", "KeyD", "d");
+                        key("keydown", "KeyJ", "j");
+                        key("keydown", "Enter", "Enter");
+                        tick();
+                        assert(world.paused && worldCalls === 0 && frozenState() === before, "Pause entry ran world work");
+                        for (let i = 0; i < 5; i++) tick();
+                        assert(world.paused && worldCalls === 0 && frozenState() === before, "Held Pause advanced the world");
+                        key("keyup", "Enter", "Enter");
+                        tick();
+                        key("keydown", "Enter", "Enter");
+                        tick();
+                        assert(!world.paused && worldCalls === 0 && frozenState() === before, "Unpause tick ran world work");
+                        tick();
+                        assert(worldCalls > 0 && frozenState() !== before, "World did not resume on the following tick");
+                        assert(player.respawning === Player.RESPAWN_DELAY, "Live hazard was not exercised after unpause");
+                    } finally {
+                        unwind(pauseMark);
+                        release();
+                        for (const list of world.elements) list.clear();
+                        world.enemies.clear();
+                        world.solids.clear();
+                        world.mines.clear();
+                        player.respawning = 0;
+                        player.x = 512;
+                        player.y = 480;
                     }
-                    const before = frozenState();
-                    key("keydown", "KeyD", "d");
-                    key("keydown", "KeyJ", "j");
-                    key("keydown", "Enter", "Enter");
-                    tick();
-                    assert(world.paused && worldCalls === 0 && frozenState() === before, "Pause entry ran world work");
-                    for (let i = 0; i < 5; i++) tick();
-                    assert(world.paused && worldCalls === 0 && frozenState() === before, "Held Pause advanced the world");
-                    key("keyup", "Enter", "Enter");
-                    tick();
-                    key("keydown", "Enter", "Enter");
-                    tick();
-                    assert(!world.paused && worldCalls === 0 && frozenState() === before, "Unpause tick ran world work");
-                    tick();
-                    assert(worldCalls > 0 && frozenState() !== before, "World did not resume on the following tick");
-                    assert(player.respawning === Player.RESPAWN_DELAY, "Live hazard was not exercised after unpause");
-                } finally {
-                    unwind(pauseMark);
-                    release();
-                    for (const list of world.elements) list.clear();
-                    world.enemies.clear();
-                    world.solids.clear();
-                    world.mines.clear();
-                    player.respawning = 0;
-                    player.x = 512;
-                    player.y = 480;
                 }
+                main.extraLives = 0;
+                main.extraLivesStr = "0";
+                player.explode();
+                assert(currentSong() === null && requestedSong() === null, scenario.name + ": death did not clear songs");
+                assert(player.respawning === Player.RESPAWN_DELAY, "Changed death countdown");
             }
-            main.extraLives = 0;
-            main.extraLivesStr = "0";
-            player.explode();
-            assert(currentSong() === null && requestedSong() === null, scenario.name + ": death did not clear songs");
-            assert(player.respawning === Player.RESPAWN_DELAY, "Changed death countdown");
+            assert(player.respawning > 0 && main.extraLives === 0, "Expected same restored final-life countdown");
             const deathTicks = player.respawning;
             // Introduce a real contact hazard during the death interval. Mine uses
             // production Enemy.bump(), not an audio-canceling test stub.
             const hazard = scenario.hazard ? new Mine(player.x - 16, player.y - 16) : null;
             if (hazard !== null) hazard.points = 0; // An earned reserve life would change the branch.
-            player.gunArmed = 0;
-            player.shootReleased = true;
-            player.fireReleased = true;
-            player.weaponArmed = true;
+            if (!restoredChoice) player.gunArmed = 0;
+            if (!restoredChoice) player.shootReleased = true;
+            if (!restoredChoice) player.fireReleased = true;
+            if (!restoredChoice) player.weaponArmed = true;
             if (scenario.gun) key("keydown", "KeyJ", "j");
             if (scenario.secondary) key("keydown", "KeyK", "k");
             if (scenario.gun || scenario.secondary) key("keydown", "KeyD", "d");
 
             let handedOff = false;
+            let continueInstalls = 0;
             let playerAtHandoff: string | null = null;
             let entitiesAtHandoff = -1;
             let scoreAtHandoff = -1;
@@ -654,6 +680,7 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
                 replace(main, "setMode", (mode: Parameters<RuntimeMain["setMode"]>[0], gc: Parameters<RuntimeMain["setMode"]>[1]): void => {
                     setMode.call(main, mode, gc);
                     if (mode instanceof ContinueMode) {
+                        continueInstalls++;
                         handedOff = true;
                         playerAtHandoff = state();
                         entitiesAtHandoff = entityCount();
@@ -687,7 +714,19 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
                 }
                 for (let i = 0; i < deathTicks; i++) tick();
                 const menu = currentMode();
-                assert(handedOff && menu instanceof ContinueMode, scenario.name + ": no Continue handoff");
+                assert(
+                    handedOff && continueInstalls === 1 && menu instanceof ContinueMode,
+                    scenario.name +
+                        ": no Continue handoff " +
+                        JSON.stringify({
+                            installs: continueInstalls,
+                            mode: main.mode?.constructor.name,
+                            countdown: player.respawning,
+                            playing: world.playing,
+                            paused: world.paused,
+                            lives: main.extraLives
+                        })
+                );
                 assert(!menu.optionSelectedFlag && !menu.menu.selectionMade, scenario.name + ": unintended menu selection");
                 assert(state() === playerAtHandoff, scenario.name + ": old player ran after handoff");
                 assert(entityCount() === entitiesAtHandoff, scenario.name + ": stale projectile/explosion created");
@@ -711,18 +750,29 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
                 release();
                 tick();
                 assert(!menu.optionSelectedFlag, scenario.name + ": release selected YES");
+                if (restoredChoice === "no") {
+                    key("keydown", "KeyS", "s");
+                    tick();
+                    key("keyup", "KeyS", "s");
+                    tick();
+                }
                 key("keydown", "Enter", "Enter");
                 tick();
                 key("keyup", "Enter", "Enter");
-                assert(menu.optionSelectedFlag && menu.selectedIndex === 0, scenario.name + ": fresh YES failed");
+                assert(menu.optionSelectedFlag && menu.selectedIndex === (restoredChoice === "no" ? 1 : 0), scenario.name + ": fresh selection failed");
                 for (let i = 0; i < 60; i++) tick();
                 const restarted = currentMode();
                 const restartedSong = currentSong();
-                assert(restarted instanceof GameMode && restarted !== world, scenario.name + ": YES reused old world");
-                assert(
-                    restartedSong !== null && restartedSong !== main.continueSong && restartedSong.playing,
-                    scenario.name + ": restarted level has no active song"
-                );
+                if (restoredChoice === "no") {
+                    assert(restarted instanceof IntroMode, "Fresh NO did not return to Intro");
+                    assert(currentSong() !== main.continueSong, "NO retained Continue music");
+                } else {
+                    assert(restarted instanceof GameMode && restarted !== world, scenario.name + ": YES reused old world");
+                    assert(
+                        restartedSong !== null && restartedSong !== main.continueSong && restartedSong.playing,
+                        scenario.name + ": restarted level has no active song"
+                    );
+                }
             } finally {
                 unwind(mark);
             }
