@@ -240,6 +240,8 @@ export class Player {
                         this.main.konamiCode.enabled = false;
                     }
                     this.main.requestMode(Modes.CONTINUE, this.gameMode.gc);
+                    // Continue owns the presentation; this outgoing Player must stop now.
+                    return;
                 }
             } else {
                 return;

@@ -833,6 +833,9 @@ public class GameMode implements IMode, IFadeListener {
       paused = true;
       main.playSound(main.pauseSound);
       gc.setMusicOn(false);
+      // Accepting Pause terminates this simulation tick, just like unpausing.
+      main.resetNextFrameTime();
+      return;
     }    
     
     if (++waterAlphaIndex == WATER_ALPHAS_PERIOD) {
@@ -926,6 +929,10 @@ public class GameMode implements IMode, IFadeListener {
      
     if (playing) {
       player.update();
+      // Player.update may synchronously replace this mode with Continue.
+      if (main.mode != this) {
+        return;
+      }
       cameraTrackPlayer();
     }
     

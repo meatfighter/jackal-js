@@ -159,3 +159,209 @@ test("actual Java and TypeScript Player mechanics stay synchronized", async (t) 
         rmSync(workDir, { recursive: true, force: true });
     }
 });
+
+// Append to scripts/test-java-ts-player-differential.mjs. Existing tests remain.
+test("Java final-life handoff is terminal, but a living last jeep and reserve respawn remain playable", (t) => {
+    if (!toolAvailable("javac", ["-version"]) || !toolAvailable("java", ["-version"])) {
+        t.skip("A JDK is required for the final-life Java behavioral regression.");
+        return;
+    }
+    const workDir = mkdtempSync(join(tmpdir(), "jackal-final-life-"));
+    try {
+        const { sourceRoot, classRoot } = javaSources(workDir);
+        // Reuse the existing real Player.java copy and its dependency fixtures.
+        // Only the external mode/song authority stub needs observability here.
+        write(
+            join(sourceRoot, "Main.java"),
+            `
+package jackal;
+import java.awt.geom.Point2D;
+import java.util.Random;
+public class Main {
+  public static Main main;
+  public static GameMode gameMode;
+  public IInput input;
+  public boolean hasMissiles, continueQueued;
+  public int missilePower, extraLives = 4, transfers, lateStops;
+  public KonamiCode konamiCode = new KonamiCode();
+  public Random random = new Random(1);
+  public Object pickupSound = new Object(), weaponUpgradeSound = new Object(), playerExplodeSound = new Object();
+  public Object[] playerWakes = new Object[6];
+  public Object[][] players = new Object[4][5];
+  public void upgradeWeapon(boolean always) {}
+  public void playSound(Object sound) {}
+  public void stopSong() {
+    if (transfers != 0) lateStops++;
+    continueQueued = false;
+  }
+  public void requestMode(Modes mode, Object gc) {
+    if (mode != Modes.CONTINUE) throw new AssertionError("Unexpected mode");
+    transfers++;
+    continueQueued = true;
+  }
+  public void loseLife() { extraLives--; }
+  public void draw(Object image, float x, float y, float alpha) {}
+  public void drawRotatedAlpha(Object image, float x, float y, float angle, float alpha) {}
+  public void drawVehicle(Object[] images, float x, float y, float angle) {}
+  public static Point2D.Float rotate(float x, float y, float angle) {
+    float cos = (float)Math.cos(angle), sin = (float)Math.sin(angle);
+    return new Point2D.Float(x * cos - y * sin, x * sin + y * cos);
+  }
+}
+`
+        );
+        write(
+            join(sourceRoot, "FinalLifeHarness.java"),
+            `
+package jackal;
+public final class FinalLifeHarness {
+  static int collisionChecks;
+  static void require(boolean condition, String message) {
+    if (!condition) throw new AssertionError(message);
+  }
+  static Player setup(InputStub input, final boolean overlap) {
+    Main.main = new Main();
+    Main.gameMode = new GameMode();
+    Main.main.input = input;
+    Grenade.count = PlayerMissile.count = PlayerBullet.count = collisionChecks = 0;
+    Main.gameMode.mines.add(new Enemy() {
+      @Override public boolean bump(float a, float b, float c, float d, boolean invincible) {
+        collisionChecks++;
+        return overlap && !invincible;
+      }
+    });
+    Player player = new Player();
+    player.x = 512; player.y = 480;
+    player.angle = player.nextAngle = 0;
+    player.displayAngle = 0;
+    player.invincible = 0;
+    return player;
+  }
+  static void terminal(String name, boolean gun, boolean secondary, boolean missiles,
+      boolean overlap, int gunDelay, boolean released) {
+    InputStub input = new InputStub();
+    input.shoot = gun; input.fire = secondary; input.right = gun || secondary;
+    Player player = setup(input, overlap);
+    Main.main.extraLives = 0;
+    Main.main.hasMissiles = missiles;
+    Main.main.missilePower = 2;
+    player.respawning = 1;
+    player.shootReleased = released;
+    player.gunArmed = gunDelay;
+    player.fireReleased = true;
+    player.weaponArmed = true;
+    player.update();
+    require(Main.main.transfers == 1, name + ": not exactly one Continue transfer");
+    require(Main.main.continueQueued && Main.main.lateStops == 0, name + ": pending Continue canceled");
+    require(collisionChecks == 0, name + ": old collision processing continued");
+    require(PlayerBullet.count == 0 && Grenade.count == 0 && PlayerMissile.count == 0, name + ": stale projectile");
+    require(player.x == 512 && player.y == 480, name + ": stale movement");
+    require(player.gunArmed == gunDelay && player.shootReleased == released && player.weaponArmed,
+        name + ": stale weapon bookkeeping");
+    require(player.respawning == 0 && Main.main.extraLives == 0, name + ": invalid terminal state");
+    System.out.println("PASS " + name);
+  }
+  public static void main(String[] args) {
+    terminal("final-gun", true, false, false, false, 0, true);
+    terminal("final-idle", false, false, false, false, 0, false);
+    terminal("final-gun-cooldown-one", true, false, false, false, 1, false);
+    terminal("final-gun-cooldown-nine", true, false, false, false, 9, false);
+    terminal("final-grenade", false, true, false, false, 0, false);
+    // Deliberately exercise the alternate branch even though normal explode()
+    // clears missile ownership. No stale weapon branch may execute after transfer.
+    terminal("final-missile", false, true, true, false, 0, false);
+    terminal("final-contact", false, false, false, true, 0, false);
+    terminal("final-gun-contact", true, false, false, true, 0, true);
+
+    InputStub input = new InputStub();
+    input.right = input.shoot = true;
+    Player player = setup(input, false);
+    Main.main.extraLives = 0;
+    player.shootReleased = true;
+    player.update();
+    require(Main.main.transfers == 0 && player.x > 512 && PlayerBullet.count == 1,
+        "Zero reserves is still a living playable jeep");
+    System.out.println("PASS last-active-life");
+
+    player = setup(input, true);
+    Main.main.extraLives = 1;
+    player.respawning = 1;
+    player.shootReleased = true;
+    player.update();
+    require(Main.main.transfers == 0 && Main.main.extraLives == 0 && player.x > 512,
+        "Reserve respawn was accidentally terminated");
+    require(player.invincible == Player.INVINCIBLE_DELAY - 1 && collisionChecks == 1,
+        "Reserve respawn lost normal invincibility/collision behavior");
+    System.out.println("PASS reserve-respawn");
+
+    player = setup(input, true);
+    Main.main.extraLives = 0;
+    player.respawning = 2;
+    player.gunArmed = 1;
+    player.update();
+    require(player.respawning == 1 && Main.main.transfers == 0 && player.x == 512 &&
+        player.gunArmed == 1 && PlayerBullet.count == 0 && collisionChecks == 0,
+        "Intermediate death countdown executed gameplay");
+    System.out.println("PASS death-countdown");
+
+    player = setup(input, false);
+    Main.main.extraLives = 0;
+    Main.gameMode.stageCompleted = true;
+    player.respawning = 1;
+    player.update();
+    require(Main.main.transfers == 0 && !Main.main.continueQueued,
+        "Stage-completed precedence was changed");
+    System.out.println("PASS stage-completed-precedence");
+  }
+}
+`
+        );
+        const files = [
+            "IInput",
+            "Enemy",
+            "FriendlySoldierType",
+            "FriendlySoldier",
+            "Explosion",
+            "Grenade",
+            "PlayerMissile",
+            "PlayerBullet",
+            "Modes",
+            "KonamiCode",
+            "InputStub",
+            "GameMode",
+            "Main",
+            "Player",
+            "FinalLifeHarness"
+        ].map((name) => join(sourceRoot, `${name}.java`));
+        const compile = spawnSync("javac", ["-encoding", "UTF-8", "-d", classRoot, ...files], { encoding: "utf8" });
+        assert.equal(compile.status, 0, `Final-life javac failed:\n${compile.stdout}\n${compile.stderr}`);
+        const run = spawnSync("java", ["-cp", classRoot, "jackal.FinalLifeHarness"], { encoding: "utf8" });
+        assert.equal(run.status, 0, `Final-life Java failed:\n${run.stdout}\n${run.stderr}`);
+        assert.deepEqual(run.stdout.trim().split(/\r?\n/), [
+            "PASS final-gun",
+            "PASS final-idle",
+            "PASS final-gun-cooldown-one",
+            "PASS final-gun-cooldown-nine",
+            "PASS final-grenade",
+            "PASS final-missile",
+            "PASS final-contact",
+            "PASS final-gun-contact",
+            "PASS last-active-life",
+            "PASS reserve-respawn",
+            "PASS death-countdown",
+            "PASS stage-completed-precedence"
+        ]);
+    } finally {
+        rmSync(workDir, { recursive: true, force: true });
+    }
+});
+
+test("both GameMode callers stop before camera tracking when player update changes the active mode", () => {
+    const tsSource = readFileSync(join(rootDir, "pwa", "src", "jackal", "GameMode.ts"), "utf8");
+    const javaSource = readFileSync(join(rootDir, "desktop", "src", "jackal", "GameMode.java"), "utf8");
+    assert.match(
+        tsSource,
+        /this\.player\.update\(\);\s*(?:\/\/[^\n]*\n\s*)*if\s*\(this\.main\.mode\s*!==\s*this\)\s*\{\s*return;\s*\}\s*this\.cameraTrackPlayer\(\);/
+    );
+    assert.match(javaSource, /player\.update\(\);\s*(?:\/\/[^\n]*\n\s*)*if\s*\(main\.mode\s*!=\s*this\)\s*\{\s*return;\s*\}\s*cameraTrackPlayer\(\);/);
+});

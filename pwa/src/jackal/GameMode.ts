@@ -918,6 +918,9 @@ export class GameMode implements IMode, IFadeListener {
             this.paused = true;
             this.main.playSound(this.main.pauseSound);
             this.main.currentSong?.pause();
+            // Accepting Pause terminates this simulation tick, just like unpausing.
+            this.main.resetNextFrameTime();
+            return;
         }
 
         if (++this.waterAlphaIndex === GameMode.WATER_ALPHAS_PERIOD) {
@@ -1011,6 +1014,10 @@ export class GameMode implements IMode, IFadeListener {
 
         if (this.playing) {
             this.player.update();
+            // Player.update may synchronously replace this mode with Continue.
+            if (this.main.mode !== this) {
+                return;
+            }
             this.cameraTrackPlayer();
         }
 

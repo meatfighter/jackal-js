@@ -191,6 +191,8 @@ public class Player {
         } else if (!gameMode.stageCompleted) {
           main.konamiCode.enabled = false;
           main.requestMode(Modes.CONTINUE, gameMode.gc);
+          // Continue owns the presentation; this outgoing Player must stop now.
+          return;
         }       
       } else {
         return;
