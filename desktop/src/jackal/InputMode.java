@@ -67,6 +67,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   public int selectedIndex;
   public boolean listeningForInput;
   public ButtonMapping draftButtonMapping;
+  private final Set<Integer> blockedKeyboardKeys = new HashSet<Integer>();
   public Set<Integer> assignedKeys = new HashSet<Integer>();
   public Set<Integer> assignedControllerBindings = new HashSet<Integer>();
   public String message = "";
@@ -142,12 +143,19 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     draftButtonMapping = copyButtonMapping(buttonMapping);
     assignedKeys.clear();
     assignedControllerBindings.clear();
+    blockedKeyboardKeys.clear();
     message = "";
     armDelay = ARM_DELAY;
+    Input input = gc.getInput();
+    for (int key = 1; key < org.lwjgl.input.Keyboard.KEYBOARD_SIZE; key++) {
+      if (!ButtonMapping.isReservedKey(key) && input.isKeyDown(key)) {
+        blockedKeyboardKeys.add(key);
+      }
+    }
     addInputListeners();
     syncControllerInputState();
-    gc.getInput().clearKeyPressedRecord();
-    gc.getInput().clearControlPressedRecord();
+    input.clearKeyPressedRecord();
+    input.clearControlPressedRecord();
   }
 
   private void addInputListeners() {
@@ -159,11 +167,11 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   }
 
   private void removeInputListeners() {
-    if (!listeningForInput) {
-      return;
+    if (listeningForInput) {
+      gc.getInput().removeKeyListener(this);
+      listeningForInput = false;
     }
-    gc.getInput().removeKeyListener(this);
-    listeningForInput = false;
+    blockedKeyboardKeys.clear();
   }
 
   @Override
@@ -184,26 +192,28 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   }
 
   @Override
-  public void keyPressed(int i, char c) {
-    
-    if (state != STATE_READING) {
+  public void keyPressed(int key, char c) {
+    if (key <= 0 || key >= org.lwjgl.input.Keyboard.KEYBOARD_SIZE
+        || ButtonMapping.isReservedKey(key)) {
       return;
     }
-
-    if (ButtonMapping.isReservedKey(i)) {
+    if (state != STATE_READING || armDelay > 0) {
+      blockedKeyboardKeys.add(key);
       return;
     }
-
-    if (!bindDraftKeyboardKey(i)) {
+    if (!blockedKeyboardKeys.add(key)) {
+      return;
+    }
+    if (!bindDraftKeyboardKey(key)) {
       message = "ALREADY USED";
       return;
     }
-
     advance();
   }
 
   @Override
-  public void keyReleased(int i, char c) {
+  public void keyReleased(int key, char c) {
+    blockedKeyboardKeys.remove(key);
   }
 
   private boolean bindDraftKeyboardKey(int i) {

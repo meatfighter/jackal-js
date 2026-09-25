@@ -1,3 +1,5 @@
+import { Input } from "slick2d-ts";
+import * as NesInputProfile from "./jackal/NesInputProfile.js";
 import { IntroMode } from "./jackal/IntroMode.js";
 import { ContinueMode } from "./jackal/ContinueMode.js";
 import { GameMode } from "./jackal/GameMode.js";
@@ -1011,6 +1013,27 @@ async function verifyNesMapping(runtime: PreparedRuntime): Promise<void> {
             mounted.main.update(mounted.container, 17);
         }
         assert(mode().state === InputMode.STATE_MENU, "Input menu did not open");
+        pad.mapping = "";
+        pad.id = "nonstandard-raw-pad";
+        hardware(null);
+        mounted.container.getInput().poll(1024, 960);
+        for (const raw of [12, 13, 14, 15]) {
+            hardware(raw);
+            const input = mounted.container.getInput();
+            input.poll(1024, 960);
+            assert(input.isButtonPressed(raw, 0) && !input.isControllerButtonDirectional(raw, 0), "Nonstandard browser button stays raw");
+            assert(
+                !input.isControllerUp(0) && !input.isControllerDown(0) && !input.isControllerLeft(0) && !input.isControllerRight(0),
+                "Native fallback leaked into browser"
+            );
+            hardware(null);
+            input.poll(1024, 960);
+        }
+        pad.mapping = "standard";
+        pad.id = "nes-mapping-contract-pad";
+        mounted.container.getInput().poll(1024, 960);
+        mounted.container.getInput().clearControlPressedRecord();
+        await verifyCompactLabels(mounted);
         const wanted = [7, 6, 3, 0, -2, -3, -4];
         for (let cycle = 0; cycle < 2; cycle++) {
             hardware(null);
@@ -1082,6 +1105,7 @@ async function verifyNesMapping(runtime: PreparedRuntime): Promise<void> {
         save();
         for (let i = 0; i < InputMode.DONE_DELAY + 3; i++) tick();
         assert(mode().state === InputMode.STATE_MENU, "Restored review failed");
+        await verifyCompactLabels(mounted);
         // Logical A drives menu Done. The held final Start was not an activation.
         press(-3);
         assert(mode().state === InputMode.STATE_FADE_OUT, "Logical A did not confirm Done");
@@ -1155,5 +1179,110 @@ async function verifyNesMapping(runtime: PreparedRuntime): Promise<void> {
         store.clear(() => true);
         if (descriptor) Object.defineProperty(navigator, "getGamepads", descriptor);
         else Reflect.deleteProperty(navigator, "getGamepads");
+    }
+}
+
+async function verifyCompactLabels(mounted: MountedGame): Promise<void> {
+    const { main, container } = mounted;
+    const original = main.buttonMapping.clone();
+    const input = container.getInput();
+    const canvas = gameHost.querySelector("canvas");
+    assert(canvas !== null, "Label canvas");
+    canvas.focus();
+    const mode = main.mode;
+    assert(mode instanceof InputMode, "Label editor mode");
+    const owner = mode;
+    const refreshName = "refreshInputMappingLines";
+    const linesName = "inputMappingLines";
+    const xName = "inputMappingX";
+    const cell = 32,
+        left = 0,
+        right = 1024;
+    const refresh = (): void => {
+        const f = Reflect.get(owner, refreshName);
+        assert(typeof f === "function", "Production cache refresher");
+        f.call(owner);
+    };
+    try {
+        const variants = [
+            ["ControlLeft", Input.KEY_LCONTROL],
+            ["ControlRight", Input.KEY_RCONTROL],
+            ["AltLeft", Input.KEY_LALT],
+            ["AltRight", Input.KEY_RALT],
+            ["ShiftLeft", Input.KEY_LSHIFT],
+            ["ShiftRight", Input.KEY_RSHIFT],
+            ["MetaLeft", Input.KEY_LWIN],
+            ["MetaRight", Input.KEY_RWIN],
+            ["Enter", Input.KEY_ENTER],
+            ["NumpadEnter", Input.KEY_NUMPADENTER],
+            ["Digit1", Input.KEY_1],
+            ["Numpad1", Input.KEY_NUMPAD1],
+            ["Equal", Input.KEY_EQUALS],
+            ["NumpadAdd", Input.KEY_ADD],
+            ["NumpadDivide", Input.KEY_DIVIDE],
+            ["BracketLeft", Input.KEY_LBRACKET],
+            ["Backslash", Input.KEY_BACKSLASH]
+        ] as const;
+        for (const [code, key] of variants) {
+            canvas.dispatchEvent(new KeyboardEvent("keydown", { code, key: code, bubbles: true }));
+            input.poll(1024, 960);
+            assert(input.isKeyDown(key), `Real DOM code ${code}`);
+            main.buttonMapping.keyUp = key;
+            refresh();
+            const lines: unknown = Reflect.get(owner, linesName);
+            assert(Array.isArray(lines) && typeof lines[0] === "string" && lines[0].includes(ButtonMapping.getKeyText(key)), `Actual row for ${code}`);
+            canvas.dispatchEvent(new KeyboardEvent("keyup", { code, key: code, bubbles: true }));
+            input.poll(1024, 960);
+        }
+        for (let key = -1; key < 256; key++)
+            for (const c of ButtonMapping.getKeyText(key)) {
+                assert(main.fonts[0]![c.charCodeAt(0)] !== null && main.fonts[0]![c.charCodeAt(0)] !== undefined, `Loaded bitmap glyph ${c}`);
+            }
+        for (const row of NesInputProfile.INPUTS) {
+            main.buttonMapping[row.key] = Input.KEY_SEMICOLON;
+            main.buttonMapping[row.controller] = -5;
+        }
+        refresh();
+        const lines: unknown = Reflect.get(owner, linesName);
+        const x: unknown = Reflect.get(owner, xName);
+        assert(Array.isArray(lines) && lines.length === NesInputProfile.INPUTS.length && typeof x === "number", "Actual mapping cache shape");
+        for (const line of lines) {
+            assert(
+                typeof line === "string" && line.includes("SEMICOLON") && line.includes("GP-RIGHT") && x >= left && x + line.length * cell <= right,
+                "Painted mapping row bounds"
+            );
+            for (const c of line) assert(main.fonts[0]![c.charCodeAt(0)] !== null && main.fonts[0]![c.charCodeAt(0)] !== undefined, `Loaded row glyph ${c}`);
+        }
+
+        const originalWidth = container.getWidth(),
+            originalHeight = container.getHeight();
+        const bodyStyle = document.body.getAttribute("style");
+        document.body.style.margin = "0";
+        document.body.style.overflow = "hidden";
+        const update = main.update;
+        main.update = () => {};
+        try {
+            container.setLoopSuspended(false);
+            await new Promise<void>((resolve) => {
+                Reflect.set(window, "compactLabelCapture", {
+                    game: "jackal",
+                    resolve,
+                    resize: async (width: number, height: number): Promise<void> => {
+                        await container.setDisplayMode(width, height, false);
+                    }
+                });
+            });
+        } finally {
+            container.setLoopSuspended(true);
+            main.update = update;
+            await container.setDisplayMode(originalWidth, originalHeight, false);
+            if (bodyStyle === null) document.body.removeAttribute("style");
+            else document.body.setAttribute("style", bodyStyle);
+        }
+    } finally {
+        main.buttonMapping.copyFrom(original);
+        refresh();
+        input.clearKeyPressedRecord();
+        input.clearControlPressedRecord();
     }
 }

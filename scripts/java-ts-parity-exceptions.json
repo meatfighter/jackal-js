@@ -2,7 +2,8 @@
     "javaOnlyFiles": {
         "ControllerSupport": "Desktop JInput controller discovery is replaced by the browser input layer.",
         "JackalAppGameContainer": "Desktop Slick2D container behavior is replaced by the PWA shell and AppGameContainer integration.",
-        "LoadingMode": "Browser resource preparation and loading UI are owned by the PWA shell."
+        "LoadingMode": "Browser resource preparation and loading UI are owned by the PWA shell.",
+        "NativeDpadPolicy": "Native JInput name and legacy-index compatibility policy; browser standard mapping classification intentionally differs."
     },
     "typescriptOnlyFiles": {
         "AudioRegistry": "Browser save-state persistence assigns stable IDs to Jackal Sound objects without changing Java gameplay semantics.",
