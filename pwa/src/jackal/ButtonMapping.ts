@@ -4,6 +4,44 @@ export type MappingWriteFailureReason = "unavailable" | "invalid" | "stale-sessi
 export type MappingWriteResult = { readonly saved: true } | { readonly saved: false; readonly reason: MappingWriteFailureReason };
 
 export class ButtonMapping {
+    private static readonly STANDARD_GAMEPAD_LABELS: readonly string[] = [
+        "GP-BOT",
+        "GP-RGT",
+        "GP-LFT",
+        "GP-TOP",
+        "GP-LB",
+        "GP-RB",
+        "GP-LT",
+        "GP-RT",
+        "GP-BACK",
+        "GP-START",
+        "GP-LS",
+        "GP-RS",
+        "GP-UP",
+        "GP-DOWN",
+        "GP-LEFT",
+        "GP-RIGHT",
+        "GP-HOME"
+    ];
+
+    public static usesStandardGamepadLabels(input: Pick<Input, "getControllerSampleStatus" | "getControllerCount" | "getControllerMapping">): boolean {
+        try {
+            const status = input.getControllerSampleStatus();
+            if (!status.available || !status.valid) return false;
+            const sequence = status.sequence;
+            const count = input.getControllerCount();
+            if (!Number.isInteger(count) || count <= 0) return false;
+            for (let controller = 0; controller < count; controller++) {
+                if (input.getControllerMapping(controller) !== "standard") return false;
+            }
+            const after = input.getControllerSampleStatus();
+            return after.available && after.valid && after.sequence === sequence;
+        } catch {
+            // Uncertain presentation metadata must not interrupt the input menu.
+            return false;
+        }
+    }
+
     public static readonly NO_BINDING: number = NesInputProfile.NO_BINDING;
     public static readonly CONTROLLER_DIRECTION_UP: number = NesInputProfile.DIRECTION_UP;
     public static readonly CONTROLLER_DIRECTION_DOWN: number = NesInputProfile.DIRECTION_DOWN;
@@ -88,28 +126,28 @@ export class ButtonMapping {
         return "";
     }
 
-    public controllerLabelFor(action: number): string {
+    public controllerLabelFor(action: number, standardLayout: boolean = false): string {
         switch (action) {
             case ButtonMapping.ACTION_UP:
-                return ButtonMapping.getGamepadButtonText(this.controllerUp);
+                return ButtonMapping.getGamepadButtonText(this.controllerUp, standardLayout);
             case ButtonMapping.ACTION_DOWN:
-                return ButtonMapping.getGamepadButtonText(this.controllerDown);
+                return ButtonMapping.getGamepadButtonText(this.controllerDown, standardLayout);
             case ButtonMapping.ACTION_LEFT:
-                return ButtonMapping.getGamepadButtonText(this.controllerLeft);
+                return ButtonMapping.getGamepadButtonText(this.controllerLeft, standardLayout);
             case ButtonMapping.ACTION_RIGHT:
-                return ButtonMapping.getGamepadButtonText(this.controllerRight);
+                return ButtonMapping.getGamepadButtonText(this.controllerRight, standardLayout);
             case ButtonMapping.ACTION_GRENADE:
-                return ButtonMapping.getGamepadButtonText(this.controllerGrenade);
+                return ButtonMapping.getGamepadButtonText(this.controllerGrenade, standardLayout);
             case ButtonMapping.ACTION_GUN:
-                return ButtonMapping.getGamepadButtonText(this.controllerGun);
+                return ButtonMapping.getGamepadButtonText(this.controllerGun, standardLayout);
             case ButtonMapping.ACTION_START:
-                return ButtonMapping.getGamepadButtonText(this.controllerStart);
+                return ButtonMapping.getGamepadButtonText(this.controllerStart, standardLayout);
         }
         return "";
     }
 
-    public inputMappingLine(label: string, action: number): string {
-        return ButtonMapping.padLabel(label) + ": " + this.keyboardLabelFor(action) + ", " + this.controllerLabelFor(action);
+    public inputMappingLine(label: string, action: number, standardLayout: boolean = false): string {
+        return ButtonMapping.padLabel(label) + ": " + this.keyboardLabelFor(action) + ", " + this.controllerLabelFor(action, standardLayout);
     }
 
     public static getKeyText(key: number): string {
@@ -366,11 +404,10 @@ export class ButtonMapping {
         }
     }
 
-    public static getGamepadButtonText(button: number): string {
-        if (button === ButtonMapping.NO_BINDING) {
-            return "GP-NONE";
-        }
+    public static getGamepadButtonText(button: number, standardLayout: boolean = false): string {
         switch (button) {
+            case ButtonMapping.NO_BINDING:
+                return "GP-NONE";
             case ButtonMapping.CONTROLLER_DIRECTION_UP:
                 return "GP-UP";
             case ButtonMapping.CONTROLLER_DIRECTION_DOWN:
@@ -379,35 +416,13 @@ export class ButtonMapping {
                 return "GP-LEFT";
             case ButtonMapping.CONTROLLER_DIRECTION_RIGHT:
                 return "GP-RIGHT";
-            case 0:
-                return "GP-A";
-            case 1:
-                return "GP-B";
-            case 2:
-                return "GP-X";
-            case 3:
-                return "GP-Y";
-            case 4:
-                return "GP-LB";
-            case 5:
-                return "GP-RB";
-            case 6:
-                return "GP-LT";
-            case 7:
-                return "GP-RT";
-            case 8:
-                return "GP-VIEW";
-            case 9:
-                return "GP-MENU";
-            case 10:
-                return "GP-LS";
-            case 11:
-                return "GP-RS";
-            case 16:
-                return "GP-HOME";
-            default:
-                return "GP-" + button;
         }
+        if (!Number.isInteger(button) || button < 0 || button >= NesInputProfile.RAW_BUTTON_LIMIT) return "GP-UNK";
+        if (standardLayout) {
+            const label = ButtonMapping.STANDARD_GAMEPAD_LABELS[button];
+            if (label !== undefined) return label;
+        }
+        return "GP-B" + (button + 1);
     }
 
     public static isLogicalControllerDirection(binding: number): boolean {

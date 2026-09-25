@@ -20,6 +20,8 @@ _Jackal_ supports both keyboard and gamepad input. The default controls are:
 | Gun           | Z           | X           |
 | Start / Pause | Enter       | Menu        |
 
+Gamepad button names use Xbox-style labels; equivalent buttons may have different labels on other controllers.
+
 You can change the button mapping by selecting **Options → Input** from the in-game menu.
 
 ## Browser Menu

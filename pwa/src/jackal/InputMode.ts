@@ -80,6 +80,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public inputMappingLines: string[] = javaArray(InputMode.LABELS.length, "");
     public inputMappingX: number = 0;
 
+    private static readonly gamepadLabelStyles = new WeakMap<InputMode, boolean>();
     private static readonly restoredCompletion = new WeakSet<InputMode>();
 
     public restorePersistencePresentation(): void {
@@ -391,6 +392,10 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     private renderInputMenu(gc: GameContainer, g: Graphics): void {
+        const standardLayout = ButtonMapping.usesStandardGamepadLabels(gc.getInput());
+        if (InputMode.gamepadLabelStyles.get(this) !== standardLayout) {
+            this.refreshInputMappingLines(standardLayout);
+        }
         this.main.drawString(InputMode.INPUT_TITLE, InputMode.INPUT_TITLE_X, InputMode.INPUT_TITLE_Y, MainConstants.FONT_GRAY);
 
         let mappingX = this.getInputMappingX();
@@ -412,16 +417,15 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         return javaFloat(this.inputMappingX);
     }
 
-    private refreshInputMappingLines(): void {
+    private refreshInputMappingLines(standardLayout: boolean = InputMode.gamepadLabelStyles.get(this) ?? false): void {
         let maxLength = 0;
         for (let i = 0; i < InputMode.LABELS.length; i++) {
-            let line = this.buttonMapping.inputMappingLine(InputMode.LABELS[i], InputMode.ACTIONS[i]);
+            const line = this.buttonMapping.inputMappingLine(InputMode.LABELS[i], InputMode.ACTIONS[i], standardLayout);
             this.inputMappingLines[i] = line;
-            if (line.length > maxLength) {
-                maxLength = line.length;
-            }
+            maxLength = Math.max(maxLength, line.length);
         }
         this.inputMappingX = (MainConstants.DISPLAY_WIDTH - (maxLength << 5)) / 2;
+        InputMode.gamepadLabelStyles.set(this, standardLayout);
     }
 
     private renderReading(gc: GameContainer, g: Graphics): void {

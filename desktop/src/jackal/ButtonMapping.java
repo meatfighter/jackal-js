@@ -5,7 +5,7 @@ import org.newdawn.slick.*;
 
 public class ButtonMapping {
 
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   public static final int NO_BINDING = NesInputProfile.NO_BINDING;
   public static final int CONTROLLER_DIRECTION_UP = NesInputProfile.DIRECTION_UP;
