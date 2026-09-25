@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("Jackal v16 Main save fields exclude runtime clocks, caches, close state and dead controller flags", () => {
+test("Jackal v17 Main save fields exclude runtime clocks, caches, close state and dead controller flags", () => {
     const fields = readFileSync(resolve(rootDir, "pwa/src/jackal/persistence/GameStateFields.ts"), "utf8");
     const mainFields = fields.match(/export const MAIN_FIELD_NAMES[\s\S]*?\);/)?.[0] ?? "";
 

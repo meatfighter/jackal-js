@@ -5,9 +5,14 @@ import org.newdawn.slick.*;
 
 public class ButtonMapping {
 
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
-  public static final int NO_BINDING = -1;
+  public static final int NO_BINDING = NesInputProfile.NO_BINDING;
+  public static final int CONTROLLER_DIRECTION_UP = NesInputProfile.DIRECTION_UP;
+  public static final int CONTROLLER_DIRECTION_DOWN = NesInputProfile.DIRECTION_DOWN;
+  public static final int CONTROLLER_DIRECTION_LEFT = NesInputProfile.DIRECTION_LEFT;
+  public static final int CONTROLLER_DIRECTION_RIGHT = NesInputProfile.DIRECTION_RIGHT;
+
   public static final int ACTION_UP = 0;
   public static final int ACTION_DOWN = 1;
   public static final int ACTION_LEFT = 2;
@@ -24,10 +29,10 @@ public class ButtonMapping {
   public static final int DEFAULT_KEY_GUN = Input.KEY_Z;
   public static final int DEFAULT_KEY_START = Input.KEY_ENTER;
 
-  public static final int DEFAULT_CONTROLLER_UP = 12;
-  public static final int DEFAULT_CONTROLLER_DOWN = 13;
-  public static final int DEFAULT_CONTROLLER_LEFT = 14;
-  public static final int DEFAULT_CONTROLLER_RIGHT = 15;
+  public static final int DEFAULT_CONTROLLER_UP = CONTROLLER_DIRECTION_UP;
+  public static final int DEFAULT_CONTROLLER_DOWN = CONTROLLER_DIRECTION_DOWN;
+  public static final int DEFAULT_CONTROLLER_LEFT = CONTROLLER_DIRECTION_LEFT;
+  public static final int DEFAULT_CONTROLLER_RIGHT = CONTROLLER_DIRECTION_RIGHT;
   public static final int DEFAULT_CONTROLLER_GRENADE = 0;
   public static final int DEFAULT_CONTROLLER_GUN = 2;
   public static final int DEFAULT_CONTROLLER_START = 9;
@@ -243,13 +248,13 @@ public class ButtonMapping {
         return "GP-LS";
       case 11:
         return "GP-RS";
-      case 12:
+      case CONTROLLER_DIRECTION_UP:
         return "GP-UP";
-      case 13:
+      case CONTROLLER_DIRECTION_DOWN:
         return "GP-DOWN";
-      case 14:
+      case CONTROLLER_DIRECTION_LEFT:
         return "GP-LEFT";
-      case 15:
+      case CONTROLLER_DIRECTION_RIGHT:
         return "GP-RIGHT";
       case 16:
         return "GP-HOME";
@@ -321,5 +326,8 @@ public class ButtonMapping {
         return "Z";
     }
     return Integer.toString(key);
+  }
+  public static boolean isValidControllerBinding(int binding) {
+    return NesInputProfile.isControllerBinding(binding);
   }
 }

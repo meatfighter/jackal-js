@@ -22,7 +22,7 @@ interface JackalInputMappingSnapshot {
 }
 
 export class JackalInputMappingStore {
-    private static readonly SNAPSHOT_VERSION = 3;
+    private static readonly SNAPSHOT_VERSION = 4;
 
     public save(buttonMapping: ButtonMapping, isAuthorized: () => boolean): MappingWriteResult {
         const result = captureAndWriteSnapshot(
@@ -127,9 +127,9 @@ export class JackalInputMappingStore {
             ButtonMapping.isValidControllerBinding(snapshot.controllerDown) &&
             ButtonMapping.isValidControllerBinding(snapshot.controllerLeft) &&
             ButtonMapping.isValidControllerBinding(snapshot.controllerRight) &&
-            ButtonMapping.isValidControllerActionBinding(snapshot.controllerGrenade) &&
-            ButtonMapping.isValidControllerActionBinding(snapshot.controllerGun) &&
-            ButtonMapping.isValidControllerActionBinding(snapshot.controllerStart) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerGrenade) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerGun) &&
+            ButtonMapping.isValidControllerBinding(snapshot.controllerStart) &&
             this.hasRequiredActionBindings(snapshot) &&
             this.hasUniqueNonBindingValues([
                 snapshot.keyUp,

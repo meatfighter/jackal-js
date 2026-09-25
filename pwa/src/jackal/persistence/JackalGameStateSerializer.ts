@@ -431,7 +431,7 @@ export class JackalGameStateSerializer {
             menu: this.createMenuSnapshot(mode.menu, context),
             draftButtonMapping: this.createButtonMappingSnapshot(mode.draftButtonMapping, context),
             assignedKeys: Array.from(mode.assignedKeys ?? []),
-            assignedControllerButtons: Array.from(mode.assignedControllerButtons ?? [])
+            assignedControllerBindings: Array.from(mode.assignedControllerBindings ?? [])
         };
     }
 
@@ -486,7 +486,7 @@ export class JackalGameStateSerializer {
             decodeNamedFieldsInto(mode.draftButtonMapping, snapshot.draftButtonMapping.fields, BUTTON_MAPPING_FIELD_NAMES, context);
         }
         mode.assignedKeys = new Set(snapshot.assignedKeys);
-        mode.assignedControllerButtons = new Set(snapshot.assignedControllerButtons);
+        mode.assignedControllerBindings = new Set(snapshot.assignedControllerBindings);
         mode.syncInputListenerState();
 
         mode.restorePersistencePresentation();

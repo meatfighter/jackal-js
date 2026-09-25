@@ -144,6 +144,18 @@ function javaDeclaration(source, className) {
 function tsDeclaration(path, name) {
     const source = readFileSync(path, "utf8");
     const sourceFile = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    // The pure profile is a module in TypeScript and a static utility class in Java.
+    if (name === "NesInputProfile") {
+        const fields = new Set();
+        const methods = new Set();
+        for (const statement of sourceFile.statements) {
+            if (ts.isVariableStatement(statement)) {
+                for (const declaration of statement.declarationList.declarations) if (ts.isIdentifier(declaration.name)) fields.add(declaration.name.text);
+            }
+            if (ts.isFunctionDeclaration(statement) && statement.name) methods.add(statement.name.text);
+        }
+        return { fields, methods, enumMembers: new Set() };
+    }
     const declaration = sourceFile.statements.find(
         (statement) =>
             (ts.isClassDeclaration(statement) || ts.isInterfaceDeclaration(statement) || ts.isEnumDeclaration(statement)) && statement.name?.text === name
@@ -423,6 +435,13 @@ test("renamed overloads and constructor factories cover every Java signature exa
             }
             const parameterTypes = method.params.map((parameter) => parameter.type);
             const javaKey = javaSignatureKey(className, method.name, parameterTypes);
+            if (className === "NesInputProfile" && (method.name === "key" || method.name === "controller")) {
+                // Java needs typed getter/setter switches; TS indexes the same fields
+                // through INPUTS rows. Both actual profiles run destination/domain tests.
+                assert.ok(["ButtonMapping,int", "ButtonMapping,int,int"].includes(parameterTypes.join(",")), javaKey);
+                assert.match(readFileSync(join(tsRoot, "NesInputProfile.ts"), "utf8"), /draft\[target\.(key|controller)\]/);
+                continue;
+            }
             assert.ok(mappedMethods.has(javaKey), `Java overload ${javaKey} lacks an explicit TypeScript mapping.`);
         }
     }

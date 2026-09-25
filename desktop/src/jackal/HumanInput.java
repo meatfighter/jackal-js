@@ -12,6 +12,10 @@ public class HumanInput implements IInput {
   private boolean right;
   private boolean fire;
   private boolean shoot;
+  private boolean mappedGrenadeDown;
+  private boolean mappedGrenadeWasDown;
+  private boolean mappedGunDown;
+  private boolean mappedGunWasDown;
   private boolean mappedStartDown;
   private boolean mappedStartWasDown;
   private boolean nonDirectionalButtonDown;
@@ -25,6 +29,8 @@ public class HumanInput implements IInput {
   }
 
   public void snap() {
+    mappedGrenadeWasDown = mappedGrenadeDown;
+    mappedGunWasDown = mappedGunDown;
     mappedStartWasDown = mappedStartDown;
     nonDirectionalButtonWasDown = nonDirectionalButtonDown;
 
@@ -36,11 +42,13 @@ public class HumanInput implements IInput {
         || ControllerSupport.isDirectionDown(buttonMapping.controllerLeft);
     right = isKeyDown(buttonMapping.keyRight)
         || ControllerSupport.isDirectionDown(buttonMapping.controllerRight);
+    mappedGrenadeDown = ControllerSupport.isDirectionDown(buttonMapping.controllerGrenade);
+    mappedGunDown = ControllerSupport.isDirectionDown(buttonMapping.controllerGun);
     fire = isKeyDown(buttonMapping.keyGrenade)
-        || ControllerSupport.isButtonDown(buttonMapping.controllerGrenade);
+        || mappedGrenadeDown;
     shoot = isKeyDown(buttonMapping.keyGun)
-        || ControllerSupport.isButtonDown(buttonMapping.controllerGun);
-    mappedStartDown = ControllerSupport.isButtonDown(
+        || mappedGunDown;
+    mappedStartDown = ControllerSupport.isDirectionDown(
         buttonMapping.controllerStart);
     nonDirectionalButtonDown =
         ControllerSupport.isNonDirectionalButtonDown(buttonMapping);
@@ -106,8 +114,11 @@ public class HumanInput implements IInput {
   }
 
   public boolean isEnter() {
-    return isMappedStartPressed()
-        || isPressed(nonDirectionalButtonDown, nonDirectionalButtonWasDown);
+    boolean start = isMappedStartPressed();
+    boolean a = isPressed(mappedGrenadeDown, mappedGrenadeWasDown);
+    boolean b = isPressed(mappedGunDown, mappedGunWasDown);
+    boolean other = isPressed(nonDirectionalButtonDown, nonDirectionalButtonWasDown);
+    return start || a || b || other;
   }
 
   public boolean isFullscreenTogglePressed() {
@@ -132,8 +143,12 @@ public class HumanInput implements IInput {
   }
 
   private void syncControllerPressedRecord() {
+    mappedGrenadeDown = ControllerSupport.isDirectionDown(buttonMapping.controllerGrenade);
+    mappedGrenadeWasDown = mappedGrenadeDown;
+    mappedGunDown = ControllerSupport.isDirectionDown(buttonMapping.controllerGun);
+    mappedGunWasDown = mappedGunDown;
 
-    mappedStartDown = ControllerSupport.isButtonDown(
+    mappedStartDown = ControllerSupport.isDirectionDown(
         buttonMapping.controllerStart);
     mappedStartWasDown = mappedStartDown;
     nonDirectionalButtonDown =

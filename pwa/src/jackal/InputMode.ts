@@ -1,3 +1,4 @@
+import * as NesInputProfile from "./NesInputProfile.js";
 import { Color, Input, type GameContainer, type Graphics, type KeyListener } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -46,9 +47,9 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         ButtonMapping.ACTION_START
     ];
 
-    public static readonly LABELS: string[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
+    public static readonly LABELS: string[] = NesInputProfile.INPUTS.map((row) => row.label);
 
-    public static readonly NAMES: string[] = ["UP", "DOWN", "LEFT", "RIGHT", "GRENADE", "GUN", "START"];
+    public static readonly NAMES: string[] = NesInputProfile.INPUTS.map((row) => row.label);
     public static readonly NAME_XS: number[] = javaArray(InputMode.NAMES.length, 0);
 
     static {
@@ -68,7 +69,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     public listeningForInput: boolean = false;
     public draftButtonMapping: ButtonMapping = null!;
     public assignedKeys: Set<number> = new Set();
-    public assignedControllerButtons: Set<number> = new Set();
+    public assignedControllerBindings: Set<number> = new Set();
     public message: string = "";
     public armDelay: number = 0;
     private controllerButtonDown: boolean[][] = [];
@@ -149,7 +150,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         this.menu = null!;
         this.draftButtonMapping = this.copyButtonMapping(this.buttonMapping);
         this.assignedKeys.clear();
-        this.assignedControllerButtons.clear();
+        this.assignedControllerBindings.clear();
         this.message = "";
         this.armDelay = InputMode.ARM_DELAY;
         const input = this.gc.getInput();
@@ -238,158 +239,21 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
     }
 
     private bindDraftKeyboardKey(i: number): boolean {
-        if (this.assignedKeys.has(i)) {
-            return false;
-        }
-        this.clearDraftKey(i);
-        switch (this.getCurrentAction()) {
-            case ButtonMapping.ACTION_UP:
-                this.draftButtonMapping.keyUp = i;
-                break;
-            case ButtonMapping.ACTION_DOWN:
-                this.draftButtonMapping.keyDown = i;
-                break;
-            case ButtonMapping.ACTION_LEFT:
-                this.draftButtonMapping.keyLeft = i;
-                break;
-            case ButtonMapping.ACTION_RIGHT:
-                this.draftButtonMapping.keyRight = i;
-                break;
-            case ButtonMapping.ACTION_GRENADE:
-                this.draftButtonMapping.keyGrenade = i;
-                break;
-            case ButtonMapping.ACTION_GUN:
-                this.draftButtonMapping.keyGun = i;
-                break;
-            case ButtonMapping.ACTION_START:
-                this.draftButtonMapping.keyStart = i;
-                break;
-        }
-        this.assignedKeys.add(i);
-        return true;
+        return NesInputProfile.assignKey(this.draftButtonMapping, this.nameIndex, i, this.assignedKeys);
     }
 
-    private bindDraftControllerButton(buttonIndex: number): boolean {
-        if (this.assignedControllerButtons.has(buttonIndex)) {
-            return false;
-        }
-        this.clearDraftControllerButton(buttonIndex);
-        switch (this.getCurrentAction()) {
-            case ButtonMapping.ACTION_UP:
-                this.draftButtonMapping.controllerUp = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_DOWN:
-                this.draftButtonMapping.controllerDown = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_LEFT:
-                this.draftButtonMapping.controllerLeft = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_RIGHT:
-                this.draftButtonMapping.controllerRight = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_GRENADE:
-                this.draftButtonMapping.controllerGrenade = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_GUN:
-                this.draftButtonMapping.controllerGun = buttonIndex;
-                break;
-            case ButtonMapping.ACTION_START:
-                this.draftButtonMapping.controllerStart = buttonIndex;
-                break;
-        }
-        this.assignedControllerButtons.add(buttonIndex);
-        return true;
+    private bindDraftControllerBinding(buttonIndex: number): boolean {
+        return NesInputProfile.assignController(this.draftButtonMapping, this.nameIndex, buttonIndex, this.assignedControllerBindings);
     }
 
     private copyButtonMapping(source: ButtonMapping): ButtonMapping {
-        let copy = new ButtonMapping();
-        copy.keyUp = source.keyUp;
-        copy.keyDown = source.keyDown;
-        copy.keyLeft = source.keyLeft;
-        copy.keyRight = source.keyRight;
-        copy.keyGrenade = source.keyGrenade;
-        copy.keyGun = source.keyGun;
-        copy.keyStart = source.keyStart;
-        copy.controllerUp = source.controllerUp;
-        copy.controllerDown = source.controllerDown;
-        copy.controllerLeft = source.controllerLeft;
-        copy.controllerRight = source.controllerRight;
-        copy.controllerGrenade = source.controllerGrenade;
-        copy.controllerGun = source.controllerGun;
-        copy.controllerStart = source.controllerStart;
-        return copy;
-    }
-
-    private clearDraftKey(key: number): void {
-        if (this.draftButtonMapping.keyUp === key) {
-            this.draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyDown === key) {
-            this.draftButtonMapping.keyDown = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyLeft === key) {
-            this.draftButtonMapping.keyLeft = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyRight === key) {
-            this.draftButtonMapping.keyRight = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyGrenade === key) {
-            this.draftButtonMapping.keyGrenade = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyGun === key) {
-            this.draftButtonMapping.keyGun = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.keyStart === key) {
-            this.draftButtonMapping.keyStart = ButtonMapping.NO_BINDING;
-        }
-    }
-
-    private clearDraftControllerButton(buttonIndex: number): void {
-        if (this.draftButtonMapping.controllerUp === buttonIndex) {
-            this.draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerDown === buttonIndex) {
-            this.draftButtonMapping.controllerDown = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerLeft === buttonIndex) {
-            this.draftButtonMapping.controllerLeft = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerRight === buttonIndex) {
-            this.draftButtonMapping.controllerRight = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerGrenade === buttonIndex) {
-            this.draftButtonMapping.controllerGrenade = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerGun === buttonIndex) {
-            this.draftButtonMapping.controllerGun = ButtonMapping.NO_BINDING;
-        }
-        if (this.draftButtonMapping.controllerStart === buttonIndex) {
-            this.draftButtonMapping.controllerStart = ButtonMapping.NO_BINDING;
-        }
+        return source.clone();
     }
 
     private commitDraftButtonMapping(): void {
-        this.buttonMapping.keyUp = this.draftButtonMapping.keyUp;
-        this.buttonMapping.keyDown = this.draftButtonMapping.keyDown;
-        this.buttonMapping.keyLeft = this.draftButtonMapping.keyLeft;
-        this.buttonMapping.keyRight = this.draftButtonMapping.keyRight;
-        this.buttonMapping.keyGrenade = this.draftButtonMapping.keyGrenade;
-        this.buttonMapping.keyGun = this.draftButtonMapping.keyGun;
-        this.buttonMapping.keyStart = this.draftButtonMapping.keyStart;
-        this.buttonMapping.controllerUp = this.draftButtonMapping.controllerUp;
-        this.buttonMapping.controllerDown = this.draftButtonMapping.controllerDown;
-        this.buttonMapping.controllerLeft = this.draftButtonMapping.controllerLeft;
-        this.buttonMapping.controllerRight = this.draftButtonMapping.controllerRight;
-        this.buttonMapping.controllerGrenade = this.draftButtonMapping.controllerGrenade;
-        this.buttonMapping.controllerGun = this.draftButtonMapping.controllerGun;
-        this.buttonMapping.controllerStart = this.draftButtonMapping.controllerStart;
+        NesInputProfile.copyInto(this.draftButtonMapping, this.buttonMapping);
         this.draftButtonMapping = null!;
         this.refreshInputMappingLines();
-    }
-
-    private isActionStep(): boolean {
-        let action = this.getCurrentAction();
-        return action === ButtonMapping.ACTION_GRENADE || action === ButtonMapping.ACTION_GUN || action === ButtonMapping.ACTION_START;
     }
 
     private bindControllerInputPressed(): void {
@@ -398,7 +262,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
             return;
         }
 
-        if (!this.bindDraftControllerButton(candidate)) {
+        if (!this.bindDraftControllerBinding(candidate)) {
             this.message = "ALREADY USED";
             return;
         }
@@ -459,12 +323,7 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
                 const wasDown = buttons[button] ?? false;
                 const pressed = selectCandidate && !baseline && down && !wasDown;
                 buttons[button] = down;
-                if (
-                    pressedButton === ButtonMapping.NO_BINDING &&
-                    pressed &&
-                    !input.isControllerButtonDirectional(button, controller) &&
-                    !this.isDraftDirectionButton(button)
-                ) {
+                if (pressedButton === ButtonMapping.NO_BINDING && pressed && !input.isControllerButtonDirectional(button, controller)) {
                     pressedButton = button;
                 }
             }
@@ -473,30 +332,15 @@ export class InputMode implements IMode, KeyListener, IFadeListener, IMenuListen
         if (!selectCandidate) {
             return ButtonMapping.NO_BINDING;
         }
-        if (!this.isActionStep()) {
-            if (directionPressed[0]) return ButtonMapping.CONTROLLER_DIRECTION_UP;
-            if (directionPressed[1]) return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
-            if (directionPressed[2]) return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
-            if (directionPressed[3]) return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
-        }
+        if (directionPressed[0]) return ButtonMapping.CONTROLLER_DIRECTION_UP;
+        if (directionPressed[1]) return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
+        if (directionPressed[2]) return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
+        if (directionPressed[3]) return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
         return pressedButton;
-    }
-
-    private isDraftDirectionButton(button: number): boolean {
-        return (
-            this.draftButtonMapping.controllerUp === button ||
-            this.draftButtonMapping.controllerDown === button ||
-            this.draftButtonMapping.controllerLeft === button ||
-            this.draftButtonMapping.controllerRight === button
-        );
     }
 
     private syncControllerInputState(): void {
         this.sampleControllerInput(false, true);
-    }
-
-    private getCurrentAction(): number {
-        return InputMode.ACTIONS[this.nameIndex];
     }
 
     private advance(): void {

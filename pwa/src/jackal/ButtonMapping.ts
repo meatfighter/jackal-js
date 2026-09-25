@@ -1,13 +1,14 @@
+import * as NesInputProfile from "./NesInputProfile.js";
 import { Input } from "slick2d-ts";
 export type MappingWriteFailureReason = "unavailable" | "invalid" | "stale-session";
 export type MappingWriteResult = { readonly saved: true } | { readonly saved: false; readonly reason: MappingWriteFailureReason };
 
 export class ButtonMapping {
-    public static readonly NO_BINDING: number = -1;
-    public static readonly CONTROLLER_DIRECTION_UP: number = -2;
-    public static readonly CONTROLLER_DIRECTION_DOWN: number = -3;
-    public static readonly CONTROLLER_DIRECTION_LEFT: number = -4;
-    public static readonly CONTROLLER_DIRECTION_RIGHT: number = -5;
+    public static readonly NO_BINDING: number = NesInputProfile.NO_BINDING;
+    public static readonly CONTROLLER_DIRECTION_UP: number = NesInputProfile.DIRECTION_UP;
+    public static readonly CONTROLLER_DIRECTION_DOWN: number = NesInputProfile.DIRECTION_DOWN;
+    public static readonly CONTROLLER_DIRECTION_LEFT: number = NesInputProfile.DIRECTION_LEFT;
+    public static readonly CONTROLLER_DIRECTION_RIGHT: number = NesInputProfile.DIRECTION_RIGHT;
     public static readonly ACTION_UP: number = 0;
     public static readonly ACTION_DOWN: number = 1;
     public static readonly ACTION_LEFT: number = 2;
@@ -202,12 +203,7 @@ export class ButtonMapping {
     }
 
     public static isLogicalControllerDirection(binding: number): boolean {
-        return (
-            binding === ButtonMapping.CONTROLLER_DIRECTION_UP ||
-            binding === ButtonMapping.CONTROLLER_DIRECTION_DOWN ||
-            binding === ButtonMapping.CONTROLLER_DIRECTION_LEFT ||
-            binding === ButtonMapping.CONTROLLER_DIRECTION_RIGHT
-        );
+        return NesInputProfile.isLogicalDirection(binding);
     }
 
     public static isValidKeyBinding(value: unknown): value is number {
@@ -219,19 +215,11 @@ export class ButtonMapping {
     }
 
     public static isValidRawControllerButton(value: unknown): value is number {
-        return typeof value === "number" && Number.isInteger(value) && value >= 0 && value < Input.BROWSER_CONTROLLER_BUTTON_LIMIT;
+        return NesInputProfile.isRawButton(value);
     }
 
     public static isValidControllerBinding(value: unknown): value is number {
-        return (
-            value === ButtonMapping.NO_BINDING ||
-            (typeof value === "number" && ButtonMapping.isLogicalControllerDirection(value)) ||
-            ButtonMapping.isValidRawControllerButton(value)
-        );
-    }
-
-    public static isValidControllerActionBinding(value: unknown): value is number {
-        return value === ButtonMapping.NO_BINDING || ButtonMapping.isValidRawControllerButton(value);
+        return NesInputProfile.isControllerBinding(value);
     }
 
     private static padLabel(label: string): string {
@@ -297,20 +285,7 @@ export class ButtonMapping {
     }
 
     public copyFrom(source: ButtonMapping): void {
-        this.keyUp = source.keyUp;
-        this.keyDown = source.keyDown;
-        this.keyLeft = source.keyLeft;
-        this.keyRight = source.keyRight;
-        this.keyGrenade = source.keyGrenade;
-        this.keyGun = source.keyGun;
-        this.keyStart = source.keyStart;
-        this.controllerUp = source.controllerUp;
-        this.controllerDown = source.controllerDown;
-        this.controllerLeft = source.controllerLeft;
-        this.controllerRight = source.controllerRight;
-        this.controllerGrenade = source.controllerGrenade;
-        this.controllerGun = source.controllerGun;
-        this.controllerStart = source.controllerStart;
+        NesInputProfile.copyInto(source, this);
     }
 
     public clone(): ButtonMapping {

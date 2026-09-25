@@ -1,3 +1,4 @@
+import * as NesInputProfile from "../NesInputProfile.js";
 import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
 import { SOUND_FIELD_NAMES, isSoundId } from "../AudioRegistry.js";
@@ -70,7 +71,7 @@ const MODE_SNAPSHOT_FIELDS = [...BASE_SNAPSHOT_FIELDS, "modeId", "modeFields", "
 const GAME_MODE_SNAPSHOT_FIELDS = ["fields", "elements", "entities"] as const;
 const ENTITY_SNAPSHOT_FIELDS = ["id", "type", "fields", "runtimeFields"] as const;
 const MENU_SNAPSHOT_FIELDS = ["fields"] as const;
-const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerButtons"] as const;
+const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerBindings"] as const;
 const JEEP_YEAH_EXTRA_FIELDS = ["explosion", "leftPlane", "rightPlane", "fireLeft", "fireRight", "bullets"] as const;
 const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
 const AUDIO_STATE_FIELDS = ["sounds", "cooldowns"] as const;
@@ -604,22 +605,11 @@ function isButtonMappingSnapshot(value: unknown): value is ButtonMappingSnapshot
     }
 
     const fields = value.fields;
-    const keyNames = ["keyUp", "keyDown", "keyLeft", "keyRight", "keyGrenade", "keyGun", "keyStart"] as const;
-    const controllerDirectionNames = ["controllerUp", "controllerDown", "controllerLeft", "controllerRight"] as const;
-    const controllerActionNames = ["controllerGrenade", "controllerGun", "controllerStart"] as const;
-    if (!keyNames.every((key) => ButtonMapping.isValidKeyBinding(fields[key]))) {
-        return false;
-    }
-    if (!controllerDirectionNames.every((key) => ButtonMapping.isValidControllerBinding(fields[key]))) {
-        return false;
-    }
-    if (!controllerActionNames.every((key) => ButtonMapping.isValidControllerActionBinding(fields[key]))) {
-        return false;
-    }
-    return (
-        hasUniqueNonBindingValues(keyNames.map((key) => fields[key])) &&
-        hasUniqueNonBindingValues([...controllerDirectionNames.map((key) => fields[key]), ...controllerActionNames.map((key) => fields[key])])
-    );
+    const keyNames = NesInputProfile.KEY_FIELDS;
+    const controllerNames = NesInputProfile.CONTROLLER_FIELDS;
+    if (!keyNames.every((key) => ButtonMapping.isValidKeyBinding(fields[key]))) return false;
+    if (!controllerNames.every((key) => ButtonMapping.isValidControllerBinding(fields[key]))) return false;
+    return hasUniqueNonBindingValues(keyNames.map((key) => fields[key])) && hasUniqueNonBindingValues(controllerNames.map((key) => fields[key]));
 }
 
 function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): value is InputModeExtraSnapshot {
@@ -629,7 +619,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         !isMenuSnapshot(value.menu, 2) ||
         !isButtonMappingSnapshot(value.draftButtonMapping) ||
         !isUniqueKeyArray(value.assignedKeys, MAX_INPUT_ASSIGNMENTS) ||
-        !isUniqueControllerAssignmentArray(value.assignedControllerButtons, MAX_INPUT_ASSIGNMENTS)
+        !isUniqueControllerAssignmentArray(value.assignedControllerBindings, MAX_INPUT_ASSIGNMENTS)
     ) {
         return false;
     }
@@ -653,7 +643,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
         return false;
     }
 
-    const assignmentCount = value.assignedKeys.length + value.assignedControllerButtons.length;
+    const assignmentCount = value.assignedKeys.length + value.assignedControllerBindings.length;
     const reading = state === InputMode.STATE_READING;
     const readFade = state === InputMode.STATE_READ_FADE;
     const saved = state === InputMode.STATE_SAVED;
@@ -667,7 +657,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             nameIndex < InputMode.ACTIONS.length &&
             delay === 0 &&
             assignmentCount === nameIndex &&
-            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerButtons, nameIndex) &&
+            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerBindings, nameIndex) &&
             (message === "" || (message === "ALREADY USED" && armDelay === 0))
         );
     }
@@ -677,7 +667,7 @@ function isInputModeExtraSnapshot(modeFields: EncodedRecord, value: unknown): va
             delay >= 1 &&
             delay <= InputMode.FADE_TIME &&
             assignmentCount === nameIndex + 1 &&
-            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerButtons, nameIndex + 1) &&
+            assignmentsMatchInputDraft(value.draftButtonMapping, value.assignedKeys, value.assignedControllerBindings, nameIndex + 1) &&
             message === ""
         );
     }
@@ -709,20 +699,9 @@ function assignmentsMatchInputDraft(
     }
     const assignedKeys = new Set(assignedKeyValues);
     const assignedControllers = new Set(assignedControllerValues);
-    const fields = [
-        ["keyUp", "controllerUp"],
-        ["keyDown", "controllerDown"],
-        ["keyLeft", "controllerLeft"],
-        ["keyRight", "controllerRight"],
-        ["keyGrenade", "controllerGrenade"],
-        ["keyGun", "controllerGun"],
-        ["keyStart", "controllerStart"]
-    ] as const;
-
-    for (let i = 0; i < fields.length; i++) {
-        const [keyField, controllerField] = fields[i];
-        const ownsKey = assignedKeys.has(draft.fields[keyField] as number);
-        const ownsController = assignedControllers.has(draft.fields[controllerField] as number);
+    for (const [i, row] of NesInputProfile.INPUTS.entries()) {
+        const ownsKey = assignedKeys.has(draft.fields[row.key] as number);
+        const ownsController = assignedControllers.has(draft.fields[row.controller] as number);
         if (i < completedSteps) {
             if (ownsKey === ownsController) {
                 return false;

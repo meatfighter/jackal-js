@@ -49,7 +49,12 @@ function assertPlaybackEqual(actual: unknown, expected: unknown, label: string):
     assert(JSON.stringify(actual) === JSON.stringify(expected), `${label} did not restore exact logical playback state.`);
 }
 
-async function mountGame(runtime: PreparedRuntime, restore: boolean, onRestored?: (main: RuntimeMain) => void): Promise<MountedGame> {
+async function mountGame(
+    runtime: PreparedRuntime,
+    restore: boolean,
+    onRestored?: (main: RuntimeMain) => void,
+    beforeRestore?: (main: RuntimeMain) => void
+): Promise<MountedGame> {
     gameHost.replaceChildren();
     runtime.slick.Display.setParent(gameHost);
 
@@ -67,6 +72,7 @@ async function mountGame(runtime: PreparedRuntime, restore: boolean, onRestored?
     if (restore) {
         const store = new runtime.JackalGameStateStore("browser-verification");
         main.loadingCompleteHandler = (gc) => {
+            beforeRestore?.(main);
             const restored = store.restore(main, gc);
             if (restored) {
                 onRestored?.(main);
@@ -216,6 +222,7 @@ async function verify(): Promise<void> {
         destroyMounted(runtime, second);
         second = null;
         await verifyFadeRestoreMatrix(runtime);
+        await verifyNesMapping(runtime);
     } finally {
         destroyMounted(runtime, first);
         destroyMounted(runtime, second);
@@ -299,11 +306,11 @@ function verifyInputEditor(runtime: PreparedRuntime, mounted: MountedGame): void
             if (step === 0) {
                 for (const invalid of [-1, -6, 64, 0.5, NaN, Infinity, -Infinity]) {
                     const bad = structuredClone(snapshot);
-                    bad.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerButtons: [invalid] } };
+                    bad.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerBindings: [invalid] } };
                     assert(!acceptsSnapshot(bad), "Invalid assignment accepted: " + invalid);
                 }
                 const duplicate = structuredClone(snapshot);
-                duplicate.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerButtons: [-2, -2] } };
+                duplicate.modeExtra = { input: { ...snapshot.modeExtra.input, assignedControllerBindings: [-2, -2] } };
                 assert(!acceptsSnapshot(duplicate), "Duplicate accepted");
                 const mismatch = structuredClone(snapshot);
                 assert(mismatch.modeExtra !== null && "input" in mismatch.modeExtra && mismatch.modeExtra.input.draftButtonMapping !== null, "Expected draft");
@@ -311,7 +318,7 @@ function verifyInputEditor(runtime: PreparedRuntime, mounted: MountedGame): void
                 assert(!acceptsSnapshot(mismatch), "Inconsistent draft accepted");
                 mismatch.modeExtra.input.draftButtonMapping.fields.controllerUp = -2;
                 mismatch.modeExtra.input.draftButtonMapping.fields.controllerGrenade = -2;
-                assert(!acceptsSnapshot(mismatch), "Logical direction accepted as raw action");
+                assert(!acceptsSnapshot(mismatch), "Duplicate logical binding accepted");
             }
             assert(store.restore(main, container), "Assignment reload failed");
             assert(main.mode instanceof InputMode, "Assignment restored wrong mode");
@@ -913,5 +920,240 @@ async function verifyFadeRestoreMatrix(runtime: PreparedRuntime): Promise<void> 
         retire();
         store.clear(() => true);
         Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+    }
+}
+/** Actual Slick polling through repeated remapping, persistence and fresh restore. */
+async function verifyNesMapping(runtime: PreparedRuntime): Promise<void> {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, "getGamepads");
+    const pad = {
+        id: "nes-mapping-contract-pad",
+        index: 0,
+        connected: true,
+        mapping: "standard",
+        timestamp: 1,
+        axes: [0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }))
+    };
+    let invalid = false;
+    let mounted: MountedGame | null = null;
+    const store = new runtime.JackalGameStateStore("nes-mapping");
+    const mappingStore = new JackalInputMappingStore();
+    const serializer = new JackalGameStateSerializer();
+    let writes = 0;
+    const mode = (): InputMode => {
+        assert(mounted?.main.mode instanceof InputMode, "NES fixture lost editor");
+        return mounted.main.mode;
+    };
+    const tick = (): void => {
+        assert(mounted !== null, "NES fixture unmounted");
+        pad.timestamp++;
+        mounted.container.getInput().poll(1024, 960);
+        mounted.main.input.snap();
+        mode().update(mounted.container);
+    };
+    const hardware = (binding: number | null): void => {
+        for (const b of pad.buttons) {
+            b.pressed = b.touched = false;
+            b.value = 0;
+        }
+        if (binding !== null) {
+            const b = pad.buttons[binding < 0 ? 10 - binding : binding]!;
+            b.pressed = b.touched = true;
+            b.value = 1;
+        }
+    };
+    const ready = (): void => {
+        for (let i = 0; i < 45 && (mode().armDelay > 0 || mode().state === InputMode.STATE_READ_FADE); i++) tick();
+    };
+    const press = (binding: number): void => {
+        hardware(null);
+        tick();
+        ready();
+        hardware(binding);
+        tick();
+    };
+    const save = (): void => {
+        assert(mounted !== null, "Missing mapping runtime");
+        const snapshot = serializer.createSnapshot(mounted.main, "nes-mapping");
+        assert(
+            isSupportedGameStateSnapshot(snapshot) && serializer.isSupportedSnapshotForLoadedResources(mounted.main, snapshot),
+            "NES editor snapshot invalid"
+        );
+        assert(store.save(mounted.main, () => true).saved, "NES editor save failed");
+        assert(snapshot.kind === "mode" && snapshot.modeExtra !== null && "input" in snapshot.modeExtra, "Expected INPUT save");
+        const old = structuredClone(snapshot);
+        assert(old.modeExtra !== null && "input" in old.modeExtra, "Missing cloned editor state");
+        const extra = old.modeExtra.input;
+        Reflect.set(extra, "assignedControllerButtons", extra.assignedControllerBindings);
+        Reflect.deleteProperty(extra, "assignedControllerBindings");
+        assert(!isSupportedGameStateSnapshot(old), "Old assigned-property alias accepted");
+    };
+    const attachWriter = (main: RuntimeMain): void => {
+        main.inputMappingChangedHandler = () => {
+            writes++;
+            return mappingStore.save(main.buttonMapping, () => true);
+        };
+    };
+    try {
+        Object.defineProperty(navigator, "getGamepads", {
+            configurable: true,
+            value: () => {
+                if (invalid) throw new Error("Injected enumeration failure");
+                return [pad];
+            }
+        });
+        mounted = await mountGame(runtime, false);
+        mounted.container.setLoopSuspended(true);
+        attachWriter(mounted.main);
+        mounted.main.requestMode(Modes.INPUT, mounted.container);
+        for (let i = 0; i < 40 && mounted.main.fading; i++) {
+            mounted.main.nextFrameTime = 0;
+            mounted.main.update(mounted.container, 17);
+        }
+        assert(mode().state === InputMode.STATE_MENU, "Input menu did not open");
+        const wanted = [7, 6, 3, 0, -2, -3, -4];
+        for (let cycle = 0; cycle < 2; cycle++) {
+            hardware(null);
+            tick();
+            mode().optionSelected(InputMode.OPTION_CHANGE);
+            ready();
+            for (let i = 0; i < wanted.length; i++) {
+                press(wanted[i]!);
+                assert(mode().state === InputMode.STATE_READ_FADE, `NES capture ${cycle}/${i}`);
+                save();
+                ready();
+            }
+            assert(writes === cycle + 1 && mode().state === InputMode.STATE_SAVED, "Repeated mapping did not commit once");
+            save();
+            const stored = JSON.parse(localStorage.getItem(getDeploymentStorageKey("jackal.input-mapping"))!);
+            assert(
+                stored.version === 4 && stored.controllerGrenade === -2 && stored.controllerGun === -3 && stored.controllerStart === -4,
+                "Wrong stored NES map"
+            );
+            for (let i = 0; i < InputMode.DONE_DELAY + 3; i++) tick();
+            assert(
+                mode().state === InputMode.STATE_MENU && mode().menu.selectedIndex === InputMode.OPTION_DONE && !mode().menu.selectionMade,
+                "Held final control activated review"
+            );
+        }
+        hardware(null);
+        tick();
+        mode().optionSelected(InputMode.OPTION_CHANGE);
+        ready();
+        press(6);
+        assert(mode().draftButtonMapping.controllerDown === -1, "Old future owner not displaced");
+        ready();
+        const before = JSON.stringify(mode().draftButtonMapping);
+        press(6);
+        assert(mode().message === "ALREADY USED" && mode().nameIndex === 1 && JSON.stringify(mode().draftButtonMapping) === before, "Duplicate changed draft");
+        save();
+        hardware(null);
+        tick();
+        const oldMain = mounted.main;
+        const authority = oldMain.buttonMapping.clone();
+        destroyMounted(runtime, mounted);
+        mounted = null;
+        let restored = false;
+        mounted = await mountGame(
+            runtime,
+            true,
+            (fresh) => {
+                restored = true;
+                assert(fresh !== oldMain, "Reused Main");
+            },
+            (fresh) => {
+                fresh.buttonMapping.copyFrom(authority);
+                attachWriter(fresh);
+            }
+        );
+        mounted.container.setLoopSuspended(true);
+        assert(
+            restored && mode().nameIndex === 1 && mode().draftButtonMapping.controllerDown === -1 && writes === 2,
+            "Mid-editor restore lost transaction or replayed preference commit"
+        );
+        assert(JSON.stringify(mounted.main.buttonMapping) === JSON.stringify(authority), "Editor restore replaced session authority");
+        for (const binding of [7, 0, 3, -3, -2, -5]) {
+            press(binding);
+            assert(mode().state === InputMode.STATE_READ_FADE, "Restored capture rejected");
+            save();
+            ready();
+        }
+        assert(Number(writes) === 3, "Fresh editor completion did not commit exactly once");
+        save();
+        for (let i = 0; i < InputMode.DONE_DELAY + 3; i++) tick();
+        assert(mode().state === InputMode.STATE_MENU, "Restored review failed");
+        // Logical A drives menu Done. The held final Start was not an activation.
+        press(-3);
+        assert(mode().state === InputMode.STATE_FADE_OUT, "Logical A did not confirm Done");
+        hardware(null);
+        mounted.container.getInput().poll(1024, 960);
+        mounted.main.buttonMapping.copyFrom(authority);
+        mounted.main.startPlayer();
+        mounted.main.stageIndex = 1;
+        mounted.main.continued = true;
+        mounted.main.fading = false;
+        mounted.main.fadeListener = null;
+        mounted.main.requestMode(Modes.GAME, mounted.container);
+        for (let i = 0; i < 30; i++) {
+            mounted.main.nextFrameTime = 0;
+            mounted.main.update(mounted.container, 10);
+        }
+        const world = mounted.main.mode;
+        assert(world instanceof GameMode && world.playing && mounted.main.isSongPlaying(), "Pause fixture is not eligible gameplay");
+        const sample = (): void => {
+            pad.timestamp++;
+            mounted!.container.getInput().poll(1024, 960);
+            mounted!.main.input.snap();
+        };
+        hardware(-2);
+        sample();
+        assert(mounted.main.input.isFire() && !mounted.main.input.isUp(), "Logical A gameplay meaning");
+        assert(mounted.main.input.isEnter(), "Logical A confirm edge missing");
+        hardware(-3);
+        sample();
+        assert(mounted.main.input.isShoot() && !mounted.main.input.isDown(), "Logical B gameplay meaning");
+        assert(mounted.main.input.isEnter(), "Logical B confirm edge missing");
+        hardware(7);
+        sample();
+        assert(mounted.main.input.isUp() && !mounted.main.input.isEnter(), "Mapped raw movement also confirmed");
+        hardware(null);
+        sample();
+        hardware(-4);
+        sample();
+        world.update(mounted.container);
+        assert(world.paused, "Logical Start did not pause");
+        sample();
+        world.update(mounted.container);
+        assert(world.paused, "Held Start unpaused");
+        hardware(null);
+        sample();
+        world.update(mounted.container);
+        hardware(-4);
+        sample();
+        world.update(mounted.container);
+        assert(!world.paused, "Fresh Start did not unpause");
+        // Same-slot replacement and invalid samples preserve quarantine, without a hidden neutral poll.
+        hardware(-2);
+        pad.id = "nes-replacement";
+        sample();
+        assert(!mounted.main.input.isFire(), "Replacement held A leaked");
+        invalid = true;
+        hardware(null);
+        sample();
+        invalid = false;
+        hardware(-2);
+        sample();
+        assert(!mounted.main.input.isFire(), "Invalid enumeration manufactured release");
+        hardware(null);
+        sample();
+        hardware(-2);
+        sample();
+        assert(mounted.main.input.isFire(), "First fresh replacement A lost");
+    } finally {
+        invalid = false;
+        destroyMounted(runtime, mounted);
+        store.clear(() => true);
+        if (descriptor) Object.defineProperty(navigator, "getGamepads", descriptor);
+        else Reflect.deleteProperty(navigator, "getGamepads");
     }
 }

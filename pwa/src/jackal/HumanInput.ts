@@ -89,48 +89,54 @@ export class HumanInput implements IInput {
             }
 
             const establishBaseline = firstSample || status.baselineOnly || ownerChanged || mappingChanged;
-            up ||= this.sampleControllerControl(
-                controller,
-                0,
-                this.isControllerBindingDown(this.buttonMapping.controllerUp, controller),
-                establishBaseline,
-                blocked
-            );
-            down ||= this.sampleControllerControl(
-                controller,
-                1,
-                this.isControllerBindingDown(this.buttonMapping.controllerDown, controller),
-                establishBaseline,
-                blocked
-            );
-            left ||= this.sampleControllerControl(
-                controller,
-                2,
-                this.isControllerBindingDown(this.buttonMapping.controllerLeft, controller),
-                establishBaseline,
-                blocked
-            );
-            right ||= this.sampleControllerControl(
-                controller,
-                3,
-                this.isControllerBindingDown(this.buttonMapping.controllerRight, controller),
-                establishBaseline,
-                blocked
-            );
-            fire ||= this.sampleControllerControl(
-                controller,
-                4,
-                this.isControllerButtonDown(this.buttonMapping.controllerGrenade, controller),
-                establishBaseline,
-                blocked
-            );
-            shoot ||= this.sampleControllerControl(
-                controller,
-                5,
-                this.isControllerButtonDown(this.buttonMapping.controllerGun, controller),
-                establishBaseline,
-                blocked
-            );
+            up =
+                this.sampleControllerControl(
+                    controller,
+                    0,
+                    this.isControllerBindingDown(this.buttonMapping.controllerUp, controller),
+                    establishBaseline,
+                    blocked
+                ) || up;
+            down =
+                this.sampleControllerControl(
+                    controller,
+                    1,
+                    this.isControllerBindingDown(this.buttonMapping.controllerDown, controller),
+                    establishBaseline,
+                    blocked
+                ) || down;
+            left =
+                this.sampleControllerControl(
+                    controller,
+                    2,
+                    this.isControllerBindingDown(this.buttonMapping.controllerLeft, controller),
+                    establishBaseline,
+                    blocked
+                ) || left;
+            right =
+                this.sampleControllerControl(
+                    controller,
+                    3,
+                    this.isControllerBindingDown(this.buttonMapping.controllerRight, controller),
+                    establishBaseline,
+                    blocked
+                ) || right;
+            fire =
+                this.sampleControllerControl(
+                    controller,
+                    4,
+                    this.isControllerBindingDown(this.buttonMapping.controllerGrenade, controller),
+                    establishBaseline,
+                    blocked
+                ) || fire;
+            shoot =
+                this.sampleControllerControl(
+                    controller,
+                    5,
+                    this.isControllerBindingDown(this.buttonMapping.controllerGun, controller),
+                    establishBaseline,
+                    blocked
+                ) || shoot;
         }
 
         this.controllerUp = up;
@@ -171,14 +177,28 @@ export class HumanInput implements IInput {
     }
 
     private isControllerBindingPressed(button: number): boolean {
-        if (button < 0) {
-            return false;
+        let control: number;
+        switch (button) {
+            case ButtonMapping.CONTROLLER_DIRECTION_LEFT:
+                control = 0;
+                break;
+            case ButtonMapping.CONTROLLER_DIRECTION_RIGHT:
+                control = 1;
+                break;
+            case ButtonMapping.CONTROLLER_DIRECTION_UP:
+                control = 2;
+                break;
+            case ButtonMapping.CONTROLLER_DIRECTION_DOWN:
+                control = 3;
+                break;
+            default:
+                if (!ButtonMapping.isValidRawControllerButton(button)) return false;
+                control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
         }
         let pressed = false;
-        const control = HumanInput.GAMEPAD_BUTTON_CONTROL_OFFSET + button;
-        const controllerCount = this.input.getControllerCount();
-        for (let controller = 0; controller < controllerCount; controller++) {
-            pressed = this.input.isControlPressed(control, controller) || pressed;
+        for (let controller = 0; controller < this.input.getControllerCount(); controller++) {
+            const current = this.input.isControlPressed(control, controller);
+            pressed = current || pressed;
         }
         return pressed;
     }
@@ -239,9 +259,11 @@ export class HumanInput implements IInput {
     }
 
     public isEnter(): boolean {
-        const mappedStartPressed = this.isMappedStartPressed();
-        const anyNonDirectionalPressed = this.isAnyNonDirectionalControllerButtonPressed();
-        return mappedStartPressed || anyNonDirectionalPressed;
+        const start = this.isMappedStartPressed();
+        const a = this.isControllerBindingPressed(this.buttonMapping.controllerGrenade);
+        const b = this.isControllerBindingPressed(this.buttonMapping.controllerGun);
+        const other = this.isAnyNonDirectionalControllerButtonPressed();
+        return start || a || b || other;
     }
 
     public isPause(): boolean {

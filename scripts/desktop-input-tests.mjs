@@ -4,6 +4,7 @@ import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
+const profileSource = fileURLToPath(new URL("../desktop/test/jackal/NesControllerMappingTest.java", import.meta.url));
 const testSource = fileURLToPath(new URL("../desktop/test/jackal/ControllerSupportTest.java", import.meta.url));
 
 export function runDesktopInputTests({ classesDir, classpath, releaseArgs }) {
@@ -16,11 +17,12 @@ export function runDesktopInputTests({ classesDir, classpath, releaseArgs }) {
         }
     }
     try {
-        run("javac", ["-encoding", "UTF-8", "-Xlint:-options", ...releaseArgs, "-cp", productionClasspath, "-d", testClasses, testSource]);
+        run("javac", ["-encoding", "UTF-8", "-Xlint:-options", ...releaseArgs, "-cp", productionClasspath, "-d", testClasses, testSource, profileSource]);
         // JInput discovery is process-wide, so each scenario needs a fresh JVM.
         for (const scenario of ["empty", "connected", "poll-failure", "reported-failure", "initialization-failure"]) {
             run("java", ["-Djava.awt.headless=true", "-cp", `${testClasses}${delimiter}${productionClasspath}`, "jackal.ControllerSupportTest", scenario]);
         }
+        run("java", ["-Djava.awt.headless=true", "-cp", `${testClasses}${delimiter}${productionClasspath}`, "jackal.NesControllerMappingTest"]);
     } finally {
         rmSync(testClasses, { recursive: true, force: true });
     }

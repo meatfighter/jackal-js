@@ -124,8 +124,11 @@ async function loadPersistenceValidation() {
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
     const audioRegistryUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/AudioRegistry.ts", import.meta.url), "utf8"));
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
+    const profileUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/NesInputProfile.ts", import.meta.url), "utf8"));
     const buttonMappingUrl = compileModule(
-        readFileSync(new URL("../pwa/src/jackal/ButtonMapping.ts", import.meta.url), "utf8").replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
+        readFileSync(new URL("../pwa/src/jackal/ButtonMapping.ts", import.meta.url), "utf8")
+            .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
+            .replace(`from "./NesInputProfile.js"`, `from "${profileUrl}"`)
     );
     const tileTypesUrl = compileModule(readFileSync(new URL("../pwa/src/jackal/GameTileTypes.ts", import.meta.url), "utf8"));
     const inputModeUrl = compileModule(`
@@ -180,6 +183,7 @@ async function loadPersistenceValidation() {
     `);
     const validatorUrl = compileModule(
         source("GameStateSnapshotValidator.ts")
+            .replace(`from "../NesInputProfile.js"`, `from "${profileUrl}"`)
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
             .replace(`from "../AudioRegistry.js"`, `from "${audioRegistryUrl}"`)
@@ -376,7 +380,7 @@ function inputModeSnapshot(fields, version) {
                     })
                 },
                 assignedKeys: [],
-                assignedControllerButtons: []
+                assignedControllerBindings: []
             }
         }
     };
@@ -464,7 +468,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 16);
+    assert.equal(currentVersion, 17);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -700,7 +704,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
 
     const unreachableControllerAssignment = structuredClone(validInput);
     unreachableControllerAssignment.modeFields.nameIndex = 1;
-    unreachableControllerAssignment.modeExtra.input.assignedControllerButtons = [64];
+    unreachableControllerAssignment.modeExtra.input.assignedControllerBindings = [64];
     assert.equal(validator.isSupportedGameStateSnapshot(unreachableControllerAssignment), false);
 
     const unreachableDraftController = structuredClone(validInput);
@@ -936,4 +940,38 @@ test("GameMode active fade ownership is consistent with stage completion", async
         Object.assign(s.gameMode.fields, { stageCompletedFlag: completed, stageCompletedDelay: delay });
         assert.equal(validator.isSupportedGameStateSnapshot(s), expected, JSON.stringify({ fading, fadeOut, completed, delay }));
     }
+});
+
+test("NES INPUT drafts preserve displaced future slots and current-only assigned bindings", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    const snapshot = inputModeSnapshot(fields, schema.GAME_STATE_VERSION);
+    const draft = snapshot.modeExtra.input.draftButtonMapping.fields;
+    Object.assign(draft, {
+        controllerUp: 6,
+        controllerDown: -1,
+        controllerLeft: 3,
+        controllerRight: 0,
+        controllerGrenade: -2,
+        controllerGun: -3,
+        controllerStart: -4
+    });
+    snapshot.modeFields.nameIndex = 1;
+    snapshot.modeFields.armDelay = 0;
+    snapshot.modeExtra.input.assignedControllerBindings = [6];
+    assert.equal(validator.isSupportedGameStateSnapshot(snapshot), true);
+    for (const invalid of [-1, -6, 64, 0.5, NaN, Infinity, "6", null]) {
+        const bad = structuredClone(snapshot);
+        bad.modeExtra.input.assignedControllerBindings = [invalid];
+        assert.equal(validator.isSupportedGameStateSnapshot(bad), false);
+    }
+    const old = structuredClone(snapshot);
+    old.modeExtra.input.assignedControllerButtons = old.modeExtra.input.assignedControllerBindings;
+    delete old.modeExtra.input.assignedControllerBindings;
+    assert.equal(validator.isSupportedGameStateSnapshot(old), false);
+    const duplicate = structuredClone(snapshot);
+    duplicate.modeExtra.input.draftButtonMapping.fields.controllerUp = -2;
+    assert.equal(validator.isSupportedGameStateSnapshot(duplicate), false);
+    const oldVersion = structuredClone(snapshot);
+    oldVersion.version--;
+    assert.equal(validator.isSupportedGameStateSnapshot(oldVersion), false);
 });

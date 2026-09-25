@@ -90,7 +90,7 @@ export type InputModeExtraSnapshot = {
     menu: MenuSnapshot | null;
     draftButtonMapping: ButtonMappingSnapshot | null;
     assignedKeys: number[];
-    assignedControllerButtons: number[];
+    assignedControllerBindings: number[];
 };
 
 export type GenericModeExtraSnapshot = { menu: MenuSnapshot | null } | { input: InputModeExtraSnapshot } | { jeepYeah: JeepYeahModeExtraSnapshot };

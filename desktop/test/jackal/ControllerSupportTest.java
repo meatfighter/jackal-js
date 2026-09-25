@@ -12,7 +12,7 @@ import org.newdawn.slick.Input;
 
 /** Headless regressions using the shipped LWJGL/JInput adapters and fake devices. */
 public final class ControllerSupportTest {
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Throwable {
     String scenario = args[0];
     Pad pad = new Pad();
     Environment environment = new Environment(
@@ -69,6 +69,18 @@ public final class ControllerSupportTest {
       mapping.resetToDefaults();
       if (scenario.equals("connected")) {
         pad.x.value = 0;
+        pad.y.value = 0;
+        pad.button.value = 0;
+        for (int raw = 12; raw <= 15; raw++) {
+          pad.buttons[raw].value = 1;
+          ControllerSupport.beginFrame();
+          check(ControllerSupport.isButtonDown(raw), "Raw button level " + raw);
+          check(!ControllerSupport.isDirectionalButton(raw), "Raw button classification " + raw);
+          check(!ControllerSupport.isUpDown() && !ControllerSupport.isDownDown()
+              && !ControllerSupport.isLeftDown() && !ControllerSupport.isRightDown(), "Raw button must not fabricate a direction");
+          pad.buttons[raw].value = 0;
+          ControllerSupport.beginFrame();
+        }
         pad.pov.value = Component.POV.UP;
         ControllerSupport.beginFrame();
         check(ControllerSupport.isUpDown() && !ControllerSupport.isDownDown(), "D-pad orientation");
@@ -112,6 +124,7 @@ public final class ControllerSupportTest {
       input.snap();
       check(!input.isEnter(), "A held action button does not repeat its press");
     }
+    if (scenario.equals("connected")) verifyNesMapping(pad, keyboard);
     check(environment.enumerations == 1, "Discovery must run only once");
     check(defaultEnvironment.get(null) == environment, "Do not replace the native environment");
     System.out.println("ok - jackal desktop input " + scenario);
@@ -132,6 +145,63 @@ public final class ControllerSupportTest {
     public void setDefaultMouseCursor() {}
     public void setMouseGrabbed(boolean grabbed) {}
     public boolean isMouseGrabbed() { return false; }
+  }
+
+  private static void set(Object target, String name, Object value) throws Exception {
+    Field field = target.getClass().getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(target, value);
+  }
+  private static Object get(Object target, String name) throws Exception {
+    Field field = target.getClass().getDeclaredField(name);
+    field.setAccessible(true);
+    return field.get(target);
+  }
+  private static void invoke(Object target, String name) throws Exception {
+    java.lang.reflect.Method method = target.getClass().getDeclaredMethod(name);
+    method.setAccessible(true);
+    method.invoke(target);
+  }
+  private static final class QuietMain extends Main {
+    public void playSoundAlways(org.newdawn.slick.Sound sound) {}
+  }
+  private static void verifyNesMapping(Pad pad, KeyboardInput keyboard) throws Throwable {
+    keyboard.up = false;
+    pad.x.value = 0; pad.y.value = 0; pad.button.value = 0;
+    pad.pov.value = Component.POV.OFF;
+    ControllerSupport.beginFrame();
+    ButtonMapping mapping = new ButtonMapping();
+    mapping.controllerUp = 7; mapping.controllerDown = 6;
+    mapping.controllerLeft = 3; mapping.controllerRight = 0;
+    mapping.controllerGrenade = -2; mapping.controllerGun = -3; mapping.controllerStart = -4;
+    HeadlessContainer gc = new HeadlessContainer(keyboard);
+    HumanInput input = new HumanInput(mapping, gc);
+    pad.pov.value = Component.POV.UP; ControllerSupport.beginFrame(); input.snap();
+    check(input.isFire() && !input.isUp() && input.isEnter(), "Logical A virtual meaning");
+    input.clearKeyPressedRecord(); input.snap(); check(!input.isEnter(), "A clear baseline");
+    pad.pov.value = Component.POV.OFF; ControllerSupport.beginFrame(); input.snap();
+    pad.pov.value = Component.POV.DOWN; ControllerSupport.beginFrame(); input.snap();
+    check(input.isShoot() && !input.isDown() && input.isEnter(), "Logical B virtual meaning");
+    input.clearKeyPressedRecord(); input.snap(); check(!input.isEnter(), "B clear baseline");
+    pad.pov.value = Component.POV.OFF; ControllerSupport.beginFrame(); input.snap();
+    pad.pov.value = Component.POV.LEFT; ControllerSupport.beginFrame(); input.snap();
+    check(input.isPause(), "Logical Start edge"); input.snap(); check(!input.isPause(), "Held Start");
+    input.clearKeyPressedRecord(); input.snap(); check(!input.isPause(), "Start clear baseline");
+    pad.pov.value = Component.POV.OFF; ControllerSupport.beginFrame(); input.snap(); check(!input.isPause(), "Start release");
+    pad.pov.value = Component.POV.LEFT; ControllerSupport.beginFrame(); input.snap(); check(input.isPause(), "Fresh Start after release");
+    pad.pov.value = Component.POV.OFF; ControllerSupport.beginFrame();
+    QuietMain main = new QuietMain(); main.buttonMapping = mapping;
+    InputMode editor = new InputMode(); editor.main = main; editor.gc = gc; editor.buttonMapping = mapping;
+    invoke(editor, "startReading");
+    for (int i = 0; i < InputMode.ARM_DELAY; i++) editor.update(gc);
+    pad.buttons[7].value = 1; ControllerSupport.beginFrame(); editor.update(gc);
+    check(editor.state == InputMode.STATE_READ_FADE && editor.draftButtonMapping.controllerUp == 7, "Native first prompt raw reuse");
+    pad.buttons[7].value = 0; ControllerSupport.beginFrame(); invoke(editor, "syncControllerInputState");
+    editor.state = InputMode.STATE_READING; editor.nameIndex = 6; editor.armDelay = 0;
+    pad.pov.value = Component.POV.LEFT; ControllerSupport.beginFrame(); editor.update(gc);
+    check(editor.state == InputMode.STATE_READ_FADE && editor.draftButtonMapping.controllerStart == -4, "Native final prompt logical capture");
+    check(editor.assignedControllerBindings.contains(-4), "Logical assigned set");
+    pad.pov.value = Component.POV.OFF; ControllerSupport.beginFrame();
   }
 
   private static void check(boolean condition, String message) {
@@ -179,8 +249,26 @@ public final class ControllerSupportTest {
     final Control x = new Control(Component.Identifier.Axis.X);
     final Control y = new Control(Component.Identifier.Axis.Y);
     final Control pov = new Control(Component.Identifier.Axis.POV);
-    final Control button = new Control(Component.Identifier.Button._0);
-    final Component[] components = {x, y, pov, button};
+    final Control[] buttons = {
+        new Control(Component.Identifier.Button._0),
+        new Control(Component.Identifier.Button._1),
+        new Control(Component.Identifier.Button._2),
+        new Control(Component.Identifier.Button._3),
+        new Control(Component.Identifier.Button._4),
+        new Control(Component.Identifier.Button._5),
+        new Control(Component.Identifier.Button._6),
+        new Control(Component.Identifier.Button._7),
+        new Control(Component.Identifier.Button._8),
+        new Control(Component.Identifier.Button._9),
+        new Control(Component.Identifier.Button._10),
+        new Control(Component.Identifier.Button._11),
+        new Control(Component.Identifier.Button._12),
+        new Control(Component.Identifier.Button._13),
+        new Control(Component.Identifier.Button._14),
+        new Control(Component.Identifier.Button._15)
+    };
+    final Control button = buttons[0];
+    final Component[] components = {x, y, pov, buttons[0], buttons[1], buttons[2], buttons[3], buttons[4], buttons[5], buttons[6], buttons[7], buttons[8], buttons[9], buttons[10], buttons[11], buttons[12], buttons[13], buttons[14], buttons[15]};
     final EventQueue events = new EventQueue(32);
     int polls;
     boolean fail;

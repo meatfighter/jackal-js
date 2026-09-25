@@ -161,13 +161,13 @@ test("browser binding validity has one Jackal policy owner", () => {
     const stateValidator = read("pwa/src/jackal/persistence/GameStateSnapshotValidator.ts");
 
     assert.match(mapping, /Input\.isBrowserKeyCodeSupported\(value\)/);
-    assert.match(mapping, /value < Input\.BROWSER_CONTROLLER_BUTTON_LIMIT/);
+    assert.match(mapping, /NesInputProfile\.isRawButton\(value\)/);
     assert.match(mapping, /public static isValidControllerBinding/);
-    assert.match(mapping, /public static isValidControllerActionBinding/);
+    assert.match(mapping, /public static isValidControllerBinding/);
 
     assert.match(store, /ButtonMapping\.isValidKeyBinding/);
     assert.match(store, /ButtonMapping\.isValidControllerBinding/);
-    assert.match(store, /ButtonMapping\.isValidControllerActionBinding/);
+    assert.match(store, /ButtonMapping\.isValidControllerBinding/);
     assert.doesNotMatch(store, /MAX_CONTROLLER_BUTTON_INDEX|Input\.isBrowserKeyCodeSupported/);
 
     assert.match(inputMode, /ButtonMapping\.isValidKeyBinding\(i\)/);
@@ -175,7 +175,7 @@ test("browser binding validity has one Jackal policy owner", () => {
 
     assert.match(stateValidator, /ButtonMapping\.isValidKeyBinding/);
     assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding/);
-    assert.match(stateValidator, /ButtonMapping\.isValidControllerActionBinding/);
+    assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding/);
     assert.match(stateValidator, /ButtonMapping\.isValidControllerBinding\(entry\) && entry !== ButtonMapping\.NO_BINDING/);
     assert.doesNotMatch(stateValidator, /Input\.isBrowserKeyCodeSupported|MAX_CONTROLLER_BUTTON_INDEX/);
 });

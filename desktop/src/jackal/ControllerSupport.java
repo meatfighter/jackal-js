@@ -146,17 +146,12 @@ public final class ControllerSupport {
   }
 
   public static boolean isDirectionDown(int direction) {
-    switch(direction) {
-      case ButtonMapping.DEFAULT_CONTROLLER_UP:
-        return isAnyControllerUp() || isButtonDown(direction);
-      case ButtonMapping.DEFAULT_CONTROLLER_DOWN:
-        return isAnyControllerDown() || isButtonDown(direction);
-      case ButtonMapping.DEFAULT_CONTROLLER_LEFT:
-        return isAnyControllerLeft() || isButtonDown(direction);
-      case ButtonMapping.DEFAULT_CONTROLLER_RIGHT:
-        return isAnyControllerRight() || isButtonDown(direction);
-      default:
-        return isButtonDown(direction);
+    switch (direction) {
+      case ButtonMapping.CONTROLLER_DIRECTION_UP: return isAnyControllerUp();
+      case ButtonMapping.CONTROLLER_DIRECTION_DOWN: return isAnyControllerDown();
+      case ButtonMapping.CONTROLLER_DIRECTION_LEFT: return isAnyControllerLeft();
+      case ButtonMapping.CONTROLLER_DIRECTION_RIGHT: return isAnyControllerRight();
+      default: return isButtonDown(direction);
     }
   }
 
@@ -179,6 +174,10 @@ public final class ControllerSupport {
   public static boolean isButtonDown(int button) {
     return !isControllerInputUnavailable() && button >= 0
         && button < GAMEPAD_BUTTON_INDEX_LIMIT && sampledButtons[button];
+  }
+
+  public static boolean isNonDirectionalButtonDown(int button) {
+    return !isControllerInputUnavailable() && button >= 0 && button < GAMEPAD_BUTTON_INDEX_LIMIT && sampledNonDirectionalButtons[button];
   }
 
   public static boolean isNonDirectionalButtonDown(ButtonMapping mapping) {
@@ -206,8 +205,7 @@ public final class ControllerSupport {
         return true;
       }
     }
-    return button >= ButtonMapping.DEFAULT_CONTROLLER_UP
-        && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+    return false;
   }
 
   private static boolean isAnyControllerUp() {
@@ -220,7 +218,7 @@ public final class ControllerSupport {
       Controller lwjglController = getGameController(controller);
       if (lwjglController != null
           && (isPovUp(lwjglController)
-          || isDirectionalButtonDown(ButtonMapping.DEFAULT_CONTROLLER_UP,
+          || isDirectionalButtonDown(ButtonMapping.CONTROLLER_DIRECTION_UP,
               controller, lwjglController)
           || isAnyStickUp(controller, lwjglController))) {
         return true;
@@ -239,7 +237,7 @@ public final class ControllerSupport {
       Controller lwjglController = getGameController(controller);
       if (lwjglController != null
           && (isPovDown(lwjglController)
-          || isDirectionalButtonDown(ButtonMapping.DEFAULT_CONTROLLER_DOWN,
+          || isDirectionalButtonDown(ButtonMapping.CONTROLLER_DIRECTION_DOWN,
               controller, lwjglController)
           || isAnyStickDown(controller, lwjglController))) {
         return true;
@@ -258,7 +256,7 @@ public final class ControllerSupport {
       Controller lwjglController = getGameController(controller);
       if (lwjglController != null
           && (isPovLeft(lwjglController)
-          || isDirectionalButtonDown(ButtonMapping.DEFAULT_CONTROLLER_LEFT,
+          || isDirectionalButtonDown(ButtonMapping.CONTROLLER_DIRECTION_LEFT,
               controller, lwjglController)
           || isAnyStickLeft(controller, lwjglController))) {
         return true;
@@ -277,7 +275,7 @@ public final class ControllerSupport {
       Controller lwjglController = getGameController(controller);
       if (lwjglController != null
           && (isPovRight(lwjglController)
-          || isDirectionalButtonDown(ButtonMapping.DEFAULT_CONTROLLER_RIGHT,
+          || isDirectionalButtonDown(ButtonMapping.CONTROLLER_DIRECTION_RIGHT,
               controller, lwjglController)
           || isAnyStickRight(controller, lwjglController))) {
         return true;
@@ -772,34 +770,12 @@ public final class ControllerSupport {
 
   private static boolean isDirectionalButton(int button, int controllerIndex,
       Controller controller) {
-    if (getButtonDirection(button, controllerIndex, controller)
-        != ButtonMapping.NO_BINDING) {
-      return true;
-    }
-    return button >= ButtonMapping.DEFAULT_CONTROLLER_UP
-        && button <= ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+    return getButtonDirection(button, controllerIndex, controller) != ButtonMapping.NO_BINDING;
   }
 
   private static boolean isDirectionalButton(int button, int controllerIndex,
       Controller controller, int direction) {
-    int namedDirection = getButtonDirection(button, controllerIndex,
-        controller);
-    if (namedDirection != ButtonMapping.NO_BINDING) {
-      return namedDirection == direction;
-    }
-
-    switch(direction) {
-      case ButtonMapping.DEFAULT_CONTROLLER_UP:
-        return button == ButtonMapping.DEFAULT_CONTROLLER_UP;
-      case ButtonMapping.DEFAULT_CONTROLLER_DOWN:
-        return button == ButtonMapping.DEFAULT_CONTROLLER_DOWN;
-      case ButtonMapping.DEFAULT_CONTROLLER_LEFT:
-        return button == ButtonMapping.DEFAULT_CONTROLLER_LEFT;
-      case ButtonMapping.DEFAULT_CONTROLLER_RIGHT:
-        return button == ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-      default:
-        return false;
-    }
+    return getButtonDirection(button, controllerIndex, controller) == direction;
   }
 
   private static int getButtonDirection(int button, int controllerIndex,
@@ -843,36 +819,36 @@ public final class ControllerSupport {
 
     if (containsDirectionWord(lower, "up")
         || containsDirectionWord(lower, "north")) {
-      return ButtonMapping.DEFAULT_CONTROLLER_UP;
+      return ButtonMapping.CONTROLLER_DIRECTION_UP;
     }
     if (containsDirectionWord(lower, "down")
         || containsDirectionWord(lower, "south")) {
-      return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
+      return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
     }
     if (containsDirectionWord(lower, "left")
         || containsDirectionWord(lower, "west")) {
-      return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
+      return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
     }
     if (containsDirectionWord(lower, "right")
         || containsDirectionWord(lower, "east")) {
-      return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+      return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
     }
 
     if (directionalGroup && (lower.indexOf("y-") != -1
         || lower.indexOf("-y") != -1)) {
-      return ButtonMapping.DEFAULT_CONTROLLER_UP;
+      return ButtonMapping.CONTROLLER_DIRECTION_UP;
     }
     if (directionalGroup && (lower.indexOf("y+") != -1
         || lower.indexOf("+y") != -1)) {
-      return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
+      return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
     }
     if (directionalGroup && (lower.indexOf("x-") != -1
         || lower.indexOf("-x") != -1)) {
-      return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
+      return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
     }
     if (directionalGroup && (lower.indexOf("x+") != -1
         || lower.indexOf("+x") != -1)) {
-      return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
+      return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
     }
     return ButtonMapping.NO_BINDING;
   }

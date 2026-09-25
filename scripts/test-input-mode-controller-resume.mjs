@@ -29,7 +29,7 @@ try {
 
         assert.equal(mode.armDelay, 0);
         assert.equal(mode.state, InputMode.STATE_READING);
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), []);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), []);
 
         mode.update({});
         assert.equal(mode.state, InputMode.STATE_READING, "a button held throughout ARM_DELAY must not become a fresh binding");
@@ -40,7 +40,7 @@ try {
         mode.update({});
 
         assert.equal(mode.state, InputMode.STATE_READ_FADE);
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), [0]);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), [0]);
         assert.equal(mode.draftButtonMapping.controllerGrenade, 0);
     });
 
@@ -54,7 +54,7 @@ try {
         mode.update({});
 
         assert.equal(mode.state, InputMode.STATE_READING);
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), []);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), []);
 
         controls.heldButton = -1;
         mode.update({});
@@ -62,7 +62,7 @@ try {
         mode.update({});
 
         assert.equal(mode.state, InputMode.STATE_READ_FADE);
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), [2]);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), [2]);
         assert.equal(mode.draftButtonMapping.controllerGrenade, 2);
     });
 
@@ -76,7 +76,7 @@ try {
 
         controls.heldButton = 0;
         mode.update({});
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), [0]);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), [0]);
 
         mode.state = InputMode.STATE_READING;
         mode.nameIndex = 5;
@@ -88,7 +88,7 @@ try {
 
         assert.equal(mode.state, InputMode.STATE_READING);
         assert.equal(mode.message, "ALREADY USED");
-        assert.deepEqual(Array.from(mode.assignedControllerButtons), [0]);
+        assert.deepEqual(Array.from(mode.assignedControllerBindings), [0]);
     });
 } finally {
     await server.close();
@@ -99,8 +99,8 @@ test("Jackal browser InputMode retains the maintained Java polling architecture"
     const javaSource = readFileSync(resolve(rootDir, "desktop/src/jackal/InputMode.java"), "utf8");
 
     assert.match(javaSource, /syncControllerInputState/);
-    assert.match(javaSource, /getPressedControllerDirection/);
-    assert.match(javaSource, /getPressedNonDirectionalControllerButton/);
+    assert.match(javaSource, /sampleControllerBinding/);
+    assert.match(javaSource, /NesInputProfile\.assignController/);
     assert.match(javaSource, /armDelay/);
 
     assert.match(tsSource, /syncControllerInputState/);
@@ -166,7 +166,7 @@ function createInputModeFixture(InputMode, ButtonMapping) {
     mode.armDelay = InputMode.ARM_DELAY;
     mode.draftButtonMapping = mode.copyButtonMapping(mapping);
     mode.assignedKeys.clear();
-    mode.assignedControllerButtons.clear();
+    mode.assignedControllerBindings.clear();
     mode.message = "";
 
     return { controls, input, main, mode, queriedButtons };

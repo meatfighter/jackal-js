@@ -44,29 +44,15 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     ButtonMapping.ACTION_START,
   };
 
-  public static final String[] LABELS = {
-    "UP",
-    "DOWN",
-    "LEFT",
-    "RIGHT",
-    "GRENADE",
-    "GUN",
-    "START",
-  };
+  public static final String[] LABELS = new String[NesInputProfile.ACTIVE_COUNT];
 
-  public static final String[] NAMES = {
-    "UP",
-    "DOWN",
-    "LEFT",
-    "RIGHT",
-    "GRENADE",
-    "GUN",
-    "START",
-  };
+  public static final String[] NAMES = new String[NesInputProfile.ACTIVE_COUNT];
   public static final float[] NAME_XS = new float[NAMES.length];
   
   static {
     for(int i = 0; i < NAMES.length; i++) {
+      LABELS[i] = NesInputProfile.label(i);
+      NAMES[i] = NesInputProfile.label(i);
       NAME_XS[i] = (Main.DISPLAY_WIDTH - (NAMES[i].length() << 5)) / 2f;
     }
   }
@@ -82,7 +68,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   public boolean listeningForInput;
   public ButtonMapping draftButtonMapping;
   public Set<Integer> assignedKeys = new HashSet<Integer>();
-  public Set<Integer> assignedControllerButtons = new HashSet<Integer>();
+  public Set<Integer> assignedControllerBindings = new HashSet<Integer>();
   public String message = "";
   public int armDelay;
   public boolean[] controllerButtonDown =
@@ -155,7 +141,7 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
     menu = null;
     draftButtonMapping = copyButtonMapping(buttonMapping);
     assignedKeys.clear();
-    assignedControllerButtons.clear();
+    assignedControllerBindings.clear();
     message = "";
     armDelay = ARM_DELAY;
     addInputListeners();
@@ -197,19 +183,6 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   public void inputStarted() {
   }
 
-  private void bindControllerDirection(int buttonIndex) {
-    if (state != STATE_READING || isActionStep()) {
-      return;
-    }
-
-    if (!bindDraftControllerButton(buttonIndex)) {
-      message = "ALREADY USED";
-      return;
-    }
-
-    advance();
-  }
-
   @Override
   public void keyPressed(int i, char c) {
     
@@ -234,159 +207,20 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
   }
 
   private boolean bindDraftKeyboardKey(int i) {
-    if (assignedKeys.contains(i)) {
-      return false;
-    }
-    clearDraftKey(i);
-    switch(getCurrentAction()) {
-      case ButtonMapping.ACTION_UP:
-        draftButtonMapping.keyUp = i;
-        break;
-      case ButtonMapping.ACTION_DOWN:
-        draftButtonMapping.keyDown = i;
-        break;
-      case ButtonMapping.ACTION_LEFT:
-        draftButtonMapping.keyLeft = i;
-        break;
-      case ButtonMapping.ACTION_RIGHT:
-        draftButtonMapping.keyRight = i;
-        break;
-      case ButtonMapping.ACTION_GRENADE:
-        draftButtonMapping.keyGrenade = i;
-        break;
-      case ButtonMapping.ACTION_GUN:
-        draftButtonMapping.keyGun = i;
-        break;
-      case ButtonMapping.ACTION_START:
-        draftButtonMapping.keyStart = i;
-        break;
-    }
-    assignedKeys.add(i);
-    return true;
+    return NesInputProfile.assignKey(draftButtonMapping, nameIndex, i, assignedKeys);
   }
 
-  private boolean bindDraftControllerButton(int buttonIndex) {
-    if (assignedControllerButtons.contains(buttonIndex)) {
-      return false;
-    }
-    clearDraftControllerButton(buttonIndex);
-    switch(getCurrentAction()) {
-      case ButtonMapping.ACTION_UP:
-        draftButtonMapping.controllerUp = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_DOWN:
-        draftButtonMapping.controllerDown = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_LEFT:
-        draftButtonMapping.controllerLeft = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_RIGHT:
-        draftButtonMapping.controllerRight = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GRENADE:
-        draftButtonMapping.controllerGrenade = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_GUN:
-        draftButtonMapping.controllerGun = buttonIndex;
-        break;
-      case ButtonMapping.ACTION_START:
-        draftButtonMapping.controllerStart = buttonIndex;
-        break;
-    }
-    assignedControllerButtons.add(buttonIndex);
-    return true;
+  private boolean bindDraftControllerBinding(int buttonIndex) {
+    return NesInputProfile.assignController(draftButtonMapping, nameIndex, buttonIndex, assignedControllerBindings);
   }
 
   private ButtonMapping copyButtonMapping(ButtonMapping source) {
-    ButtonMapping copy = new ButtonMapping();
-    copy.keyUp = source.keyUp;
-    copy.keyDown = source.keyDown;
-    copy.keyLeft = source.keyLeft;
-    copy.keyRight = source.keyRight;
-    copy.keyGrenade = source.keyGrenade;
-    copy.keyGun = source.keyGun;
-    copy.keyStart = source.keyStart;
-    copy.controllerUp = source.controllerUp;
-    copy.controllerDown = source.controllerDown;
-    copy.controllerLeft = source.controllerLeft;
-    copy.controllerRight = source.controllerRight;
-    copy.controllerGrenade = source.controllerGrenade;
-    copy.controllerGun = source.controllerGun;
-    copy.controllerStart = source.controllerStart;
-    return copy;
-  }
-
-  private void clearDraftKey(int key) {
-    if (draftButtonMapping.keyUp == key) {
-      draftButtonMapping.keyUp = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyDown == key) {
-      draftButtonMapping.keyDown = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyLeft == key) {
-      draftButtonMapping.keyLeft = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyRight == key) {
-      draftButtonMapping.keyRight = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyGrenade == key) {
-      draftButtonMapping.keyGrenade = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyGun == key) {
-      draftButtonMapping.keyGun = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.keyStart == key) {
-      draftButtonMapping.keyStart = ButtonMapping.NO_BINDING;
-    }
-  }
-
-  private void clearDraftControllerButton(int buttonIndex) {
-    if (draftButtonMapping.controllerUp == buttonIndex) {
-      draftButtonMapping.controllerUp = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerDown == buttonIndex) {
-      draftButtonMapping.controllerDown = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerLeft == buttonIndex) {
-      draftButtonMapping.controllerLeft = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerRight == buttonIndex) {
-      draftButtonMapping.controllerRight = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerGrenade == buttonIndex) {
-      draftButtonMapping.controllerGrenade = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerGun == buttonIndex) {
-      draftButtonMapping.controllerGun = ButtonMapping.NO_BINDING;
-    }
-    if (draftButtonMapping.controllerStart == buttonIndex) {
-      draftButtonMapping.controllerStart = ButtonMapping.NO_BINDING;
-    }
+    return NesInputProfile.copy(source);
   }
 
   private void commitDraftButtonMapping() {
-    buttonMapping.keyUp = draftButtonMapping.keyUp;
-    buttonMapping.keyDown = draftButtonMapping.keyDown;
-    buttonMapping.keyLeft = draftButtonMapping.keyLeft;
-    buttonMapping.keyRight = draftButtonMapping.keyRight;
-    buttonMapping.keyGrenade = draftButtonMapping.keyGrenade;
-    buttonMapping.keyGun = draftButtonMapping.keyGun;
-    buttonMapping.keyStart = draftButtonMapping.keyStart;
-    buttonMapping.controllerUp = draftButtonMapping.controllerUp;
-    buttonMapping.controllerDown = draftButtonMapping.controllerDown;
-    buttonMapping.controllerLeft = draftButtonMapping.controllerLeft;
-    buttonMapping.controllerRight = draftButtonMapping.controllerRight;
-    buttonMapping.controllerGrenade = draftButtonMapping.controllerGrenade;
-    buttonMapping.controllerGun = draftButtonMapping.controllerGun;
-    buttonMapping.controllerStart = draftButtonMapping.controllerStart;
+    NesInputProfile.copyInto(draftButtonMapping, buttonMapping);
     draftButtonMapping = null;
-  }
-
-  private boolean isActionStep() {
-    int action = getCurrentAction();
-    return action == ButtonMapping.ACTION_GRENADE 
-        || action == ButtonMapping.ACTION_GUN
-        || action == ButtonMapping.ACTION_START;
   }
 
   private void bindControllerInputPressed() {
@@ -394,105 +228,51 @@ public class InputMode implements IMode, KeyListener, IFadeListener,
       syncControllerInputState();
       return;
     }
-
-    int direction = getPressedControllerDirection();
-    if (direction != ButtonMapping.NO_BINDING && !isActionStep()) {
-      bindControllerDirection(direction);
+    int binding = sampleControllerBinding(true);
+    if (binding == ButtonMapping.NO_BINDING) return;
+    if (!bindDraftControllerBinding(binding)) {
+      message = "ALREADY USED";
       return;
     }
-
-    int button = getPressedNonDirectionalControllerButton();
-    if (button != ButtonMapping.NO_BINDING) {
-      if (!bindDraftControllerButton(button)) {
-        message = "ALREADY USED";
-        return;
-      }
-      advance();
-    }
+    advance();
   }
 
-  private int getPressedControllerDirection() {
-    if (isControllerUpPressed()) {
-      return ButtonMapping.DEFAULT_CONTROLLER_UP;
-    }
-    if (isControllerDownPressed()) {
-      return ButtonMapping.DEFAULT_CONTROLLER_DOWN;
-    }
-    if (isControllerLeftPressed()) {
-      return ButtonMapping.DEFAULT_CONTROLLER_LEFT;
-    }
-    if (isControllerRightPressed()) {
-      return ButtonMapping.DEFAULT_CONTROLLER_RIGHT;
-    }
-    return ButtonMapping.NO_BINDING;
-  }
+  private int sampleControllerBinding(boolean selectCandidate) {
+    boolean up = ControllerSupport.isUpDown();
+    boolean down = ControllerSupport.isDownDown();
+    boolean left = ControllerSupport.isLeftDown();
+    boolean right = ControllerSupport.isRightDown();
+    boolean upPressed = up && !controllerUpDown;
+    boolean downPressed = down && !controllerDownDown;
+    boolean leftPressed = left && !controllerLeftDown;
+    boolean rightPressed = right && !controllerRightDown;
+    controllerUpDown = up;
+    controllerDownDown = down;
+    controllerLeftDown = left;
+    controllerRightDown = right;
 
-  private int getPressedNonDirectionalControllerButton() {
     int pressedButton = ButtonMapping.NO_BINDING;
-    for(int button = 0; button < controllerButtonDown.length; button++) {
-      boolean down = ControllerSupport.isButtonDown(button);
-      boolean pressed = down && !controllerButtonDown[button];
-      controllerButtonDown[button] = down;
-      if (pressedButton == ButtonMapping.NO_BINDING
-          && pressed
-          && !ControllerSupport.isDirectionalButton(button)
-          && !isDraftDirectionButton(button)) {
+    for (int button = 0; button < controllerButtonDown.length; button++) {
+      boolean held = ControllerSupport.isButtonDown(button);
+      boolean pressed = held && !controllerButtonDown[button];
+      controllerButtonDown[button] = held;
+      if (selectCandidate && pressedButton == ButtonMapping.NO_BINDING &&
+          pressed && ControllerSupport.isNonDirectionalButtonDown(button)) {
         pressedButton = button;
       }
     }
+    if (!selectCandidate) return ButtonMapping.NO_BINDING;
+    if (upPressed) return ButtonMapping.CONTROLLER_DIRECTION_UP;
+    if (downPressed) return ButtonMapping.CONTROLLER_DIRECTION_DOWN;
+    if (leftPressed) return ButtonMapping.CONTROLLER_DIRECTION_LEFT;
+    if (rightPressed) return ButtonMapping.CONTROLLER_DIRECTION_RIGHT;
     return pressedButton;
   }
 
-  private boolean isDraftDirectionButton(int button) {
-    return draftButtonMapping.controllerUp == button
-        || draftButtonMapping.controllerDown == button
-        || draftButtonMapping.controllerLeft == button
-        || draftButtonMapping.controllerRight == button;
-  }
-
-  private boolean isControllerUpPressed() {
-    boolean down = ControllerSupport.isUpDown();
-    boolean pressed = down && !controllerUpDown;
-    controllerUpDown = down;
-    return pressed;
-  }
-
-  private boolean isControllerDownPressed() {
-    boolean down = ControllerSupport.isDownDown();
-    boolean pressed = down && !controllerDownDown;
-    controllerDownDown = down;
-    return pressed;
-  }
-
-  private boolean isControllerLeftPressed() {
-    boolean down = ControllerSupport.isLeftDown();
-    boolean pressed = down && !controllerLeftDown;
-    controllerLeftDown = down;
-    return pressed;
-  }
-
-  private boolean isControllerRightPressed() {
-    boolean down = ControllerSupport.isRightDown();
-    boolean pressed = down && !controllerRightDown;
-    controllerRightDown = down;
-    return pressed;
-  }
-
   private void syncControllerInputState() {
-
-    controllerUpDown = ControllerSupport.isUpDown();
-    controllerDownDown = ControllerSupport.isDownDown();
-    controllerLeftDown = ControllerSupport.isLeftDown();
-    controllerRightDown = ControllerSupport.isRightDown();
-    for(int button = 0; button < controllerButtonDown.length; button++) {
-      controllerButtonDown[button] = ControllerSupport.isButtonDown(button);
-    }
+    sampleControllerBinding(false);
   }
 
-  private int getCurrentAction() {
-    return ACTIONS[nameIndex];
-  }
-  
   private void advance() {
     main.playSoundAlways(main.bulletHitSound);
     message = "";
