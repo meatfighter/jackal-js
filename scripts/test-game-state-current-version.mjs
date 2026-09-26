@@ -468,7 +468,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 18);
+    assert.equal(currentVersion, 19);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -980,7 +980,7 @@ test("NES INPUT drafts preserve displaced future slots and current-only assigned
     assert.equal(validator.isSupportedGameStateSnapshot(oldVersion), false);
 });
 
-test("schema18 explicitly validates death holds, pending exits and ending ownership", async () => {
+test("current schema explicitly validates death holds, pending exits and ending ownership", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const f = () => gameSnapshot(fields, schema.GAME_STATE_VERSION, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     const held = f();
@@ -1083,5 +1083,52 @@ test("removing the zero-reserve Pause validator guard admits the malformed count
         };
         s.requestedSongId = "stageSong0";
         assert.equal(validator.isSupportedGameStateSnapshot(s), mutant);
+    }
+});
+
+test("schema19 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    assert.equal(schema.GAME_STATE_VERSION, 19);
+    const game = gameSnapshot(fields, 19, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    game.playerFields.respawning = 100;
+    game.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: false,
+        lastLifeSuspended: true,
+        activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
+    };
+    game.requestedSongId = "bossSong";
+    const controls = [modeSnapshot(fields, 19), game];
+    for (const current of controls) {
+        assert.equal(validator.isSupportedGameStateSnapshot(current), true, "positive current shape");
+        for (const oldVersion of Array.from({ length: 19 }, (_, index) => index)) {
+            const old = { ...structuredClone(current), version: oldVersion };
+            const bytes = JSON.stringify(old);
+            assert.equal(validator.isSupportedGameStateSnapshot(old), false);
+            assert.equal(JSON.stringify(old), bytes, "validation never relabels or repairs input");
+        }
+        for (const version of [20, "19", null, true, 19.5, NaN, Infinity]) {
+            assert.equal(validator.isSupportedGameStateSnapshot({ ...structuredClone(current), version }), false);
+        }
+        const oldWithNewBuildLabel = { ...structuredClone(current), version: 18, appVersion: "schema19-test-build" };
+        assert.equal(validator.isSupportedGameStateSnapshot(oldWithNewBuildLabel), false);
+        const currentWithDifferentBuildLabel = { ...structuredClone(current), appVersion: "another-valid-current-schema-build" };
+        assert.equal(validator.isSupportedGameStateSnapshot(currentWithDifferentBuildLabel), true);
+    }
+});
+
+test("an appVersion allowlist rejects supported current state and is detected", async () => {
+    const signature = "export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {";
+    for (const mutant of [false, true]) {
+        const { schema, fields, validator } = await loadPersistenceValidation((source) => {
+            assert.ok(source.includes(signature));
+            return mutant
+                ? source.replace(signature, signature + ' if ((snapshot as {appVersion?:string}).appVersion !== "allowed-build") return false;')
+                : source;
+        });
+        const candidate = modeSnapshot(fields, schema.GAME_STATE_VERSION);
+        candidate.appVersion = "another-valid-build";
+        assert.equal(validator.isSupportedGameStateSnapshot(candidate), !mutant);
     }
 });

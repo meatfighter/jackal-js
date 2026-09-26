@@ -130,23 +130,39 @@ try {
             await upgraded.reload();
             await prepared(upgraded);
             assert.equal(await upgraded.locator(continueGame).isEnabled(), true, `${name}: upgrade lost Continue`);
-            // Check future-save protection while online, then restore this test's
-            // own current-version fixture for the independent offline scenario.
+            // Worker A/B above uses the same candidate schema. Compatibility
+            // rejection below is a separate test of the packaged reader.
             const current = await saveEntry(upgraded);
             assert(current !== null);
-            const future = JSON.parse(current[1]);
-            future.version += 1;
-            const futureText = JSON.stringify(future);
-            await upgraded.evaluate(([key, value]) => localStorage.setItem(key, value), [current[0], futureText]);
-            await upgraded.reload();
-            await prepared(upgraded);
-            assert.equal((await saveEntry(upgraded))[1], futureText, `${name}: newer public save was modified`);
-            assert.equal(await upgraded.locator(continueGame).isEnabled(), false);
+            const currentSnapshot = JSON.parse(current[1]);
+            assert.equal(currentSnapshot.version, 19, `${name}: packaged candidate did not write schema19`);
+            assert.equal(
+                current[0],
+                `jackal.game-state:${encodeURIComponent(new URL("./", url).pathname)}`,
+                `${name}: semantic cutover changed the stable deployment slot`
+            );
+            for (const unsupportedVersion of [18, 20]) {
+                const unsupportedText = JSON.stringify({ ...currentSnapshot, version: unsupportedVersion });
+                await upgraded.evaluate(([key, value]) => localStorage.setItem(key, value), [current[0], unsupportedText]);
+                for (let probe = 0; probe < 2; probe++) {
+                    await upgraded.reload();
+                    await prepared(upgraded);
+                    const observed = await saveEntry(upgraded);
+                    assert(observed !== null);
+                    assert.equal(observed[0], current[0]);
+                    assert.equal(observed[1], unsupportedText, `${name}: unsupported ${unsupportedVersion} bytes changed`);
+                    assert.equal(await upgraded.locator(continueGame).isEnabled(), false, `${name}: unsupported ${unsupportedVersion} enabled Continue`);
+                    assert.equal(await upgraded.locator("canvas").count(), 0, `${name}: unsupported game was mounted`);
+                    assert.equal(await upgraded.locator(newGame).isEnabled(), true, `${name}: unsupported save disabled New Game`);
+                }
+            }
+            // Restore only this test's own compatible fixture. This is test
+            // setup, not production migration or automatic version rewriting.
             await upgraded.evaluate(([key, value]) => localStorage.setItem(key, value), current);
             await upgraded.reload();
             await prepared(upgraded);
             assert.equal(await upgraded.locator(continueGame).isEnabled(), true);
-            console.log(name + ": takeover, upgrade and future-save protection passed; checking offline Continue");
+            console.log(name + ": takeover, same-schema cache upgrade, prior/future rejection passed; checking offline Continue");
             await setOffline(true);
             await upgraded.reload();
             await prepared(upgraded);
@@ -164,7 +180,7 @@ try {
                 assert.equal(await upgraded.locator(continueGame).isEnabled(), true);
             }
             assert.deepEqual(errors, [], `${name}: uncaught browser errors`);
-            console.log(`${name}: game entry, saved-session takeover, two cache generations, offline Continue, and future-save preservation passed`);
+            console.log(`${name}: game entry, saved-session takeover, two cache generations, offline Continue, and prior/future schema rejection passed`);
         } catch (error) {
             console.error(name + " qualification failed:", errors);
             for (const page of context.pages()) {

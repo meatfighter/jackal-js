@@ -40,7 +40,8 @@ import { ButtonMapping } from "./jackal/ButtonMapping.js";
 import { JackalInputMappingStore } from "./app/JackalInputMappingStore.js";
 import { JackalGameStateSerializer } from "./jackal/persistence/JackalGameStateSerializer.js";
 import { isSupportedGameStateSnapshot } from "./jackal/persistence/GameStateSnapshotValidator.js";
-import { GAME_STATE_STORAGE_KEY } from "./jackal/persistence/GameStateSchema.js";
+import type { JackalGameStateSnapshot } from "./jackal/persistence/GameStateSnapshot.js";
+import { GAME_STATE_STORAGE_KEY, GAME_STATE_VERSION } from "./jackal/persistence/GameStateSchema.js";
 import { getDeploymentStorageKey } from "./app/DeploymentStorageKeys.js";
 import { verifyAuthoritativeSave } from "./PersistenceContractVerification.js";
 import { JackalRuntimeLoader, type PreparedRuntime } from "./app/JackalRuntimeLoader.js";
@@ -269,6 +270,7 @@ async function verify(): Promise<void> {
         await verifyGameplayPauseFadePolicy(runtime);
         await verifyLastLifeArbitration(runtime);
         await verifyBossEntryLastLife(runtime);
+        await verifySaveSemanticCutover(runtime);
         await verifyLastLifeMusicResume(runtime);
         await verifyPausedWorldRendering(runtime);
         await verifyNesMapping(runtime);
@@ -1396,7 +1398,7 @@ async function verifyCompactLabels(mounted: MountedGame): Promise<void> {
 function verifyGamepadLabelTransitions(mounted: MountedGame): void {
     const { main, container } = mounted;
     const input = container.getInput();
-    const owner = main.mode;
+    const owner: RuntimeMain["mode"] = main.mode;
     assert(owner instanceof InputMode, "Label transition fixture requires InputMode");
     const provider = Object.getOwnPropertyDescriptor(navigator, "getGamepads");
     const disabled = Reflect.get(Input, "controllersDisabled");
@@ -2568,7 +2570,7 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
     const fresh = async (label: string): Promise<GameMode> => {
         const old = current().main,
             expected = projection();
-        assert(store.save(old, () => true).saved && store.hasValidSave(), label + " valid schema18 save");
+        assert(store.save(old, () => true).saved && store.hasValidSave(), label + " valid current-schema save");
         const bytes = localStorage.getItem(slot);
         retire();
         mounted = await mountGame(runtime, true, (m) => {
@@ -2766,7 +2768,7 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
             });
             retire();
         }
-        // Additional schema18 boundaries: no song, positive unreleased hold, and hit after trigger.
+        // Additional current-schema boundaries: no song, positive unreleased hold, and hit after trigger.
         for (const boundary of ["no-song", "positive-hold", "after-trigger", "zero", "four", "headquarters"]) {
             let w = await enter(boundary === "headquarters" ? 5 : 0);
             prepareRow(w, boundary === "headquarters" ? 5 : 0);
@@ -2867,6 +2869,76 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
             }
             retire();
         }
+        for (const bonus of [false, true]) {
+            const w = await enter(0);
+            prepareRow(w, 0);
+            const main = current().main;
+            hit(w, 3);
+            main.nextFrameTime = now + 10; // Once, to make tick(30) exactly three due ticks.
+            if (bonus) {
+                main.score = 19200;
+                main.scoreStr = "019200";
+                new GrayJeep(1450, 800);
+                new PlayerMissile(1450, 810, 270, 0);
+            }
+            const boss = main.bossSong;
+            const originalPlay = boss.play;
+            let starts = 0;
+            boss.play = function () {
+                starts++;
+                originalPlay.call(this);
+            };
+            try {
+                tick(30);
+                assert(managers(w, names[0]) === 1, "catch-up never duplicates the entry manager");
+                if (!bonus) {
+                    assert(main.mode instanceof ContinueMode, "third logical death tick owns Continue");
+                    assert(starts === 0 && !listener(w).ready, "abandoned catch-up never starts boss cue or readiness");
+                } else {
+                    assert(main.mode === w && main.extraLives === 1 && w.player.respawning === 2, "first tick rescues; pan ticks do not consume twice");
+                    assert(w.cameraY === 248 && !listener(w).ready, "remaining two due ticks advance the pan once each");
+                    assert(main.currentSong === null && main.requestedSong === boss && starts === 0, "do not move music scheduling into each catch-up tick");
+                    tick(0); // No fixed tick is due; normal outer music polling applies the queued cue.
+                    tick(0);
+                    assert(main.currentSong === boss && Number(starts) === 1, "queued boss cue starts once at the existing music checkpoint");
+                }
+            } finally {
+                boss.play = originalPlay;
+                retire();
+            }
+        }
+        for (const stage of [4, 5]) {
+            const w = await enter(stage);
+            prepareRow(w, stage);
+            hit(w, Player.RESPAWN_DELAY);
+            tick();
+            const main = current().main;
+            const manager = listener(w);
+            const death = w.player.respawning;
+            const camera = w.cameraY;
+            const children = [...w.enemies].filter((enemy) => ["RotatingGun", "ElephantGun"].includes(enemy.constructor.name));
+            assert(children.length > 0, "real preconstructed defenses exist");
+            const originals = new Map<Enemy, () => void>();
+            let updates = 0;
+            for (const child of children) {
+                const original = child.update;
+                originals.set(child, original);
+                child.update = function () {
+                    updates++;
+                    original.call(this);
+                };
+            }
+            try {
+                for (let n = 0; n < 30; n++) tick();
+                assert(main.mode === w && w.player.respawning === death - 30, "defenses cannot reset the recorded death");
+                assert(w.cameraY === camera && !manager.ready && w.bossCameraPan, "unresolved entry remains deferred");
+                assert(updates > 0 && managers(w, names[stage]) === 1, "normal defenses advance without reconstructing the manager");
+                assert(main.currentSong?.lastLifeSuspended && main.extraLives === 0, "defense progress does not release the music hold");
+            } finally {
+                for (const [child, original] of originals) child.update = original;
+                retire();
+            }
+        }
         // Real entrance fade composition, kept distinct from objective/exit fades.
         let w = await enter(1, false, true);
         let main = current().main;
@@ -2895,5 +2967,232 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
         retire();
         Object.defineProperty(runtime.slick.Sys, "getTime", clock);
         localStorage.removeItem(slot);
+    }
+}
+
+async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void> {
+    assert(GAME_STATE_VERSION === 19, "This cutover deliberately establishes schema 19");
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    assert(clock, "cutover clock descriptor");
+    let now = runtime.slick.Sys.getTime();
+    let mounted: MountedGame | null = null;
+    const serializer = new JackalGameStateSerializer();
+    const store = new runtime.JackalGameStateStore("schema19-semantic-cutover");
+    const key = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const mappingKey = getDeploymentStorageKey("jackal.input-mapping");
+    const previous = localStorage.getItem(key);
+    const previousMapping = localStorage.getItem(mappingKey);
+    const nativeGet = Storage.prototype.getItem;
+    const nativeSet = Storage.prototype.setItem;
+    const nativeRemove = Storage.prototype.removeItem;
+    const current = (): MountedGame => {
+        assert(mounted !== null, "cutover mounted owner");
+        return mounted;
+    };
+    const tick = (elapsed = 10): void => {
+        now += elapsed;
+        const { main, container } = current();
+        container.getInput().poll(1024, 960);
+        main.update(container, elapsed);
+    };
+    const retire = (): void => {
+        destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    const freezeBeforeRestore = (main: RuntimeMain): void => {
+        assert(main.gc instanceof runtime.slick.AppGameContainer, "cutover fresh container");
+        main.gc.setLoopSuspended(true);
+    };
+    const projection = (snapshot: JackalGameStateSnapshot): string => {
+        assert(snapshot.kind === "game", "cutover game snapshot");
+        return JSON.stringify([
+            snapshot.mainFields,
+            snapshot.random,
+            snapshot.playerFields,
+            snapshot.gameMode,
+            snapshot.requestedSongId,
+            snapshot.currentSongState
+        ]);
+    };
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        mounted = await mountGame(runtime, false);
+        const { main, container } = current();
+        container.setLoopSuspended(true);
+        main.startPlayer();
+        main.stageIndex = 0;
+        main.continued = true;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, container);
+        main.nextFrameTime = now;
+        for (let n = 0; n < 600 && (main.fading || !(main.mode instanceof GameMode) || !main.mode.playing); n++) tick();
+        assert(main.mode instanceof GameMode && main.mode.playing && !main.fading, "cutover entrance finished");
+        const world = main.mode;
+        for (const layer of world.elements) layer.clear();
+        world.enemies.clear();
+        world.solids.clear();
+        world.mines.clear();
+        world.triggerY = 0;
+        main.stopAllSongs();
+        main.requestSong(main.stageSong0);
+        tick();
+        assert(main.currentSong === main.stageSong0 && main.currentSong.playing, "cutover initial song");
+
+        // Local approach setup on the loaded stock map, not a full-stage playthrough.
+        const row = world.triggerMap.findIndex((entries) => entries.some((entry) => entry[0] === Triggers.BOSS_BLUE_TANKS));
+        assert(row >= 0, "stock boss trigger exists");
+        const camera = (row + 2) * 32 - 1;
+        const y = camera + GameMode.CAMERA_MARGIN_NORTH;
+        let x = -1;
+        for (let candidate = 128; candidate < world.mapWidth * 32 - 128; candidate += 32) {
+            if (world.isDriveableBounds(candidate - 64, y - 64, candidate + 64, y + 64)) {
+                x = candidate;
+                break;
+            }
+        }
+        assert(x >= 0 && camera <= world.maxCameraY, "valid loaded-map approach");
+        world.cameraX = Math.max(0, Math.min(world.maxCameraX, x - 512));
+        world.cameraY = camera;
+        world.player.x = x;
+        world.player.y = y;
+        world.player.invincible = 0;
+        world.triggerY = row + 1;
+        main.extraLives = 0;
+        main.extraLivesStr = "0";
+        main.score = 0;
+        main.scoreStr = "000000";
+        assert(world.player.attackAt(x, y), "cutover recorded death");
+        tick();
+        assert(world.bossCameraPan && world.player.respawning > 0, "production pending boss entry");
+        const held = serializer.createSnapshot(main, "schema19-semantic-cutover");
+        assert(isSupportedGameStateSnapshot(held) && held.currentSongState?.lastLifeSuspended, "valid current held state");
+
+        // Causal twins: current authoritative requests can have the same shape as
+        // an older boss-entry request. These are compatibility fixtures, not an
+        // assertion that the old build generated these exact serialized bytes.
+        main.requestSong(main.bossSong);
+        const pending = serializer.createSnapshot(main, "schema19-authoritative-pending");
+        assert(pending.currentSongState === null && pending.requestedSongId === "bossSong", "queued authoritative twin");
+        tick();
+        const audible = serializer.createSnapshot(main, "schema19-authoritative-playing");
+        assert(audible.currentSongState?.playing && !audible.currentSongState.lastLifeSuspended, "playing authoritative twin");
+        const variants: readonly [string, JackalGameStateSnapshot][] = [
+            ["correct-but-older held save", held],
+            ["legacy-compatible pending cue", pending],
+            ["legacy-compatible playing cue", audible]
+        ];
+        assert(new JackalInputMappingStore().save(main.buttonMapping, () => true).saved, "independent mapping fixture");
+        const mappingBytes = nativeGet.call(localStorage, mappingKey);
+        let lastLegacy = "";
+        for (const [label, candidate] of variants) {
+            assert(isSupportedGameStateSnapshot(candidate), label + " current positive control");
+            const legacy = JSON.stringify({ ...candidate, version: 18 });
+            lastLegacy = legacy;
+            nativeSet.call(localStorage, key, legacy);
+            const owner: RuntimeMain["mode"] = main.mode;
+            const song: RuntimeMain["currentSong"] = main.currentSong;
+            const requested = main.requestedSong;
+            const death = world.player.respawning;
+            let writes = 0;
+            let removals = 0;
+            Storage.prototype.setItem = function (entryKey, text) {
+                if (entryKey === key) writes++;
+                nativeSet.call(this, entryKey, text);
+            };
+            Storage.prototype.removeItem = function (entryKey) {
+                if (entryKey === key) removals++;
+                nativeRemove.call(this, entryKey);
+            };
+            try {
+                assert(!isSupportedGameStateSnapshot(JSON.parse(legacy)), label + " rejects schema18");
+                assert(!store.hasValidSave() && !store.hasValidSave(), label + " read miss");
+                assert(!store.restore(main, container), label + " restore miss");
+                assert(main.mode === owner && main.currentSong === song && main.requestedSong === requested, label + " no ownership change");
+                assert(world.player.respawning === death, label + " no death advance");
+                const denied = store.save(main, () => false);
+                assert(!denied.saved && denied.reason === "not-authorized", label + " denied writer");
+                assert(writes === 0 && removals === 0 && nativeGet.call(localStorage, key) === legacy, label + " bytes retained");
+            } finally {
+                Storage.prototype.setItem = nativeSet;
+                Storage.prototype.removeItem = nativeRemove;
+            }
+            Storage.prototype.setItem = function (entryKey, text) {
+                if (entryKey === key) throw new DOMException("cutover test quota", "QuotaExceededError");
+                nativeSet.call(this, entryKey, text);
+            };
+            try {
+                const failed = store.save(main, () => true);
+                assert(!failed.saved && failed.reason === "write-failed", label + " quota failure");
+                assert(nativeGet.call(localStorage, key) === legacy, label + " failed write retains bytes");
+            } finally {
+                Storage.prototype.setItem = nativeSet;
+            }
+            let oldReads = 0;
+            Storage.prototype.getItem = function (entryKey) {
+                if (entryKey === key) {
+                    oldReads++;
+                    throw new Error("cutover writer must not inspect the old slot");
+                }
+                return nativeGet.call(this, entryKey);
+            };
+            try {
+                assert(store.save(main, () => true).saved && oldReads === 0, label + " authorized replacement without read");
+            } finally {
+                Storage.prototype.getItem = nativeGet;
+            }
+            const replacement = nativeGet.call(localStorage, key);
+            assert(replacement !== null && JSON.parse(replacement).version === 19 && store.hasValidSave(), label + " current replacement");
+            assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, label + " separate controls unaffected");
+        }
+
+        // A fresh runtime must decline the old record without invoking its
+        // restoration callback or deleting the record during normal fallback.
+        nativeSet.call(localStorage, key, lastLegacy);
+        retire();
+        let restoredOld = false;
+        mounted = await mountGame(
+            runtime,
+            true,
+            () => {
+                restoredOld = true;
+            },
+            freezeBeforeRestore
+        );
+        current().container.setLoopSuspended(true);
+        assert(!restoredOld && !(current().main.mode instanceof GameMode), "old game not revived by fresh boot");
+        assert(nativeGet.call(localStorage, key) === lastLegacy, "fresh fallback is non-destructive");
+        retire();
+
+        // Restore a real current held-entry snapshot, preserving its graph and
+        // audio intent without advancing the death or replaying the trigger.
+        const heldBytes = JSON.stringify(held);
+        nativeSet.call(localStorage, key, heldBytes);
+        let restoredCurrent = false;
+        mounted = await mountGame(
+            runtime,
+            true,
+            (fresh) => {
+                restoredCurrent = true;
+                assert(fresh !== main, "fresh current owner");
+                assert(projection(serializer.createSnapshot(fresh, "recapture")) === projection(held), "current exact graph/death/audio restore");
+            },
+            freezeBeforeRestore
+        );
+        current().container.setLoopSuspended(true);
+        assert(restoredCurrent && store.hasValidSave(), "schema19 restores normally");
+        assert(nativeGet.call(localStorage, key) === heldBytes, "current restore leaves bytes unchanged");
+        assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, "fresh restore leaves controls unchanged");
+    } finally {
+        Storage.prototype.getItem = nativeGet;
+        Storage.prototype.setItem = nativeSet;
+        Storage.prototype.removeItem = nativeRemove;
+        retire();
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+        // Fixture teardown only. Shipped rejection code must never do this.
+        if (previous === null) nativeRemove.call(localStorage, key);
+        else nativeSet.call(localStorage, key, previous);
+        if (previousMapping === null) nativeRemove.call(localStorage, mappingKey);
+        else nativeSet.call(localStorage, mappingKey, previousMapping);
     }
 }

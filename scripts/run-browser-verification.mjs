@@ -21,11 +21,18 @@ const server = spawn(process.execPath, [viteBin, "--config", "pwa/vite.config.ts
 let browser = null;
 try {
     await waitForHttpServer(server, browserVerificationUrl);
-    browser = await launchBrowser(browserVerificationUrl, rootDir, "jackal-browser-");
+    browser = await launchBrowser("about:blank", rootDir, "jackal-browser-");
     const verificationHooks =
         "window.captureCompactLabels = (game) => new Promise(resolve => { window.compactLabelCapture = { game, resolve }; }); window.activateLastLifeAudio = (activate) => new Promise((resolve,reject) => { const timer=setTimeout(()=>reject(new Error('Last-life audio activation exceeded 10s')),10000); window.lastLifeAudioActivation={activate,resolve:(value)=>{clearTimeout(timer);resolve(value);}}; })";
-    await browser.page.call("Page.addScriptToEvaluateOnNewDocument", { source: verificationHooks });
-    await browser.page.call("Runtime.evaluate", { expression: verificationHooks });
+    // Install the driver bridge before fixture navigation; an unchecked evaluation
+    // during the initial navigation can leave the test running without its hooks.
+    await browser.page.call("Page.enable");
+    await browser.page.call("Page.bringToFront");
+    const hooks = await browser.page.call("Page.addScriptToEvaluateOnNewDocument", { source: verificationHooks });
+    assert.ok(hooks.identifier, "Verification hooks registered before navigation");
+    const navigation = await browser.page.call("Page.navigate", { url: browserVerificationUrl });
+    assert.ok(!navigation.errorText, "Verification fixture navigation failed");
+    await waitForExpression(browser.page, 'typeof window.captureCompactLabels === "function" && typeof window.activateLastLifeAudio === "function"');
     while (true) {
         const status = await waitForExpression(
             browser.page,
