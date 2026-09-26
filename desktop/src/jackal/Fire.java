@@ -89,7 +89,7 @@ public class Fire extends GameElement {
 
   @Override
   public void render() {
-    if (++flickerCounter == 4) {
+    if (!gameMode.paused && ++flickerCounter == 4) {
       flickerIndex ^= 1;
       flickerCounter = 0;
     }
@@ -104,7 +104,7 @@ public class Fire extends GameElement {
     if (state == STATE_SHRINKING) {
       scale = -scale;
     }
-    main.drawRotatedScaled(main.fires[flickerIndex][index], 
+    main.drawRotatedScaled(main.fires[flickerIndex][index],
         x, y, 0, -8, angle, scale, 1, alpha);
   }  
 }

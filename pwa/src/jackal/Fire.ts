@@ -117,7 +117,7 @@ export class Fire extends GameElement {
     }
 
     public render(): void {
-        if (++this.flickerCounter === 4) {
+        if (!this.gameMode.paused && ++this.flickerCounter === 4) {
             this.flickerIndex ^= 1;
             this.flickerCounter = 0;
         }

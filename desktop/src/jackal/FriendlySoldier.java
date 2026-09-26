@@ -500,12 +500,12 @@ public class FriendlySoldier extends Enemy {
 
   @Override
   public void render() {
-    if (colorChanging) {
+    if (colorChanging && !gameMode.paused) {
       colorIndex = (colorIndex + 1) & 3;
     }
-    main.draw(main.friendlySoldiers[colorIndex][orientation + legIndex], 
-        x + wobbleX - 16, y + wobbleY 
-            - (orientation == ORIENTATION_LEFT 
+    main.draw(main.friendlySoldiers[colorIndex][orientation + legIndex],
+        x + wobbleX - 16, y + wobbleY
+            - (orientation == ORIENTATION_LEFT
                 || orientation == ORIENTATION_RIGHT ? 60 : 56));
   }  
 }

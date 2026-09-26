@@ -358,13 +358,15 @@ export class BossHelicopter extends Enemy {
     public override checkBounds(maxY: number): void {}
 
     public render(): void {
-        this.rotorAngle -= 30;
-        if (this.rotorAngle === -90) {
-            this.rotorAngle = 0;
-        }
-        this.tailIndexCounter = !this.tailIndexCounter;
-        if (this.tailIndexCounter) {
-            this.tailIndex = this.tailIndex === 3 ? 4 : 3;
+        if (!this.gameMode.paused) {
+            this.rotorAngle -= 30;
+            if (this.rotorAngle === -90) {
+                this.rotorAngle = 0;
+            }
+            this.tailIndexCounter = !this.tailIndexCounter;
+            if (this.tailIndexCounter) {
+                this.tailIndex = this.tailIndex === 3 ? 4 : 3;
+            }
         }
 
         let ang = this.angle - BossHelicopter.DRIFT_ANGLES[this.positionDriftTime] * this.positionDriftDx;

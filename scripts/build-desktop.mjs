@@ -1,3 +1,4 @@
+import { runDesktopRenderTests } from "./desktop-render-tests.mjs";
 import { runDesktopInputTests } from "./desktop-input-tests.mjs";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -313,6 +314,7 @@ function buildWithJdk() {
 
     run("javac", ["-encoding", "UTF-8", "-Xlint:-options", ...releaseArgs, "-cp", classpath, "-d", classesDir, `@${sourcesFile}`]);
     runDesktopInputTests({ classesDir, classpath, releaseArgs });
+    runDesktopRenderTests({ classesDir, classpath, releaseArgs });
 
     copyResources(sourceDir, classesDir);
     writeManifest();

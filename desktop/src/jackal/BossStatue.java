@@ -118,13 +118,13 @@ public class BossStatue extends Enemy {
 
   @Override
   public void render() {
-    
+
     switch(state) {
-      case STATE_EYES_FLASHING:        
+      case STATE_EYES_FLASHING:
         if (eyesVisible < 2) {
-          main.draw(main.statueWhiteEyes, x + 32, y + 64); 
+          main.draw(main.statueWhiteEyes, x + 32, y + 64);
         }
-        if (++eyesVisible == 4) {
+        if (!gameMode.paused && ++eyesVisible == 4) {
           eyesVisible = 0;
         }
         break;

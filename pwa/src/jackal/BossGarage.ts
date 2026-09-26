@@ -174,7 +174,7 @@ export class BossGarage extends Enemy {
         if (this.state === BossGarage.STATE_CLOSED) {
             this.main.drawImage(this.main.garages[0], this.x, this.y);
         } else {
-            if (--this.lightIndex === 0) {
+            if (!this.gameMode.paused && --this.lightIndex === 0) {
                 this.lightIndex = 3;
             }
 

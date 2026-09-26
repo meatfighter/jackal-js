@@ -522,7 +522,7 @@ export class EnemySoldier extends Enemy {
     }
 
     public render(): void {
-        if (--this.blink < 0) {
+        if (!this.gameMode.paused && --this.blink < 0) {
             this.blink = 4;
         }
         if (this.fire) {

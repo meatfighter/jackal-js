@@ -1,3 +1,13 @@
+import { referenceEnemySoldier, referenceBossHelicopter } from "./RenderPauseReferences.js";
+import { LasersManager } from "./jackal/LasersManager.js";
+import { Flame } from "./jackal/Flame.js";
+import { Fire } from "./jackal/Fire.js";
+import { FloorGun } from "./jackal/FloorGun.js";
+import { Star } from "./jackal/Star.js";
+import { BossHelicopter } from "./jackal/BossHelicopter.js";
+import { EnemyHelicopter } from "./jackal/EnemyHelicopter.js";
+import { EnemySoldierType } from "./jackal/EnemySoldierType.js";
+import { EnemySoldier } from "./jackal/EnemySoldier.js";
 import { Input } from "slick2d-ts";
 import * as NesInputProfile from "./jackal/NesInputProfile.js";
 import { IntroMode } from "./jackal/IntroMode.js";
@@ -224,6 +234,8 @@ async function verify(): Promise<void> {
         destroyMounted(runtime, second);
         second = null;
         await verifyFadeRestoreMatrix(runtime);
+        await verifyGameplayPauseFadePolicy(runtime);
+        await verifyPausedWorldRendering(runtime);
         await verifyNesMapping(runtime);
     } finally {
         destroyMounted(runtime, first);
@@ -1480,5 +1492,514 @@ function verifyGamepadLabelTransitions(mounted: MountedGame): void {
         if (notification) Object.defineProperty(main, "notifyInputMappingChanged", notification);
         else Reflect.deleteProperty(main, "notifyInputMappingChanged");
         input.poll(1024, 960);
+    }
+}
+
+/** Controlled production Main ticks, real polled input and fresh persistence. */
+async function verifyGameplayPauseFadePolicy(runtime: PreparedRuntime): Promise<void> {
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    const provider = Object.getOwnPropertyDescriptor(navigator, "getGamepads");
+    assert(clock !== undefined, "Missing pause/fade clock");
+    const store = new runtime.JackalGameStateStore("browser-verification");
+    const serializer = new JackalGameStateSerializer();
+    const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const pad = {
+        id: "pause-policy",
+        index: 0,
+        connected: true,
+        mapping: "standard",
+        timestamp: 1,
+        axes: [0, 0],
+        buttons: Array.from({ length: 64 }, () => ({ pressed: false, touched: false, value: 0 }))
+    };
+    let now = runtime.slick.Sys.getTime(),
+        mounted: MountedGame | null = null;
+    const current = (): MountedGame => {
+        assert(mounted !== null, "Pause policy runtime missing");
+        return mounted;
+    };
+    const world = (): GameMode => {
+        const w = current().main.mode;
+        assert(w instanceof GameMode, "Pause policy world missing");
+        return w;
+    };
+    const diagnostic = (): string => {
+        const { main } = current();
+        return JSON.stringify({
+            now,
+            deadline: main.nextFrameTime,
+            index: main.fadeIndex,
+            fading: main.fading,
+            out: main.fadeOut,
+            paused: main.mode instanceof GameMode && main.mode.paused,
+            mode: main.mode?.constructor.name,
+            music: main.currentSong?.playing
+        });
+    };
+    const check = (condition: unknown, message: string): void => assert(condition, `${message}: ${diagnostic()}`);
+    const tick = (elapsed = 10): void => {
+        now += elapsed;
+        const { main, container } = current();
+        pad.timestamp++;
+        container.getInput().poll(1024, 960);
+        main.update(container, elapsed);
+    };
+    const project = (): string => {
+        const s = serializer.createSnapshot(current().main, "pause-projection");
+        assert(s.kind === "game", "Pause projection requires world");
+        const fields = { ...s.gameMode.fields };
+        delete fields.paused;
+        return JSON.stringify({
+            world: { ...s.gameMode, fields },
+            player: s.playerFields,
+            random: s.random,
+            score: s.mainFields.score,
+            lives: s.mainFields.extraLives
+        });
+    };
+    const key = (down: boolean): void => {
+        const { main } = current();
+        const canvas = gameHost.querySelector("canvas");
+        assert(canvas !== null, "Pause canvas");
+        canvas.focus();
+        const names: Array<[number, string]> = [
+            [Input.KEY_ENTER, "Enter"],
+            [Input.KEY_SPACE, "Space"],
+            [Input.KEY_NUMPADENTER, "NumpadEnter"]
+        ];
+        for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") names.push([Reflect.get(Input, "KEY_" + letter) as number, "Key" + letter]);
+        const code = names.find(([value]) => value === main.buttonMapping.keyStart)?.[1];
+        assert(code !== undefined, "Fixture Start has no DOM code");
+        canvas.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", { code, key: code === "Enter" ? "Enter" : code, bubbles: true }));
+    };
+    const hardware = (down: boolean): void => {
+        const binding = current().main.buttonMapping.controllerStart;
+        const b = pad.buttons[binding < 0 ? 10 - binding : binding];
+        assert(b !== undefined, "Mapped Start button");
+        b.pressed = b.touched = down;
+        b.value = down ? 1 : 0;
+    };
+    const transport = (): string => {
+        const song = current().main.currentSong;
+        assert(song !== null && song.playing, "Paused active Song");
+        return JSON.stringify([song.playedIntro2, ...[song.intro, song.intro2, song.loop].map((m) => m?.getTransportState() ?? null)]);
+    };
+    const retire = (): void => {
+        if (mounted !== null) {
+            key(false);
+            hardware(false);
+            mounted.container.getInput().poll(1024, 960);
+        }
+        destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    const enter = async (stage = 1, continued = true): Promise<void> => {
+        mounted = await mountGame(runtime, false);
+        mounted.container.setLoopSuspended(true);
+        const { main, container } = mounted;
+        main.startPlayer();
+        main.stageIndex = stage;
+        main.continued = continued;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, container);
+        main.nextFrameTime = now;
+        tick(0);
+        key(false);
+        hardware(false);
+        container.getInput().poll(1024, 960);
+        main.clearInputPressedRecords();
+    };
+    const finish = (): void => {
+        for (let i = 0; i < 30 && current().main.fading; i++) tick();
+        check(!current().main.fading, "Bounded fade completion");
+    };
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, value: () => [pad] });
+        for (const device of ["keyboard", "gamepad"] as const) {
+            await enter();
+            const { main } = current();
+            const w = world();
+            check(w.playing && main.fading && main.fadeListener === null, "Reachable active entrance");
+            const press = device === "keyboard" ? key : hardware;
+            const frozen = project(),
+                index = main.fadeIndex;
+            press(true);
+            tick(1000); // Intentionally overdue once; all later deadlines are production-owned.
+            check(w.paused && main.fadeIndex === index - 1 && main.nextFrameTime === now + 10, "Pause tick ordering and debt reset");
+            check(project() === frozen, "Pause acceptance did world work");
+            const audio = transport();
+            check(audio.includes("paused"), "Pause did not pause active music");
+            tick(1);
+            check(main.fadeIndex === index - 1, "No-due callback advanced fade");
+            tick(9);
+            check(w.paused && project() === frozen, "Held Start toggled or advanced world");
+            press(false);
+            tick();
+            check(w.paused, "Release unpaused");
+            const savedIndex = main.fadeIndex;
+            main.setBrowserSuspended(true);
+            for (const elapsed of [1000, 10000, 100000]) {
+                tick(elapsed);
+                check(main.fadeIndex === savedIndex && main.nextFrameTime === now && project() === frozen, "Strong suspension advanced world/fade");
+            }
+            main.setBrowserSuspended(false);
+            tick(0);
+            check(
+                w.paused && main.fadeIndex === savedIndex - 1 && main.nextFrameTime === now + 10 && transport() === audio,
+                "Retained Continue changed pause/audio or replayed debt"
+            );
+            if (device === "keyboard") {
+                const snapshot = serializer.createSnapshot(main, "paused-fade");
+                check(
+                    isSupportedGameStateSnapshot(snapshot) && serializer.isSupportedSnapshotForLoadedResources(main, snapshot),
+                    "Paused entrance snapshot invalid"
+                );
+                check(store.save(main, () => true).saved, "Paused entrance save failed");
+                const raw = localStorage.getItem(slot),
+                    saved = main.fadeIndex,
+                    source = main;
+                retire();
+                mounted = await mountGame(runtime, true, (fresh) => {
+                    assert(fresh.gc instanceof runtime.slick.AppGameContainer, "Fresh container boundary");
+                    fresh.gc.setLoopSuspended(true);
+                    assert(fresh !== source && fresh.mode instanceof GameMode && fresh.mode.paused, "Fresh paused identity");
+                    assert(fresh.fading && !fresh.fadeOut && fresh.fadeIndex === saved && fresh.fadeListener === null, "Fresh entrance fade ownership");
+                });
+                current().container.setLoopSuspended(true);
+                check(project() === frozen && transport() === audio, "Fresh paused world/audio changed");
+                const restored = world();
+                for (let i = 0; i < saved + 1; i++) tick();
+                check(
+                    !current().main.fading && current().main.fadeIndex === -1 && world() === restored && restored.paused,
+                    "Fresh paused fade did not complete"
+                );
+                check(project() === frozen && transport() === audio && localStorage.getItem(slot) === raw, "Fade completion mutated world/music/save");
+                const recaptured = serializer.createSnapshot(current().main, "paused-fade");
+                check(
+                    isSupportedGameStateSnapshot(recaptured) && serializer.isSupportedSnapshotForLoadedResources(current().main, recaptured),
+                    "Post-fade snapshot invalid"
+                );
+            } else finish();
+            check(world().paused && project() === frozen && transport() === audio, "Entrance completion resumed gameplay/audio");
+            press(false);
+            tick();
+            press(true);
+            tick();
+            check(!world().paused && project() === frozen, "Fresh unpause tick advanced world");
+            press(false);
+            tick();
+            check(project() !== frozen, "Gameplay did not resume");
+            retire();
+        }
+        // Final entrance step completes before the real Pause branch accepts input.
+        await enter();
+        for (let i = 0; i < 30 && current().main.fadeIndex > 0; i++) tick();
+        check(current().main.fadeIndex === 0, "Bounded last entrance step");
+        key(true);
+        tick();
+        check(world().paused && !current().main.fading && current().main.fadeIndex === -1, "Index-zero Pause ordering");
+        retire();
+        // Continued Chinook is eligible; a normal introduction is not.
+        for (const continued of [false, true]) {
+            await enter(0, continued);
+            check(world().playing === continued, "Chinook entry eligibility");
+            key(true);
+            tick();
+            check(world().paused === continued, "Chinook Pause policy");
+            key(false);
+            finish();
+            retire();
+        }
+        for (const stage of [1, 5]) {
+            await enter(stage);
+            finish();
+            const w = world(),
+                main = current().main;
+            w.stageCompleted();
+            for (let i = 0; i < GameMode.STAGE_COMPLETED_DELAY; i++) tick();
+            check(main.fading && main.fadeOut && main.fadeListener === w, "Transition-generated completion fade");
+            const descriptor = Object.getOwnPropertyDescriptor(main, "requestMode"),
+                request = main.requestMode,
+                destinations: Modes[] = [];
+            main.requestMode = (mode, gc) => {
+                destinations.push(mode);
+                request.call(main, mode, gc);
+            };
+            try {
+                key(true);
+                tick();
+                check(!w.paused && w.stageCompletedDelay === 0, "Completion accepted Pause or underflowed");
+                key(false);
+                for (let i = 0; i < 30 && main.mode === w; i++) tick();
+                check(
+                    destinations.length === 1 &&
+                        (stage === 5 ? destinations[0] === Modes.SUNSET : [Modes.HERE, Modes.YEAH, Modes.WE_MADE_IT].includes(destinations[0]!)),
+                    "Completion destination count"
+                );
+                tick();
+                check(destinations.length === 1, "Completion callback repeated");
+            } finally {
+                if (descriptor) Object.defineProperty(main, "requestMode", descriptor);
+                else Reflect.deleteProperty(main, "requestMode");
+            }
+            retire();
+        }
+        console.log("Jackal gameplay Pause/fade policy passed: real keyboard/pad, debt reset, retained/fresh restore, music and completion ownership.");
+    } finally {
+        retire();
+        store.clear(() => true);
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+        if (provider) Object.defineProperty(navigator, "getGamepads", provider);
+        else Reflect.deleteProperty(navigator, "getGamepads");
+    }
+}
+
+/** Rare effect states below are explicit loaded-resource fixtures, not natural playthroughs. */
+async function verifyPausedWorldRendering(runtime: PreparedRuntime): Promise<void> {
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    const provider = Object.getOwnPropertyDescriptor(navigator, "getGamepads");
+    assert(clock !== undefined, "Render clock descriptor");
+    let now = runtime.slick.Sys.getTime(),
+        mounted: MountedGame | null = null;
+    const store = new runtime.JackalGameStateStore("browser-verification"),
+        serializer = new JackalGameStateSerializer();
+    const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const pad = {
+        id: "paused-render",
+        index: 0,
+        connected: true,
+        mapping: "standard",
+        timestamp: 1,
+        axes: [0, 0],
+        buttons: Array.from({ length: 64 }, () => ({ pressed: false, touched: false, value: 0 }))
+    };
+    const current = (): MountedGame => {
+        assert(mounted !== null, "Render runtime missing");
+        return mounted;
+    };
+    const tick = (): void => {
+        now += 10;
+        const { main, container } = current();
+        container.getInput().poll(1024, 960);
+        main.update(container, 10);
+    };
+    const press = (down: boolean): void => {
+        const binding = current().main.buttonMapping.controllerStart;
+        const b = pad.buttons[binding < 0 ? 10 - binding : binding]!;
+        b.pressed = b.touched = down;
+        b.value = down ? 1 : 0;
+    };
+    const render = (): void => {
+        const { buffered, container } = current();
+        buffered.render(container, container.getGraphics());
+        container.getGraphics().flush();
+    };
+    const projection = (): string => {
+        const s = serializer.createSnapshot(current().main, "render-pause");
+        assert(s.kind === "game", "Render world snapshot");
+        return JSON.stringify({ world: s.gameMode, player: s.playerFields, random: s.random });
+    };
+    const capture = async (name: string): Promise<void> => {
+        const { main, container } = current(),
+            update = main.update;
+        const bodyStyle = document.body.getAttribute("style");
+        document.body.style.margin = "0";
+        document.body.style.overflow = "hidden";
+        const width = container.getWidth(),
+            height = container.getHeight();
+        main.update = () => {};
+        try {
+            container.setLoopSuspended(false);
+            await new Promise<void>((resolve) =>
+                Reflect.set(window, "compactLabelCapture", { game: name, resolve, resize: (w: number, h: number) => container.setDisplayMode(w, h, false) })
+            );
+        } finally {
+            container.setLoopSuspended(true);
+            main.update = update;
+            await container.setDisplayMode(width, height, false);
+            if (bodyStyle === null) document.body.removeAttribute("style");
+            else document.body.setAttribute("style", bodyStyle);
+        }
+    };
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, value: () => [pad] });
+        mounted = await mountGame(runtime, false);
+        mounted.container.setLoopSuspended(true);
+        const { main, container } = mounted;
+        main.startPlayer();
+        main.stageIndex = 1;
+        main.continued = true;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, container);
+        main.nextFrameTime = now;
+        for (let i = 0; i < 30 && main.fading; i++) tick();
+        assert(!main.fading && main.mode instanceof GameMode, "Renderable ordinary world");
+        const world = main.mode,
+            x = world.cameraX,
+            y = world.cameraY;
+        // Real constructor registration and resource arrays, with explicit visual branches.
+        const soldier = new EnemySoldier(x + 200, y + 240, EnemySoldierType.STATIONARY);
+        soldier.aiming = 12;
+        soldier.blink = 3;
+        const rotor = new EnemyHelicopter(true);
+        rotor.x = x + 350;
+        rotor.y = y + 220;
+        const boss = new BossHelicopter();
+        boss.x = x + 700;
+        boss.y = y + 370;
+        boss.tailIndex = 3;
+        const mine = new Mine(x + 160, y + 400);
+        mine.visible = true;
+        const star = new Star(x + 260, y + 400, Star.TYPE_FLASHING);
+        star.flashingIndex = 2;
+        const gun = FloorGun.create(x + 440, y + 400);
+        gun.state = FloorGun.STATE_SHOOTING;
+        gun.colorIndex = 1;
+        const fire = new Fire(x + 360, y + 520, 1, 0, 0, soldier);
+        fire.length = 96;
+        new Flame(x + 500, y + 520);
+        const lasers = new LasersManager(x + 640, y + 650);
+        lasers.state = LasersManager.STATE_LASERING;
+        press(false);
+        container.getInput().poll(1024, 960);
+        main.clearInputPressedRecords();
+        press(true);
+        tick();
+        assert(world.paused, "Actual mapped Start did not pause scene");
+        press(false);
+        tick();
+        render();
+        const frozen = projection();
+        const originalDraw = Object.getOwnPropertyDescriptor(main, "drawImage"),
+            draw = main.drawImage;
+        const ids = new WeakMap<object, number>();
+        let nextId = 0;
+        const trace: string[] = [];
+        main.drawImage = (image, dx, dy) => {
+            if (!ids.has(image)) ids.set(image, ++nextId);
+            trace.push(`${ids.get(image)}:${dx}:${dy}`);
+            draw.call(main, image, dx, dy);
+        };
+        try {
+            render();
+            const first = trace.join("|");
+            assert(trace.length > 20, "Paused scene stopped drawing");
+            for (let i = 0; i < 201; i++) {
+                trace.length = 0;
+                render();
+                assert(trace.join("|") === first && projection() === frozen, `Paused scene changed at render ${i}`);
+            }
+        } finally {
+            if (originalDraw) Object.defineProperty(main, "drawImage", originalDraw);
+            else Reflect.deleteProperty(main, "drawImage");
+        }
+        const canvas = gameHost.querySelector("canvas");
+        assert(canvas !== null, "Paused scene canvas");
+        render();
+        const pixels = canvas.toDataURL();
+        for (let i = 0; i < 80; i++) render();
+        assert(canvas.toDataURL() === pixels, "Ordinary paused framebuffer changed");
+        await capture("jackal-paused-world-before");
+        for (let i = 0; i < 80; i++) render();
+        await capture("jackal-paused-world-after");
+        assert(projection() === frozen, "Screenshots changed paused phase");
+        const snapshot = serializer.createSnapshot(main, "render-pause");
+        assert(isSupportedGameStateSnapshot(snapshot) && serializer.isSupportedSnapshotForLoadedResources(main, snapshot), "Loaded effect snapshot invalid");
+        assert(store.save(main, () => true).saved, "Paused world save failed");
+        const savedBytes = localStorage.getItem(slot);
+        for (let i = 0; i < 40; i++) render();
+        assert(projection() === frozen && localStorage.getItem(slot) === savedBytes, "Paused rendering changed save state");
+        main.setBrowserSuspended(true);
+        now += 100000;
+        main.update(container, 100000);
+        main.setBrowserSuspended(false);
+        render();
+        assert(world.paused && projection() === frozen, "Same-page Continue changed paused phase");
+        // Diagnostic CPU submission timing, not GPU completion. No traces/snapshots in measured loops.
+        const performanceRows: Array<{ version: string; paused: boolean; ms: number[]; heap: number[] }> = [];
+        const soldierRender = soldier.render,
+            bossRender = boss.render;
+        try {
+            for (const version of ["original-two-effects", "guarded-two-effects"])
+                for (const paused of [false, true]) {
+                    soldier.render = version === "original-two-effects" ? referenceEnemySoldier : soldierRender;
+                    boss.render = version === "original-two-effects" ? referenceBossHelicopter : bossRender;
+                    world.paused = paused;
+                    for (let i = 0; i < 20; i++) render();
+                    const ms: number[] = [],
+                        heap: number[] = [];
+                    for (let run = 0; run < 5; run++) {
+                        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+                        const start = performance.now();
+                        for (let i = 0; i < 30; i++) render();
+                        ms.push(performance.now() - start);
+                        const memory: unknown = Reflect.get(performance, "memory");
+                        heap.push(typeof memory === "object" && memory !== null ? Number(Reflect.get(memory, "usedJSHeapSize")) : 0);
+                    }
+                    performanceRows.push({ version, paused, ms, heap });
+                }
+        } finally {
+            soldier.render = soldierRender;
+            boss.render = bossRender;
+            world.paused = true;
+        }
+        Reflect.set(window, "renderPauseEvidence", {
+            viewport: [1024, 960],
+            warmupRenders: 20,
+            rendersPerRun: 30,
+            repeats: 5,
+            cpuSubmissionOnly: true,
+            referenceEffects: ["EnemySoldier", "BossHelicopter"],
+            rows: performanceRows
+        });
+        destroyMounted(runtime, mounted);
+        mounted = null;
+        // Restore the saved pre-benchmark phase into a new Main, stopping at the restore boundary.
+        mounted = await mountGame(runtime, true, (fresh) => {
+            assert(fresh.gc instanceof runtime.slick.AppGameContainer, "Fresh render container");
+            fresh.gc.setLoopSuspended(true);
+            assert(fresh !== main && fresh.mode instanceof GameMode && fresh.mode.paused, "Fresh paused render identity");
+        });
+        current().container.setLoopSuspended(true);
+        render();
+        assert(projection() === frozen, "Fresh restore changed visual phase");
+        for (let i = 0; i < 201; i++) render();
+        assert(projection() === frozen, "Fresh paused rendering advanced phase");
+        const freshWorld = current().main.mode;
+        assert(freshWorld instanceof GameMode, "Fresh visual world");
+        const freshRotor = freshWorld.elements
+            .flatMap((list) => Array.from({ length: list.size() }, (_, i) => list.get(i)))
+            .find((element) => element instanceof EnemyHelicopter);
+        assert(freshRotor instanceof EnemyHelicopter, "Fresh rotor identity");
+        const angleBeforeResume = freshRotor.rotorAngle;
+        press(false);
+        tick();
+        press(true);
+        tick();
+        assert(freshRotor.rotorAngle === angleBeforeResume, "Toggle tick advanced visual phase");
+        assert(current().main.mode instanceof GameMode && !(current().main.mode as GameMode).paused, "Restored gameplay cannot unpause");
+        render();
+        assert(
+            freshRotor.rotorAngle === (angleBeforeResume === -60 ? 0 : angleBeforeResume - 30),
+            "Resumed render did not take exactly one original rotor step"
+        );
+        assert(projection() !== frozen, "Restored rendering did not resume");
+        console.log(
+            "Jackal loaded paused world passed: scene traces/framebuffer, real constructors, retained/fresh restore, resumed rendering and diagnostic timing."
+        );
+    } finally {
+        if (mounted !== null) {
+            press(false);
+            mounted.container.getInput().poll(1024, 960);
+        }
+        destroyMounted(runtime, mounted);
+        store.clear(() => true);
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+        if (provider) Object.defineProperty(navigator, "getGamepads", provider);
+        else Reflect.deleteProperty(navigator, "getGamepads");
     }
 }

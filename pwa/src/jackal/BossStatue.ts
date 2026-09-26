@@ -136,7 +136,7 @@ export class BossStatue extends Enemy {
                 if (this.eyesVisible < 2) {
                     this.main.drawImage(this.main.statueWhiteEyes, this.x + 32, this.y + 64);
                 }
-                if (++this.eyesVisible === 4) {
+                if (!this.gameMode.paused && ++this.eyesVisible === 4) {
                     this.eyesVisible = 0;
                 }
                 break;

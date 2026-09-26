@@ -100,7 +100,7 @@ export class Star extends Enemy {
                 break;
             case Star.TYPE_FLASHING:
                 this.main.drawImage(this.main.stars[this.flashingIndex], this.x - 32, this.y - 32);
-                if (--this.flashingIndex < 0) {
+                if (!this.gameMode.paused && --this.flashingIndex < 0) {
                     this.flashingIndex = 3;
                 }
                 break;

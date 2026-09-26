@@ -95,10 +95,10 @@ public class Star extends Enemy {
         break;
       case TYPE_FLASHING:
         main.draw(main.stars[flashingIndex], x - 32, y - 32);
-        if (--flashingIndex < 0) {
+        if (!gameMode.paused && --flashingIndex < 0) {
           flashingIndex = 3;
         }
         break;
-    }      
+    }
   }  
 }

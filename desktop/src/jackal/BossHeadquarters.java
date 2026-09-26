@@ -130,26 +130,27 @@ public class BossHeadquarters extends Enemy {
 
   @Override
   public void render() {
-    switch(state) {
-      case STATE_FLASHING:        
-        if (--flashDelay == 0) {
-          if (flashing) {
-            flashing = false;
-            flashDelay = FLASH_DELAY;
-          } else {
-            flashing = true;
-            flashDelay = FLASH_DURATION;
+    switch (state) {
+      case STATE_FLASHING:
+        if (!gameMode.paused) {
+          if (--flashDelay == 0) {
+            if (flashing) {
+              flashing = false;
+              flashDelay = FLASH_DELAY;
+            } else {
+              flashing = true;
+              flashDelay = FLASH_DURATION;
+            }
+          }
+          if (flashing && ++flashIndex == 2) {
+            flashIndex = -1;
           }
         }
-        if (flashing) {
-          if (++flashIndex == 2) {
-            flashIndex = -1;
-          } else {
-            main.draw(main.headquartersLights[flashIndex], 932, 188);
-            main.draw(main.headquartersLights[flashIndex], 996, 220);
-            main.draw(main.headquartersLights[flashIndex], 1028, 220);
-            main.draw(main.headquartersLights[flashIndex], 1092, 188);
-          }
+        if (flashing && flashIndex >= 0) {
+          main.draw(main.headquartersLights[flashIndex], 932, 188);
+          main.draw(main.headquartersLights[flashIndex], 996, 220);
+          main.draw(main.headquartersLights[flashIndex], 1028, 220);
+          main.draw(main.headquartersLights[flashIndex], 1092, 188);
         }
         break;
     }

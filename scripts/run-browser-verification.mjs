@@ -54,6 +54,12 @@ try {
         // Includes 92 source-save/destroy/fresh-runtime fade restores with real resources.
         180_000
     );
+    const evidence = await browser.page.call("Runtime.evaluate", { expression: "window.renderPauseEvidence", returnByValue: true });
+    if (evidence.result?.value) {
+        const dir = process.env.QUALIFICATION_EVIDENCE_DIR ?? resolve(tmpdir(), "jackal-render-pause");
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(resolve(dir, "render-pause-performance.json"), JSON.stringify(evidence.result.value, null, 2) + "\n");
+    }
     console.log(output);
     await verifySessionOwnership(appUrl, "Jackal");
 } finally {

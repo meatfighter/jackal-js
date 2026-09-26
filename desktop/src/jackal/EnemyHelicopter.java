@@ -200,19 +200,21 @@ public class EnemyHelicopter extends Enemy {
 
   @Override
   public void render() {
-    rotorAngle -= 30;
-    if (rotorAngle == -90) {
-      rotorAngle = 0;
+    if (!gameMode.paused) {
+      rotorAngle -= 30;
+      if (rotorAngle == -90) {
+        rotorAngle = 0;
+      }
     }
-    
-    float ang = angle - BossHelicopter.DRIFT_ANGLES[positionDriftTime] 
+
+    float ang = angle - BossHelicopter.DRIFT_ANGLES[positionDriftTime]
         * positionDriftDx;
-    
+
     main.drawRotated(main.enemyHelicopters[2], x + 32, y + 40, -30, -11, ang);
     main.drawRotated(main.enemyHelicopters[0], x, y, -74, -28, ang);
-    
+
     for(int i = 0; i < 4; i++) {
-      main.drawRotated(main.enemyHelicopters[1], x, y, 0, -18, 
+      main.drawRotated(main.enemyHelicopters[1], x, y, 0, -18,
           90 * i + rotorAngle);
     }
   }  

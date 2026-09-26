@@ -1,0 +1,1388 @@
+[
+    {
+        "class": "Airplane",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "36d85105d2e3d4c1e1b9d890da28f44cdf5e5ae2a72c59162949a17bb4a9092f"
+            }
+        ]
+    },
+    {
+        "class": "AppearingBrownTank",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "AppearingEnemyHelicopter",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "AppearingGrayJeep",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "AppearingPlane",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "AppearingSoldier",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "Bomb",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImageRotatedScaled"],
+                "hash": "48671e4b8da0274c8041ad8e1bb301c2ef800062596949066f1b6c5bc35ec254"
+            }
+        ]
+    },
+    {
+        "class": "BossBlueTank",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawVehicle"],
+                "hash": "9e13fe5d20555a392ff8d044f64453ed4c0e1ec7243bf89ba4bd521c9a52a352"
+            }
+        ]
+    },
+    {
+        "class": "BossBlueTanksManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "BossGarage",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.lightIndex"],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage", "this.main.drawVehicleAlpha"]
+            }
+        ],
+        "nonRenderHash": "3d581fd39861d183d982058d7d8413c24924f583fa3c21ec54bf751a63d39077"
+    },
+    {
+        "class": "BossGarageManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener, ITankTracker"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage"],
+                "hash": "68a682deba634409d52bbb6047936f81188e139a0aa4901a90d61ae082d0e93b"
+            }
+        ]
+    },
+    {
+        "class": "BossHeadquarters",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.flashDelay", "this.flashIndex", "this.flashing"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "bdcecd9ee13b5860a0e1da53bed7dbccdf756e6e1344da66cb6153f0b9385065"
+    },
+    {
+        "class": "BossHeadquartersManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener, ITankTracker"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "BossHelicopter",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.rotorAngle", "this.tailIndex", "this.tailIndexCounter"],
+                "calls": ["this.main.drawRotatedAtCenter"]
+            }
+        ],
+        "nonRenderHash": "eb4c9d9292a1328ed5cb5292cc620354fdcbee2445030ee8d48f3b044a91aa31"
+    },
+    {
+        "class": "BossHelicopterManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "BossShipGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.colorIndex"],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage", "this.main.drawRotatedAtCenter"]
+            }
+        ],
+        "nonRenderHash": "d284f20542ed1f5319362427d48a4943d5cee01cfed9ace8b40f92610e13dd35"
+    },
+    {
+        "class": "BossShipManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener, ITankTracker"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "BossStatue",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.eyesVisible"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "849f23813d97a60f91f2a331462876f63b28ba532ff9d34bde072a5512c2e481"
+    },
+    {
+        "class": "BossStatuesManager",
+        "extends": ["extends GameElement", "implements ICameraPanListener, ITankTracker"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "BossSuperTank",
+        "extends": ["extends Enemy", "implements ICameraPanListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [
+                    "this.gameMode.g.clearWorldClip",
+                    "this.gameMode.g.setWorldClip",
+                    "this.main.drawImage",
+                    "this.main.drawImageAlpha",
+                    "this.main.drawRotated",
+                    "this.main.superTanks[0][i].setAlpha"
+                ],
+                "hash": "80b5ba40f5aeaf80bced1421266832eedc83455b34846946d396132b8e3df25c"
+            }
+        ]
+    },
+    {
+        "class": "BossSuperTankGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotatedAtCenter"],
+                "hash": "a284de95205ac32596dc192bee4b8cbde02236589415fa6f0261fa61628a5059"
+            }
+        ]
+    },
+    {
+        "class": "BrownTank",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawVehicle"],
+                "hash": "6ba0abe544167f59c7e6a256835e6e68136966c8e46d7a7c26879386c2a87f92"
+            }
+        ]
+    },
+    {
+        "class": "BulletHit",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt"],
+                "hash": "4f830498de7ff3d6a8ac265abbcefcae91db8259df0cb74c865a8f7f267844bd"
+            }
+        ]
+    },
+    {
+        "class": "CannonTruck",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "fef17bd32208f2c8bf73b5dcaf865a75dd94a43a2b1dafc8db19964db890c376"
+            }
+        ]
+    },
+    {
+        "class": "Chinook",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.rotorAngle"],
+                "calls": [
+                    "this.main.drawOffset",
+                    "this.main.drawRotatedAtCenter",
+                    "this.main.drawRotatedScaled",
+                    "this.main.popGraphics",
+                    "this.main.rotateGraphicsScaled"
+                ],
+                "hash": "03a7bc4f64c60623b573ee19a486556d4ef0dd363f903fc6ee6fc4e2dad180b9"
+            }
+        ]
+    },
+    {
+        "class": "CliffGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "35632bd455fbe77151f423fbd60b38502692267a80f6ad7b699811877a9a393c"
+            }
+        ]
+    },
+    {
+        "class": "CliffMissileLauncher",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "a739aebed394983e9ca12f1574da02a2d2f266cf2cfa3fb76f8624610e866db6"
+            }
+        ]
+    },
+    {
+        "class": "Column",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage", "this.main.drawRotated"],
+                "hash": "9402a1d9dc4a208a1561b99dd7bd1cb1fe32ad8d740d7da5c138cf02d7110537"
+            }
+        ]
+    },
+    {
+        "class": "ContinueMode",
+        "extends": ["implements IMode, IFadeListener, IMenuListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.drawString", "this.menu.render"],
+                "hash": "e2f780f6203e82c196c8442719ad40fb22e737789cc7780e1b69cf82a48e797a"
+            }
+        ]
+    },
+    {
+        "class": "DeadEnemySoldier",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["javaFloat", "this.main.drawImage", "this.main.drawImageAlpha"],
+                "hash": "5da19d81f384fb5c9d7c08d75b3e340078026c59a76fd77f06527862425e1348"
+            }
+        ]
+    },
+    {
+        "class": "DifficultyMode",
+        "extends": ["implements IMode, IFadeListener, IMenuListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.drawString", "this.menu.render"],
+                "hash": "f244c29a0e05dacf26518132b16ea1706bd08629c217bd17e471c22f7f4ddb96"
+            }
+        ]
+    },
+    {
+        "class": "ElephantGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt", "this.main.drawCenteredScaledAlpha", "this.main.drawImage"],
+                "hash": "f2cff38d2b909ebf76bb5096a0c7017ffedc8e3601387869c2b9a7fed3ff0ae1"
+            }
+        ]
+    },
+    {
+        "class": "ElephantMissile",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotated"],
+                "hash": "44389214ed3bf62cf1d32d0d264e87c4b409185e74fc36a907865f48cb83107a"
+            }
+        ]
+    },
+    {
+        "class": "EnemyBullet",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt"],
+                "hash": "e05d3806bd8736395d1e02635ca91774ba8559e826bb5f739c18a5dff328875e"
+            }
+        ]
+    },
+    {
+        "class": "EnemyHelicopter",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.rotorAngle"],
+                "calls": ["this.main.drawRotatedAtCenter"]
+            }
+        ],
+        "nonRenderHash": "406affb79a1dfcd86b55c4caa3bd8c8d8152aadf0598af1205a368d991bb9766"
+    },
+    {
+        "class": "EnemySoldier",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.blink"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "b09f2d94056185b818ea55cc21a284f30bc8c02dda861dfa5e3f5190f40f4366"
+    },
+    {
+        "class": "Explosion",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawScaled", "this.main.drawScaledAlpha"],
+                "hash": "46d0ea945c6a18e6ca689b982cdb2880d0ccbfea41453383c18c075b472d4b98"
+            }
+        ]
+    },
+    {
+        "class": "Fire",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.flickerCounter", "this.flickerIndex"],
+                "calls": ["this.main.drawRotatedScaledAlpha"]
+            }
+        ],
+        "nonRenderHash": "5f08156c49828cd9ee57133e041a7634f883b85df9ea61f2bb42f6df0fb5f2a9"
+    },
+    {
+        "class": "FireTank",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawVehicle"],
+                "hash": "6f73b33952ffd35955d4d452ffc31b1a49a5525e634e2e1c2150886906b6b9e3"
+            }
+        ]
+    },
+    {
+        "class": "Flame",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.spriteCounter", "this.spriteIndex"],
+                "calls": ["this.main.drawCenteredAlpha"]
+            }
+        ],
+        "nonRenderHash": "17c4c0bac329aa22e6a9d920083f33efa4081d20a7a2eb79ba7641a2febd3a9a"
+    },
+    {
+        "class": "FlashingSkull",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.flashDelay", "this.visible"],
+                "calls": ["this.main.drawImage", "this.main.drawImageAlpha"],
+                "hash": "e308592b368b4e04c951602a4d3ec04916f3739085bc9132932cb034695c4581"
+            }
+        ]
+    },
+    {
+        "class": "FloorGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.colorIndex"],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage", "this.main.drawRotatedAtCenter"]
+            }
+        ],
+        "nonRenderHash": "d2d03c3340986a487d95e6f016fa60629f7fc11fe1af53fe5e5f9d0b9830017e"
+    },
+    {
+        "class": "FloorMissileLauncher",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage"],
+                "hash": "c21be0eb33258f033332e36fe69b0fe7857c4454decfdba799b5463e3a53c9ac"
+            }
+        ]
+    },
+    {
+        "class": "FriendlyHelicopter",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotatedAtCenterScaled", "this.main.drawRotatedAtCenterScaledAlpha"],
+                "hash": "975fa966575fc86a9b9d0772ebcf18302daf6075661c21faf02e79f14dee7720"
+            }
+        ]
+    },
+    {
+        "class": "FriendlySoldier",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.colorIndex"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "b95b3ef04e07d7e7b26dc0464b7ce7bb7716dbf1f126c6549dd6e8e0ceb320e9"
+    },
+    {
+        "class": "GameMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.g"],
+                "calls": ["this.drawBackground", "this.drawScore", "this.drawSprites"],
+                "hash": "c679806f9156953f4e6cdd5b06d8211bab7e901bca4086b11f820c3ff3407af6"
+            },
+            {
+                "name": "drawBackground",
+                "writes": [],
+                "calls": ["javaInt", "main.drawImage", "tiles[i].setAlpha"],
+                "hash": "2448528887ec39436abb52cbaa2b7cc91a5860f346c6cb2659e5fea7611d1eb1"
+            },
+            {
+                "name": "drawSprites",
+                "writes": [],
+                "calls": ["GL11.glPopMatrix", "GL11.glPushMatrix", "GL11.glTranslatef", "element.render", "list.get", "list.size", "this.player.render"],
+                "hash": "aa90f6f958cfe22ee29140ec797c697c4cbed93207bf549591417096051bfbe0"
+            },
+            {
+                "name": "drawScore",
+                "writes": [],
+                "calls": ["this.main.drawString"],
+                "hash": "66340308b9c1457ca5a4297d8dfc51f415f1b7c18346b9072b71b01cae489821"
+            }
+        ]
+    },
+    {
+        "class": "Gate",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "GrayBoat",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage", "this.main.drawRotatedAtCenter"],
+                "hash": "dc3da2d43260ff0f6d58f7409c787bc13d2753075d2cb7a01eaac5f558e81aee"
+            }
+        ]
+    },
+    {
+        "class": "GrayJeep",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawVehicle"],
+                "hash": "de641e7726fb471f48b3fb5549f428da61cfcdbedd7a21d6b83aa6a070ea614d"
+            }
+        ]
+    },
+    {
+        "class": "GrayTank",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage", "this.main.drawVehicle"],
+                "hash": "b31199c57b6235ef89580aabd66c89f11a9451c2283e16a2f1bc65379927880a"
+            }
+        ]
+    },
+    {
+        "class": "GreenBoat",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "7b7e6d05231289409ca0c36669275e9d4bbefaabe5a6b0bf9f4d1515315ef467"
+            }
+        ]
+    },
+    {
+        "class": "Grenade",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImageRotatedScaled"],
+                "hash": "a80a1f907fc420216119fb30167c0017d90a0a477973ed28f98e4a8598659257"
+            }
+        ]
+    },
+    {
+        "class": "HardEndingMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [
+                    "g.clearWorldClip",
+                    "g.fillRect",
+                    "g.setColor",
+                    "g.setWorldClip",
+                    "this.main.drawString",
+                    "this.main.drawStringWithLength",
+                    "this.main.drawVehicle",
+                    "this.main.popGraphics",
+                    "this.main.soldiers[HardEndingMode.NAME_INFOS[this.cardIndex - 1][0]].draw",
+                    "this.main.translateGraphics"
+                ],
+                "hash": "34c0c76e42c667b5c612e903f6461b5adbfc1f5ec37acf4496eed74bf3d44c4e"
+            }
+        ]
+    },
+    {
+        "class": "Help",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "4a442f766918f61ccc20a0511e79657837724e4ee705ab1d02d3df82a8d675c3"
+            }
+        ]
+    },
+    {
+        "class": "House",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "Hut",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "InputMode",
+        "extends": ["implements IMode, KeyListener, IFadeListener, IMenuListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.renderInputMenu", "this.renderReading"],
+                "hash": "b95042a73661197d3734fb1ab0c5277ef05f118cc0b63bdaae039718794b43be"
+            },
+            {
+                "name": "renderReading",
+                "writes": [],
+                "calls": ["this.centerStringX", "this.completionMessage", "this.main.drawString", "this.main.drawStringAlpha"],
+                "hash": "0695f8d5b225769fc5d5beff0402d09471cf320395ea94651f7ccf6a3ec01cc3"
+            },
+            {
+                "name": "completionMessage",
+                "writes": [],
+                "calls": ["InputMode.restoredCompletion.has"],
+                "hash": "b7e91950179aeb09754261f5fa0bc0bbd872a00e15bba20a20f68a44c19c4263"
+            },
+            {
+                "name": "centerStringX",
+                "writes": [],
+                "calls": ["javaFloat"],
+                "hash": "02f80b31b23b817e806bff17965df95cd81bcc719150d561c66c38547f483a5b"
+            },
+            {
+                "name": "renderInputMenu",
+                "writes": [],
+                "calls": [
+                    "ButtonMapping.usesStandardGamepadLabels",
+                    "InputMode.gamepadLabelStyles.get",
+                    "gc.getInput",
+                    "this.getInputMappingX",
+                    "this.main.drawString",
+                    "this.menu.render",
+                    "this.refreshInputMappingLines"
+                ],
+                "hash": "89af91f279c2e34f6081d91de71c085eeb2a02c5ffd472df94532b925681d56d"
+            },
+            {
+                "name": "refreshInputMappingLines",
+                "writes": ["this.inputMappingLines[i]", "this.inputMappingX"],
+                "calls": ["InputMode.gamepadLabelStyles.set", "Math.max", "this.buttonMapping.inputMappingLine"],
+                "hash": "d13ed3925e45634fd9599b52619fb1b34555c26b01a7f5e3ccc86e5e92f9499e"
+            },
+            {
+                "name": "getInputMappingX",
+                "writes": [],
+                "calls": ["javaFloat"],
+                "hash": "2bcbe90dd90a06550ecadefee1e223854fe602c7b2204bc210efc65ab176e9da"
+            }
+        ]
+    },
+    {
+        "class": "IntroMapMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.drawString", "this.main.map.draw"],
+                "hash": "1f3435200cd737f054b6073c569f3a9f120e4f79f7d1d52860f482db129ba0d0"
+            }
+        ]
+    },
+    {
+        "class": "IntroMode",
+        "extends": ["implements IMode, IFadeListener, IMenuListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.renderBlankScreen", "this.renderSoldiers", "this.renderTitleAndStory", "this.renderTyping"],
+                "hash": "d7b4a4e103e3dc55fb56ba97e1fdf069c7ca7c21c68455ac5f509bf15d6faacc"
+            },
+            {
+                "name": "renderTitleAndStory",
+                "writes": [],
+                "calls": [
+                    "g.fillRect",
+                    "g.setColor",
+                    "this.main.drawString",
+                    "this.main.popGraphics",
+                    "this.main.titleImage.draw",
+                    "this.main.translateGraphics",
+                    "this.menu.render"
+                ],
+                "hash": "ead9a974735f7003261a8eb7c9587ca20f646817c9c950100a7a2223b67249ba"
+            },
+            {
+                "name": "renderSoldiers",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.soldiers[offset + 0].draw", "this.main.soldiers[offset + 1].draw"],
+                "hash": "a6b8e7fa625cc64999254c1d44895bdc78c9d2347c5b4d0fc5c53f47eed380a0"
+            },
+            {
+                "name": "renderTyping",
+                "writes": [],
+                "calls": [
+                    "g.fillRect",
+                    "g.setColor",
+                    "this.main.drawString",
+                    "this.main.drawStringWithLength",
+                    "this.main.soldiers[offset + 0].draw",
+                    "this.main.soldiers[offset + 1].draw"
+                ],
+                "hash": "af9c144ba8ed939c3c2debe372dcbb06f0f8ea0a67fc33146d9e3cad44c2c5f1"
+            },
+            {
+                "name": "renderBlankScreen",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor"],
+                "hash": "3d207713499f235ca43ed636a9eee5fb58ae94c9c492a70cef7dc516ef2b68e0"
+            }
+        ]
+    },
+    {
+        "class": "IntroPlayer",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawVehicle"],
+                "hash": "826061e422245c6c2931b22f0fc39c06fc5ddec662bc805d0f75a5c4dac174d4"
+            }
+        ]
+    },
+    {
+        "class": "InvisibleStar",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "JeepHereMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.drawImage", "this.main.jeepHere.draw"],
+                "hash": "9573be200bea0f9dd76a80c5ad4084b80162dc71afa5a102e13aebb7f223d884"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahBullet",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["main.drawRotatedAtCenterScaled"],
+                "hash": "3a83122e89a50dd8858339befd05ea235b6443adcb36358803dfb127225e4f03"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahExplosion",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["main.drawScaled", "main.drawScaledAlpha"],
+                "hash": "4c54c6bd54b55be87b7f98d7c076429e9bb2155adf14b964614d512f9f11727e"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahFireLeft",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["main.drawRotatedAtCenter", "main.drawRotatedScaled"],
+                "hash": "c2c31bfdc91970a1e74175385653eeed061231de14e87b2beffa1e032410b021"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahFireRight",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["main.drawRotatedAtCenter", "main.drawRotatedScaled"],
+                "hash": "80772ec16916572ce05ce669cc90394087fc8773bc5aef13c133d0c54cbe930d"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [
+                    "g.fillRect",
+                    "g.setColor",
+                    "this.bullets.get",
+                    "this.bullets.get(i).render",
+                    "this.bullets.size",
+                    "this.explosion.render",
+                    "this.fireLeft.render",
+                    "this.fireRight.render",
+                    "this.leftPlane.render",
+                    "this.main.drawImage",
+                    "this.main.jeepYeah.draw",
+                    "this.rightPlane.render"
+                ],
+                "hash": "2d40c5b95c3f0636bc52aad091342dc6c823a2163960037f9e0297924a3091e3"
+            }
+        ]
+    },
+    {
+        "class": "JeepYeahPlane",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.clearWorldClip", "g.setWorldClip", "main.drawRotatedAtCenterScaled", "main.drawRotatedAtCenterScaledAlpha"],
+                "hash": "e58a27319366ed925cae2dc86f2423af84c7a2372c429675ffc480be24fa9856"
+            }
+        ]
+    },
+    {
+        "class": "LandingPort",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage", "this.main.drawImageAlpha"],
+                "hash": "6dc62369cb833333b9ab91e9ee1ddea4ea886d220069c60c9e799c326b81bc98"
+            }
+        ]
+    },
+    {
+        "class": "Laser",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "LasersManager",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.colorIndex", "this.flash"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "c2f0f962252131751e0252c0549a57cd70b043fd0a517f347004ad1c28343255"
+    },
+    {
+        "class": "Main",
+        "extends": ["extends BasicGame"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "mode.render"],
+                "hash": "e9836e521a0a3f54f937d6bd943dee39b6ac61f3461bb0d1638c6194ae1b3261"
+            }
+        ]
+    },
+    {
+        "class": "MapMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [
+                    "g.fillRect",
+                    "g.setColor",
+                    "this.main.drawImage",
+                    "this.main.drawNumber",
+                    "this.main.drawScaled",
+                    "this.main.drawString",
+                    "this.main.map.draw"
+                ],
+                "hash": "372f71550c7d84990fd6f438e433176a0e2748627b94a5ea2157cbe08486b16d"
+            }
+        ]
+    },
+    {
+        "class": "Menu",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotated", "this.main.drawString", "this.main.popGraphics", "this.main.translateGraphics"],
+                "hash": "e594e13084734fb2bd0f53908c9334c626dd797ed2bbec5b8175f65ef735e6da"
+            }
+        ]
+    },
+    {
+        "class": "Mine",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.spriteIndex"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "526ddbf737ddd3c2631a75505e7429082fae413547ed85f7b5e31e93f89f2e68"
+    },
+    {
+        "class": "MissionAccomplished",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawString", "this.main.drawStringWithLength"],
+                "hash": "668c647cbe58db1915cc1a487482c00c4e74d518230fa5135f6d7901f59ddd8c"
+            }
+        ]
+    },
+    {
+        "class": "OptionsMode",
+        "extends": ["implements IMode, IFadeListener, IMenuListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["g.fillRect", "g.setColor", "this.main.drawString", "this.menu.render"],
+                "hash": "435bbc1f74aa73872b70572ffc355e3fc244e6f9275e85c315a4d630eddc8ff3"
+            }
+        ]
+    },
+    {
+        "class": "Parachute",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["javaFloat", "this.main.drawCenteredAt", "this.main.drawCenteredScaled", "this.main.drawCenteredScaledAlpha"],
+                "hash": "80c8917c2d86a72a7be2cad0e9d8ec7fc8c3fedaba1b2977f5896e53eec107dc"
+            }
+        ]
+    },
+    {
+        "class": "ParkedBrownTank",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt"],
+                "hash": "41113fa1a0b9f7534a77df0d68e5afb44365beda98e72961349c83dd6c1bb0f9"
+            }
+        ]
+    },
+    {
+        "class": "ParkedGrayJeep",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt"],
+                "hash": "0004f7a1540baa52ecae5461088746c75fffa8b0ae83752d08b36ee585b70173"
+            }
+        ]
+    },
+    {
+        "class": "Player",
+        "extends": [],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.invincibleColor"],
+                "calls": ["this.main.drawImageAlpha", "this.main.drawRotatedAlpha", "this.main.drawVehicle"],
+                "hash": "d4b44cc6ffcbae36b677796d202010e95546055e0845511e5b95514c6c3a7cee"
+            }
+        ]
+    },
+    {
+        "class": "PlayerBullet",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt"],
+                "hash": "89e570c27e69f73833288815d17d9af0a7b898d5e59a87a37d0d5d241db574a3"
+            }
+        ]
+    },
+    {
+        "class": "PlayerMissile",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotated"],
+                "hash": "dae57b464d7cd571d08100c7a510a9863a573f2f513638e93537ceef755592a7"
+            }
+        ]
+    },
+    {
+        "class": "Rock",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotatedAtCenterScaled"],
+                "hash": "09f471e7eb485d91837299842f3d5b3c9c32a706f10a02fe6a64034267cc7f60"
+            }
+        ]
+    },
+    {
+        "class": "RotatingGun",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotatedAtCenter"],
+                "hash": "8e28de5e4d0ba8f186b4fc4e6efb06ce07526d1a571444d0e0605064c673a2db"
+            }
+        ]
+    },
+    {
+        "class": "Star",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.flashingIndex"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "b758f7f15411658972afa1cf5a8b4108a1966535a7f227fe05af6937f7d9fb48"
+    },
+    {
+        "class": "Statue",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.eyesVisible"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "fbb13df4e390c98d47f1ee9435146ad27f0a3386bc18a08067823697200b3b72"
+    },
+    {
+        "class": "StatueMissile",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawRotated"],
+                "hash": "b82f739e23badb9f9bd89ebeb4c0e2632fc0aace1fb715bca7471489d56449ad"
+            }
+        ]
+    },
+    {
+        "class": "StatueSeekerMissile",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawRotated"],
+                "hash": "76a15946d22966f2aac789fc5445e637ed6cb987d582329df59430eaae893c28"
+            }
+        ]
+    },
+    {
+        "class": "Submarine",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredAt", "this.main.drawImageAlpha"],
+                "hash": "4f5318d01f8ed69cd03ad194fb7e1e827b1a150cc1383f4ee4ef9edd3bb5c4be"
+            }
+        ]
+    },
+    {
+        "class": "SubmarineMissile",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawRotated"],
+                "hash": "ec178f9f07a24110b7f5ded7334e6f829ca1ad6c58dbcd7696ec0518576d7a57"
+            }
+        ]
+    },
+    {
+        "class": "SunsetMode",
+        "extends": ["implements IMode, IFadeListener"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.rotorAngle"],
+                "calls": [
+                    "g.fillRect",
+                    "g.setColor",
+                    "this.drawHelicopter",
+                    "this.drawHelicopterShaded",
+                    "this.main.drawImage",
+                    "this.main.drawString",
+                    "this.main.drawStringWithLength",
+                    "this.main.sunset.draw"
+                ],
+                "hash": "211b826918d925deaa106b792f93c51c3be2e7ce7f9653a789ddf57c2fdcee83"
+            },
+            {
+                "name": "drawHelicopter",
+                "writes": [],
+                "calls": [
+                    "this.main.drawOffsetAlpha",
+                    "this.main.drawRotatedAtCenterScaled",
+                    "this.main.popGraphics",
+                    "this.main.rotateGraphicsScaled",
+                    "this.main.scaleGraphics"
+                ],
+                "hash": "c4b4b688a7de7b73a0d7b6da4bb9febfb7e1cde1919cbb6d4e14411831f013ce"
+            },
+            {
+                "name": "drawHelicopterShaded",
+                "writes": [],
+                "calls": [
+                    "this.main.drawOffset",
+                    "this.main.drawOffsetAlpha",
+                    "this.main.drawRotatedAtCenter",
+                    "this.main.popGraphics",
+                    "this.main.rotateGraphicsScaled",
+                    "this.main.scaleGraphics"
+                ],
+                "hash": "e674e4fbc1a4092d24b99f9b9727bf94e376bf829fb3c12254d0b0ec301befad"
+            }
+        ]
+    },
+    {
+        "class": "SuperFire",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.flickerCounter", "this.flickerIndex"],
+                "calls": [
+                    "javaInt",
+                    "this.gameMode.g.clearWorldClip",
+                    "this.gameMode.g.setWorldClip",
+                    "this.main.drawCenteredScaledAlpha",
+                    "this.main.drawImage"
+                ]
+            }
+        ],
+        "nonRenderHash": "6a20f748ff2f1262f31294412d76bfd59ebf6fa2549170f5571e8c83103ff0c9"
+    },
+    {
+        "class": "SwampMissile",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawRotated"],
+                "hash": "e4776efe953756e378aa443d8471eedcbe4c34f62e3ecff5630aca560e71eeb2"
+            }
+        ]
+    },
+    {
+        "class": "SwampMissileLauncher",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": ["this.splashIndex"],
+                "calls": ["this.main.drawImage"]
+            }
+        ],
+        "nonRenderHash": "eaa9714c2406ea0e5977448d9346131d9d718d2583a70d43dc08c0895ab99ddc"
+    },
+    {
+        "class": "TileDebris",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawCenteredScaled"],
+                "hash": "fc7119115a8a291caa827ca1c489d9249c74359c7073d6dd608fbf6b35f7cf80"
+            }
+        ]
+    },
+    {
+        "class": "Train",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.gameMode.g.clearWorldClip", "this.gameMode.g.setWorldClip", "this.main.drawImage"],
+                "hash": "dd06586cf362aa7a7cf1ee2f6e48297367c74e9700852803c431a53f917f4600"
+            }
+        ]
+    },
+    {
+        "class": "TrainManager",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": [],
+                "hash": "caccf629c37f0d23e7191cabac18464b16f823f252244ab271d1b85541e27346"
+            }
+        ]
+    },
+    {
+        "class": "TravelingExplosion",
+        "extends": ["extends GameElement"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawScaledAlpha"],
+                "hash": "1895ce6657bca007bc3bbe2603efee8d10cc1cbe2feb5a1106bb24220723482f"
+            }
+        ]
+    },
+    {
+        "class": "TroopsTruck",
+        "extends": ["extends Enemy"],
+        "methods": [
+            {
+                "name": "render",
+                "writes": [],
+                "calls": ["this.main.drawImage"],
+                "hash": "e10aaf23a02e4df056010c55e97af43e1ab603923134ac4eb9745a231c4f7fa6"
+            }
+        ]
+    }
+]

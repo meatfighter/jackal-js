@@ -68,7 +68,7 @@ public class Mine extends Enemy {
   @Override
   public void render() {
     if (visible) {
-      if (++spriteIndex == 4) {
+      if (!gameMode.paused && ++spriteIndex == 4) {
         spriteIndex = 0;
       }
       main.draw(main.mines[spriteIndex], x, y);

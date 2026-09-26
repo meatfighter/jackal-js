@@ -107,12 +107,14 @@ export class SuperFire extends GameElement {
     }
 
     public render(): void {
-        if (this.flickerCounter >= 2.5) {
-            this.flickerCounter -= 2.5;
-        } else {
-            this.flickerIndex ^= 1;
+        if (!this.gameMode.paused) {
+            if (this.flickerCounter >= 2.5) {
+                this.flickerCounter -= 2.5;
+            } else {
+                this.flickerIndex ^= 1;
+            }
+            this.flickerCounter++;
         }
-        this.flickerCounter++;
         let X = this.x - 48;
         let halfLength = this.length * 0.5;
         switch (this.state) {

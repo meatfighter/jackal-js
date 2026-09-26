@@ -1,0 +1,549 @@
+[
+    {
+        "class": "Airplane",
+        "calls": ["main.draw", "render"],
+        "renderHash": "7d55296e9b0df3208c3c43dcdf3af60ea513a807d5243b3129e961dc1b000a42"
+    },
+    {
+        "class": "AppearingBrownTank",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "AppearingEnemyHelicopter",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "AppearingGrayJeep",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "AppearingPlane",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "AppearingSoldier",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "Bomb",
+        "calls": ["main.draw", "render"],
+        "renderHash": "69e9b89212faa00b0b22f36b5025bf58d0f1ac5238b99b336d7d956cfe8c5b01"
+    },
+    {
+        "class": "BossBlueTank",
+        "calls": ["main.drawVehicle", "render"],
+        "renderHash": "848b84538d52992fa74011de98b1802f36476419a59eb1b024eb3ec219f540c4"
+    },
+    {
+        "class": "BossBlueTanksManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "BossGarage",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawVehicle", "render"],
+        "nonRenderHash": "c88955b783eae016dde23dce14148d72218c12d175ef8a8d2d4b543dde78a530"
+    },
+    {
+        "class": "BossGarageManager",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "render", "switch"],
+        "renderHash": "83761761e5946562857c8b511a4f6e6b02b7091f39056d09a4c4e04cabc08a34"
+    },
+    {
+        "class": "BossHeadquarters",
+        "calls": ["if", "main.draw", "render", "switch"],
+        "nonRenderHash": "be8f82e8fd894366e177c522d08d20b688563025f2bc3dec2c19453a6cdb11ec"
+    },
+    {
+        "class": "BossHeadquartersManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "BossHelicopter",
+        "calls": ["for", "if", "main.drawRotated", "render"],
+        "nonRenderHash": "55e03328343b1b4f544a43e0f56b2d44b65783ab5e22b110d4194e14cea47b6e"
+    },
+    {
+        "class": "BossHelicopterManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "BossShipGun",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawRotated", "render", "switch"],
+        "nonRenderHash": "801e1017f6750a7a7c5046586ff9c42c48a8c0ae2dfd6271d110c2162c79cbe6"
+    },
+    {
+        "class": "BossShipManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "BossStatue",
+        "calls": ["if", "main.draw", "render", "switch"],
+        "nonRenderHash": "982278223caa2e700fc063e48f11672ffb00b1e1aeea798dc5f12f10655b894f"
+    },
+    {
+        "class": "BossStatuesManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "BossSuperTank",
+        "calls": [".setAlpha", "for", "gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawRotated", "render"],
+        "renderHash": "30086edfce9619eca9d162b33c0960596b6f6ccf07101bf463761de293634a93"
+    },
+    {
+        "class": "BossSuperTankGun",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "d9cd2cdf23da3fd9fdf5bfabedec90111f503aff523fc3f67269e82dcfd4ab70"
+    },
+    {
+        "class": "BrownTank",
+        "calls": ["main.drawVehicle", "render"],
+        "renderHash": "0bf9bb57d8c430f53faad7978549c3183bea47cc98d56de4557fc7f9a3a38722"
+    },
+    {
+        "class": "BulletHit",
+        "calls": ["main.drawCentered", "render"],
+        "renderHash": "67c6f310209e8f31ed429298d47ee072db7bed4b111b5e82d2a06feb31bb8561"
+    },
+    {
+        "class": "CannonTruck",
+        "calls": ["if", "main.draw", "render"],
+        "renderHash": "3f5f4af0bc300d19806f64cc036cae5c19c7d34675c79f2eb360c86261ca500f"
+    },
+    {
+        "class": "Chinook",
+        "calls": ["for", "if", "main.drawOffset", "main.drawRotated", "main.drawRotatedScaled", "main.popGraphics", "main.rotateGraphics", "render"],
+        "renderHash": "454a17ed957dc57809aed9e7cdad5cc549eb3d25e665bce9dfa728dcef5b41ec"
+    },
+    {
+        "class": "CliffGun",
+        "calls": ["if", "main.draw", "render"],
+        "renderHash": "c92aaece842b1a693919604d19b2b355beb00f01471ea6804a6b96d4888b47c4"
+    },
+    {
+        "class": "CliffMissileLauncher",
+        "calls": ["main.draw", "render"],
+        "renderHash": "59aa7ab544dbf94dc1f8a0224d9773dcc5d69e35e0c673857d645990b4d1afb4"
+    },
+    {
+        "class": "Column",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawRotated", "render", "switch"],
+        "renderHash": "cc4a5b14061e11664dadb0c6b1cc14b5a5323ed191e00238eabda3d88f345f36"
+    },
+    {
+        "class": "ContinueMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.drawString", "menu.render", "render"],
+        "renderHash": "05733fe242d06fa00d673f2fb4703f028d24b000bdf64c818f4a7f378bf2b81a"
+    },
+    {
+        "class": "DeadEnemySoldier",
+        "calls": ["if", "main.draw", "render"],
+        "renderHash": "8c6849966dfaa168a0edff68eeb3fde1c447833721a9c29107a6ebd51ab222b1"
+    },
+    {
+        "class": "DifficultyMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.drawString", "menu.render", "render"],
+        "renderHash": "cb8e0f60a0adb088c7d7d2c7aec40bc8b9a66d50493d54a1f48950a19d56274b"
+    },
+    {
+        "class": "ElephantGun",
+        "calls": ["for", "if", "main.draw", "main.drawCentered", "render", "switch"],
+        "renderHash": "1bee2cc097f045ab820ffd503007a47020729ab2f7f4aa8d6ac8dd8c6c4ceed3"
+    },
+    {
+        "class": "ElephantMissile",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "df39199c4f1fac0a9ba8875d1a4fde1118e89ae2caf8fb5a4ac471ac542f9c5e"
+    },
+    {
+        "class": "EnemyBullet",
+        "calls": ["main.drawCentered", "render"],
+        "renderHash": "9f88986adffdd6b7fc83053c8de929a093a0914bdc8e8fb953090967b99b6714"
+    },
+    {
+        "class": "EnemyHelicopter",
+        "calls": ["for", "if", "main.drawRotated", "render"],
+        "nonRenderHash": "18390a1a3bdddbecd084504c3c566be30ab10a3b47b4afbcee2abee4e554bfaa"
+    },
+    {
+        "class": "EnemySoldier",
+        "calls": ["if", "main.draw", "render"],
+        "nonRenderHash": "df5d700ba811d0ed34137429e9ac76ec8aa7ef9f2b9963306fdc1640474b104e"
+    },
+    {
+        "class": "Explosion",
+        "calls": ["if", "main.drawScaled", "render"],
+        "renderHash": "b129d4b071c03795cf029eac31f1623ff168d27286d314200cc74a202798fc9f"
+    },
+    {
+        "class": "Fire",
+        "calls": ["if", "main.drawRotatedScaled", "render"],
+        "nonRenderHash": "55400ceb4f8cf9d321447a4007a75c39b3a408a5de04a9d7694733924ce02756"
+    },
+    {
+        "class": "FireTank",
+        "calls": ["main.drawVehicle", "render"],
+        "renderHash": "7328b9f3c9b4611bab4f4acd5fae7f2548b86ed23c539f095bcbc2041ca5678e"
+    },
+    {
+        "class": "Flame",
+        "calls": ["if", "main.drawCenteredAlpha", "render"],
+        "nonRenderHash": "2074c992cdea6be5b1430485dd8e38ac1b7967b70351cfb5381dfad28a67701b"
+    },
+    {
+        "class": "FlashingSkull",
+        "calls": ["for", "if", "main.draw", "render", "switch"],
+        "renderHash": "d2d155070f0813d3b7e3ac2a33883e287f197a884ea9f78384a984de2f08860d"
+    },
+    {
+        "class": "FloorGun",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawRotated", "render", "switch"],
+        "nonRenderHash": "929d810c1681827f855d01b5b24a7fca258474b71990e7f7176e691955f59e1a"
+    },
+    {
+        "class": "FloorMissileLauncher",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "render"],
+        "renderHash": "149d00df6d21b04ab293169fa8ef3c62d59eed6d03c2a44ee227cdbf1723d615"
+    },
+    {
+        "class": "FriendlyHelicopter",
+        "calls": ["if", "main.drawRotated", "render"],
+        "renderHash": "0d669976aa50c92e9177c01fc72d690b307b34d70652a40f6e774ab606636c13"
+    },
+    {
+        "class": "FriendlySoldier",
+        "calls": ["if", "main.draw", "render"],
+        "nonRenderHash": "9f30502204b8cd68019c7f69555b462777fe475f732b30a3dd950b96553fe99c"
+    },
+    {
+        "class": "GameMode",
+        "calls": ["drawBackground", "drawScore", "drawSprites", "if", "render"],
+        "renderHash": "daadf02e52461fa21d2bb952f85719e7c9b7595da252bbcf000713ae975ce5a9"
+    },
+    {
+        "class": "Gate",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "GrayBoat",
+        "calls": ["main.draw", "main.drawRotated", "render"],
+        "renderHash": "d78369cab7928fcb257087596272f4c0453a629b4e508162ff09b7c131c6fda8"
+    },
+    {
+        "class": "GrayJeep",
+        "calls": ["main.drawVehicle", "render"],
+        "renderHash": "0fab7b01677d142a70cf5a40d83685ffc754817d06074ff1f73eeace68203a43"
+    },
+    {
+        "class": "GrayTank",
+        "calls": ["if", "main.draw", "main.drawVehicle", "render"],
+        "renderHash": "ea005ccc99956c73104b897ce6ea83c0e8de147ca6dd27939edf2422a41f7201"
+    },
+    {
+        "class": "GreenBoat",
+        "calls": ["main.draw", "render"],
+        "renderHash": "ce91e1884882ea3e289df7d553f85343bec083f4a0852d780d2a33256cc0c13e"
+    },
+    {
+        "class": "Grenade",
+        "calls": ["main.draw", "render"],
+        "renderHash": "b6beeca9b2a0b15c5239cc1ecfda13bb877258d324e6c29939e6b1d05b1403ff"
+    },
+    {
+        "class": "HardEndingMode",
+        "calls": [
+            ".draw",
+            ".length",
+            "for",
+            "g.clearWorldClip",
+            "g.fillRect",
+            "g.setColor",
+            "g.setWorldClip",
+            "if",
+            "main.drawString",
+            "main.drawVehicle",
+            "main.popGraphics",
+            "main.translateGraphics",
+            "render"
+        ],
+        "renderHash": "3326167d4acc4b58e1e0bf658003acbe2495b70fa7e1541ce67709af6482345a"
+    },
+    {
+        "class": "Help",
+        "calls": ["if", "main.draw", "render"],
+        "renderHash": "c3c635ef768afaf4578ea7a3b3eabb4ad491fc6ce4b968c07fe1cbadc74d8e3e"
+    },
+    {
+        "class": "House",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "Hut",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "InputMode",
+        "calls": ["g.fillRect", "g.setColor", "render", "renderInputMenu", "renderReading", "switch"],
+        "renderHash": "3a778ed582d967e47887585b841f13a451e2ba38eef5c649c547ba6e03106e51"
+    },
+    {
+        "class": "IntroMapMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.drawString", "main.map.draw", "render"],
+        "renderHash": "12008c95b53627a64eb8ee16a3183294c1af0c4e3a109ae109a0164a71a4f55b"
+    },
+    {
+        "class": "IntroMode",
+        "calls": ["render", "renderBlankScreen", "renderSoldiers", "renderTitleAndStory", "renderTyping", "switch"],
+        "renderHash": "aa029397e1d89406070cb7ab58abe19f12a5fa519189b8db38c151e6314d1e14"
+    },
+    {
+        "class": "IntroPlayer",
+        "calls": ["main.drawVehicle", "render"],
+        "renderHash": "e1ce1bd323240025ec56a1a15cb3e85b18a709fd3425f7556a9b1a6c4f49dffa"
+    },
+    {
+        "class": "InvisibleStar",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "JeepHereMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.draw", "main.jeepHere.draw", "render"],
+        "renderHash": "49663b3a125b42caec52f031d9bddf64b07463e5b2d13e548efcac41f633a331"
+    },
+    {
+        "class": "JeepYeahBullet",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "3d3e5677844f6f0d4f38099794d6c1f8e17053324d8b79e3ec2df84d9a271bde"
+    },
+    {
+        "class": "JeepYeahExplosion",
+        "calls": ["if", "main.drawScaled", "render"],
+        "renderHash": "cbb01cb1682dc52f034b68c64375ddd094fbf9b00a9257810b65b689727f736a"
+    },
+    {
+        "class": "JeepYeahFireLeft",
+        "calls": ["main.drawRotated", "main.drawRotatedScaled", "render", "switch"],
+        "renderHash": "2fc20147bbfd6d5cdb556540a1de58ff4fb3c0118ea336661e014629606cc1ea"
+    },
+    {
+        "class": "JeepYeahFireRight",
+        "calls": ["main.drawRotated", "main.drawRotatedScaled", "render", "switch"],
+        "renderHash": "8bdf09c0ac9e684f9527f63f77178eca96101a281df514b23c1de95a10e85802"
+    },
+    {
+        "class": "JeepYeahMode",
+        "calls": [
+            ".render",
+            "bullets.get",
+            "bullets.size",
+            "explosion.render",
+            "fireLeft.render",
+            "fireRight.render",
+            "for",
+            "g.fillRect",
+            "g.setColor",
+            "if",
+            "leftPlane.render",
+            "main.draw",
+            "main.jeepYeah.draw",
+            "render",
+            "rightPlane.render"
+        ],
+        "renderHash": "d088ede49868f86f09f33f2c57f0429a468df5dda72b1c4c6ad9c6b7b92562ac"
+    },
+    {
+        "class": "JeepYeahPlane",
+        "calls": ["g.clearWorldClip", "g.setWorldClip", "if", "main.drawRotated", "render"],
+        "renderHash": "6580d4a04da94b4c37b39f14c937b66d71bd90059fe680d8a8197ca09876d8d8"
+    },
+    {
+        "class": "LandingPort",
+        "calls": ["for", "if", "main.draw", "render", "switch"],
+        "renderHash": "c98f97b1570d7b72319f1ecbc539a5ae1b485f19c47190d9a8fd1b653a59e320"
+    },
+    {
+        "class": "Laser",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "LasersManager",
+        "calls": ["for", "if", "main.draw", "render", "switch"],
+        "nonRenderHash": "b985af7197645a2d4142b842e5bb124e83c706a36eb1177c2ef1d88feb3e2a40"
+    },
+    {
+        "class": "LoadingMode",
+        "calls": ["g.clearWorldClip", "g.fillRect", "g.setColor", "g.setWorldClip", "main.draw", "main.drawString", "render"],
+        "renderHash": "1375cf37f4589f3cb61b6c61c58a637dfe6c5addde7d854cfc629d6f8cfc5878"
+    },
+    {
+        "class": "Main",
+        "calls": ["g.fillRect", "g.setColor", "if", "mode.render", "render"],
+        "renderHash": "137f9c5d90e93dde5ef5db19c82cdaa141fd6364321107a8a31c3cd9ae83b2ee"
+    },
+    {
+        "class": "MapMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.draw", "main.drawNumber", "main.drawScaled", "main.drawString", "main.map.draw", "render"],
+        "renderHash": "158836c1fce5131154de7f8e75337d5f96f26405aa4e54de61ca9433282a0f6e"
+    },
+    {
+        "class": "Menu",
+        "calls": ["for", "main.drawRotated", "main.drawString", "main.popGraphics", "main.translateGraphics", "render", "switch"],
+        "renderHash": "c3528b5d6976ce5d421b11d5f2b0fc7958d2e83233f1f849d739f0164e1a557b"
+    },
+    {
+        "class": "Mine",
+        "calls": ["if", "main.draw", "render"],
+        "nonRenderHash": "8708f0592dd1ffbc8229ff2cbaa23d41c90cae52a3b5388aad9e99fbe96422d6"
+    },
+    {
+        "class": "MissionAccomplished",
+        "calls": ["for", "if", "main.drawString", "render"],
+        "renderHash": "ceb071f60f9daaa111cbf0c010448ca1b9dc4746f615476674e778b1f3ce1930"
+    },
+    {
+        "class": "OptionsMode",
+        "calls": ["g.fillRect", "g.setColor", "if", "main.drawString", "menu.render", "render"],
+        "renderHash": "485c667084d23f9ac05bb1185ce7dd2486dfb61555ef8d156f73d107e772d132"
+    },
+    {
+        "class": "Parachute",
+        "calls": ["main.drawCentered", "render", "switch"],
+        "renderHash": "4c68f4b063a6832bbe1b3b81e533e87e419e45b5e06273d3f232a8f531a4c1c4"
+    },
+    {
+        "class": "ParkedBrownTank",
+        "calls": ["main.drawCentered", "render"],
+        "renderHash": "44e32cf9182bedc45d987782cd17f4d24ef78fa96fe107c122c051180fbe65e0"
+    },
+    {
+        "class": "ParkedGrayJeep",
+        "calls": ["main.drawCentered", "render"],
+        "renderHash": "155230e1e0b772b950e7f494e7c015a0f05ad8cabe3374ba99e3a0aff77d4d94"
+    },
+    {
+        "class": "Player",
+        "calls": ["if", "main.draw", "main.drawRotatedAlpha", "main.drawVehicle", "render", "switch"],
+        "renderHash": "9882a35ed4f7a2c4afa9cf698b5538da85518192d48a485f93b8bf49eac896a1"
+    },
+    {
+        "class": "PlayerBullet",
+        "calls": ["main.drawCentered", "render"],
+        "renderHash": "5b3308021b66030414def53122ffcde6beaa9c4f30cdb6ee4e535819384adc59"
+    },
+    {
+        "class": "PlayerMissile",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "8d20cd1188781a888aa10acaa738cd1e1c077c00c9eaaa554b523eed0f19fcd1"
+    },
+    {
+        "class": "Rock",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "ade10b6a83d5d05f2d55aa26f0a7c0d0f199cb84180cb9ae22a54e13c9163f1a"
+    },
+    {
+        "class": "RotatingGun",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "4e4e6113cc0c603a4ab3f287f0e44c48ec63269c7fb10dfd4d289b2b306bf305"
+    },
+    {
+        "class": "Star",
+        "calls": ["if", "main.draw", "render", "switch"],
+        "nonRenderHash": "cadd881ccc53ee2e0e7fd0a966bf5b376d58bbb7e90a3ac9b8c6cfd3aee1d7ef"
+    },
+    {
+        "class": "Statue",
+        "calls": ["if", "main.draw", "render", "switch"],
+        "nonRenderHash": "822711504f6fc63726dad51e8a78790476b8b8b00787d1d75bc4cbff64523bd9"
+    },
+    {
+        "class": "StatueMissile",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.drawRotated", "render"],
+        "renderHash": "5b2244c9354569d07db7ab661a4e3a14892e39f344b3ec19e165f0f007e06b76"
+    },
+    {
+        "class": "StatueSeekerMissile",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.drawRotated", "render"],
+        "renderHash": "b5795bc8313e63be27a8f516d98c3276603a044e8f51304e3fadf4bbe0bd33d6"
+    },
+    {
+        "class": "Submarine",
+        "calls": ["if", "main.draw", "main.drawCentered", "render"],
+        "renderHash": "df96fdada8534bda56b7aca5796deef5cd5c0979b5f9b94c16f58209c423ee19"
+    },
+    {
+        "class": "SubmarineMissile",
+        "calls": ["main.drawRotated", "render"],
+        "renderHash": "9c73b6d8638a35671d0af709893252d17adaa03ebaf1ce64a56abe669c4e9b0d"
+    },
+    {
+        "class": "SunsetMode",
+        "calls": [
+            ".length",
+            "drawHelicopter",
+            "drawHelicopterShaded",
+            "for",
+            "g.fillRect",
+            "g.setColor",
+            "if",
+            "main.draw",
+            "main.drawString",
+            "main.sunset.draw",
+            "render"
+        ],
+        "renderHash": "36c286f14c96eefd6e10ce16a0051dc32587837439f6a17b87651a2e1f30c7ed"
+    },
+    {
+        "class": "SuperFire",
+        "calls": ["for", "gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "main.drawCentered", "render", "switch"],
+        "nonRenderHash": "516fdbfa14225fbb23ca982a1d6331b914722b48c5712eed16b60cf744c2b3c9"
+    },
+    {
+        "class": "SwampMissile",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.drawRotated", "render"],
+        "renderHash": "c92d75ff1e58f2586eb07c2cec03029f04982613b1086603961d3eb6cd867e86"
+    },
+    {
+        "class": "SwampMissileLauncher",
+        "calls": ["if", "main.draw", "render"],
+        "nonRenderHash": "a66ccf2f2acce6c280370d9d90de948b919b53c8f31d28199334856e23c0c950"
+    },
+    {
+        "class": "TileDebris",
+        "calls": ["if", "main.drawCentered", "render"],
+        "renderHash": "187b4191116be6113b5e3dcc2a694f6e1c7af913e977c913c597a048254b9855"
+    },
+    {
+        "class": "Train",
+        "calls": ["gameMode.g.clearWorldClip", "gameMode.g.setWorldClip", "if", "main.draw", "render"],
+        "renderHash": "0992826b118670e8e2bbff7c65f16adf7af368247b63bc1f3ac29c4648a74b8c"
+    },
+    {
+        "class": "TrainManager",
+        "calls": ["render"],
+        "renderHash": "f454fc41a190cfbc6841bc0fc79de20e6206b2eb6e402249e83375c02f8bd476"
+    },
+    {
+        "class": "TravelingExplosion",
+        "calls": ["if", "main.drawScaled", "render"],
+        "renderHash": "46604b8af60a733c85808b7dfdb006df3d4b2cd7c726acea9b5422dd81494738"
+    },
+    {
+        "class": "TroopsTruck",
+        "calls": ["main.draw", "render"],
+        "renderHash": "75f7776b08a6daf987f5bffa6dc0aaec772cba7ac13f72c3774e571232243f6d"
+    }
+]

@@ -44,7 +44,7 @@ function whileStatementInUpdate() {
     return loops[0];
 }
 
-async function loadTimingHarness() {
+async function loadTimingHarness(transform = (text) => text) {
     const methodNames = ["setMode", "update", "advanceFade", "updateMusic", "applyRequestedSongChange", "startFade", "requestSong", "resetNextFrameTime"];
     const methods = methodNames.map((name) => method(name).getText(mainFile)).join("\n\n");
     const source = `
@@ -84,7 +84,7 @@ export function setNow(value) {
 
 export { Main };
 `;
-    const output = ts.transpileModule(source, {
+    const output = ts.transpileModule(transform(source), {
         compilerOptions: {
             target: ts.ScriptTarget.ES2022,
             module: ts.ModuleKind.ESNext,
@@ -373,4 +373,397 @@ test("mode-driven real setMode primes the destination and resets catch-up withou
     assert.deepEqual(events, ["snap", "outgoing", "clear", "init", "prime"]);
     assert.equal(main.mode, destination);
     assert.equal(main.nextFrameTime, 110);
+});
+
+async function makePauseFadeFixture(mainTransform, worldTransform = (text) => text) {
+    const { Main, setNow } = await loadTimingHarness(mainTransform);
+    const path = join(rootDir, "pwa", "src", "jackal", "GameMode.ts");
+    const source = readFileSync(path, "utf8");
+    const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const declaration = file.statements.find((s) => ts.isClassDeclaration(s) && s.name?.text === "GameMode");
+    assert.ok(declaration, "Missing real GameMode class");
+    const member = (name) => {
+        const value = declaration.members.find((m) => m.name && ts.isIdentifier(m.name) && m.name.text === name);
+        assert.ok(value, `Missing GameMode.${name}`);
+        return value.getText(file);
+    };
+    const text = `
+const javaFloat = Math.fround;
+const javaInt = Math.trunc;
+export class GameMode {
+    ${member("WATER_ALPHAS_PERIOD")}
+    ${member("REMOVE_BOUND")}
+    ${member("update")}
+}
+`;
+    const output = ts.transpileModule(worldTransform(text), {
+        compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+        fileName: "pause-fade-game-mode-harness.ts"
+    }).outputText;
+    const { GameMode } = await import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`);
+    const main = new Main();
+    let edge = false;
+    const counts = { world: 0, reads: 0, snaps: 0, pause: 0, resume: 0, play: 0, stop: 0, poll: 0, sound: 0 };
+    const song = {
+        playing: true,
+        transport: "playing",
+        play() {
+            counts.play++;
+            this.transport = "playing";
+        },
+        stop() {
+            counts.stop++;
+            this.transport = "stopped";
+        },
+        pause() {
+            counts.pause++;
+            this.transport = "paused";
+        },
+        resume() {
+            counts.resume++;
+            this.transport = "playing";
+        },
+        update() {
+            counts.poll++;
+        }
+    };
+    main.currentSong = main.requestedSong = song;
+    main.isSongPlaying = () => song.playing;
+    main.playSound = () => {
+        counts.sound++;
+    };
+    main.input = {
+        snap() {
+            counts.snaps++;
+        },
+        isPause() {
+            counts.reads++;
+            const result = edge;
+            edge = false;
+            return result;
+        },
+        clearKeyPressedRecord() {
+            edge = false;
+        }
+    };
+    const world = Object.assign(new GameMode(), {
+        main,
+        input: main.input,
+        paused: false,
+        playing: true,
+        stageCompletedFlag: false,
+        stageCompletedDelay: 228,
+        stageIndex: 1,
+        waterAlphaIndex: 0,
+        maxCameraY: 0,
+        bossCameraPan: false,
+        endingCameraPan: false,
+        elements: Array.from({ length: 8 }, () => ({ size: () => 0 })),
+        player: {
+            update() {
+                counts.world++;
+            }
+        },
+        processTriggers() {
+            counts.world++;
+        },
+        cameraTrackPlayer() {
+            counts.world++;
+        }
+    });
+    main.mode = world;
+    return {
+        main,
+        world,
+        song,
+        counts,
+        press() {
+            edge = true;
+        },
+        tickAt(now) {
+            setNow(now);
+            main.update({}, 0);
+        }
+    };
+}
+
+for (const initialIndex of [0, 1, 12, 22]) {
+    test(`entrance fade continues through gameplay Pause from index ${initialIndex}`, async () => {
+        const f = await makePauseFadeFixture();
+        f.main.startFade(false, null);
+        f.main.fadeIndex = initialIndex;
+        // Deliberately overdue at entry. The fake clock stays fixed within this call.
+        f.press();
+        f.tickAt(1000);
+        assert.equal(f.world.paused, true);
+        assert.equal(f.main.mode, f.world);
+        assert.equal(f.main.fadeIndex, initialIndex - 1);
+        assert.equal(f.main.fading, initialIndex !== 0);
+        assert.equal(f.main.fadeListener, null);
+        assert.equal(f.main.nextFrameTime, 1010);
+        assert.equal(f.counts.snaps, 1, "Pause reset failed to discard old fixed-step debt");
+        assert.equal(f.counts.world, 0);
+        assert.equal(f.world.waterAlphaIndex, 0);
+        assert.equal(f.song.transport, "paused");
+        assert.equal(f.counts.pause, 1);
+        const index = f.main.fadeIndex;
+        f.tickAt(1001); // Outer callback with no fixed tick due.
+        assert.equal(f.main.fadeIndex, index);
+        assert.equal(f.counts.world, 0);
+        for (let i = 0; i < 40; i++) f.tickAt(1010 + i * 10);
+        assert.equal(f.main.fading, false);
+        assert.equal(f.main.fadeIndex, -1);
+        assert.equal(f.main.fadeListener, null);
+        assert.equal(f.main.mode, f.world);
+        assert.equal(f.world.paused, true);
+        assert.equal(f.counts.world, 0);
+        assert.equal(f.world.waterAlphaIndex, 0);
+        assert.equal(f.song.transport, "paused");
+        assert.equal(f.counts.resume, 0);
+        assert.equal(f.counts.play, 0);
+        assert.equal(f.counts.stop, 0);
+        assert.ok(f.counts.poll > 0, "Do not accidentally gate existing music polling");
+        f.press();
+        f.tickAt(2000);
+        assert.equal(f.world.paused, false);
+        assert.equal(f.counts.world, 0, "Unpause toggle advanced the world");
+        assert.equal(f.main.nextFrameTime, 2010);
+        assert.equal(f.counts.resume, 1);
+        f.tickAt(2001);
+        assert.equal(f.counts.world, 0);
+        f.tickAt(2010);
+        assert.equal(f.counts.world, 3, "Normal world work did not resume once");
+        assert.equal(f.main.fading, false, "Unpause restarted the completed fade");
+    });
+}
+
+test("browser suspension freezes a paused entrance fade and discards elapsed scheduling debt", async () => {
+    const f = await makePauseFadeFixture();
+    f.main.startFade(false, null);
+    f.press();
+    f.tickAt(0);
+    assert.equal(f.world.paused, true);
+    const index = f.main.fadeIndex;
+    const polls = f.counts.poll;
+    const reads = f.counts.reads;
+    f.main.browserSuspended = true; // Main boundary only; real setter/shell tested in browser.
+    for (const now of [1000, 10000, 100000]) {
+        f.tickAt(now);
+        assert.equal(f.main.fadeIndex, index);
+        assert.equal(f.main.nextFrameTime, now);
+        assert.equal(f.counts.world, 0);
+        assert.equal(f.counts.poll, polls);
+        assert.equal(f.counts.reads, reads);
+    }
+    f.main.browserSuspended = false;
+    const snaps = f.counts.snaps;
+    f.tickAt(100000);
+    assert.equal(f.main.fadeIndex, index - 1);
+    assert.equal(f.counts.snaps, snaps + 1);
+    assert.equal(f.main.nextFrameTime, 100010);
+    assert.equal(f.world.paused, true, "Browser resume must not unpause gameplay");
+    assert.equal(f.song.transport, "paused");
+    f.tickAt(100001);
+    assert.equal(f.main.fadeIndex, index - 1);
+});
+
+test("completion fade refuses fresh gameplay Pause and calls its transition once", async () => {
+    const f = await makePauseFadeFixture();
+    // Isolated post-completion boundary fixture. Browser coverage generates it via stageCompleted().
+    f.world.stageCompletedFlag = true;
+    f.world.stageCompletedDelay = 0;
+    f.main.currentSong = f.main.requestedSong = null;
+    let callbacks = 0;
+    let destinationUpdates = 0;
+    const destination = {
+        init() {},
+        update() {
+            destinationUpdates++;
+        }
+    };
+    f.main.startFade(true, {
+        fadeCompleted() {
+            callbacks++;
+            f.main.setMode(destination, {});
+        }
+    });
+    f.main.fadeIndex = 21;
+    f.press();
+    f.tickAt(0);
+    assert.equal(f.world.paused, false);
+    assert.equal(f.main.fadeIndex, 22);
+    assert.equal(callbacks, 0);
+    assert.equal(f.world.stageCompletedDelay, 0);
+    assert.equal(f.counts.pause, 0);
+    const worldWork = f.counts.world;
+    f.tickAt(10);
+    assert.equal(callbacks, 1);
+    assert.equal(f.main.mode, destination);
+    assert.equal(f.main.fading, false);
+    assert.equal(f.counts.world, worldWork, "Old world updated after the fade callback replaced it");
+    // Current setMode primes once; the outer tick also updates the current destination.
+    assert.equal(destinationUpdates, 2);
+    f.tickAt(20);
+    assert.equal(callbacks, 1);
+    assert.equal(destinationUpdates, 3);
+});
+
+test("fresh unpause during an active entrance advances only fade on the toggle tick", async () => {
+    const f = await makePauseFadeFixture();
+    f.main.startFade(false, null);
+    f.press();
+    f.tickAt(0);
+    f.tickAt(10);
+    assert.equal(f.world.paused, true);
+    f.press();
+    f.tickAt(20);
+    assert.equal(f.world.paused, false);
+    assert.equal(f.main.fadeIndex, 19);
+    assert.equal(f.main.fading, true);
+    assert.equal(f.counts.world, 0);
+    assert.equal(f.counts.resume, 1);
+    assert.equal(f.main.nextFrameTime, 30);
+    f.tickAt(30);
+    assert.equal(f.counts.world, 3);
+    assert.equal(f.main.fadeIndex, 18);
+});
+
+test("a paused property on a different current mode cannot freeze the global fade", async () => {
+    const f = await makePauseFadeFixture();
+    f.world.paused = true;
+    let updates = 0;
+    f.main.mode = {
+        paused: true,
+        update() {
+            updates++;
+        }
+    };
+    f.main.startFade(false, null);
+    f.tickAt(0);
+    assert.equal(f.main.fadeIndex, 21);
+    assert.equal(updates, 1);
+});
+
+// Mutations affect only extracted in-memory harness text, never checkout source.
+function replaceMutation(text, from, to) {
+    assert.ok(text.includes(from), `Mutation target missing: ${from}`);
+    return text.replace(from, to);
+}
+async function exercisePausePolicy(mainTransform, worldTransform) {
+    const f = await makePauseFadeFixture(mainTransform, worldTransform);
+    f.main.startFade(false, null);
+    assert.equal(f.main.fadeListener, null, "entrance listener ownership");
+    let observedIndex;
+    const read = f.main.input.isPause;
+    f.main.input.isPause = () => {
+        observedIndex = f.main.fadeIndex;
+        return read();
+    };
+    f.press();
+    f.tickAt(1000);
+    assert.equal(f.world.paused, true, "Pause input acceptance");
+    assert.equal(observedIndex, 21, "fade before Pause read");
+    assert.equal(f.main.nextFrameTime, 1010, "Pause deadline reset");
+    f.tickAt(1010);
+    assert.equal(f.main.fadeIndex, 20, "fade progresses while paused");
+    f.main.browserSuspended = true;
+    f.tickAt(100000);
+    assert.equal(f.main.fadeIndex, 20, "browser suspension freezes fade");
+    assert.equal(f.main.nextFrameTime, 100000, "suspension deadline reset");
+    f.main.browserSuspended = false;
+    for (let i = 0; i < 21; i++) f.tickAt(100000 + i * 10);
+    assert.equal(f.main.fading, false, "paused fade completes");
+    assert.equal(f.song.transport, "paused", "completion keeps paused transport");
+    f.press();
+    f.tickAt(101000);
+    assert.equal(f.world.paused, false, "fresh input can unpause");
+    const g = await makePauseFadeFixture(mainTransform, worldTransform);
+    g.world.stageCompletedFlag = true;
+    g.world.stageCompletedDelay = 0;
+    g.main.startFade(true, null);
+    g.press();
+    g.tickAt(0);
+    assert.equal(g.world.paused, false, "completion refuses Pause");
+}
+test("fade/Pause assertions reject behavioral counterexamples without mutating production", async (t) => {
+    await exercisePausePolicy();
+    const mutants = [
+        [
+            "gameplay gate freezes fade",
+            (s) => replaceMutation(s, "this.fading && this.advanceFade()", "!this.mode.paused && this.fading && this.advanceFade()"),
+            undefined
+        ],
+        [
+            "early Main return loses unpause",
+            (s) => replaceMutation(s, "let musicUpdated = false;", "if (this.mode.paused) return; let musicUpdated = false;"),
+            undefined
+        ],
+        ["removed browser suspension return", (s) => replaceMutation(s, "if (this.browserSuspended)", "if (false)"), undefined],
+        [
+            "removed suspension deadline reset",
+            (s) => replaceMutation(s, "if (this.browserSuspended) {\n            this.resetNextFrameTime();", "if (this.browserSuspended) {"),
+            undefined
+        ],
+        [
+            "fade after mode update",
+            (s) =>
+                replaceMutation(
+                    replaceMutation(s, "const fadeCompleted = this.fading && this.advanceFade();", "const fadeCompleted = false;"),
+                    "mode.update(gc);",
+                    "mode.update(gc); if(this.fading) this.advanceFade();"
+                ),
+            undefined
+        ],
+        ["early Pause consumption", (s) => replaceMutation(s, "this.input.snap();", "this.input.snap(); this.input.isPause();"), undefined],
+        ["removed toggle deadline resets", undefined, (s) => s.replaceAll("this.main.resetNextFrameTime();", "")],
+        [
+            "entrance listener introduced",
+            (s) => replaceMutation(s, "this.fadeListener = fadeListener;", "this.fadeListener = fadeListener ?? {fadeCompleted() {}};"),
+            undefined
+        ],
+        ["completion accepts Pause", undefined, (s) => replaceMutation(s, "&& !this.stageCompletedFlag", "")],
+        [
+            "fade completion resumes music",
+            (s) =>
+                replaceMutation(
+                    s,
+                    "this.fading = false;\n        if (this.fadeListener",
+                    "this.fading = false; this.currentSong?.resume();\n        if (this.fadeListener"
+                ),
+            undefined
+        ]
+    ];
+    for (const [name, mainTransform, worldTransform] of mutants)
+        await t.test(name, async () => {
+            await assert.rejects(
+                () => exercisePausePolicy(mainTransform, worldTransform),
+                (error) => error instanceof assert.AssertionError && !error.message.includes("Mutation target missing")
+            );
+        });
+    await exercisePausePolicy();
+});
+
+test("actual restoreFadeListener preserves entrance/completion ownership and rejects listener mutants", async () => {
+    const source = readFileSync(join(rootDir, "pwa/src/jackal/persistence/JackalGameStateSerializer.ts"), "utf8");
+    const file = ts.createSourceFile("serializer.ts", source, ts.ScriptTarget.Latest, true);
+    const Class = file.statements.find(ts.isClassDeclaration);
+    const member = Class.members.find((m) => m.name?.getText(file) === "restoreFadeListener").getText(file);
+    async function verify(transform = (text) => text) {
+        const js = ts.transpileModule(`class GameMode {} export class Serializer { ${transform(member)} }; export {GameMode};`, {
+            compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
+        }).outputText;
+        const { Serializer, GameMode } = await import(`data:text/javascript;base64,${Buffer.from(js).toString("base64")}`);
+        const serializer = new Serializer(),
+            world = Object.assign(new GameMode(), { stageCompletedFlag: true, stageCompletedDelay: 0 });
+        const main = { fading: true, fadeOut: false, fadeListener: world };
+        serializer.restoreFadeListener(main, world);
+        assert.equal(main.fadeListener, null, "entrance owner");
+        main.fadeOut = true;
+        serializer.restoreFadeListener(main, world);
+        assert.equal(main.fadeListener, world, "completion owner");
+    }
+    await verify();
+    await assert.rejects(() => verify((s) => s.replace("? mode : null", "? null : null")), assert.AssertionError);
+    await assert.rejects(() => verify((s) => s.replace("? mode : null", "? mode : mode")), assert.AssertionError);
+    await verify();
 });

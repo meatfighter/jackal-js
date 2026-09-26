@@ -465,19 +465,19 @@ public class EnemySoldier extends Enemy {
 
   @Override
   public void render() {
-    if (--blink < 0) {
+    if (!gameMode.paused && --blink < 0) {
       blink = 4;
     }
     if (fire) {
       main.draw((inSwamp ? main.swampSoldiers : main.enemySoldiers)
-          [blink < 2 && state == STATE_AIMING 
-              && aiming <= AIM_BLINKING ? 0 : 1][orientation + legIndex], 
+          [blink < 2 && state == STATE_AIMING
+              && aiming <= AIM_BLINKING ? 0 : 1][orientation + legIndex],
                   x + wobbleX - 16, y + wobbleY - 54);
     } else {
       main.draw((inSwamp ? main.swampSoldiers : main.enemySoldiers)
-          [blink < 2 && state == STATE_AIMING 
-              && aiming <= AIM_BLINKING ? 1 : 0][orientation + legIndex], 
-                  x + wobbleX - 16, y + wobbleY - 54); 
+          [blink < 2 && state == STATE_AIMING
+              && aiming <= AIM_BLINKING ? 1 : 0][orientation + legIndex],
+                  x + wobbleX - 16, y + wobbleY - 54);
     }
   }  
 }

@@ -43,7 +43,7 @@ export class Flame extends GameElement {
     }
 
     public render(): void {
-        if (++this.spriteCounter === 8) {
+        if (!this.gameMode.paused && ++this.spriteCounter === 8) {
             this.spriteCounter = 0;
             this.spriteIndex ^= 1;
         }

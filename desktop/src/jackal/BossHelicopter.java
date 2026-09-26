@@ -333,24 +333,25 @@ public class BossHelicopter extends Enemy {
   
   @Override
   public void render() {
-    
-    rotorAngle -= 30;
-    if (rotorAngle == -90) {
-      rotorAngle = 0;
+    if (!gameMode.paused) {
+      rotorAngle -= 30;
+      if (rotorAngle == -90) {
+        rotorAngle = 0;
+      }
+      tailIndexCounter ^= true;
+      if (tailIndexCounter) {
+        tailIndex = tailIndex == 3 ? 4 : 3;
+      }
     }
-    tailIndexCounter ^= true;
-    if (tailIndexCounter) {
-      tailIndex = tailIndex == 3 ? 4 : 3;
-    }
-    
+
     float ang = angle - DRIFT_ANGLES[positionDriftTime] * positionDriftDx;
-    
+
     main.drawRotated(main.bossHelicopters[5], x + 64, y + 64, -18, -65, ang);
     main.drawRotated(main.bossHelicopters[0], x, y, -64, -232, ang);
     main.drawRotated(main.bossHelicopters[1], x, y, 0, -232, ang);
     main.drawRotated(main.bossHelicopters[tailIndex], x, y, -16, -224, ang);
     for(int i = 0; i < 4; i++) {
-      main.drawRotated(main.bossHelicopters[2], x, y, 0, -32, 
+      main.drawRotated(main.bossHelicopters[2], x, y, 0, -32,
           90 * i + rotorAngle);
     }
   }  

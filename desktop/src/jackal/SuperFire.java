@@ -93,20 +93,22 @@ public class SuperFire extends GameElement {
 
   @Override
   public void render() {
-    if (flickerCounter >= 2.5f) {
-      flickerCounter -= 2.5f;      
-    } else {
-      flickerIndex ^= 1;
+    if (!gameMode.paused) {
+      if (flickerCounter >= 2.5f) {
+        flickerCounter -= 2.5f;
+      } else {
+        flickerIndex ^= 1;
+      }
+      flickerCounter++;
     }
-    flickerCounter++;
     float X = x - 48;
     float halfLength = length * 0.5f;
     switch(state) {
       case STATE_ASTER:
         for(int i = 0; i < ASTER_SPINES; i++) {
-          main.drawCentered(main.elephantGuns[4], 
+          main.drawCentered(main.elephantGuns[4],
               x + ASTERS_XYS[asterDelay][i][0],
-              y + ASTERS_XYS[asterDelay][i][1], 
+              y + ASTERS_XYS[asterDelay][i][1],
               ASTER_SCALES[asterDelay],
               ASTER_SCALES[asterDelay]);
         }
@@ -122,9 +124,9 @@ public class SuperFire extends GameElement {
         main.draw(main.superFires[flickerIndex][0], X, y);
         gameMode.g.setWorldClip(X - 1, y + 64, 98, length);
         for(int i = 1 + (((int)(length - 128)) >> 5); i >= 0; i--) {
-          main.draw(main.superFires[flickerIndex][1], X, 
+          main.draw(main.superFires[flickerIndex][1], X,
               y + length - (i << 5) - 64);
-        } 
+        }
         gameMode.g.clearWorldClip();
         main.draw(main.superFires[flickerIndex][2], X, y + length - 64);
         break;
@@ -136,6 +138,6 @@ public class SuperFire extends GameElement {
         }
         main.draw(main.superFires[flickerIndex][2], X, y + 448);
         break;
-    }    
+    }
   }  
 }

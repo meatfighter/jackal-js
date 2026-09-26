@@ -73,7 +73,7 @@ export class Mine extends Enemy {
 
     public render(): void {
         if (this.visible) {
-            if (++this.spriteIndex === 4) {
+            if (!this.gameMode.paused && ++this.spriteIndex === 4) {
                 this.spriteIndex = 0;
             }
             this.main.drawImage(this.main.mines[this.spriteIndex], this.x, this.y);

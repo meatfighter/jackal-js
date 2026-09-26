@@ -154,24 +154,25 @@ export class BossHeadquarters extends Enemy {
     public render(): void {
         switch (this.state) {
             case BossHeadquarters.STATE_FLASHING:
-                if (--this.flashDelay === 0) {
-                    if (this.flashing) {
-                        this.flashing = false;
-                        this.flashDelay = BossHeadquarters.FLASH_DELAY;
-                    } else {
-                        this.flashing = true;
-                        this.flashDelay = BossHeadquarters.FLASH_DURATION;
+                if (!this.gameMode.paused) {
+                    if (--this.flashDelay === 0) {
+                        if (this.flashing) {
+                            this.flashing = false;
+                            this.flashDelay = BossHeadquarters.FLASH_DELAY;
+                        } else {
+                            this.flashing = true;
+                            this.flashDelay = BossHeadquarters.FLASH_DURATION;
+                        }
+                    }
+                    if (this.flashing && ++this.flashIndex === 2) {
+                        this.flashIndex = -1;
                     }
                 }
-                if (this.flashing) {
-                    if (++this.flashIndex === 2) {
-                        this.flashIndex = -1;
-                    } else {
-                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 932, 188);
-                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 996, 220);
-                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1028, 220);
-                        this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1092, 188);
-                    }
+                if (this.flashing && this.flashIndex >= 0) {
+                    this.main.drawImage(this.main.headquartersLights[this.flashIndex], 932, 188);
+                    this.main.drawImage(this.main.headquartersLights[this.flashIndex], 996, 220);
+                    this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1028, 220);
+                    this.main.drawImage(this.main.headquartersLights[this.flashIndex], 1092, 188);
                 }
                 break;
         }

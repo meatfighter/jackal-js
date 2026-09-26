@@ -35,7 +35,7 @@ public class Flame extends GameElement {
 
   @Override
   public void render() {
-    if (++spriteCounter == 8) {
+    if (!gameMode.paused && ++spriteCounter == 8) {
       spriteCounter = 0;
       spriteIndex ^= 1;
     }

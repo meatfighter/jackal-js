@@ -154,20 +154,20 @@ public class BossGarage extends Enemy {
   }  
 
   @Override
-  public void render() {   
-    
+  public void render() {
+
     if (state == STATE_CLOSED) {
       main.draw(main.garages[0], x, y);
     } else {
-    
-      if (--lightIndex == 0) {
+
+      if (!gameMode.paused && --lightIndex == 0) {
         lightIndex = 3;
       }
 
       main.draw(main.garages[1], x, y);
       if (state == STATE_OPEN) {
         gameMode.g.setWorldClip(x - 1, y, 130, 256);
-        main.drawVehicle(vehicle, x + 64, vehicleY, 90, 
+        main.drawVehicle(vehicle, x + 64, vehicleY, 90,
             isBrownTank ? (vehicleY - (y - 8)) * 0.0125f
                       : (vehicleY - (y - 24)) * 0.0096154f);
         gameMode.g.clearWorldClip();
@@ -176,9 +176,9 @@ public class BossGarage extends Enemy {
       if (lightIndex > 1) {
         main.draw(main.garages[lightIndex], x + 46, y - 4);
       }
-      
+
       if (state == STATE_OPENING || state == STATE_CLOSING) {
-        gameMode.g.setWorldClip(x - 1, y, 130, 256);  
+        gameMode.g.setWorldClip(x - 1, y, 130, 256);
         main.draw(main.garages[0], x, y - doorY);
         gameMode.g.clearWorldClip();
       }

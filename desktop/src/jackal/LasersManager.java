@@ -96,15 +96,16 @@ public class LasersManager extends GameElement {
   }  
 
   @Override
-  public void render() { 
-    
-    flash = !flash;
-    if (++colorIndex == 4) {
-      colorIndex = 0;
+  public void render() {
+    if (!gameMode.paused) {
+      flash = !flash;
+      if (++colorIndex == 4) {
+        colorIndex = 0;
+      }
     }
-    
+
     float X = x + BEAM_SPACING * beamIndex;
-    
+
     switch(state) {
       case STATE_OUTER_FLASHING:
         if (flash) {
@@ -134,7 +135,7 @@ public class LasersManager extends GameElement {
         break;
       case STATE_LASERING:
         for(int i = 1; i < 13; i++) {
-          main.draw(main.lasers[colorIndex], X + 48, y - (i << 5) + 4);          
+          main.draw(main.lasers[colorIndex], X + 48, y - (i << 5) + 4);
         }
         for(int i = 1; i < 11; i++) {
           main.draw(main.lasers[colorIndex], X + 48, y - (i << 5) - 508);

@@ -212,8 +212,8 @@ public class FloorGun extends Enemy {
   }  
   
   @Override
-  public void render() {    
-    
+  public void render() {
+
     switch(state) {
       case STATE_CLOSED:
         main.draw(panel, x, y);
@@ -221,7 +221,7 @@ public class FloorGun extends Enemy {
         main.draw(mask, x, y);
         break;
       case STATE_OPENING:
-        gameMode.g.setWorldClip(x, y, 64, 64);                  
+        gameMode.g.setWorldClip(x, y, 64, 64);
         main.draw(main.floorGuns[4], x, y);
         main.draw(main.floorGuns[0], x + 3, y + 51 - openY * 1.5f);
         main.draw(panel, x, y - openY);
@@ -230,30 +230,30 @@ public class FloorGun extends Enemy {
         gameMode.g.clearWorldClip();
         break;
       case STATE_AIMING:
-        main.draw(main.floorGuns[4], x, y);        
+        main.draw(main.floorGuns[4], x, y);
         main.draw(mask, x, y);
-        main.drawRotated(main.floorGuns[0], 
+        main.drawRotated(main.floorGuns[0],
             x + 32, y + 32, -29, -29, angle - 90);
         break;
       case STATE_SHOOTING:
-        if (++colorIndex == 4) {
+        if (!gameMode.paused && ++colorIndex == 4) {
           colorIndex = 0;
         }
-        main.draw(main.floorGuns[colorIndex == 1 ? 5 : 4], x, y);        
+        main.draw(main.floorGuns[colorIndex == 1 ? 5 : 4], x, y);
         main.draw(mask, x, y);
-        main.drawRotated(main.floorGuns[colorIndex], 
+        main.drawRotated(main.floorGuns[colorIndex],
             x + 32, y + 32, -29, -29, angle - 90);
         break;
       case STATE_CLOSING:
-        gameMode.g.setWorldClip(x, y, 64, 64);                  
+        gameMode.g.setWorldClip(x, y, 64, 64);
         main.draw(main.floorGuns[4], x, y);
-        main.drawRotated(main.floorGuns[0], 
+        main.drawRotated(main.floorGuns[0],
             x + 32, y + 32 + 48 - openY * 1.5f, -29, -29, angle - 90);
         main.draw(panel, x, y - openY);
         main.draw(panel, x, y + 32 + openY);
         main.draw(mask, x, y);
         gameMode.g.clearWorldClip();
         break;
-    }   
+    }
   }  
 }

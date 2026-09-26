@@ -277,7 +277,7 @@ export class BossShipGun extends Enemy {
                 this.main.drawRotatedAtCenter(this.main.floorGuns[0], this.x + 32, this.y + 32, -29, -29, this.angle - 90);
                 break;
             case BossShipGun.STATE_SHOOTING:
-                if (++this.colorIndex === 4) {
+                if (!this.gameMode.paused && ++this.colorIndex === 4) {
                     this.colorIndex = 0;
                 }
                 this.main.drawImage(this.main.floorGuns[this.colorIndex === 1 ? 5 : 4], this.x, this.y);

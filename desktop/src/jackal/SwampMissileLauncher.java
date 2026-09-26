@@ -97,9 +97,9 @@ public class SwampMissileLauncher extends Enemy {
     } else if (splashing > 0) {
       main.draw(main.swampMissiles[3], x + 16, y);
     } else {
-      if (++splashIndex == 6) {
+      if (!gameMode.paused && ++splashIndex == 6) {
         splashIndex = 0;
-      }    
+      }
       if (splashIndices[splashIndex]) {
         main.draw(main.swampMissiles[2], x + 8, y);
       } else {

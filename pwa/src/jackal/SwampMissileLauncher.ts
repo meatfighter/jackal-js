@@ -105,7 +105,7 @@ export class SwampMissileLauncher extends Enemy {
         } else if (this.splashing > 0) {
             this.main.drawImage(this.main.swampMissiles[3], this.x + 16, this.y);
         } else {
-            if (++this.splashIndex === 6) {
+            if (!this.gameMode.paused && ++this.splashIndex === 6) {
                 this.splashIndex = 0;
             }
             if (SwampMissileLauncher.splashIndices[this.splashIndex]) {

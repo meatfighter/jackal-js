@@ -109,9 +109,11 @@ export class LasersManager extends GameElement {
     }
 
     public render(): void {
-        this.flash = !this.flash;
-        if (++this.colorIndex === 4) {
-            this.colorIndex = 0;
+        if (!this.gameMode.paused) {
+            this.flash = !this.flash;
+            if (++this.colorIndex === 4) {
+                this.colorIndex = 0;
+            }
         }
 
         let X = this.x + LasersManager.BEAM_SPACING * this.beamIndex;

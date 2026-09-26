@@ -547,7 +547,7 @@ export class FriendlySoldier extends Enemy {
     }
 
     public render(): void {
-        if (this.colorChanging) {
+        if (this.colorChanging && !this.gameMode.paused) {
             this.colorIndex = (this.colorIndex + 1) & 3;
         }
         this.main.drawImage(
