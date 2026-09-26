@@ -1232,6 +1232,26 @@ public class Main extends BasicGame {
     stopSound(wellDoneSound);
   }
 
+  /** Gameplay cue that does not cancel an unresolved last-life hold. */
+  public void queueGameplaySong(Song song) {
+    if (closeRequested) return;
+    requestedSong = song;
+    if (!(mode instanceof GameMode)) return;
+    GameMode world = (GameMode) mode;
+    if (world.player.respawning == 0 || extraLives > 0
+        || (currentSong != null && currentSong.lastLifeSuspended)) {
+      return;
+    }
+    Song current = currentSong;
+    if (current != null && current.playing) {
+      current.suspendForLastLife();
+    } else {
+      if (current != null) current.stop();
+      currentSong = song;
+      song.suspendForLastLife();
+    }
+  }
+
   public void requestSong(Song song) {
     if (closeRequested) {
       return;

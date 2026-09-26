@@ -2,6 +2,7 @@ package jackal;
 
 import org.newdawn.slick.*;
 import org.newdawn.slick.openal.SoundStore;
+import org.lwjgl.openal.AL10;
 
 public class Song {
   
@@ -100,6 +101,10 @@ public class Song {
     lastLifePausedPart = null;
     if (pausedPart != null) {
       pausedPart.stop();
+      // All Song parts are buffered. The vendored Music.stop leaves that buffer
+      // attached, so SoundStore.setMusicOn(true) can restart a cancelled hold.
+      // Detach only this owned held part; keep the cached resource buffer alive.
+      AL10.alSourcei(SoundStore.get().getSource(0), AL10.AL_BUFFER, 0);
     }
     if (intro != null && intro.playing()) {
       intro.stop();

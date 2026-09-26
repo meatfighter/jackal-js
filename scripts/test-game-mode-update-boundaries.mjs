@@ -218,7 +218,9 @@ class GameElement {
   void update() { owner.entities++; }
 }
 class Enemy extends GameElement { boolean solid, mine; }
+class Song { boolean lastLifeSuspended; }
 class Main {
+  Song currentSong;
   Object mode, pauseSound = new Object(); Object[] conveyors = new Object[16];
   boolean song = true; int resets, sounds, fades, extraLives;
   boolean isSongPlaying() { return song; }
@@ -250,6 +252,7 @@ class GameMode {
   }
   void processTriggers() { triggers++; }
   void cameraTrackPlayer() { cameras++; }
+  ${read("desktop/src/jackal/GameMode.java").match(/private boolean isBossEntryBlockedByDeath\(\) \{[\s\S]*?\n {2}\}/)[0]}
   ${javaUpdate()}
 }
 public final class GameModeBoundaryHarness {

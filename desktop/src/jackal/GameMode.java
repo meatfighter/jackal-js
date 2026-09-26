@@ -163,6 +163,12 @@ public class GameMode implements IMode, IFadeListener {
     triggedGroups = new boolean[groups.length];
   }  
   
+  private boolean isBossEntryBlockedByDeath() {
+    return player.respawning > 0
+        && (main.extraLives == 0
+            || (main.currentSong != null && main.currentSong.lastLifeSuspended));
+  }
+
   public void startBossCameraPan(ICameraPanListener cameraPanListener) {
     bossCameraPan = true;
     this.cameraPanListener = cameraPanListener;
@@ -583,33 +589,33 @@ public class GameMode implements IMode, IFadeListener {
         break;
       case Triggers.BOSS_BLUE_TANKS:        
         new BossBlueTanksManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.BOSS_STATUES:
         new BossStatuesManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.LASER:
         new LasersManager(x, y);
         break;
       case Triggers.BOSS_SHIP:
         new BossShipManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.BOSS_HELICOPTER:
         new BossHelicopterManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.STAR_GREEN:
         new InvisibleStar(x + 32, y + 32, Star.SPRITE_GREEN);
         break;
       case Triggers.BOSS_GARAGE:
         new BossGarageManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.BOSS_HEADQUARTERS:
         new BossHeadquartersManager();
-        main.requestSong(main.bossSong);
+        main.queueGameplaySong(main.bossSong);
         break;
       case Triggers.CHINOOK:
         new Chinook();
@@ -861,15 +867,17 @@ public class GameMode implements IMode, IFadeListener {
       conveyorLastIndex = conveyorIndex;
     }
     
-    if (bossCameraPan && cameraY != 0) {     
-      cameraY -= BOSS_PAN_CAMERA_SPEED;
-      if (cameraY <= 0) {
-        maxCameraY = cameraY = 0;
-        bossCameraPan = false;
-        cameraPanListener.panComplete();
-      } else {
-        return;
+    if (bossCameraPan && !isBossEntryBlockedByDeath()) {
+      if (cameraY != 0) {
+        cameraY -= BOSS_PAN_CAMERA_SPEED;
+        if (cameraY > 0) {
+          return;
+        }
       }
+      maxCameraY = cameraY = 0;
+      bossCameraPan = false;
+      cameraPanListener.panComplete();
+      if (main.mode != this) return;
     }
     
     if (endingCameraPan) {

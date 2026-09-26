@@ -1,3 +1,9 @@
+import { BossStatuesManager } from "./jackal/BossStatuesManager.js";
+import { BossHelicopterManager } from "./jackal/BossHelicopterManager.js";
+import { BossHeadquartersManager } from "./jackal/BossHeadquartersManager.js";
+import { Triggers } from "./jackal/Triggers.js";
+import { GrayJeep } from "./jackal/GrayJeep.js";
+import { BossHeadquarters } from "./jackal/BossHeadquarters.js";
 import { CutsceneSequence } from "./jackal/CutsceneSequence.js";
 import type { ArrayList } from "./java/JavaRuntime.js";
 import { FlashingSkull } from "./jackal/FlashingSkull.js";
@@ -142,6 +148,10 @@ async function verify(): Promise<void> {
             await verifyLastLifeMusicResume(runtime);
             return;
         }
+        if (new URL(location.href).searchParams.get("suite") === "boss-entry-last-life") {
+            await verifyBossEntryLastLife(runtime);
+            return;
+        }
         first = await mountGame(runtime, false);
         verifyAuthoritativeSave(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), first.main, (main) => store.save(main, () => true));
         first.main.requestMode(Modes.GAME, first.container);
@@ -258,6 +268,7 @@ async function verify(): Promise<void> {
         await verifyFadeRestoreMatrix(runtime);
         await verifyGameplayPauseFadePolicy(runtime);
         await verifyLastLifeArbitration(runtime);
+        await verifyBossEntryLastLife(runtime);
         await verifyLastLifeMusicResume(runtime);
         await verifyPausedWorldRendering(runtime);
         await verifyNesMapping(runtime);
@@ -2378,6 +2389,7 @@ async function verifyLastLifeMusicResume(runtime: PreparedRuntime): Promise<void
                     main.extraLivesStr = "0";
                     main.score = 19999;
                     main.scoreStr = "019999";
+                    if (disabled) sound.setMusicOn(false); // Required policy already off before damage.
                     if (queued) main.requestSong(main.stageSong1); // Pending before damage: preserve it through the hold.
                     world().player.invincible = 0;
                     assert(world().player.attackAt(world().player.x, world().player.y), "real last-life damage accepted");
@@ -2521,6 +2533,367 @@ async function verifyLastLifeMusicResume(runtime: PreparedRuntime): Promise<void
         Object.defineProperty(runtime.slick.Sys, "getTime", clock);
         Object.defineProperty(AudioBufferSourceNode.prototype, "start", startDescriptor);
         sound.setMusicOn(policy);
+        localStorage.removeItem(slot);
+    }
+}
+
+/** Real-resource entry overlaps; accelerated death deadlines are explicit fixture boundaries. */
+async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> {
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    assert(clock, "entry clock");
+    let now = runtime.slick.Sys.getTime(),
+        mounted: MountedGame | null = null;
+    const serializer = new JackalGameStateSerializer(),
+        store = new runtime.JackalGameStateStore("browser-verification"),
+        slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const current = (): MountedGame => {
+        assert(mounted, "entry mounted");
+        return mounted;
+    };
+    const retire = (): void => {
+        if (mounted) destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    const tick = (elapsed = 10): void => {
+        now += elapsed;
+        const f = current();
+        f.container.getInput().poll(1024, 960);
+        f.main.update(f.container, elapsed);
+    };
+    const projection = (): string => {
+        const s = serializer.createSnapshot(current().main, "entry-projection");
+        assert(s.kind === "game", "entry projection");
+        return JSON.stringify([s.mainFields, s.playerFields, s.random, s.gameMode, s.currentSongState, s.requestedSongId]);
+    };
+    const fresh = async (label: string): Promise<GameMode> => {
+        const old = current().main,
+            expected = projection();
+        assert(store.save(old, () => true).saved && store.hasValidSave(), label + " valid schema18 save");
+        const bytes = localStorage.getItem(slot);
+        retire();
+        mounted = await mountGame(runtime, true, (m) => {
+            assert(m !== old && m.gc instanceof runtime.slick.AppGameContainer, "entry fresh owner");
+            m.gc.setLoopSuspended(true);
+        });
+        current().container.setLoopSuspended(true);
+        assert(projection() === expected, label + " exact graph/audio/RNG restore");
+        assert(localStorage.getItem(slot) === bytes, label + " non-destructive read");
+        assert(current().main.mode instanceof GameMode, "entry restored world");
+        return current().main.mode as GameMode;
+    };
+    const enter = async (stage: number, hard = false, entrance = false): Promise<GameMode> => {
+        mounted = await mountGame(runtime, false);
+        const { main, container } = current();
+        container.setLoopSuspended(true);
+        main.startPlayer();
+        main.random.setSeed(123);
+        main.stageIndex = stage;
+        main.hardMode = hard;
+        main.continued = true;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, container);
+        main.nextFrameTime = now;
+        if (!entrance) {
+            tick(0);
+            for (let i = 0; i < 500 && main.fading; i++) tick();
+        }
+        assert(main.mode instanceof GameMode && main.mode.playing, "entry resource world");
+        const w = main.mode;
+        for (const layer of w.elements) layer.clear();
+        w.enemies.clear();
+        w.solids.clear();
+        w.mines.clear();
+        w.cameraX = 512;
+        w.cameraY = 256;
+        w.maxCameraY = Math.max(w.maxCameraY, 512);
+        w.player.x = 1100;
+        w.player.y = 800;
+        w.player.invincible = 0;
+        w.triggerY = 0;
+        main.extraLives = 0;
+        main.extraLivesStr = "0";
+        main.score = 0;
+        main.scoreStr = "000000";
+        return w;
+    };
+    const triggers = [
+        Triggers.BOSS_BLUE_TANKS,
+        Triggers.BOSS_STATUES,
+        Triggers.BOSS_SHIP,
+        Triggers.BOSS_HELICOPTER,
+        Triggers.BOSS_GARAGE,
+        Triggers.BOSS_HEADQUARTERS
+    ];
+    const names = ["BossBlueTanksManager", "BossStatuesManager", "BossShipManager", "BossHelicopterManager", "BossGarageManager", "BossHeadquartersManager"];
+    const listener = (w: GameMode) => {
+        const value = w.cameraPanListener;
+        assert(
+            value instanceof BossBlueTanksManager ||
+                value instanceof BossStatuesManager ||
+                value instanceof BossShipManager ||
+                value instanceof BossHelicopterManager ||
+                value instanceof BossGarageManager ||
+                value instanceof BossHeadquartersManager,
+            "actual typed entry listener"
+        );
+        return value;
+    };
+    const managers = (w: GameMode, name: string): number => w.elements.reduce((n, l) => n + [...l].filter((e) => e.constructor.name === name).length, 0);
+    const prepareRow = (w: GameMode, stage: number): void => {
+        w.triggerMap = w.triggerMap.map(() => []);
+        w.triggerMap[7] = [[triggers[stage], 0, 0]];
+        w.triggerY = 8;
+    };
+    const hit = (w: GameMode, count = 8): void => {
+        assert(w.player.attackAt(w.player.x, w.player.y), "entry actual damage");
+        assert(w.player.respawning === 182, "production death deadline");
+        w.player.respawning = count;
+    };
+    const controls = new Map<string, string>();
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        for (let stage = 0; stage < 6; stage++)
+            for (const hard of [false, true])
+                for (const bonus of [false, true])
+                    for (const restored of [false, true]) {
+                        let w = await enter(stage, hard);
+                        prepareRow(w, stage);
+                        hit(w);
+                        tick();
+                        assert(w.bossCameraPan && !listener(w).ready && managers(w, names[stage]) === 1, "one typed pending manager " + stage);
+                        assert(
+                            current().main.currentSong?.lastLifeSuspended &&
+                                current().main.requestedSong === current().main.bossSong &&
+                                !current().main.isSongPlaying(),
+                            "silent queued boss entry"
+                        );
+                        const childNames = ["BossShipGun", "BossGarage", "RotatingGun", "BossHeadquarters", "ElephantGun"];
+                        const children = () => childNames.map((name) => managers(w, name));
+                        const initialChildren = JSON.stringify(children());
+                        const expected = projection();
+                        current().main.setBrowserSuspended(true);
+                        now += 10000;
+                        current().main.update(current().container, 10000);
+                        current().main.setBrowserSuspended(false);
+                        assert(projection() === expected, "same-page Continue preserves pending entry");
+                        if (restored) w = await fresh("boss-" + stage + "-" + hard + "-" + bonus);
+                        const manager = listener(w);
+                        assert(
+                            w.elements.some((l) => [...l].some((e) => e === manager)),
+                            "restored listener is manager in graph"
+                        );
+                        let callbacks = 0;
+                        const pan = manager.panComplete.bind(manager);
+                        manager.panComplete = () => {
+                            callbacks++;
+                            pan();
+                        };
+                        const main = current().main,
+                            death = w.player.respawning,
+                            row = w.triggerY,
+                            oldSong = main.currentSong;
+                        if (bonus) {
+                            main.score = 19200;
+                            main.scoreStr = "019200";
+                            const enemy = new GrayJeep(1450, 800);
+                            new PlayerMissile(enemy.x, enemy.y + 10, 270, 0);
+                        }
+                        tick(0); // Both same-page and fresh ownership reset the scheduler to this boundary.
+                        assert(w.player.respawning === death - 1 && w.cameraY === 256 && callbacks === 0, "blocked pan advances one death tick");
+                        assert(w.triggerY === row && managers(w, names[stage]) === 1, "no row retry or manager duplication");
+                        assert(JSON.stringify(children()) === initialChildren, "preconstructed children not duplicated by deferred entry");
+                        if (bonus) {
+                            assert(main.score === 20000 && main.extraLives === 1 && !oldSong?.lastLifeSuspended, "real element-loop projectile rescues once");
+                            assert(main.currentSong === null, "obsolete held stage track not restarted");
+                            tick();
+                            assert(main.currentSong === main.bossSong && Number(w.cameraY) === 252, "next eligible pan and queued cue");
+                            for (let i = 0; i < 100 && w.bossCameraPan; i++) tick();
+                            assert(!w.bossCameraPan && manager.ready && Number(callbacks) === 1, "one readiness callback");
+                            for (let i = 0; i < 20 && w.player.respawning > 0; i++) tick();
+                            assert(main.mode === w && w.player.respawning === 0 && Number(main.extraLives) === 0, "one reserve consumed");
+                        } else {
+                            for (let i = 1; i < death; i++) tick();
+                            assert(main.mode instanceof ContinueMode && callbacks === 0, "finite Continue at death boundary without outgoing callback");
+                            assert(oldSong !== null && !oldSong.lastLifeSuspended, "Continue cancels old hold");
+                        }
+                        const outcome = JSON.stringify([
+                            main.mode?.constructor.name,
+                            main.score,
+                            main.extraLives,
+                            main.random.getState(),
+                            w.triggerY,
+                            callbacks
+                        ]);
+                        const key = JSON.stringify([stage, hard, bonus]);
+                        if (restored) assert(controls.get(key) === outcome, "fresh and uninterrupted entry outcomes " + key);
+                        else controls.set(key, outcome);
+                        retire();
+                    }
+        // Seed only the local approach/contact hazard; retain the stock terrain and trigger row.
+        // This proves the final movement/contact overlap, not a full-stage route or a stock mine placement.
+        {
+            const w = await enter(0),
+                main = current().main;
+            const row = w.triggerMap.findIndex((r) => r.some((t) => t[0] === Triggers.BOSS_BLUE_TANKS));
+            assert(row >= 0, "stock boss row exists");
+            const camera = (row + 2) * 32,
+                y = camera + GameMode.CAMERA_MARGIN_NORTH;
+            let x = -1;
+            for (let candidate = 128; candidate < w.mapWidth * 32 - 128; candidate += 32)
+                if (w.isDriveableBounds(candidate - 64, y - 64, candidate + 64, y + 64)) {
+                    x = candidate;
+                    break;
+                }
+            assert(x >= 0, "stock terrain has valid local approach corridor");
+            w.player.x = x;
+            w.player.y = y;
+            w.cameraX = Math.max(0, Math.min(w.maxCameraX, x - 512));
+            w.cameraY = camera;
+            w.maxCameraY = Math.max(w.maxCameraY, camera);
+            w.triggerY = row + 1;
+            new Mine(x - 16, y - 40);
+            document.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowUp", key: "ArrowUp", bubbles: true }));
+            tick();
+            document.dispatchEvent(new KeyboardEvent("keyup", { code: "ArrowUp", key: "ArrowUp", bubbles: true }));
+            assert(w.player.y < y && w.cameraY < camera && w.player.respawning > 0 && !w.bossCameraPan, "actual movement then contact then camera crossing");
+            const crossing = [row, x, y, w.player.y, camera, w.cameraY];
+            tick();
+            assert(w.bossCameraPan && managers(w, names[0]) === 1 && main.currentSong?.lastLifeSuspended, "stock next trigger retains death silence");
+            Reflect.set(window, "bossEntryStockEvidence", {
+                scope: "Seeded local approach and Mine on unchanged stock stage-0 terrain/trigger map; actual ArrowUp movement/contact/camera/processTriggers",
+                crossing
+            });
+            retire();
+        }
+        // Additional schema18 boundaries: no song, positive unreleased hold, and hit after trigger.
+        for (const boundary of ["no-song", "positive-hold", "after-trigger", "zero", "four", "headquarters"]) {
+            let w = await enter(boundary === "headquarters" ? 5 : 0);
+            prepareRow(w, boundary === "headquarters" ? 5 : 0);
+            const main = current().main;
+            if (boundary === "no-song") main.stopAllSongs();
+            if (boundary === "after-trigger") {
+                tick();
+                hit(w);
+            } else {
+                hit(w);
+                tick();
+            }
+            assert(w.bossCameraPan, "boundary preserves real pending pan");
+            if (boundary === "positive-hold") {
+                main.score = 19200;
+                new GrayJeep(1450, 800).explode();
+                assert(main.extraLives === 1 && main.currentSong?.lastLifeSuspended, "valid positive held checkpoint");
+            }
+            if (boundary === "zero" || boundary === "four") {
+                main.score = 19200;
+                new GrayJeep(1450, 800).explode();
+                w.cameraY = boundary === "zero" ? 0 : 4;
+                w.player.y = 500;
+            }
+            if (boundary === "no-song") assert(main.currentSong === main.bossSong && main.bossSong.lastLifeSuspended, "never-started held queued cue");
+            if (boundary === "headquarters") {
+                const h = [...w.enemies].find((e) => e instanceof BossHeadquarters);
+                assert(h instanceof BossHeadquarters, "preconstructed headquarters");
+                h.hits = BossHeadquarters.HITS - 1;
+                assert(h.attack(h.x + 10, h.y + 10, h.x + 100, h.y + 100, AttackSource.PLAYER_WEAPON), "actual held-entry HQ cleanup");
+                assert(main.currentSong === null && main.requestedSong === null, "HQ authoritative silence");
+            }
+            w = await fresh(boundary);
+            const owner = current().main,
+                manager = listener(w);
+            let callbacks = 0;
+            const pan = manager.panComplete.bind(manager);
+            manager.panComplete = () => {
+                callbacks++;
+                pan();
+            };
+            const before = w.player.respawning,
+                y = w.cameraY;
+            tick(0);
+            assert(
+                w.player.respawning === before - 1 && w.cameraY === y,
+                "boundary reaches Player before pan " + JSON.stringify([boundary, before, w.player.respawning, y, w.cameraY])
+            );
+            if (["positive-hold", "zero", "four"].includes(boundary)) {
+                assert(!owner.currentSong?.lastLifeSuspended, "held reserve releases once");
+                tick();
+                if (boundary !== "positive-hold") assert(callbacks === 1 && !w.bossCameraPan, "zero/four settles once");
+            } else {
+                const score = owner.score;
+                for (let i = 0; i < 20 && owner.mode === w; i++) tick();
+                assert(owner.mode instanceof ContinueMode && callbacks === 0, "no abandoned manager callback");
+                if (boundary === "headquarters") assert(owner.score === score, "cleanup score not replayed");
+            }
+            retire();
+        }
+        for (const kind of ["living", "reserve", "final-score", "latest-cue", "authoritative"]) {
+            let w = await enter(0);
+            prepareRow(w, 0);
+            let main = current().main;
+            if (kind === "reserve") main.extraLives = 1;
+            if (kind !== "living") hit(w, kind === "final-score" ? 2 : 8);
+            tick();
+            const death = w.player.respawning;
+            if (kind === "latest-cue") main.queueGameplaySong(main.stageSong2);
+            if (kind === "authoritative") {
+                const held = main.currentSong;
+                main.requestSong(main.bossSong);
+                assert(main.currentSong === null && !held?.lastLifeSuspended, "authoritative same-song request cancels hold");
+            }
+            if (kind === "final-score") {
+                assert(death === 1, "final score at last death tick");
+                main.score = 19200;
+                new GrayJeep(1450, 800);
+                new PlayerMissile(1450, 810, 270, 0);
+            }
+            w = await fresh(kind);
+            main = current().main;
+            tick(0);
+            if (kind === "living" || kind === "reserve")
+                assert(w.cameraY === 252 && w.player.respawning === death, "ordinary healthy/reserve pan freezes Player as baseline");
+            if (kind === "final-score")
+                assert(
+                    main.mode === w && w.player.respawning === 0 && main.score === 20000 && main.extraLives === 0,
+                    "last-tick actual projectile reserve consumed once"
+                );
+            if (kind === "latest-cue") {
+                assert(main.requestedSong === main.stageSong2 && main.currentSong?.lastLifeSuspended, "latest queue survives restore silently");
+                main.score = 19200;
+                new GrayJeep(1450, 800).explode();
+                tick();
+                tick();
+                assert(main.currentSong === main.stageSong2, "latest queued cue wins release");
+            }
+            retire();
+        }
+        // Real entrance fade composition, kept distinct from objective/exit fades.
+        let w = await enter(1, false, true);
+        let main = current().main;
+        assert(main.fading && !main.fadeOut && main.fadeListener === null, "actual entrance fade");
+        main.stopAllSongs();
+        main.requestSong(main.stageSong2);
+        tick(0);
+        const song = main.currentSong;
+        assert(song === main.stageSong2 && song.loop, "entrance music");
+        song.loop.restorePlaybackState({ transport: "playing", positionSeconds: 0.2, playbackRate: 1, volume: 1, looped: true, fade: null });
+        hit(w, 8);
+        const held = JSON.stringify(song.loop.capturePlaybackState());
+        w = await fresh("entrance-death");
+        main = current().main;
+        const fade = main.fadeIndex,
+            death = w.player.respawning;
+        tick(0);
+        assert(main.fadeIndex < fade && w.player.respawning === death - 1 && main.fadeListener === null, "fade and death retain separate cadence");
+        assert(JSON.stringify(main.currentSong?.loop?.capturePlaybackState()) === held, "entrance retains exact held offset");
+        main.score = 19200;
+        new GrayJeep(1450, 800).explode();
+        tick();
+        assert(!main.currentSong?.lastLifeSuspended && main.fadeIndex < fade && main.fadeListener === null, "entrance rescue without restart or listener");
+        retire();
+    } finally {
+        retire();
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
         localStorage.removeItem(slot);
     }
 }

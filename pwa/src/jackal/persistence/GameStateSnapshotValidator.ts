@@ -977,6 +977,7 @@ function isGameModeLastLifeStateConsistent(mainFields: UnknownRecord, fields: Un
     if (typeof respawning !== "number" || !Number.isInteger(respawning) || respawning < 0) return false;
     const dying = respawning > 0;
     const transport = song?.activeMusic?.playback.transport ?? null;
+    if (dying && mainFields.extraLives === 0 && fields.paused === true) return false;
 
     if (dying && (fields.playing === false || fields.endingCameraPan === true)) return false;
     if (dying && mainFields.fading === true && mainFields.fadeOut === true) return false;

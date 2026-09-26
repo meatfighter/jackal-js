@@ -1134,6 +1134,24 @@ export class Main extends BasicGame {
         this.stopAllSoundEffects();
     }
 
+    /** Gameplay cue: retain an unresolved death hold; do not claim transition ownership. */
+    public queueGameplaySong(song: Song): void {
+        if (this.closeRequestedFlag) return;
+        this.requestedSong = song;
+        const mode = this.mode;
+        if (!(mode instanceof GameMode) || mode.player.respawning === 0 || this.extraLives > 0 || this.currentSong?.lastLifeSuspended) {
+            return;
+        }
+        const current = this.currentSong;
+        if (current !== null && current.playing) {
+            current.suspendForLastLife();
+        } else {
+            current?.stop();
+            this.currentSong = song;
+            song.suspendForLastLife();
+        }
+    }
+
     public requestSong(song: Song): void {
         if (this.closeRequestedFlag) {
             return;

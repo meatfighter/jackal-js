@@ -8,6 +8,64 @@ import org.lwjgl.openal.AL10;
 public final class LastLifeMusicTest {
  static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}
  static void near(float value,float expected,String message){check(Math.abs(value-expected)<0.15f,message+": "+value+" expected "+expected);}
+static void verifyMusicDisabledBeforeDamage() throws Exception {
+  SoundStore store = SoundStore.get();
+  for (int phase = 0; phase < 3; phase++) {
+    for (int outcome = 0; outcome < 3; outcome++) {
+      store.setMusicOn(true);
+      Music a = new Music("music/stage0_intro.ogg", false);
+      Music b = new Music("music/stage1_intro.ogg", false);
+      Music c = new Music("music/stage0_repeat.ogg", false);
+      Song song = new Song(a, b, c);
+      song.playing = true;
+      song.playedIntro2 = phase > 0;
+      Music part = phase == 0 ? a : phase == 1 ? b : c;
+      if (phase == 2) part.loop(); else part.play();
+      check(part.setPosition(0.5f), "Pre-disabled test accepts nonzero position");
+      Main owner = new Main();
+      owner.currentSong = owner.requestedSong = song;
+      try {
+        store.setMusicOn(false); // Crucially BEFORE damage/suspension.
+        float offset = part.getPosition();
+        owner.suspendMusicForLastLife();
+        check(song.lastLifeSuspended && !store.musicOn(), "Hold recorded without enabling Music");
+        for (int i = 0; i < 20; i++) { Music.poll(10); song.update(); }
+        near(part.getPosition(), offset, "Disabled-before-damage position");
+        if (outcome == 2) {
+          owner.stopSong();
+          store.setMusicOn(true);
+          Music.poll(10);
+          song.update();
+          check(!song.lastLifeSuspended && !song.playing, "Cancelled hold cannot recover");
+          check(AL10.alGetSourcei(store.getSource(0), AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING,
+              "Enabling after cancellation cannot revive old source");
+        } else {
+          if (outcome == 0) {
+            store.setMusicOn(true);
+            song.update(); // First owning update after backend enable.
+            check(song.lastLifeSuspended, "Enable does not resolve death");
+            check(AL10.alGetSourcei(store.getSource(0), AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING,
+                "Unrescued hold stays silent at owning checkpoint");
+            near(part.getPosition(), offset, "Enable while unrescued retains offset");
+          }
+          owner.resumeMusicAfterLastLife();
+          if (outcome == 1) {
+            check(!store.musicOn(), "Disabled rescue preserves preference");
+            for (int i = 0; i < 20; i++) { Music.poll(10); song.update(); }
+            near(part.getPosition(), offset, "Rescued but still disabled retains offset");
+            store.setMusicOn(true);
+          }
+          song.update();
+          check(part.playing(), "Rescued held part plays when permitted");
+          near(part.getPosition(), offset, "Resume never restarts interrupted part");
+        }
+      } finally {
+        owner.stopSong();
+        store.setMusicOn(true);
+      }
+    }
+  }
+}
  public static void main(String[] args)throws Exception {
   SoundStore store=SoundStore.get();
   try {
@@ -54,7 +112,11 @@ public final class LastLifeMusicTest {
    check(owner.currentSong==first&&first.lastLifeSuspended&&!first.playing,"Never-started request promoted silently");owner.resumeMusicAfterLastLife();check(first.intro.playing(),"First start only on release");
    owner.suspendMusicForLastLife();owner.requestSong(first);check(owner.currentSong==null&&owner.requestedSong==first&&!first.lastLifeSuspended&&!first.intro.paused(),"New same-song request cancels old hold");owner.stopSong();
    owner.currentSong=owner.requestedSong=first;owner.suspendMusicForLastLife();check(owner.currentSong==null&&!first.lastLifeSuspended,"Naturally finished same song is not armed");
-   Song continuation=new Song("music/continue.ogg");continuation.play();check(continuation.intro.playing(),"Continue track owns playback after cancellation");continuation.stop();
+   Song continuation=new Song("music/continue.ogg");continuation.play();check(continuation.intro.playing(),"Continue track owns playback after cancellation");owner.stopSong();first.stop();check(continuation.intro.playing(),"Repeated old cancellation cannot detach Continue");continuation.stop();
+   verifyMusicDisabledBeforeDamage();
+   store.setMusicOn(false);Song neverStarted=new Song("music/stage0_intro.ogg");Main queuedOwner=new Main();Main.main=queuedOwner;GameMode queuedWorld=new GameMode();Main.gameMode=queuedWorld;queuedOwner.mode=queuedWorld;queuedWorld.player=new Player();queuedWorld.player.respawning=1;queuedOwner.extraLives=0;queuedOwner.queueGameplaySong(neverStarted);check(queuedOwner.currentSong==neverStarted&&neverStarted.lastLifeSuspended,"Actual queued first cue held");check(!neverStarted.playing,"Never-started hold under disabled preference");neverStarted.resumeAfterLastLife();check(!store.musicOn()&&AL10.alGetSourcei(store.getSource(0),AL10.AL_SOURCE_STATE)!=AL10.AL_PLAYING,"First start respects disabled Music");store.setMusicOn(true);neverStarted.update();check(neverStarted.intro.playing(),"Queued first cue plays after enable");neverStarted.stop();
+   check(AL10.alGetError()==AL10.AL_NO_ERROR,"Native adapter leaves no OpenAL error");
+
    System.out.println("ok - real vendored Music/OpenAL last-life pause, exact-offset resume (150ms tolerance), disabled preference, part boundary and strong cancellation");
   }finally{if(AL.isCreated())AL.destroy();}
  }

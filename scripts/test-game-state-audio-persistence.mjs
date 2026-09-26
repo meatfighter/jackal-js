@@ -371,7 +371,7 @@ test("Song pause/resume preserves intro, intro2, and loop sequencing", async () 
 test("only the PWA shell may mutate global Music/Sound enable policy", () => {
     const calls = collectAudioPolicySetterCalls(resolve(rootDir, "pwa", "src"));
     // The isolated verification entry deliberately tests disabled/enabled policy; it is not shipped gameplay.
-    assert.equal(calls.filter((call) => call.startsWith("pwa/src/browser-verify.ts:")).length, 4);
+    assert.equal(calls.filter((call) => call.startsWith("pwa/src/browser-verify.ts:")).length, 5);
     assert.deepEqual(
         calls.filter((call) => !call.startsWith("pwa/src/browser-verify.ts:")),
         ["pwa/src/app/JackalWebApp.ts:setMusicOn", "pwa/src/app/JackalWebApp.ts:setSoundsOn"]

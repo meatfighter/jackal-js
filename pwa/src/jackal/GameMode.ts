@@ -208,6 +208,10 @@ export class GameMode implements IMode, IFadeListener {
         this.triggedGroups = javaArray(this.groups.length, false);
     }
 
+    private isBossEntryBlockedByDeath(): boolean {
+        return this.player.respawning > 0 && (this.main.extraLives === 0 || this.main.currentSong?.lastLifeSuspended === true);
+    }
+
     public startBossCameraPan(cameraPanListener: ICameraPanListener): void {
         this.bossCameraPan = true;
         this.cameraPanListener = cameraPanListener;
@@ -646,33 +650,33 @@ export class GameMode implements IMode, IFadeListener {
                 break;
             case Triggers.BOSS_BLUE_TANKS:
                 new BossBlueTanksManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.BOSS_STATUES:
                 new BossStatuesManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.LASER:
                 new LasersManager(javaFloat(x), javaFloat(y));
                 break;
             case Triggers.BOSS_SHIP:
                 new BossShipManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.BOSS_HELICOPTER:
                 new BossHelicopterManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.STAR_GREEN:
                 new InvisibleStar(javaFloat(x + 32), javaFloat(y + 32), Star.SPRITE_GREEN);
                 break;
             case Triggers.BOSS_GARAGE:
                 new BossGarageManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.BOSS_HEADQUARTERS:
                 new BossHeadquartersManager();
-                this.main.requestSong(this.main.bossSong);
+                this.main.queueGameplaySong(this.main.bossSong);
                 break;
             case Triggers.CHINOOK:
                 new Chinook();
@@ -952,15 +956,17 @@ export class GameMode implements IMode, IFadeListener {
             this.conveyorLastIndex = conveyorIndex;
         }
 
-        if (this.bossCameraPan && this.cameraY !== 0) {
-            this.cameraY = javaFloat(this.cameraY - GameMode.BOSS_PAN_CAMERA_SPEED);
-            if (this.cameraY <= 0) {
-                this.maxCameraY = this.cameraY = 0;
-                this.bossCameraPan = false;
-                this.cameraPanListener.panComplete();
-            } else {
-                return;
+        if (this.bossCameraPan && !this.isBossEntryBlockedByDeath()) {
+            if (this.cameraY !== 0) {
+                this.cameraY = javaFloat(this.cameraY - GameMode.BOSS_PAN_CAMERA_SPEED);
+                if (this.cameraY > 0) {
+                    return;
+                }
             }
+            this.maxCameraY = this.cameraY = 0;
+            this.bossCameraPan = false;
+            this.cameraPanListener.panComplete();
+            if (this.main.mode !== this) return;
         }
 
         if (this.endingCameraPan) {

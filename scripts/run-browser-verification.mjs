@@ -9,7 +9,8 @@ import { rootDir } from "./build-utils.mjs";
 
 const port = 5197;
 const focusedSuite = process.env.JACKAL_BROWSER_SUITE;
-if (focusedSuite && !["last-life-music", "last-life-arbitration"].includes(focusedSuite)) throw new Error("Unknown browser verification suite");
+if (focusedSuite && !["last-life-music", "last-life-arbitration", "boss-entry-last-life"].includes(focusedSuite))
+    throw new Error("Unknown browser verification suite");
 const browserVerificationUrl = `http://127.0.0.1:${port}/browser-verify.html${focusedSuite ? "?suite=" + focusedSuite : ""}`;
 const appUrl = `http://127.0.0.1:${port}/`;
 const viteBin = resolve(rootDir, "node_modules", "vite", "bin", "vite.js");
@@ -29,7 +30,7 @@ try {
         const status = await waitForExpression(
             browser.page,
             `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.lastLifeAudioActivation ? {audioActivation:true} : window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : false;})()`,
-            180000
+            360000
         );
         if (status.done) break;
         if (status.audioActivation) {
@@ -64,14 +65,19 @@ try {
     const output = await waitForExpression(
         browser.page,
         '(() => { const element = document.querySelector("#result"); if (element?.dataset.status === "failed") throw new Error(element.textContent || "Browser verification failed."); return element?.dataset.status === "passed" ? element.textContent : false; })()',
-        // Includes 92 source-save/destroy/fresh-runtime fade restores with real resources.
-        180_000
+        // Full fade, arbitration, entry, and music matrices use real source-save/destroy/fresh-runtime restores.
+        360_000
     );
     const evidence = await browser.page.call("Runtime.evaluate", { expression: "window.renderPauseEvidence", returnByValue: true });
     if (evidence.result?.value) {
         const dir = process.env.QUALIFICATION_EVIDENCE_DIR ?? resolve(tmpdir(), "jackal-render-pause");
         mkdirSync(dir, { recursive: true });
         writeFileSync(resolve(dir, "render-pause-performance.json"), JSON.stringify(evidence.result.value, null, 2) + "\n");
+    }
+    const stock = await browser.page.call("Runtime.evaluate", { expression: "window.bossEntryStockEvidence", returnByValue: true });
+    if (stock.result?.value && process.env.QUALIFICATION_EVIDENCE_DIR) {
+        mkdirSync(process.env.QUALIFICATION_EVIDENCE_DIR, { recursive: true });
+        writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "boss-entry-stock-overlap.json"), JSON.stringify(stock.result.value, null, 2) + "\n");
     }
     console.log(focusedSuite ? `Focused ${focusedSuite} browser verification passed (full gameplay suite not requested).` : output);
     await verifySessionOwnership(appUrl, "Jackal");

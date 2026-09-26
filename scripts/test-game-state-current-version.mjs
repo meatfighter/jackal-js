@@ -118,7 +118,7 @@ function source(name) {
     return readFileSync(new URL(`../pwa/src/jackal/persistence/${name}`, import.meta.url), "utf8");
 }
 
-async function loadPersistenceValidation() {
+async function loadPersistenceValidation(transform = (value) => value) {
     const schemaUrl = compileModule(source("GameStateSchema.ts"));
     const idsUrl = compileModule(source("GameElementTypeIds.ts"));
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
@@ -182,7 +182,7 @@ async function loadPersistenceValidation() {
         }
     `);
     const validatorUrl = compileModule(
-        source("GameStateSnapshotValidator.ts")
+        transform(source("GameStateSnapshotValidator.ts"))
             .replace(`from "../NesInputProfile.js"`, `from "${profileUrl}"`)
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
@@ -1033,4 +1033,55 @@ test("schema18 explicitly validates death holds, pending exits and ending owners
     const standalone = modeSnapshot(fields, schema.GAME_STATE_VERSION);
     standalone.currentSongState = { ...held.currentSongState, activeMusic: null };
     assert.equal(validator.isSupportedGameStateSnapshot(standalone), false);
+});
+
+test("ordinary Pause cannot hide a zero-reserve registered death", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    const s = gameSnapshot(fields, schema.GAME_STATE_VERSION, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    s.playerFields.respawning = 12;
+    s.mainFields.extraLives = 0;
+    s.gameMode.fields.paused = true;
+    s.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: false,
+        lastLifeSuspended: false,
+        activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
+    };
+    s.requestedSongId = "stageSong0";
+    assert.equal(validator.isSupportedGameStateSnapshot(s), false);
+    s.mainFields.extraLives = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(s), true, "reserve-backed ordinary Pause remains valid");
+    s.mainFields.extraLives = 0;
+    s.playerFields.respawning = 0;
+    assert.equal(validator.isSupportedGameStateSnapshot(s), true, "living last vehicle may Pause");
+    s.playerFields.respawning = 12;
+    s.gameMode.fields.paused = false;
+    s.currentSongState.lastLifeSuspended = true;
+    assert.equal(validator.isSupportedGameStateSnapshot(s), true, "correct death hold remains valid");
+    s.mainFields.extraLives = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(s), true, "positive award before release remains valid");
+});
+
+test("removing the zero-reserve Pause validator guard admits the malformed counterexample", async () => {
+    const guard = "    if (dying && mainFields.extraLives === 0 && fields.paused === true) return false;";
+    for (const mutant of [false, true]) {
+        const { schema, fields, validator } = await loadPersistenceValidation((value) => {
+            assert.ok(value.includes(guard));
+            return mutant ? value.replace(guard, "") : value;
+        });
+        const s = gameSnapshot(fields, schema.GAME_STATE_VERSION, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+        s.playerFields.respawning = 12;
+        s.mainFields.extraLives = 0;
+        s.gameMode.fields.paused = true;
+        s.currentSongState = {
+            id: "stageSong0",
+            playing: true,
+            playedIntro2: false,
+            lastLifeSuspended: false,
+            activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
+        };
+        s.requestedSongId = "stageSong0";
+        assert.equal(validator.isSupportedGameStateSnapshot(s), mutant);
+    }
 });
