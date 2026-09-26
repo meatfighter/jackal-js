@@ -46,13 +46,13 @@ async function loadSongModule() {
     return { Song, Music };
 }
 
-async function loadAudioModules() {
+async function loadAudioModules(transform = (source) => source) {
     const registryUrl = compileModule(registrySource);
     const fieldsUrl = compileModule(fieldsSource);
     const mainConstantsUrl = compileModule("export class MainConstants { static MINIMUM_SOUND_TIME = 125; }");
     const songUrl = compileModule(songSource.replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`));
     const audioUrl = compileModule(
-        audioSource
+        transform(audioSource)
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
             .replace(`from "../AudioRegistry.js"`, `from "${registryUrl}"`)
@@ -370,7 +370,12 @@ test("Song pause/resume preserves intro, intro2, and loop sequencing", async () 
 
 test("only the PWA shell may mutate global Music/Sound enable policy", () => {
     const calls = collectAudioPolicySetterCalls(resolve(rootDir, "pwa", "src"));
-    assert.deepEqual(calls, ["pwa/src/app/JackalWebApp.ts:setMusicOn", "pwa/src/app/JackalWebApp.ts:setSoundsOn"]);
+    // The isolated verification entry deliberately tests disabled/enabled policy; it is not shipped gameplay.
+    assert.equal(calls.filter((call) => call.startsWith("pwa/src/browser-verify.ts:")).length, 4);
+    assert.deepEqual(
+        calls.filter((call) => !call.startsWith("pwa/src/browser-verify.ts:")),
+        ["pwa/src/app/JackalWebApp.ts:setMusicOn", "pwa/src/app/JackalWebApp.ts:setSoundsOn"]
+    );
 });
 
 test("Song pause/resume preserves sequencing and paused transport snapshot", async () => {
@@ -514,4 +519,69 @@ test("fractional monotonic cooldowns retain the integer schema without shortenin
             assert.ok(Number.isInteger(entry.remainingMs));
         }
     }
+});
+
+test("death-hold restore installs reason after cleanup, restores offset before any playback, and cancels failed candidates", async () => {
+    async function exercise(transform) {
+        const { registry, audio, Song } = await loadAudioModules(transform);
+        const main = fakeMain(registry.SOUND_FIELD_NAMES),
+            events = [];
+        const music = {
+            state: { transport: "stopped" },
+            getTransportState() {
+                return this.state.transport;
+            },
+            stop() {
+                this.state = { transport: "stopped" };
+            },
+            restorePlaybackState(s) {
+                events.push("restore");
+                this.state = clone(s);
+            },
+            capturePlaybackState() {
+                return clone(this.state);
+            },
+            resume() {
+                events.push("resume");
+            },
+            play() {
+                events.push("play");
+            }
+        };
+        const song = Song.fromIntroMusic(music);
+        main.stageSong0 = song;
+        const cleanup = main.stopAllSounds.bind(main);
+        main.stopAllSounds = () => {
+            events.push("cleanup");
+            song.stop();
+            cleanup();
+        };
+        const saved = {
+            id: "stageSong0",
+            playing: true,
+            playedIntro2: false,
+            lastLifeSuspended: true,
+            activeMusic: {
+                id: "stageSong0.intro",
+                playback: { transport: "paused", positionSeconds: 7.25, playbackRate: 0.8, volume: 0.4, looped: false, fade: null }
+            }
+        };
+        const snapshot = { currentSongState: saved, requestedSongId: "stageSong0", audioState: { sounds: [], cooldowns: [] } };
+        audio.restoreAudioPlayback(main, snapshot);
+        assert.equal(song.lastLifeSuspended, true, "restore reason must survive cleanup");
+        assert.deepEqual(events, ["cleanup", "restore"], "restore must not play/resume");
+        assert.deepEqual(audio.captureSongSnapshot(main, song), saved);
+        music.restorePlaybackState = () => {
+            throw new Error("injected offset restore failure");
+        };
+        assert.throws(() => audio.restoreAudioPlayback(main, snapshot), /injected offset/);
+        assert.equal(song.lastLifeSuspended, false, "failed restore cleanup clears recovery");
+    }
+    await exercise();
+    for (const transform of [
+        (s) => s.replace("currentSong.lastLifeSuspended = state.lastLifeSuspended;", ""),
+        (s) => s.replace("music.restorePlaybackState(state.activeMusic.playback);", "music.resume(); music.restorePlaybackState(state.activeMusic.playback);")
+    ])
+        await assert.rejects(exercise(transform), (error) => error instanceof assert.AssertionError);
+    await exercise();
 });

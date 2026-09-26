@@ -103,6 +103,7 @@ function tsFixture() {
             calls.camera++;
         },
         player: {
+            respawning: 0,
             update() {
                 calls.player++;
                 if (flags.transfer) main.mode = {};
@@ -219,7 +220,7 @@ class GameElement {
 class Enemy extends GameElement { boolean solid, mine; }
 class Main {
   Object mode, pauseSound = new Object(); Object[] conveyors = new Object[16];
-  boolean song = true; int resets, sounds, fades;
+  boolean song = true; int resets, sounds, fades, extraLives;
   boolean isSongPlaying() { return song; }
   void playSound(Object sound) { sounds++; }
   void resetNextFrameTime() { resets++; }
@@ -227,7 +228,7 @@ class Main {
 }
 class Input { boolean pause; boolean isPause() { return pause; } }
 class Player {
-  GameMode owner; boolean transfer;
+  GameMode owner; boolean transfer; int respawning;
   void update() { owner.players++; if (transfer) owner.main.mode = new Object(); }
 }
 class PanListener { void panComplete() {} }

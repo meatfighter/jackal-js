@@ -236,9 +236,11 @@ export class BossSuperTank extends Enemy implements ICameraPanListener {
                 }
                 break;
             case BossSuperTank.STATE_EXPLODED:
-                if (--this.delay === 0) {
+                if (this.delay > 1) {
+                    this.delay--;
+                } else if (this.delay === 1 && this.gameMode.tryStartEndingCameraPan(this)) {
+                    this.delay = 0;
                     this.state = BossSuperTank.STATE_PANNING;
-                    this.gameMode.startEndingCameraPan(this);
                 }
                 break;
         }

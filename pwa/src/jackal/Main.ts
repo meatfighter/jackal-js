@@ -397,6 +397,7 @@ export class Main extends BasicGame {
     }
 
     private applyRequestedSongChange(): void {
+        if (this.currentSong?.lastLifeSuspended) return;
         if (this.currentSong === this.requestedSong) {
             return;
         }
@@ -546,6 +547,7 @@ export class Main extends BasicGame {
     }
 
     public setMode(mode: IMode, gc: GameContainer): void {
+        if (this.currentSong?.lastLifeSuspended) this.stopAllSongs();
         this.input.clearKeyPressedRecord();
         this.mode = mode;
         mode.init(this, gc);
@@ -1068,8 +1070,40 @@ export class Main extends BasicGame {
         }
     }
 
+    public suspendMusicForLastLife(): void {
+        if (this.closeRequestedFlag) return;
+        const current = this.currentSong;
+        if (current !== null && current.playing) {
+            current.suspendForLastLife();
+            return;
+        }
+        const requested = this.requestedSong;
+        if (requested !== null && requested !== current) {
+            current?.stop();
+            this.currentSong = requested;
+            requested.suspendForLastLife();
+            return;
+        }
+        // No active or genuinely queued song: do not revive a naturally finished one.
+        this.stopAllSongs();
+    }
+
+    public resumeMusicAfterLastLife(): void {
+        if (this.closeRequestedFlag) return;
+        const current = this.currentSong;
+        if (current === null || !current.lastLifeSuspended) return;
+        if (current !== this.requestedSong) {
+            // A request already existed when death happened. Honor it at the normal
+            // scheduling point without briefly resuming the superseded old track.
+            current.stop();
+            this.currentSong = null;
+            return;
+        }
+        current.resumeAfterLastLife();
+    }
+
     public isSongPlaying(): boolean {
-        return this.currentSong !== null && this.currentSong.playing;
+        return this.currentSong !== null && this.currentSong.playing && !this.currentSong.lastLifeSuspended;
     }
 
     public stopAllSongs(): void {
@@ -1103,6 +1137,10 @@ export class Main extends BasicGame {
     public requestSong(song: Song): void {
         if (this.closeRequestedFlag) {
             return;
+        }
+        if (this.currentSong?.lastLifeSuspended) {
+            this.currentSong.stop();
+            this.currentSong = null;
         }
         this.requestedSong = song;
     }

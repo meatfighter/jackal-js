@@ -468,7 +468,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 17);
+    assert.equal(currentVersion, 18);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -652,6 +652,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
+        lastLifeSuspended: false,
         activeMusic: { id: "stageSong0.loop", playback: playback({ volume: 2 }) }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(invalidVolume), false);
@@ -661,6 +662,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
+        lastLifeSuspended: false,
         activeMusic: { id: "bossSong.loop", playback: playback() }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedMusic), false);
@@ -801,6 +803,7 @@ test("paused GameMode requires a paused current Music transport", async () => {
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
+        lastLifeSuspended: false,
         activeMusic: { id: "stageSong0.loop", playback: playback({ transport: "paused" }) }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(paused), true);
@@ -823,6 +826,7 @@ test("paused GameMode requires a paused current Music transport", async () => {
         id: "stageSong0",
         playing: true,
         playedIntro2: true,
+        lastLifeSuspended: false,
         activeMusic: { id: "stageSong0.loop", playback: playback({ transport: "paused" }) }
     };
     assert.equal(validator.isSupportedGameStateSnapshot(standalonePausedMusic), false);
@@ -974,4 +978,59 @@ test("NES INPUT drafts preserve displaced future slots and current-only assigned
     const oldVersion = structuredClone(snapshot);
     oldVersion.version--;
     assert.equal(validator.isSupportedGameStateSnapshot(oldVersion), false);
+});
+
+test("schema18 explicitly validates death holds, pending exits and ending ownership", async () => {
+    const { schema, fields, validator } = await loadPersistenceValidation();
+    const f = () => gameSnapshot(fields, schema.GAME_STATE_VERSION, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    const held = f();
+    held.playerFields.respawning = 12;
+    held.currentSongState = {
+        id: "stageSong0",
+        playing: true,
+        playedIntro2: false,
+        lastLifeSuspended: true,
+        activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
+    };
+    held.requestedSongId = "bossSong";
+    assert.equal(validator.isSupportedGameStateSnapshot(held), true, "pre-existing different request is retained");
+    for (const mutate of [
+        (s) => delete s.currentSongState.lastLifeSuspended,
+        (s) => (s.currentSongState.lastLifeSuspended = "true"),
+        (s) => (s.playerFields.respawning = 0),
+        (s) => (s.gameMode.fields.paused = true),
+        (s) => (s.gameMode.fields.playing = false),
+        (s) => (s.gameMode.fields.endingCameraPan = true),
+        (s) => (s.currentSongState.activeMusic.playback.transport = "playing")
+    ]) {
+        const bad = structuredClone(held);
+        mutate(bad);
+        assert.equal(validator.isSupportedGameStateSnapshot(bad), false);
+    }
+    for (const transport of ["ended-pending", "paused"]) {
+        const s = structuredClone(held);
+        s.currentSongState.activeMusic.playback.transport = transport;
+        assert.equal(validator.isSupportedGameStateSnapshot(s), true);
+    }
+    const queued = structuredClone(held);
+    queued.currentSongState.playing = false;
+    queued.currentSongState.activeMusic = null;
+    assert.equal(validator.isSupportedGameStateSnapshot(queued), true);
+    const bonus = structuredClone(held);
+    bonus.mainFields.extraLives = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(bonus), true, "award known before player release");
+    const completion = f();
+    completion.playerFields.respawning = 12;
+    completion.gameMode.fields.stageCompletedFlag = true;
+    completion.gameMode.fields.stageCompletedDelay = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(completion), true, "completed boss waiting at one");
+    completion.gameMode.fields.stageCompletedDelay = 0;
+    assert.equal(validator.isSupportedGameStateSnapshot(completion), false, "zero must mean active exit fade");
+    completion.mainFields.fading = true;
+    completion.mainFields.fadeOut = true;
+    completion.mainFields.fadeIndex = 1;
+    assert.equal(validator.isSupportedGameStateSnapshot(completion), false, "pending death cannot already exit");
+    const standalone = modeSnapshot(fields, schema.GAME_STATE_VERSION);
+    standalone.currentSongState = { ...held.currentSongState, activeMusic: null };
+    assert.equal(validator.isSupportedGameStateSnapshot(standalone), false);
 });

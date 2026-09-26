@@ -168,10 +168,14 @@ public class GameMode implements IMode, IFadeListener {
     this.cameraPanListener = cameraPanListener;
   }
   
-  public void startEndingCameraPan(ICameraPanListener cameraPanListener) {
+  public boolean tryStartEndingCameraPan(ICameraPanListener cameraPanListener) {
+    if (main.mode != this || player.respawning != 0) {
+      return false;
+    }
     playing = false;
     endingCameraPan = true;
     this.cameraPanListener = cameraPanListener;
+    return true;
   }
   
   public void rotate(float[] v, float angle) {
@@ -810,7 +814,8 @@ public class GameMode implements IMode, IFadeListener {
   }
   
   @Override
-  public void fadeCompleted() { 
+  public void fadeCompleted() {
+    if (main.mode != this) return;
     if (stageIndex == 5) {
       main.requestMode(Modes.SUNSET, gc);
     } else {
@@ -829,7 +834,7 @@ public class GameMode implements IMode, IFadeListener {
       main.resetNextFrameTime();
       return;
     } else if (input.isPause() && !stageCompleted && playing 
-        && main.isSongPlaying()) {
+        && (player.respawning == 0 || main.extraLives > 0) && main.isSongPlaying()) {
       paused = true;
       main.playSound(main.pauseSound);
       gc.setMusicOn(false);
@@ -936,7 +941,7 @@ public class GameMode implements IMode, IFadeListener {
       cameraTrackPlayer();
     }
     
-    if (stageCompleted && stageCompletedDelay > 0 && --stageCompletedDelay == 0) {
+    if (stageCompleted && stageCompletedDelay > 0 && (stageCompletedDelay > 1 || player.respawning == 0) && --stageCompletedDelay == 0) {
       main.startFade(true, this);    
     }    
   }

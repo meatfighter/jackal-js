@@ -77,7 +77,7 @@ const RANDOM_FIELDS = ["seed0", "seed1", "seed2"] as const;
 const AUDIO_STATE_FIELDS = ["sounds", "cooldowns"] as const;
 const SOUND_FIELDS = ["id", "playback"] as const;
 const SOUND_COOLDOWN_FIELDS = ["id", "remainingMs"] as const;
-const SONG_FIELDS = ["id", "playing", "playedIntro2", "activeMusic"] as const;
+const SONG_FIELDS = ["id", "playing", "playedIntro2", "lastLifeSuspended", "activeMusic"] as const;
 const MUSIC_FIELDS = ["id", "playback"] as const;
 
 const MAX_APP_VERSION_LENGTH = 128;
@@ -266,18 +266,11 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (!isGameModeFadeStateConsistent(mainFields, gameMode.fields)) {
         return false;
     }
-    const paused = gameMode.fields.paused;
-    const currentSongState = snapshot.currentSongState;
-    if (typeof paused !== "boolean" || !isSongSnapshot(currentSongState)) {
-        return false;
-    }
-    const activeMusicTransport = currentSongState?.activeMusic?.playback.transport ?? null;
     if (
-        (paused && (currentSongState === null || !currentSongState.playing || activeMusicTransport !== "paused")) ||
-        (!paused && activeMusicTransport === "paused")
-    ) {
+        !isSongSnapshot(snapshot.currentSongState) ||
+        !isGameModeLastLifeStateConsistent(mainFields, gameMode.fields, snapshot.playerFields, snapshot.currentSongState)
+    )
         return false;
-    }
     for (const entitySnapshot of gameMode.entities) {
         if (
             !isRecord(entitySnapshot) ||
@@ -386,7 +379,7 @@ function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalS
         return false;
     }
     const currentSongState = snapshot.currentSongState;
-    if (!isSongSnapshot(currentSongState) || currentSongState?.activeMusic?.playback.transport === "paused") {
+    if (!isSongSnapshot(currentSongState) || currentSongState?.lastLifeSuspended === true || currentSongState?.activeMusic?.playback.transport === "paused") {
         return false;
     }
     return isModeExtraSnapshot(snapshot.modeId, snapshot.modeFields, snapshot.modeExtra);
@@ -900,6 +893,7 @@ function isSongSnapshot(value: unknown): value is SongSnapshot | null {
         !isSongId(value.id) ||
         typeof value.playing !== "boolean" ||
         typeof value.playedIntro2 !== "boolean" ||
+        typeof value.lastLifeSuspended !== "boolean" ||
         !isMusicSnapshot(value.activeMusic)
     ) {
         return false;
@@ -907,6 +901,7 @@ function isSongSnapshot(value: unknown): value is SongSnapshot | null {
     if (value.activeMusic === null) {
         return true;
     }
+    if (!value.playing || (value.lastLifeSuspended && value.activeMusic.playback.transport === "playing")) return false;
     const parsed = parseMusicId(value.activeMusic.id);
     return parsed !== null && parsed.songId === value.id;
 }
@@ -975,4 +970,25 @@ function isGameModeFadeStateConsistent(mainFields: EncodedRecord, gameModeFields
     if (mainFields.fading !== true) return true;
     if (mainFields.fadeOut === true) return gameModeFields.stageCompletedFlag === true && gameModeFields.stageCompletedDelay === 0;
     return gameModeFields.stageCompletedFlag === false;
+}
+
+function isGameModeLastLifeStateConsistent(mainFields: UnknownRecord, fields: UnknownRecord, playerFields: UnknownRecord, song: SongSnapshot | null): boolean {
+    const respawning = playerFields.respawning;
+    if (typeof respawning !== "number" || !Number.isInteger(respawning) || respawning < 0) return false;
+    const dying = respawning > 0;
+    const transport = song?.activeMusic?.playback.transport ?? null;
+
+    if (dying && (fields.playing === false || fields.endingCameraPan === true)) return false;
+    if (dying && mainFields.fading === true && mainFields.fadeOut === true) return false;
+    if (fields.stageCompletedFlag === true && fields.stageCompletedDelay === 0 && !(mainFields.fading === true && mainFields.fadeOut === true)) return false;
+
+    if (song?.lastLifeSuspended) {
+        if (!dying || fields.paused !== false || fields.playing !== true || fields.stageCompletedFlag !== false || fields.endingCameraPan !== false)
+            return false;
+        return song.activeMusic === null || (song.playing && (transport === "paused" || transport === "ended-pending"));
+    }
+    if (fields.paused === true) {
+        return song !== null && song.playing && transport === "paused";
+    }
+    return transport !== "paused";
 }

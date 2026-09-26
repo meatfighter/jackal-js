@@ -47,8 +47,28 @@ export class Song {
     public loop: Music | null = null;
     public playing = false;
     public playedIntro2 = false;
+    public lastLifeSuspended = false;
+
+    public suspendForLastLife(): void {
+        if (this.lastLifeSuspended) return;
+        this.lastLifeSuspended = true;
+        this.pause();
+    }
+
+    public resumeAfterLastLife(): void {
+        if (!this.lastLifeSuspended) return;
+        this.lastLifeSuspended = false;
+        if (!this.playing) {
+            // A queued song promoted to current while silent has never started.
+            // This is a first start, not a restart of interrupted playback.
+            this.play();
+            return;
+        }
+        this.resume();
+    }
 
     public stop(): void {
+        this.lastLifeSuspended = false;
         for (const music of [this.intro, this.intro2, this.loop]) {
             if (music !== null && music.getTransportState() !== "stopped") {
                 music.stop();
@@ -59,7 +79,7 @@ export class Song {
     }
 
     public play(): void {
-        if (this.playing) {
+        if (this.playing || this.lastLifeSuspended) {
             return;
         }
         this.stop();
@@ -92,7 +112,7 @@ export class Song {
 
     /** Resume the exact paused Music part without changing Song sequencing. */
     public resume(): void {
-        if (!this.playing) {
+        if (!this.playing || this.lastLifeSuspended) {
             return;
         }
         for (const music of [this.intro, this.intro2, this.loop]) {
@@ -104,7 +124,7 @@ export class Song {
     }
 
     public update(): void {
-        if (!this.playing || this.intro?.isTransportActive()) {
+        if (this.lastLifeSuspended || !this.playing || this.intro?.isTransportActive()) {
             return;
         }
         if (this.intro2 !== null && !this.playedIntro2) {

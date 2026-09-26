@@ -1,6 +1,7 @@
 package jackal;
 
 import org.newdawn.slick.*;
+import org.newdawn.slick.openal.SoundStore;
 
 public class Song {
   
@@ -11,6 +12,51 @@ public class Song {
   public Music loop;
   public boolean playing;
   public boolean playedIntro2;
+  public boolean lastLifeSuspended;
+  private Music lastLifePausedPart;
+
+  public void suspendForLastLife() {
+    if (lastLifeSuspended) return;
+    lastLifeSuspended = true;
+    if (!playing) return;
+    if (intro != null && intro.playing()) {
+      lastLifePausedPart = intro;
+    } else if (intro2 != null && intro2.playing()) {
+      lastLifePausedPart = intro2;
+    } else if (loop != null && loop.playing()) {
+      lastLifePausedPart = loop;
+    }
+    if (lastLifePausedPart != null) {
+      lastLifePausedPart.pause();
+    }
+  }
+
+  private boolean resumeHeldPartWhenEnabled() {
+    if (lastLifePausedPart == null) return true;
+    // Never force the user's Music policy on or briefly play through a disabled bus.
+    if (!SoundStore.get().musicOn()) return false;
+    Music part = lastLifePausedPart;
+    lastLifePausedPart = null;
+    // This vendored SoundStore.setMusicOn(true) already calls alSourcePlay.
+    // Pause that source before synchronizing Music's logical playing flag;
+    // a second alSourcePlay on an already-playing source would restart at zero.
+    if (!part.paused()) {
+      if (!SoundStore.get().isMusicPlaying()) return true;
+      part.pause();
+    }
+    part.resume();
+    return true;
+  }
+
+  public void resumeAfterLastLife() {
+    if (!lastLifeSuspended) return;
+    lastLifeSuspended = false;
+    if (!playing) {
+      play(); // Only the never-started queued-song case.
+      return;
+    }
+    resumeHeldPartWhenEnabled();
+  }
 
   public Song(String intro) throws SlickException {
     this.intro = new Music(intro, STREAMING);
@@ -49,6 +95,12 @@ public class Song {
   }
 
   public void stop() {
+    lastLifeSuspended = false;
+    Music pausedPart = lastLifePausedPart;
+    lastLifePausedPart = null;
+    if (pausedPart != null) {
+      pausedPart.stop();
+    }
     if (intro != null && intro.playing()) {
       intro.stop();
     }
@@ -63,7 +115,7 @@ public class Song {
   }
 
   public void play() {    
-    if (playing) {
+    if (playing || lastLifeSuspended) {
       return;
     }
     stop();
@@ -78,6 +130,12 @@ public class Song {
   }
 
   public void update() {
+    if (lastLifeSuspended) {
+      if (lastLifePausedPart != null && !lastLifePausedPart.paused()
+          && SoundStore.get().isMusicPlaying()) lastLifePausedPart.pause();
+      return;
+    }
+    if (!resumeHeldPartWhenEnabled()) return;
     if (playing) {
       if (intro == null || !intro.playing()) {
         if (!(intro2 == null || playedIntro2)) {

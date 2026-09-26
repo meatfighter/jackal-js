@@ -8,7 +8,9 @@ import { cleanupBrowser, findBrowser, launchBrowser, stopChild, waitForExpressio
 import { rootDir } from "./build-utils.mjs";
 
 const port = 5197;
-const browserVerificationUrl = `http://127.0.0.1:${port}/browser-verify.html`;
+const focusedSuite = process.env.JACKAL_BROWSER_SUITE;
+if (focusedSuite && !["last-life-music", "last-life-arbitration"].includes(focusedSuite)) throw new Error("Unknown browser verification suite");
+const browserVerificationUrl = `http://127.0.0.1:${port}/browser-verify.html${focusedSuite ? "?suite=" + focusedSuite : ""}`;
 const appUrl = `http://127.0.0.1:${port}/`;
 const viteBin = resolve(rootDir, "node_modules", "vite", "bin", "vite.js");
 const server = spawn(process.execPath, [viteBin, "--config", "pwa/vite.config.ts", "--host", "127.0.0.1", "--port", String(port), "--strictPort"], {
@@ -19,16 +21,27 @@ let browser = null;
 try {
     await waitForHttpServer(server, browserVerificationUrl);
     browser = await launchBrowser(browserVerificationUrl, rootDir, "jackal-browser-");
-    await browser.page.call("Runtime.evaluate", {
-        expression: "window.captureCompactLabels = (game) => new Promise(resolve => { window.compactLabelCapture = { game, resolve }; })"
-    });
+    const verificationHooks =
+        "window.captureCompactLabels = (game) => new Promise(resolve => { window.compactLabelCapture = { game, resolve }; }); window.activateLastLifeAudio = (activate) => new Promise((resolve,reject) => { const timer=setTimeout(()=>reject(new Error('Last-life audio activation exceeded 10s')),10000); window.lastLifeAudioActivation={activate,resolve:(value)=>{clearTimeout(timer);resolve(value);}}; })";
+    await browser.page.call("Page.addScriptToEvaluateOnNewDocument", { source: verificationHooks });
+    await browser.page.call("Runtime.evaluate", { expression: verificationHooks });
     while (true) {
         const status = await waitForExpression(
             browser.page,
-            `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : false;})()`,
+            `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.lastLifeAudioActivation ? {audioActivation:true} : window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : false;})()`,
             180000
         );
         if (status.done) break;
+        if (status.audioActivation) {
+            const activation = await browser.page.call("Runtime.evaluate", {
+                expression: "(() => { const a=window.lastLifeAudioActivation; delete window.lastLifeAudioActivation; return a.activate().then(a.resolve); })()",
+                userGesture: true,
+                awaitPromise: true
+            });
+            assert.ok(!activation.exceptionDetails, "Real user-gesture audio activation failed");
+            console.log("Last-life real audio activation passed.");
+            continue;
+        }
         const dir = process.env.QUALIFICATION_EVIDENCE_DIR ?? resolve(tmpdir(), "native-input-labels-screenshots");
         mkdirSync(dir, { recursive: true });
         for (const [name, width, height] of [
@@ -60,7 +73,7 @@ try {
         mkdirSync(dir, { recursive: true });
         writeFileSync(resolve(dir, "render-pause-performance.json"), JSON.stringify(evidence.result.value, null, 2) + "\n");
     }
-    console.log(output);
+    console.log(focusedSuite ? `Focused ${focusedSuite} browser verification passed (full gameplay suite not requested).` : output);
     await verifySessionOwnership(appUrl, "Jackal");
 } finally {
     await cleanupBrowser(browser);

@@ -213,10 +213,14 @@ export class GameMode implements IMode, IFadeListener {
         this.cameraPanListener = cameraPanListener;
     }
 
-    public startEndingCameraPan(cameraPanListener: ICameraPanListener): void {
+    public tryStartEndingCameraPan(cameraPanListener: ICameraPanListener): boolean {
+        if (this.main.mode !== this || this.player.respawning !== 0) {
+            return false;
+        }
         this.playing = false;
         this.endingCameraPan = true;
         this.cameraPanListener = cameraPanListener;
+        return true;
     }
 
     public rotate(v: number[], angle: number): void {
@@ -899,6 +903,7 @@ export class GameMode implements IMode, IFadeListener {
     }
 
     public fadeCompleted(): void {
+        if (this.main.mode !== this) return;
         if (this.stageIndex === 5) {
             this.main.requestMode(Modes.SUNSET, this.gc);
         } else {
@@ -914,7 +919,13 @@ export class GameMode implements IMode, IFadeListener {
             }
             this.main.resetNextFrameTime();
             return;
-        } else if (this.input.isPause() && !this.stageCompletedFlag && this.playing && this.main.isSongPlaying()) {
+        } else if (
+            this.input.isPause() &&
+            !this.stageCompletedFlag &&
+            this.playing &&
+            (this.player.respawning === 0 || this.main.extraLives > 0) &&
+            this.main.isSongPlaying()
+        ) {
             this.paused = true;
             this.main.playSound(this.main.pauseSound);
             this.main.currentSong?.pause();
@@ -1021,7 +1032,12 @@ export class GameMode implements IMode, IFadeListener {
             this.cameraTrackPlayer();
         }
 
-        if (this.stageCompletedFlag && this.stageCompletedDelay > 0 && --this.stageCompletedDelay === 0) {
+        if (
+            this.stageCompletedFlag &&
+            this.stageCompletedDelay > 0 &&
+            (this.stageCompletedDelay > 1 || this.player.respawning === 0) &&
+            --this.stageCompletedDelay === 0
+        ) {
             this.main.startFade(true, this);
         }
     }

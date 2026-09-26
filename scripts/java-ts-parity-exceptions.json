@@ -141,6 +141,9 @@
         },
         "NesInputProfile.ACTIVE_COUNT": {
             "reason": "Java uses numeric slot constants/count; TypeScript derives virtual slots and their count from the typed INPUTS rows. Executable profiles verify the same order/domain."
+        },
+        "Song.lastLifePausedPart": {
+            "reason": "Runtime-only native Music reference holds the exact paused part until Music policy permits resume. Browser Music exposes logical paused transport directly; only lastLifeSuspended is durable audio intent."
         }
     },
     "methodExceptions": {
@@ -237,6 +240,9 @@
         },
         "NesInputProfile.copy": {
             "reason": "Java switch-based field/label adapters and ButtonMapping copy correspond to TypeScript typed INPUTS rows, inputAt, and ButtonMapping.clone. Both profiles execute the same conformance suite."
+        },
+        "Song.resumeHeldPartWhenEnabled": {
+            "reason": "Native-only resume gate preserves the user Music preference and resumes the stored paused part once. Browser playback generations enforce application policy while retaining logical transport."
         }
     },
     "enumMemberExceptions": {

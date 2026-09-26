@@ -61,7 +61,7 @@ function javaSources(workDir) {
     );
     write(
         join(sourceRoot, "Main.java"),
-        `package jackal; import java.awt.geom.Point2D; import java.util.Random; public class Main { public static Main main; public static GameMode gameMode; public IInput input; public boolean hasMissiles; public int missilePower,extraLives=4; public KonamiCode konamiCode=new KonamiCode(); public Random random=new Random(1); public Object pickupSound=new Object(),weaponUpgradeSound=new Object(),playerExplodeSound=new Object(); public Object[] playerWakes=new Object[6]; public Object[][] players=new Object[4][5]; public void upgradeWeapon(boolean always){} public void playSound(Object s){} public void stopSong(){} public void requestMode(Modes mode,Object gc){} public void loseLife(){extraLives--;} public void draw(Object image,float x,float y,float alpha){} public void drawRotatedAlpha(Object image,float x,float y,float angle,float alpha){} public void drawVehicle(Object[] images,float x,float y,float angle){} public static Point2D.Float rotate(float x,float y,float angle){float cos=(float)Math.cos(angle);float sin=(float)Math.sin(angle);return new Point2D.Float(x*cos-y*sin,x*sin+y*cos);} }`
+        `package jackal; import java.awt.geom.Point2D; import java.util.Random; public class Main { public static Main main; public static GameMode gameMode; public IInput input; public boolean hasMissiles; public int missilePower,extraLives=4; public KonamiCode konamiCode=new KonamiCode(); public Random random=new Random(1); public Object pickupSound=new Object(),weaponUpgradeSound=new Object(),playerExplodeSound=new Object(); public Object[] playerWakes=new Object[6]; public Object[][] players=new Object[4][5]; public void upgradeWeapon(boolean always){} public void playSound(Object s){} public void suspendMusicForLastLife(){} public void resumeMusicAfterLastLife(){} public void stopSong(){} public void requestMode(Modes mode,Object gc){} public void loseLife(){extraLives--;} public void draw(Object image,float x,float y,float alpha){} public void drawRotatedAlpha(Object image,float x,float y,float angle,float alpha){} public void drawVehicle(Object[] images,float x,float y,float angle){} public static Point2D.Float rotate(float x,float y,float angle){float cos=(float)Math.cos(angle);float sin=(float)Math.sin(angle);return new Point2D.Float(x*cos-y*sin,x*sin+y*cos);} }`
     );
     write(
         join(sourceRoot, "PlayerHarness.java"),
@@ -141,7 +141,7 @@ function bits(v){const b=new ArrayBuffer(4),d=new DataView(b);d.setFloat32(0,v,f
 function row(s,t,p){return s+"|"+t+"|"+bits(p.x)+"|"+bits(p.y)+"|"+p.angle+"|"+p.nextAngle+"|"+bits(p.displayAngle)+"|"+bits(p.angleVelocity)+"|"+p.angleSteps+"|"+p.diagonalDelay+"|"+p.fireAngle+"|"+p.inSwamp+"|"+Grenade.count+"|"+PlayerMissile.count+"|"+PlayerBullet.count+"|"+p.gunArmed+"|"+p.rumble;}
 class InputStub {up=false;down=false;left=false;right=false;fire=false;shoot=false;isUp(){return this.up;}isDown(){return this.down;}isLeft(){return this.left;}isRight(){return this.right;}isFire(){return this.fire;}isShoot(){return this.shoot;}}
 class ModeStub {constructor(){this.mines=new ArrayList();this.stageCompletedFlag=false;this.bossCameraPan=false;this.endingCameraPan=false;this.playing=true;this.paused=false;this.maxCameraY=4096;this.conveyorDelta=1;this.tileType=TILE_TYPE_EMPTY;this.gc={};}getTileType(){return this.tileType;}isDriveable(){return true;}}
-function reset(input,mode){runtimeMode=mode;runtimeMain={input,hasMissiles:false,missilePower:0,extraLives:4,konamiCode:{enabled:false},random:{nextInt(){return 0;}},pickupSound:{},weaponUpgradeSound:{},playerExplodeSound:{},playerWakes:Array(6),players:Array.from({length:4},()=>Array(5)),upgradeWeapon(){},playSound(){},stopAllSongs(){},requestMode(){},loseLife(){this.extraLives--;},drawImageAlpha(){},drawRotatedAlpha(){},drawVehicle(){}};Grenade.count=PlayerMissile.count=PlayerBullet.count=0;return new Player();}
+function reset(input,mode){runtimeMode=mode;runtimeMain={input,hasMissiles:false,missilePower:0,extraLives:4,konamiCode:{enabled:false},random:{nextInt(){return 0;}},pickupSound:{},weaponUpgradeSound:{},playerExplodeSound:{},playerWakes:Array(6),players:Array.from({length:4},()=>Array(5)),upgradeWeapon(){},playSound(){},suspendMusicForLastLife(){},resumeMusicAfterLastLife(){},stopAllSongs(){},requestMode(){},loseLife(){this.extraLives--;},drawImageAlpha(){},drawRotatedAlpha(){},drawVehicle(){}};Grenade.count=PlayerMissile.count=PlayerBullet.count=0;return new Player();}
 function runScenario(name,input,mode,ticks,rows){const p=reset(input,mode);rows.push(row(name,0,p));for(let t=1;t<=ticks;t++){p.update();rows.push(row(name,t,p));}}
 const rows=[];let i=new InputStub(),m=new ModeStub();i.right=true;runScenario("R",i,m,20,rows);i=new InputStub();m=new ModeStub();i.down=i.right=true;runScenario("D",i,m,12,rows);i=new InputStub();m=new ModeStub();m.tileType=TILE_TYPE_SWAMP;i.right=true;runScenario("S",i,m,10,rows);i=new InputStub();m=new ModeStub();m.tileType=TILE_TYPE_CONVEYOR;runScenario("C",i,m,5,rows);i=new InputStub();m=new ModeStub();let p=reset(i,m);p.update();i.fire=true;rows.push(row("F",0,p));p.update();rows.push(row("F",1,p));i.fire=false;p.update();rows.push(row("F",2,p));i=new InputStub();m=new ModeStub();p=reset(i,m);p.update();i.shoot=true;rows.push(row("G",0,p));for(let t=1;t<=50;t++){p.update();rows.push(row("G",t,p));} export { rows };`;
     return (await import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`)).rows;
@@ -190,6 +190,8 @@ public class Main {
   public Object[][] players = new Object[4][5];
   public void upgradeWeapon(boolean always) {}
   public void playSound(Object sound) {}
+  public void suspendMusicForLastLife() {}
+  public void resumeMusicAfterLastLife() {}
   public void stopSong() {
     if (transfers != 0) lateStops++;
     continueQueued = false;
@@ -309,9 +311,9 @@ public final class FinalLifeHarness {
     Main.gameMode.stageCompleted = true;
     player.respawning = 1;
     player.update();
-    require(Main.main.transfers == 0 && !Main.main.continueQueued,
-        "Stage-completed precedence was changed");
-    System.out.println("PASS stage-completed-precedence");
+    require(Main.main.transfers == 1 && Main.main.continueQueued,
+        "Registered death must resolve despite stage completion");
+    System.out.println("PASS recorded-death-precedence");
   }
 }
 `
@@ -349,7 +351,7 @@ public final class FinalLifeHarness {
             "PASS last-active-life",
             "PASS reserve-respawn",
             "PASS death-countdown",
-            "PASS stage-completed-precedence"
+            "PASS recorded-death-precedence"
         ]);
     } finally {
         rmSync(workDir, { recursive: true, force: true });

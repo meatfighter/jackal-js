@@ -292,12 +292,14 @@ public class Main extends BasicGame {
       }
     }
     
-    if (currentSong != requestedSong) {
+    if ((currentSong == null || !currentSong.lastLifeSuspended) && currentSong != requestedSong) {
       if (currentSong != null) {
         currentSong.stop();
       }
       currentSong = requestedSong;
-      currentSong.play();
+      if (currentSong != null) {
+        currentSong.play();
+      }
     }
     if (currentSong != null) {
       currentSong.update();
@@ -610,6 +612,7 @@ public class Main extends BasicGame {
   }
   
   public void setMode(IMode mode, GameContainer gc) {
+    if (currentSong != null && currentSong.lastLifeSuspended) stopSong();
     try {
       input.clearKeyPressedRecord();
       this.mode = mode;
@@ -1149,8 +1152,37 @@ public class Main extends BasicGame {
     }
   }  
 
+  public void suspendMusicForLastLife() {
+    if (closeRequested) return;
+    Song current = currentSong;
+    if (current != null && current.playing) {
+      current.suspendForLastLife();
+      return;
+    }
+    Song requested = requestedSong;
+    if (requested != null && requested != current) {
+      if (current != null) current.stop();
+      currentSong = requested;
+      requested.suspendForLastLife();
+      return;
+    }
+    stopSong();
+  }
+
+  public void resumeMusicAfterLastLife() {
+    if (closeRequested) return;
+    Song current = currentSong;
+    if (current == null || !current.lastLifeSuspended) return;
+    if (current != requestedSong) {
+      current.stop();
+      currentSong = null;
+      return;
+    }
+    current.resumeAfterLastLife();
+  }
+
   public boolean isSongPlaying() {
-    return currentSong != null && currentSong.playing;
+    return currentSong != null && currentSong.playing && !currentSong.lastLifeSuspended;
   }
 
   public void stopSong() {
@@ -1203,6 +1235,10 @@ public class Main extends BasicGame {
   public void requestSong(Song song) {
     if (closeRequested) {
       return;
+    }
+    if (currentSong != null && currentSong.lastLifeSuspended) {
+      currentSong.stop();
+      currentSong = null;
     }
     requestedSong = song;
   }  

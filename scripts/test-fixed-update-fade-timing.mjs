@@ -460,6 +460,7 @@ export class GameMode {
         endingCameraPan: false,
         elements: Array.from({ length: 8 }, () => ({ size: () => 0 })),
         player: {
+            respawning: 0,
             update() {
                 counts.world++;
             }
@@ -721,7 +722,7 @@ test("fade/Pause assertions reject behavioral counterexamples without mutating p
             (s) => replaceMutation(s, "this.fadeListener = fadeListener;", "this.fadeListener = fadeListener ?? {fadeCompleted() {}};"),
             undefined
         ],
-        ["completion accepts Pause", undefined, (s) => replaceMutation(s, "&& !this.stageCompletedFlag", "")],
+        ["completion accepts Pause", undefined, (s) => replaceMutation(s, "!this.stageCompletedFlag &&", "")],
         [
             "fade completion resumes music",
             (s) =>

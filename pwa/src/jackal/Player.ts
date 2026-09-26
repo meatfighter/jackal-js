@@ -137,13 +137,19 @@ export class Player {
     }
 
     public explode(): void {
-        if (this.gameMode.stageCompletedFlag) {
+        if (this.gameMode.stageCompletedFlag || !this.gameMode.playing) {
             return;
         }
+        this.registerDeath();
+    }
 
+    private registerDeath(): void {
+        if (this.respawning > 0) {
+            return;
+        }
         this.main.playSound(this.main.playerExplodeSound);
         if (this.main.extraLives === 0) {
-            this.main.stopAllSongs();
+            this.main.suspendMusicForLastLife();
         }
         Explosion.withPlayerExplosion(this.x, this.y, true);
 
@@ -231,11 +237,14 @@ export class Player {
         let speed = javaFloat(this.getSpeed());
 
         if (this.respawning > 0) {
+            if (this.main.extraLives > 0) {
+                this.main.resumeMusicAfterLastLife();
+            }
             if (--this.respawning === 0) {
                 if (this.main.extraLives > 0) {
                     this.main.loseLife();
                     this.invincible = Player.INVINCIBLE_DELAY;
-                } else if (!this.gameMode.stageCompletedFlag) {
+                } else {
                     if (this.main.konamiCode !== null) {
                         this.main.konamiCode.enabled = false;
                     }
@@ -513,11 +522,12 @@ export class Player {
         }
         for (let i = this.mines.size() - 1; i >= 0; i--) {
             let mine = this.mines.get(i);
+            const acceptedBeforeCallback = this.respawning === 0 && !invincibleLocal && this.gameMode.playing && !this.gameMode.stageCompletedFlag;
             if (
                 mine.bump(javaFloat(this.x - xMargin), javaFloat(this.y - yMargin), javaFloat(this.x + xMargin), javaFloat(this.y + yMargin), invincibleLocal)
             ) {
                 if (!invincibleLocal) {
-                    this.explode();
+                    if (acceptedBeforeCallback) this.registerDeath();
                     break;
                 }
             }

@@ -107,14 +107,19 @@ public class Player {
   }
   
   public void explode() {
-    
-    if (gameMode.stageCompleted) {
+    if (gameMode.stageCompleted || !gameMode.playing) {
       return;
     }
-    
+    registerDeath();
+  }
+
+  private void registerDeath() {
+    if (respawning > 0) {
+      return;
+    }
     main.playSound(main.playerExplodeSound);   
     if (main.extraLives == 0) {      
-      main.stopSong();
+      main.suspendMusicForLastLife();
     }
     new Explosion(x, y, true);
     
@@ -184,11 +189,14 @@ public class Player {
     float speed = getSpeed();
     
     if (respawning > 0) {
+      if (main.extraLives > 0) {
+        main.resumeMusicAfterLastLife();
+      }
       if (--respawning == 0) {
         if (main.extraLives > 0) {
           main.loseLife();
           invincible = INVINCIBLE_DELAY;
-        } else if (!gameMode.stageCompleted) {
+        } else {
           main.konamiCode.enabled = false;
           main.requestMode(Modes.CONTINUE, gameMode.gc);
           // Continue owns the presentation; this outgoing Player must stop now.
@@ -447,10 +455,11 @@ public class Player {
     }
     for(int i = mines.size() - 1; i >= 0; i--) {
       Enemy mine = mines.get(i);
+      boolean acceptedBeforeCallback = respawning == 0 && !invincible && gameMode.playing && !gameMode.stageCompleted;
       if (mine.bump(x - xMargin, y - yMargin, 
           x + xMargin, y + yMargin, invincible)) {
         if (!invincible) {
-          explode();
+          if (acceptedBeforeCallback) registerDeath();
           break;
         }
       }

@@ -23,6 +23,7 @@ export type SongSnapshot = {
     id: SongId;
     playing: boolean;
     playedIntro2: boolean;
+    lastLifeSuspended: boolean;
     activeMusic: MusicSnapshot | null;
 };
 

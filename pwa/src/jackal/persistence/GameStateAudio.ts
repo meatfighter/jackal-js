@@ -43,6 +43,7 @@ export function captureSongSnapshot(main: Main, song: Song | null): SongSnapshot
         id,
         playing: song.playing,
         playedIntro2: song.playedIntro2,
+        lastLifeSuspended: song.lastLifeSuspended,
         activeMusic: captureActiveSongMusic(id, song)
     };
 }
@@ -122,6 +123,7 @@ function restoreSongState(main: Main, snapshot: JackalGameStateSnapshot): void {
     }
     currentSong.playing = state.playing;
     currentSong.playedIntro2 = state.playedIntro2;
+    currentSong.lastLifeSuspended = state.lastLifeSuspended;
     if (state.activeMusic !== null) {
         const music = musicById(main, state.activeMusic.id);
         if (music === null) {

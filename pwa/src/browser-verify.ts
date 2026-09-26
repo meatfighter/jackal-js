@@ -1,3 +1,17 @@
+import { CutsceneSequence } from "./jackal/CutsceneSequence.js";
+import type { ArrayList } from "./java/JavaRuntime.js";
+import { FlashingSkull } from "./jackal/FlashingSkull.js";
+import { BossBlueTank } from "./jackal/BossBlueTank.js";
+import { BossBlueTanksManager } from "./jackal/BossBlueTanksManager.js";
+import { BossShipManager } from "./jackal/BossShipManager.js";
+import { BossShipGun } from "./jackal/BossShipGun.js";
+import { BossGarageManager } from "./jackal/BossGarageManager.js";
+import { BossGarage } from "./jackal/BossGarage.js";
+import { BossSuperTank } from "./jackal/BossSuperTank.js";
+import { Gate } from "./jackal/Gate.js";
+import { PlayerMissile } from "./jackal/PlayerMissile.js";
+import { AttackSource } from "./jackal/AttackSource.js";
+import { Enemy } from "./jackal/Enemy.js";
 import { referenceEnemySoldier, referenceBossHelicopter } from "./RenderPauseReferences.js";
 import { LasersManager } from "./jackal/LasersManager.js";
 import { Flame } from "./jackal/Flame.js";
@@ -120,6 +134,14 @@ async function verify(): Promise<void> {
     let second: MountedGame | null = null;
 
     try {
+        if (new URL(location.href).searchParams.get("suite") === "last-life-arbitration") {
+            await verifyLastLifeArbitration(runtime);
+            return;
+        }
+        if (new URL(location.href).searchParams.get("suite") === "last-life-music") {
+            await verifyLastLifeMusicResume(runtime);
+            return;
+        }
         first = await mountGame(runtime, false);
         verifyAuthoritativeSave(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), first.main, (main) => store.save(main, () => true));
         first.main.requestMode(Modes.GAME, first.container);
@@ -216,7 +238,7 @@ async function verify(): Promise<void> {
             deathRestoreObserved = true;
             assert(restoredMain.mode instanceof GameMode, "Death reload did not restore gameplay");
             assert(restoredMain.mode.player.respawning === deathCountdown && restoredMain.extraLives === 0, "Death reload changed countdown or reserves");
-            assert(restoredMain.currentSong === null && restoredMain.requestedSong === null, "Death reload restarted music before Continue");
+            assert(restoredMain.currentSong?.lastLifeSuspended === true && !restoredMain.isSongPlaying(), "Death reload lost silent held-song intent");
             const snapshot = new JackalGameStateSerializer().createSnapshot(restoredMain, "death-reload-contract");
             assert(isSupportedGameStateSnapshot(snapshot), "Restored death countdown did not recapture validly");
         });
@@ -235,6 +257,8 @@ async function verify(): Promise<void> {
         second = null;
         await verifyFadeRestoreMatrix(runtime);
         await verifyGameplayPauseFadePolicy(runtime);
+        await verifyLastLifeArbitration(runtime);
+        await verifyLastLifeMusicResume(runtime);
         await verifyPausedWorldRendering(runtime);
         await verifyNesMapping(runtime);
     } finally {
@@ -647,7 +671,10 @@ function verifyFinalLifeTransition(runtime: PreparedRuntime, mounted: MountedGam
                 main.extraLives = 0;
                 main.extraLivesStr = "0";
                 player.explode();
-                assert(currentSong() === null && requestedSong() === null, scenario.name + ": death did not clear songs");
+                assert(
+                    currentSong()?.lastLifeSuspended === true && requestedSong() === currentSong() && !main.isSongPlaying(),
+                    scenario.name + ": death did not hold interrupted song"
+                );
                 assert(player.respawning === Player.RESPAWN_DELAY, "Changed death countdown");
             }
             assert(player.respawning > 0 && main.extraLives === 0, "Expected same restored final-life countdown");
@@ -2001,5 +2028,499 @@ async function verifyPausedWorldRendering(runtime: PreparedRuntime): Promise<voi
         Object.defineProperty(runtime.slick.Sys, "getTime", clock);
         if (provider) Object.defineProperty(navigator, "getGamepads", provider);
         else Reflect.deleteProperty(navigator, "getGamepads");
+    }
+}
+
+/** Real loaded worlds; rare boss-boundary state is explicitly seeded, never claimed as natural play. */
+async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void> {
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    assert(clock, "last-life clock descriptor");
+    let now = runtime.slick.Sys.getTime(),
+        mounted: MountedGame | null = null;
+    const cutsceneModes = Reflect.get(CutsceneSequence, "modes") as ArrayList<Modes>;
+    const priorCutscenes = [...cutsceneModes];
+    const store = new runtime.JackalGameStateStore("browser-verification");
+    const serializer = new JackalGameStateSerializer();
+    const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const tick = (elapsed = 10): void => {
+        assert(mounted, "last-life mount");
+        now += elapsed;
+        mounted.container.getInput().poll(1024, 960);
+        mounted.main.update(mounted.container, elapsed);
+    };
+    const current = (): MountedGame => {
+        assert(mounted, "last-life current runtime");
+        return mounted;
+    };
+    const retire = (): void => {
+        if (mounted) destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    const enter = async (stage: number, hard: boolean): Promise<GameMode> => {
+        mounted = await mountGame(runtime, false);
+        const { main, container } = mounted;
+        container.setLoopSuspended(true);
+        main.startPlayer();
+        main.random.setSeed(123);
+        cutsceneModes.clear(); // Equal initial sequence for uninterrupted/restored controls.
+        main.stageIndex = stage;
+        main.hardMode = hard;
+        main.continued = true;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, container);
+        main.nextFrameTime = now;
+        for (let n = 0; n < 500 && (main.fading || !(main.mode instanceof GameMode) || !main.mode.playing); n++) tick();
+        assert(main.mode instanceof GameMode && main.mode.playing && !main.fading, "last-life entrance completed");
+        const w = main.mode;
+        for (const list of w.elements) list.clear();
+        w.enemies.clear();
+        w.solids.clear();
+        w.mines.clear();
+        w.cameraX = 512;
+        w.cameraY = w.maxCameraY = 0;
+        w.triggerY = 0;
+        w.bossCameraPan = false;
+        w.endingCameraPan = false;
+        w.cameraPanListener = null!;
+        w.player.x = 1450;
+        w.player.y = 700;
+        w.player.invincible = 0;
+        main.extraLives = 0;
+        main.extraLivesStr = "0";
+        main.score = 0;
+        main.scoreStr = "000000";
+        return w;
+    };
+    const state = (): string => {
+        const s = serializer.createSnapshot(current().main, "last-life-projection");
+        assert(s.kind === "game", "last-life projection world");
+        return JSON.stringify([s.mainFields, s.random, s.playerFields, s.gameMode, s.requestedSongId, s.currentSongState]);
+    };
+    const roundTrip = async (label: string): Promise<GameMode> => {
+        const source = current().main,
+            expected = state();
+        assert(store.save(source, () => true).saved && store.hasValidSave(), label + " valid save");
+        const bytes = localStorage.getItem(slot);
+        retire();
+        let observed = false;
+        mounted = await mountGame(runtime, true, (main) => {
+            observed = true;
+            assert(main !== source && main.mode instanceof GameMode, label + " fresh ownership");
+            assert(main.gc instanceof runtime.slick.AppGameContainer, "restored arbitration container");
+            main.gc.setLoopSuspended(true);
+        });
+        current().container.setLoopSuspended(true);
+        assert(observed && state() === expected, label + " exact logical restore");
+        assert(localStorage.getItem(slot) === bytes, label + " restore is non-destructive");
+        assert(isSupportedGameStateSnapshot(serializer.createSnapshot(current().main, label)), label + " recapture");
+        return current().main.mode as GameMode;
+    };
+    const controls = new Map<string, string>();
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        for (const kind of ["tank", "ship", "garage", "final"] as const)
+            for (const hard of [false, true])
+                for (const bonus of [false, true])
+                    for (const restoredRun of [false, true]) {
+                        let w = await enter(kind === "tank" ? 0 : kind === "ship" ? 2 : kind === "garage" ? 4 : 5, hard);
+                        let target: Enemy;
+                        const main = current().main;
+                        if (kind === "tank") {
+                            const manager = new BossBlueTanksManager();
+                            manager.spawned = 4;
+                            manager.destroyed = 3;
+                            manager.ready = false;
+                            const tank = new BossBlueTank(1024, 480, manager);
+                            tank.colorOffset = 2;
+                            target = tank;
+                            w.player.x = tank.x;
+                            w.player.y = tank.y;
+                            w.player.update();
+                            assert(w.player.respawning === 182 && !tank.removeFlag, "tank contact registers death without destroying tank");
+                            w.player.x = 1450;
+                            w.player.y = 700;
+                        } else if (kind === "ship") {
+                            const manager = new BossShipManager();
+                            manager.ready = false;
+                            for (let i = manager.shipGuns.size() - 1; i > 0; i--) manager.shipGuns.get(i).remove();
+                            const gun = manager.shipGuns.get(0);
+                            gun.state = BossShipGun.STATE_AIMING;
+                            gun.openY = 32;
+                            gun.hits = 1;
+                            gun.wasHit = false;
+                            target = gun;
+                            w.player.attackAt(w.player.x, w.player.y); // Valid damage; no impossible ship-gun/water-gap contact claim.
+                        } else if (kind === "garage") {
+                            const manager = new BossGarageManager();
+                            manager.ready = false;
+                            for (const garage of [...manager.garages!]) {
+                                garage.state = BossGarage.STATE_OPEN_3;
+                                assert(
+                                    garage.attack(garage.x, garage.y, garage.x + 128, garage.y + 128, AttackSource.PLAYER_WEAPON),
+                                    "garage weapon destruction"
+                                );
+                            }
+                            const gate = [...w.enemies].find((e) => e instanceof Gate && !e.removeFlag);
+                            assert(gate instanceof Gate, "real garage destruction spawned gate");
+                            target = gate;
+                            w.player.attackAt(w.player.x, w.player.y);
+                        } else {
+                            const tank = new BossSuperTank(800, 400);
+                            tank.state = BossSuperTank.STATE_STOPPED;
+                            tank.hits = BossSuperTank.HITS_EXPLODE - 1;
+                            target = tank;
+                            w.player.attackAt(w.player.x, w.player.y);
+                        }
+                        w.bossCameraPan = false;
+                        w.cameraPanListener = null!;
+                        main.score = bonus ? 19999 : 0;
+                        main.scoreStr = main.score.toString();
+                        main.extraLives = 0;
+                        main.extraLivesStr = "0";
+                        // A genuine outstanding weapon is allowed to finish after registered damage.
+                        const cx = target.x + (target.hitX1 + target.hitX2) / 2,
+                            cy = target.y + (target.hitY1 + target.hitY2) / 2;
+                        const missile = new PlayerMissile(cx, cy + 10, 270, 0);
+                        missile.update();
+                        assert(missile.removeFlag, "outstanding missile hit boss/gate");
+                        assert(
+                            kind === "final" ? (target as BossSuperTank).state === BossSuperTank.STATE_EXPLODING : w.stageCompletedFlag,
+                            "real boss completion path"
+                        );
+                        assert(main.currentSong === null && main.requestedSong === null, "authoritative boss cleanup cancels old death hold");
+                        assert(main.extraLives > 0 === bonus, kind + " actual per-call boss/cleanup score award");
+                        if (kind !== "final") {
+                            if (restoredRun) w = await roundTrip(kind + " completed/death-pending");
+                            w.stageCompletedDelay = 1; // Explicit accelerated deadline boundary, then production owns progression.
+                            if (restoredRun) w = await roundTrip(kind + " held-at-one");
+                        }
+                        const original = current().main,
+                            death = w.player.respawning;
+                        for (let n = 0; n < death + 10 && original.mode === w && w.player.respawning > 0; n++) tick();
+                        if (!bonus) {
+                            assert(original.mode instanceof ContinueMode, kind + " death beats objective");
+                            const mode = original.mode;
+                            w.fadeCompleted();
+                            assert(original.mode === mode, kind + " stale fade callback inert");
+                        } else {
+                            assert(original.mode === w && w.player.respawning === 0 && original.extraLives === 0, kind + " rescued reserve consumed once");
+                            for (let n = 0; n < 2500 && original.mode === w; n++) {
+                                // Deterministic backend end notification, not elapsed headless AudioContext time.
+                                if (
+                                    kind === "final" &&
+                                    original.currentSong === original.cutsceneSong &&
+                                    [...w.elements[0]].some((e) => e instanceof FlashingSkull && e.state === FlashingSkull.STATE_PAUSED)
+                                ) {
+                                    const music = original.cutsceneSong.intro!;
+                                    music.restorePlaybackState({ ...music.capturePlaybackState(), transport: "ended-pending" });
+                                }
+                                tick();
+                            }
+                            assert(original.mode !== w && !(original.mode instanceof ContinueMode), kind + " finite healthy destination after rescue");
+                            if (kind === "final") assert(original.mode?.constructor.name === "SunsetMode", "resolved final reaches Sunset");
+                        }
+                        const key = JSON.stringify([kind, hard, bonus]);
+                        const outcome = JSON.stringify([original.mode?.constructor.name, original.extraLives, original.score, original.stageIndex]);
+                        if (restoredRun)
+                            assert(
+                                controls.get(key) === outcome,
+                                key + " fresh restore matches uninterrupted winner and score: " + controls.get(key) + " vs " + outcome
+                            );
+                        else controls.set(key, outcome);
+                        retire();
+                    }
+        for (const bonus of [false, true])
+            for (const restoredRun of [false, true]) {
+                let w = await enter(5, false);
+                const main = current().main;
+                const tank = new BossSuperTank(800, 400);
+                tank.state = BossSuperTank.STATE_EXPLODED;
+                tank.delay = 1;
+                // Explicit final-entry race fixture, distinct from the real fatal-hit sequence above.
+                w.player.attackAt(w.player.x, w.player.y);
+                w.player.respawning = 1;
+                main.stopAllSongs();
+                if (bonus) main.addPoints(20000);
+                if (restoredRun) w = await roundTrip("final-ending-boundary");
+                const held = [...w.enemies].find((e) => e instanceof BossSuperTank);
+                assert(held instanceof BossSuperTank, "restored final tank");
+                tick(restoredRun ? 0 : 10);
+                if (!bonus) assert(current().main.mode instanceof ContinueMode, "final boundary no reserve loses");
+                else {
+                    assert(w.playing && held.delay === 1, "boss waits before same-tick player resolves");
+                    tick();
+                    assert(!w.playing && held.state === BossSuperTank.STATE_PANNING, "next eligible boss tick enters ending");
+                }
+                const key = "final-boundary-" + bonus,
+                    outcome = JSON.stringify([current().main.mode?.constructor.name, current().main.extraLives, held.state, held.delay, w.playing]);
+                if (restoredRun) assert(controls.get(key) === outcome, key + " fresh restore matches uninterrupted ending gate");
+                else controls.set(key, outcome);
+                retire();
+            }
+    } finally {
+        retire();
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+        cutsceneModes.clear();
+        for (const mode of priorCutscenes) cutsceneModes.add(mode);
+        localStorage.removeItem(slot);
+    }
+}
+
+async function verifyLastLifeMusicResume(runtime: PreparedRuntime): Promise<void> {
+    const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
+    assert(clock, "music clock");
+    const sound = runtime.slick.SoundStore.get(),
+        policy = sound.musicOn();
+    const startDescriptor = Object.getOwnPropertyDescriptor(AudioBufferSourceNode.prototype, "start");
+    assert(startDescriptor, "native browser source start");
+    const originalStart = AudioBufferSourceNode.prototype.start,
+        starts: number[] = [];
+    let now = runtime.slick.Sys.getTime(),
+        mounted: MountedGame | null = null;
+    const store = new runtime.JackalGameStateStore("browser-verification"),
+        serializer = new JackalGameStateSerializer();
+    const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
+    const current = (): MountedGame => {
+        assert(mounted, "music runtime");
+        return mounted;
+    };
+    const tick = (elapsed = 10): void => {
+        now += elapsed;
+        const f = current();
+        f.container.getInput().poll(1024, 960);
+        f.main.update(f.container, elapsed);
+    };
+    const world = (): GameMode => {
+        const w = current().main.mode;
+        assert(w instanceof GameMode, "music world");
+        return w;
+    };
+    const key = (down: boolean): void => {
+        document.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", { code: "Enter", key: "Enter", bubbles: true }));
+    };
+    const projection = (): string => {
+        const s = serializer.createSnapshot(current().main, "music-projection");
+        assert(s.kind === "game", "music projection");
+        return JSON.stringify([s.playerFields, s.random, s.mainFields.extraLives, s.mainFields.score, s.currentSongState, s.requestedSongId]);
+    };
+    const retire = (): void => {
+        if (mounted) destroyMounted(runtime, mounted);
+        mounted = null;
+    };
+    const fresh = async (label: string): Promise<void> => {
+        const source = current().main,
+            expected = projection();
+        assert(store.save(source, () => true).saved && store.hasValidSave(), label + " save");
+        const bytes = localStorage.getItem(slot);
+        retire();
+        mounted = await mountGame(runtime, true, (main) => {
+            assert(main !== source && main.gc instanceof runtime.slick.AppGameContainer, label + " fresh container");
+            main.gc.setLoopSuspended(true);
+        });
+        current().container.setLoopSuspended(true);
+        assert(projection() === expected, label + " exact state/offset restore");
+        assert(localStorage.getItem(slot) === bytes, label + " unchanged slot");
+    };
+    const activate = (): Promise<boolean> => {
+        const request = Reflect.get(window, "activateLastLifeAudio") as ((start: () => Promise<boolean>) => Promise<boolean>) | undefined;
+        assert(request, "driver-owned user gesture activation");
+        return request(() => sound.beginPlaybackGenerationFromUserGesture());
+    };
+    const controls = new Map<string, string>();
+    try {
+        Object.defineProperty(runtime.slick.Sys, "getTime", { configurable: true, value: () => now });
+        Object.defineProperty(AudioBufferSourceNode.prototype, "start", {
+            configurable: true,
+            writable: true,
+            value: function (this: AudioBufferSourceNode, when = 0, offset = 0, duration?: number) {
+                if (this.buffer === sound.getDecodedAudioBuffer("music/stage2_repeat.ogg")) starts.push(offset);
+                if (duration === undefined) originalStart.call(this, when, offset);
+                else originalStart.call(this, when, offset, duration);
+            }
+        });
+        for (const queued of [false, true])
+            for (const disabled of [false, true])
+                for (const restoredRun of [false, true]) {
+                    mounted = await mountGame(runtime, false);
+                    current().container.setLoopSuspended(true);
+                    let main = current().main;
+                    main.startPlayer();
+                    main.stageIndex = 1;
+                    main.continued = true;
+                    main.fading = false;
+                    main.fadeListener = null;
+                    main.requestMode(Modes.GAME, current().container);
+                    main.nextFrameTime = now;
+                    for (let n = 0; n < 500 && (main.fading || !world().playing); n++) tick();
+                    assert(!main.fading && world().playing, "music entrance");
+                    for (const layer of world().elements) layer.clear();
+                    world().enemies.clear();
+                    world().mines.clear();
+                    world().solids.clear();
+                    world().triggerY = 0;
+                    main.stopAllSongs();
+                    main.requestSong(main.stageSong2);
+                    tick();
+                    const song = main.currentSong;
+                    assert(song === main.stageSong2 && song.loop, "music loop ownership");
+                    const part = song.loop,
+                        buffer = sound.getDecodedAudioBuffer("music/stage2_repeat.ogg");
+                    assert(buffer && buffer.duration > 0, "decoded duration");
+                    const offset = Math.min(buffer.duration / 3, 0.5);
+                    sound.setMusicOn(true);
+                    assert(await activate(), "real playback generation");
+                    part.restorePlaybackState({ transport: "playing", positionSeconds: offset, playbackRate: 0.8, volume: 0.4, looped: true, fade: null });
+                    await part.attachPlaybackGeneration();
+                    const oldSource = Reflect.get(part, "source") as AudioBufferSourceNode | null,
+                        oldEnded = oldSource?.onended;
+                    main.extraLives = 0;
+                    main.extraLivesStr = "0";
+                    main.score = 19999;
+                    main.scoreStr = "019999";
+                    if (queued) main.requestSong(main.stageSong1); // Pending before damage: preserve it through the hold.
+                    world().player.invincible = 0;
+                    assert(world().player.attackAt(world().player.x, world().player.y), "real last-life damage accepted");
+                    assert(song.lastLifeSuspended && !main.isSongPlaying(), "immediate last-life silence");
+                    const paused = part.capturePlaybackState();
+                    assert(paused.transport === "paused" && paused.positionSeconds > 0, "nonzero held transport");
+                    key(true);
+                    tick();
+                    assert(!world().paused && song.lastLifeSuspended, "fresh Pause cannot own death hold");
+                    key(false);
+                    tick();
+                    const held = projection();
+                    main.setBrowserSuspended(true);
+                    now += 10000;
+                    main.update(current().container, 10000);
+                    main.setBrowserSuspended(false);
+                    assert(projection() === held, "same-page suspension retains hold/count/offset");
+                    await activate();
+                    if (oldSource && oldEnded) oldEnded.call(oldSource, new Event("ended"));
+                    assertPlaybackEqual(part.capturePlaybackState(), paused, "stale generation cannot finish held part");
+                    if (restoredRun) await fresh(queued ? "queued-different-song-hold" : "silent-death-offset");
+                    main = current().main;
+                    const restored = main.currentSong;
+                    assert(restored?.lastLifeSuspended && restored.loop, "restored hold reason");
+                    const restoredPart = restored.loop;
+                    const before = restoredPart.capturePlaybackState();
+                    sound.setMusicOn(!disabled);
+                    starts.length = 0;
+                    new EnemySoldier(world().player.x + 200, world().player.y, EnemySoldierType.STATIONARY).explode();
+                    assert(main.extraLives === 1 && restored.lastLifeSuspended, "nested production score does not resume inside gainExtraLife");
+                    tick(restoredRun ? 0 : 10);
+                    assert(!restored.lastLifeSuspended && world().player.respawning > 0, "Player releases rescue before vehicle returns");
+                    if (queued) {
+                        assert(main.currentSong === null, "obsolete held track not briefly resumed");
+                        tick();
+                        assert(main.currentSong === main.stageSong1, "queued track wins normal scheduler");
+                    } else {
+                        assert(main.currentSong === restored, "rescued exact song identity");
+                        const recovered = restoredPart.capturePlaybackState();
+                        assert(
+                            recovered.transport === "playing" &&
+                                Math.abs(recovered.positionSeconds - before.positionSeconds) < 0.1 &&
+                                recovered.playbackRate === 0.8 &&
+                                recovered.volume === 0.4 &&
+                                recovered.looped,
+                            "rescued exact transport intent"
+                        );
+                        assert(sound.musicOn() === !disabled, "user Music policy preserved");
+                        if (disabled) {
+                            assert(starts.length === 0, "disabled rescue attached no audible source");
+                            sound.setMusicOn(true);
+                        }
+                        assert(await activate(), "accepted recovery generation");
+                        await restoredPart.attachPlaybackGeneration();
+                        assert(
+                            starts.some((value) => Math.abs(value - before.positionSeconds) < 0.1),
+                            "actual source attachment uses preserved offset"
+                        );
+                        // Save after release but before respawn, detached at an exact logical boundary.
+                        sound.endPlaybackGeneration();
+                        if (restoredRun) await fresh("rescued-before-respawn");
+                        key(true);
+                        tick();
+                        assert(world().paused, "normal Pause eligible after rescue");
+                        key(false);
+                        tick();
+                        key(true);
+                        tick();
+                        assert(!world().paused, "fresh unpause after rescue");
+                        key(false);
+                        tick();
+                    }
+                    const final = serializer.createSnapshot(current().main, "music-final");
+                    assert(isSupportedGameStateSnapshot(final), "music candidate valid");
+                    const caseKey = JSON.stringify([queued, disabled]),
+                        state = final.currentSongState;
+                    const outcome = JSON.stringify([
+                        final.mainFields.extraLives,
+                        final.mainFields.score,
+                        state?.id,
+                        state?.playing,
+                        state?.lastLifeSuspended,
+                        state?.playedIntro2,
+                        state?.activeMusic?.id,
+                        state?.activeMusic?.playback.transport
+                    ]);
+                    if (restoredRun) assert(controls.get(caseKey) === outcome, caseKey + " fresh music restore matches uninterrupted recovery");
+                    else controls.set(caseKey, outcome);
+                    retire();
+                }
+        mounted = await mountGame(runtime, false);
+        current().container.setLoopSuspended(true);
+        const main = current().main;
+        main.startPlayer();
+        main.stageIndex = 1;
+        main.continued = true;
+        main.fading = false;
+        main.fadeListener = null;
+        main.requestMode(Modes.GAME, current().container);
+        main.nextFrameTime = now;
+        for (let n = 0; n < 500 && (main.fading || !world().playing); n++) tick();
+        for (const layer of world().elements) layer.clear();
+        world().enemies.clear();
+        world().mines.clear();
+        world().solids.clear();
+        world().triggerY = 0;
+        main.stopAllSongs();
+        main.requestSong(main.stageSong1);
+        tick();
+        const boundary = main.stageSong1,
+            intro = boundary.intro!,
+            loop = boundary.loop!;
+        assert(intro.getTransportState() === "playing", "real intro before completion boundary");
+        // Explicit backend end notification avoids assuming headless AudioContext wall-clock advancement.
+        intro.restorePlaybackState({ ...intro.capturePlaybackState(), transport: "ended-pending" });
+        main.extraLives = 0;
+        main.extraLivesStr = "0";
+        main.score = 19999;
+        main.scoreStr = "019999";
+        world().player.invincible = 0;
+        assert(world().player.attackAt(world().player.x, world().player.y), "boundary death accepted");
+        for (let n = 0; n < 8; n++) tick();
+        assert(boundary.lastLifeSuspended && !loop.isTransportActive(), "completed intro cannot advance while death held");
+        await fresh("completed-intro-death-hold");
+        const recovered = current().main.currentSong;
+        assert(recovered?.lastLifeSuspended && recovered.intro && recovered.loop, "restored ended-part identity");
+        new EnemySoldier(world().player.x + 200, world().player.y, EnemySoldierType.STATIONARY).explode();
+        tick(0);
+        tick();
+        assert(
+            !recovered.lastLifeSuspended && recovered.loop.getTransportState() === "playing" && !recovered.intro.isTransportActive(),
+            "completed intro stays finished; released sequencer starts loop"
+        );
+        retire();
+    } finally {
+        if (mounted) {
+            key(false);
+            current().container.getInput().poll(1024, 960);
+        }
+        retire();
+        Object.defineProperty(runtime.slick.Sys, "getTime", clock);
+        Object.defineProperty(AudioBufferSourceNode.prototype, "start", startDescriptor);
+        sound.setMusicOn(policy);
+        localStorage.removeItem(slot);
     }
 }
