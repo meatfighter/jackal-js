@@ -33,10 +33,12 @@ try {
     const navigation = await browser.page.call("Page.navigate", { url: browserVerificationUrl });
     assert.ok(!navigation.errorText, "Verification fixture navigation failed");
     await waitForExpression(browser.page, 'typeof window.captureCompactLabels === "function" && typeof window.activateLastLifeAudio === "function"');
+    let stage = "";
+    const seenStages = new Set();
     while (true) {
         const status = await waitForExpression(
             browser.page,
-            `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.lastLifeAudioActivation ? {audioActivation:true} : window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : false;})()`,
+            `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.lastLifeAudioActivation ? {audioActivation:true} : window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : r?.dataset.stage && r.dataset.stage !== ${JSON.stringify(stage)} ? {stage:r.dataset.stage} : false;})()`,
             360000
         );
         if (status.done) {
@@ -49,6 +51,13 @@ try {
                 writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "ending-first-render-matrix.json"), ending.result.value);
             }
             break;
+        }
+        if (status.stage) {
+            assert.ok(!seenStages.has(status.stage) && seenStages.size < 9, "Browser suite stages must advance finitely");
+            seenStages.add(status.stage);
+            stage = status.stage;
+            console.log(`Browser verification stage: ${stage} (360s bound)`);
+            continue;
         }
         if (status.audioActivation) {
             const activation = await browser.page.call("Runtime.evaluate", {

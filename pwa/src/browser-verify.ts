@@ -276,14 +276,23 @@ async function verify(): Promise<void> {
         verifyEditorResume(second.main, second.container);
         destroyMounted(runtime, second);
         second = null;
+        result.dataset.stage = "FadeRestoreMatrix";
         await verifyFadeRestoreMatrix(runtime);
+        result.dataset.stage = "GameplayPauseFadePolicy";
         await verifyGameplayPauseFadePolicy(runtime);
+        result.dataset.stage = "LastLifeArbitration";
         await verifyLastLifeArbitration(runtime);
+        result.dataset.stage = "BossEntryLastLife";
         await verifyBossEntryLastLife(runtime);
+        result.dataset.stage = "SaveSemanticCutover";
         await verifySaveSemanticCutover(runtime);
+        result.dataset.stage = "EndingPersistence";
         await verifyEndingPersistence(runtime);
+        result.dataset.stage = "LastLifeMusicResume";
         await verifyLastLifeMusicResume(runtime);
+        result.dataset.stage = "PausedWorldRendering";
         await verifyPausedWorldRendering(runtime);
+        result.dataset.stage = "NesMapping";
         await verifyNesMapping(runtime);
     } finally {
         destroyMounted(runtime, first);
