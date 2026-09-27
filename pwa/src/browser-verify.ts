@@ -297,7 +297,8 @@ async function verify(): Promise<void> {
 void verify().then(
     () => {
         result.dataset.status = "passed";
-        result.textContent = "Real Jackal browser boot/gameplay save/restore/audio, final-life transition, and input-editor storage verification passed.";
+        result.textContent =
+            "Real Jackal browser boot/gameplay save/restore/audio, final-life transition, ending presentation, cutscene persistence, and input-editor storage verification passed.";
     },
     (error: unknown) => {
         console.error(error);
