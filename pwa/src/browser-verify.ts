@@ -6,7 +6,6 @@ import { Triggers } from "./jackal/Triggers.js";
 import { GrayJeep } from "./jackal/GrayJeep.js";
 import { BossHeadquarters } from "./jackal/BossHeadquarters.js";
 import { CutsceneSequence } from "./jackal/CutsceneSequence.js";
-import type { ArrayList } from "./java/JavaRuntime.js";
 import { FlashingSkull } from "./jackal/FlashingSkull.js";
 import { BossBlueTank } from "./jackal/BossBlueTank.js";
 import { BossBlueTanksManager } from "./jackal/BossBlueTanksManager.js";
@@ -2063,8 +2062,7 @@ async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void
     assert(clock, "last-life clock descriptor");
     let now = runtime.slick.Sys.getTime(),
         mounted: MountedGame | null = null;
-    const cutsceneModes = Reflect.get(CutsceneSequence, "modes") as ArrayList<Modes>;
-    const priorCutscenes = [...cutsceneModes];
+    const priorCutscenes = CutsceneSequence.captureState();
     const store = new runtime.JackalGameStateStore("browser-verification");
     const serializer = new JackalGameStateSerializer();
     const slot = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
@@ -2088,7 +2086,7 @@ async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void
         container.setLoopSuspended(true);
         main.startPlayer();
         main.random.setSeed(123);
-        cutsceneModes.clear(); // Equal initial sequence for uninterrupted/restored controls.
+        CutsceneSequence.restoreState([]); // Equal initial sequence for uninterrupted/restored controls.
         main.stageIndex = stage;
         main.hardMode = hard;
         main.continued = true;
@@ -2121,7 +2119,7 @@ async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void
     const state = (): string => {
         const s = serializer.createSnapshot(current().main, "last-life-projection");
         assert(s.kind === "game", "last-life projection world");
-        return JSON.stringify([s.mainFields, s.random, s.playerFields, s.gameMode, s.requestedSongId, s.currentSongState]);
+        return JSON.stringify([s.mainFields, s.random, s.remainingCutscenes, s.playerFields, s.gameMode, s.requestedSongId, s.currentSongState]);
     };
     const roundTrip = async (label: string): Promise<GameMode> => {
         const source = current().main,
@@ -2287,8 +2285,7 @@ async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void
     } finally {
         retire();
         Object.defineProperty(runtime.slick.Sys, "getTime", clock);
-        cutsceneModes.clear();
-        for (const mode of priorCutscenes) cutsceneModes.add(mode);
+        CutsceneSequence.restoreState(priorCutscenes);
         localStorage.removeItem(slot);
     }
 }
