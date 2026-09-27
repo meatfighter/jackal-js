@@ -45,6 +45,25 @@ try {
             ...(name === "chromium" ? { args: ["--use-angle=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] } : {})
         });
         try {
+            writeFileSync(
+                join(evidence, `${name}-ending-browser-identity.json`),
+                JSON.stringify(
+                    {
+                        name,
+                        version: browser.version(),
+                        executable: type.executablePath(),
+                        headless: name === "firefox" && process.env.PWA_FIREFOX_HEADLESS === "1"
+                    },
+                    null,
+                    2
+                )
+            );
+            // Keep Firefox from tearing down its last native window between
+            // independent contexts. This blank page owns no game modules/storage.
+            if (name === "firefox") {
+                const keeper = await browser.newPage();
+                await keeper.goto("about:blank");
+            }
             const records = [];
             let packagedBytes;
             for (const remaining of [0, 1, 2])
@@ -86,6 +105,9 @@ try {
                         assert.deepEqual(errors, []);
                         records.push({ remaining, partial, before, after });
                         await page.evaluate(() => window.endingReload.dispose());
+                    } catch (error) {
+                        console.error(`${name}: reload case remaining=${remaining}, partial=${partial} failed`, error);
+                        throw error;
                     } finally {
                         await context.close();
                     }
