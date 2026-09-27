@@ -91,81 +91,113 @@ export async function verifyHealthyFinalBossScorePresentation(runtime: PreparedR
     const f = await createEndingVerification(runtime),
         evidence: unknown[] = [];
     try {
-        for (const startScore of [123450, 1000000])
-            for (const hard of [false, true]) {
-                await f.mount(false);
-                const { main, container } = f.current();
-                main.startPlayer();
-                main.stageIndex = 5;
-                main.hardMode = hard;
-                main.requestMode(Modes.GAME, container);
-                for (let n = 0; n < 500 && (main.fading || !(main.mode instanceof GameMode) || !main.mode.playing); n++) f.tick();
-                check(main.mode instanceof GameMode && main.mode.playing && !main.fading, "healthy loaded stage5");
-                const world = main.mode;
-                // Seed the final-hit boundary, retaining the actual boss, missile, cleanup and ending producers.
-                for (const list of world.elements) list.clear();
-                world.enemies.clear();
-                world.solids.clear();
-                world.mines.clear();
-                world.cameraX = 512;
-                world.cameraY = world.maxCameraY = 0;
-                world.triggerY = 0;
-                world.bossCameraPan = false;
-                world.endingCameraPan = false;
-                world.cameraPanListener = null!;
-                world.player.x = 1450;
-                world.player.y = 700;
-                world.player.invincible = 0;
-                main.score = startScore;
-                main.friendlySoldiersPickedUp = 3;
-                main.extraLives = 4;
-                main.reconcileStateAfterRestore();
-                const ledger: number[] = [],
-                    add = main.addPoints.bind(main);
-                main.addPoints = (points) => {
-                    ledger.push(points);
-                    add(points);
-                };
-                const tank = new BossSuperTank(800, 400);
-                tank.state = BossSuperTank.STATE_STOPPED;
-                tank.hits = BossSuperTank.HITS_EXPLODE - 1;
-                const missile = new PlayerMissile(tank.x + (tank.hitX1 + tank.hitX2) / 2, tank.y + (tank.hitY1 + tank.hitY2) / 2 + 10, 270, 0);
-                missile.update();
-                check(missile.removeFlag && tank.state === BossSuperTank.STATE_EXPLODING, "actual healthy final missile hit");
-                let ticks = 0;
-                while (main.mode === world) {
-                    check(world.player.respawning === 0, "healthy control never registers death");
-                    if (
-                        main.currentSong === main.cutsceneSong &&
-                        [...world.elements[0]].some((e) => e instanceof FlashingSkull && e.state === FlashingSkull.STATE_PAUSED)
-                    ) {
-                        const music = main.cutsceneSong.intro;
-                        check(music, "cutscene backend notification");
-                        music.restorePlaybackState({ ...music.capturePlaybackState(), transport: "ended-pending" });
-                        runtime.slick.Music.poll(0); // Container dispatches backend completion before Main.update.
-                    }
-                    f.tick();
-                    check(++ticks < 5000, "healthy final completion bounded");
-                }
-                check(main.mode instanceof SunsetMode, "healthy final enters actual Sunset");
-                const total = startScore + ledger.reduce((sum, p) => sum + p, 0),
-                    text = "final score: " + String(total).padStart(6, "0");
-                check(ledger.length > 0 && main.score === total && main.scoreStr === String(total).padStart(6, "0"), "independent actual award ledger");
-                check(main.mode.credits.at(-1)?.[0] === text, "healthy boss completion ending text");
-                f.render();
-                if (hard) {
-                    while (main.mode instanceof SunsetMode) {
+        const killed: string[] = [];
+        for (const mutation of ["none", "omit-pows", "double-award"] as const)
+            for (const startScore of [123450, 1000000])
+                for (const hard of [false, true]) {
+                    if (mutation !== "none" && (hard || startScore !== 123450)) continue;
+                    await f.mount(false);
+                    const { main, container } = f.current();
+                    main.startPlayer();
+                    main.stageIndex = 5;
+                    main.hardMode = hard;
+                    main.requestMode(Modes.GAME, container);
+                    for (let n = 0; n < 500 && (main.fading || !(main.mode instanceof GameMode) || !main.mode.playing); n++) f.tick();
+                    check(main.mode instanceof GameMode && main.mode.playing && !main.fading, "healthy loaded stage5");
+                    const world = main.mode;
+                    // Seed the final-hit boundary, retaining the actual boss, missile, cleanup and ending producers.
+                    for (const list of world.elements) list.clear();
+                    world.enemies.clear();
+                    world.solids.clear();
+                    world.mines.clear();
+                    world.cameraX = 512;
+                    world.cameraY = world.maxCameraY = 0;
+                    world.triggerY = 0;
+                    world.bossCameraPan = false;
+                    world.endingCameraPan = false;
+                    world.cameraPanListener = null!;
+                    world.player.x = 1450;
+                    world.player.y = 700;
+                    world.player.invincible = 0;
+                    main.score = startScore;
+                    main.friendlySoldiersPickedUp = 3;
+                    main.extraLives = 4;
+                    main.reconcileStateAfterRestore();
+                    const ledger: number[] = [],
+                        add = main.addPoints.bind(main);
+                    main.addPoints = (points) => {
+                        // Behavioral fault injection at the award boundary; production files remain untouched.
+                        if (points > 0 && mutation === "omit-pows") points -= 6000;
+                        if (points > 0 && mutation === "double-award") points *= 2;
+                        ledger.push(points);
+                        add(points);
+                    };
+                    const tank = new BossSuperTank(800, 400);
+                    tank.state = BossSuperTank.STATE_STOPPED;
+                    tank.hits = BossSuperTank.HITS_EXPLODE - 1;
+                    const missile = new PlayerMissile(tank.x + (tank.hitX1 + tank.hitX2) / 2, tank.y + (tank.hitY1 + tank.hitY2) / 2 + 10, 270, 0);
+                    missile.update();
+                    check(missile.removeFlag && tank.state === BossSuperTank.STATE_EXPLODING, "actual healthy final missile hit");
+                    let ticks = 0;
+                    while (main.mode === world) {
+                        check(world.player.respawning === 0, "healthy control never registers death");
+                        if (
+                            main.currentSong === main.cutsceneSong &&
+                            [...world.elements[0]].some((e) => e instanceof FlashingSkull && e.state === FlashingSkull.STATE_PAUSED)
+                        ) {
+                            const music = main.cutsceneSong.intro;
+                            check(music, "cutscene backend notification");
+                            music.restorePlaybackState({ ...music.capturePlaybackState(), transport: "ended-pending" });
+                            runtime.slick.Music.poll(0); // Container dispatches backend completion before Main.update.
+                        }
                         f.tick();
-                        check(++ticks < 20000, "hard ending natural transition");
+                        check(++ticks < 5000, "healthy final completion bounded");
                     }
-                    const ending = f.current().main.mode;
-                    check(ending instanceof HardEndingMode, "actual hard ending reached");
-                    check(ending.finalScore === text && ending.finalScoreX === (1024 - text.length * 32) >> 1, "hard final text and full-width centering");
+                    check(main.mode instanceof SunsetMode, "healthy final enters actual Sunset");
+                    const total = startScore + ledger.reduce((sum, p) => sum + p, 0),
+                        text = "final score: " + String(total).padStart(6, "0");
+                    check(ledger.length > 0 && main.score === total && main.scoreStr === String(total).padStart(6, "0"), "independent actual award ledger");
+                    const independentAward = (): void => {
+                        // Independent oracle for this deliberately cleared world with three POWs.
+                        const expectedAward = 10_000 + 3 * 2_000;
+                        const positiveAwards = ledger.filter((points) => points > 0);
+                        check(
+                            ledger.every((points) => points >= 0),
+                            "healthy final has no negative awards"
+                        );
+                        check(positiveAwards.length === 1 && positiveAwards[0] === expectedAward, "healthy final awards tank plus POWs exactly once");
+                        check(main.score === startScore + expectedAward, "healthy final expected numeric total");
+                        check(text === (startScore === 123450 ? "final score: 139450" : "final score: 1016000"), "healthy final independently expected text");
+                    };
+                    if (mutation !== "none") {
+                        let failure = "";
+                        try {
+                            independentAward();
+                        } catch (error) {
+                            failure = error instanceof Error ? error.message : String(error);
+                        }
+                        check(failure === "healthy final awards tank plus POWs exactly once", "award mutant must fail the intended numerical assertion");
+                        killed.push(mutation);
+                        continue;
+                    }
+                    independentAward();
+                    check(main.mode.credits.at(-1)?.[0] === text, "healthy boss completion ending text");
                     f.render();
+                    if (hard) {
+                        while (main.mode instanceof SunsetMode) {
+                            f.tick();
+                            check(++ticks < 20000, "hard ending natural transition");
+                        }
+                        const ending = f.current().main.mode;
+                        check(ending instanceof HardEndingMode, "actual hard ending reached");
+                        check(ending.finalScore === text && ending.finalScoreX === (1024 - text.length * 32) >> 1, "hard final text and full-width centering");
+                        f.render();
+                    }
+                    check(world.player.respawning === 0 && main.score === total, "no death, restore or duplicated score in healthy control");
+                    evidence.push({ startScore, hard, pows: 3, ledger, total, text, ticks });
                 }
-                check(world.player.respawning === 0 && main.score === total, "no death, restore or duplicated score in healthy control");
-                evidence.push({ startScore, hard, pows: 3, ledger, total, text, ticks });
-            }
+        check(killed.join(",") === "omit-pows,double-award", "healthy final behavioral mutation manifest");
+        Reflect.set(window, "healthyFinalMutationEvidence", killed);
         check(evidence.length === 4, "healthy final scenario manifest");
         Reflect.set(window, "healthyFinalEvidence", evidence);
     } finally {

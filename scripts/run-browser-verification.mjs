@@ -52,7 +52,8 @@ try {
             }
             if (process.env.QUALIFICATION_EVIDENCE_DIR) {
                 const counters = await browser.page.call("Runtime.evaluate", {
-                    expression: "JSON.stringify({map:window.mapCounterEvidence??null,healthyFinal:window.healthyFinalEvidence??null})",
+                    expression:
+                        "JSON.stringify({map:window.mapCounterEvidence??null,healthyFinal:window.healthyFinalEvidence??null,awardMutants:window.healthyFinalMutationEvidence??null})",
                     returnByValue: true
                 });
                 writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "counter-parity-browser.json"), counters.result.value);
