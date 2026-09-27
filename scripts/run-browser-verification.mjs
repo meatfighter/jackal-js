@@ -9,7 +9,7 @@ import { rootDir } from "./build-utils.mjs";
 
 const port = 5197;
 const focusedSuite = process.env.JACKAL_BROWSER_SUITE;
-if (focusedSuite && !["last-life-music", "last-life-arbitration", "boss-entry-last-life", "ending-persistence"].includes(focusedSuite))
+if (focusedSuite && !["last-life-music", "last-life-arbitration", "boss-entry-last-life", "ending-persistence", "counter-parity"].includes(focusedSuite))
     throw new Error("Unknown browser verification suite");
 const browserVerificationUrl = `http://127.0.0.1:${port}/browser-verify.html${focusedSuite ? "?suite=" + focusedSuite : ""}`;
 const appUrl = `http://127.0.0.1:${port}/`;
@@ -50,10 +50,17 @@ try {
                 mkdirSync(process.env.QUALIFICATION_EVIDENCE_DIR, { recursive: true });
                 writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "ending-first-render-matrix.json"), ending.result.value);
             }
+            if (process.env.QUALIFICATION_EVIDENCE_DIR) {
+                const counters = await browser.page.call("Runtime.evaluate", {
+                    expression: "JSON.stringify({map:window.mapCounterEvidence??null,healthyFinal:window.healthyFinalEvidence??null})",
+                    returnByValue: true
+                });
+                writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "counter-parity-browser.json"), counters.result.value);
+            }
             break;
         }
         if (status.stage) {
-            assert.ok(!seenStages.has(status.stage) && seenStages.size < 9, "Browser suite stages must advance finitely");
+            assert.ok(!seenStages.has(status.stage) && seenStages.size < 11, "Browser suite stages must advance finitely");
             seenStages.add(status.stage);
             stage = status.stage;
             console.log(`Browser verification stage: ${stage} (360s bound)`);

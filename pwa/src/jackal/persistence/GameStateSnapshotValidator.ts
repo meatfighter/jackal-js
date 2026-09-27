@@ -461,10 +461,11 @@ function isRestorableMainFields(fields: EncodedRecord): boolean {
         typeof fields.fadeOut === "boolean" &&
         isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) &&
         isIntegerInRange(fields.score, 0, JAVA_INT_MAX) &&
-        isIntegerInRange(fields.extraLives, 0, 1_000_000) &&
+        isIntegerInRange(fields.extraLives, 0, JAVA_INT_MAX) &&
         typeof fields.hasMissiles === "boolean" &&
-        isIntegerInRange(fields.missilePower, 0, 1_000_000) &&
-        isIntegerInRange(fields.friendlySoldiersPickedUp, 0, 1_000_000) &&
+        isIntegerInRange(fields.missilePower, 0, 2) &&
+        (fields.hasMissiles === true || fields.missilePower === 0) &&
+        isIntegerInRange(fields.friendlySoldiersPickedUp, 0, JAVA_INT_MAX) &&
         typeof fields.hardMode === "boolean" &&
         typeof fields.continued === "boolean" &&
         (!fields.fading || isIntegerInRange(fields.fadeIndex, 0, MAX_FADE_INDEX - 1))

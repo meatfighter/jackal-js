@@ -61,3 +61,58 @@ test("real Menu fresh input can commit every option during entrance fade and res
         await mod.server.close();
     }
 });
+
+test("ordinary simple-menu no-selection, held/released navigation and late commits cover declared branches", async () => {
+    const mod = await endingModules(),
+        manifest = new Set();
+    try {
+        for (const id of ["CONTINUE", "DIFFICULTY", "OPTIONS"]) {
+            const f = endingFixture(mod, { stage: 0 });
+            f.enter(id);
+            while (f.main.fading) f.tick();
+            for (let n = 0; n < 30; n++) {
+                f.tick();
+                f.validate();
+            }
+            assert.equal(f.main.mode.state, 1);
+            assert.equal(f.main.mode.optionSelectedFlag, false);
+            manifest.add(id + ":none");
+            const count = f.main.mode.menu.options.length;
+            for (let index = 0; index < count; index++) {
+                const source = endingFixture(mod, { stage: 0 });
+                source.enter(id);
+                while (source.main.fading) source.tick();
+                source.tick();
+                for (let i = 0; i < index; i++) {
+                    source.keys.add("Down");
+                    source.tick();
+                    const selected = source.main.mode.menu.selectedIndex;
+                    source.tick();
+                    assert.equal(source.main.mode.menu.selectedIndex, selected, "held navigation does not repeat");
+                    source.keys.clear();
+                    source.tick();
+                }
+                source.keys.add("Fire");
+                source.tick();
+                source.keys.clear();
+                const snapshot = source.validate();
+                assert.equal(snapshot.modeFields.selectedIndex, index);
+                const fresh = endingFixture(mod, { stage: 0 });
+                fresh.serializer.restoreStandaloneModeSnapshot(fresh.main, fresh.gc, snapshot);
+                const owner = fresh.main.mode;
+                let n = 0;
+                while (fresh.main.mode === owner) {
+                    fresh.validate();
+                    fresh.tick();
+                    assert.ok(++n < 100);
+                }
+                assert.equal(fresh.actions.length, 1);
+                manifest.add(id + ":" + index);
+            }
+            for (const key of [id + ":none", ...Array.from({ length: count }, (_, i) => id + ":" + i)]) assert.ok(manifest.has(key), key);
+        }
+        assert.equal(manifest.size, 10, "three nonselection branches and seven committed options");
+    } finally {
+        await mod.server.close();
+    }
+});

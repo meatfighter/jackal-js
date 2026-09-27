@@ -85,12 +85,15 @@ test("actual Intro attract loops and every cutscene/map stage validate throughou
                 f.main.friendlySoldiersPickedUp = 3;
                 f.enter(id);
                 let ticks = 0;
+                const visits = new Set();
                 while (f.main.mode) {
-                    f.validate();
+                    const snapshot = f.validate();
+                    visits.add(`${snapshot.modeId}:${snapshot.modeFields.state}`);
                     f.tick();
                     assert.ok(++ticks < 10000, `${id} finite progression`);
                 }
                 assert.ok(f.actions.includes(mod.Modes.GAME));
+                if (id !== "INTRO_MAP") for (const state of [0, 1, 2, 3, 4]) assert.ok(visits.has(`MAP:${state}`), `${id}/${stage} MAP phase ${state}`);
             }
     } finally {
         await mod.server.close();

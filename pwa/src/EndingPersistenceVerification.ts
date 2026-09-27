@@ -326,6 +326,12 @@ export async function createEndingVerification(runtime?: PreparedRuntime) {
     }
     return {
         initialBag,
+        mount,
+        current,
+        tick,
+        capture,
+        roundtrip,
+        textCalls,
         prepareReload,
         restoreReload,
         matrix,

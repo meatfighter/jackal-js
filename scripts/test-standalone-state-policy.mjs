@@ -35,6 +35,29 @@ test("semantically invalid standalone saves are repeatable non-destructive load 
             f.enter(id);
             const valid = f.validate();
             const changes = [];
+            if (id === "INTRO_MAP") {
+                for (const name of ["extraLives", "friendlySoldiersPickedUp"])
+                    for (const value of [-1, 0.5, 2147483648])
+                        changes.push((s) => {
+                            s.mainFields[name] = value;
+                        });
+                for (const [hasMissiles, missilePower] of [
+                    [false, 1],
+                    [false, 2],
+                    [true, 3],
+                    [true, -1],
+                    [true, 0.5]
+                ])
+                    changes.push((s) => {
+                        Object.assign(s.mainFields, { hasMissiles, missilePower });
+                    });
+                for (const name of ["extraLives", "friendlySoldiersPickedUp"]) {
+                    const boundary = structuredClone(valid);
+                    boundary.mainFields[name] = 2147483647;
+                    assert.equal(storage.writeStoredGameState(boundary, () => true).saved, true, "large Java counter real writer");
+                    assert.equal(storage.inspectStoredGameState().status, "current", "large Java counter real reader");
+                }
+            }
             for (const [name, values] of Object.entries(fields))
                 for (const value of values)
                     changes.push((s) => {

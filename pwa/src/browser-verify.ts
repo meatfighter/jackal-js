@@ -1,3 +1,5 @@
+import { verifyMapCounterPersistence, verifyHealthyFinalBossScorePresentation } from "./CounterParityVerification.js";
+import { SunsetMode } from "./jackal/SunsetMode.js";
 import { verifyEndingPersistence } from "./EndingPersistenceVerification.js";
 import { BossStatuesManager } from "./jackal/BossStatuesManager.js";
 import { BossHelicopterManager } from "./jackal/BossHelicopterManager.js";
@@ -154,6 +156,11 @@ async function verify(): Promise<void> {
             await verifyBossEntryLastLife(runtime);
             return;
         }
+        if (new URL(location.href).searchParams.get("suite") === "counter-parity") {
+            await verifyMapCounterPersistence(runtime);
+            await verifyHealthyFinalBossScorePresentation(runtime);
+            return;
+        }
         if (new URL(location.href).searchParams.get("suite") === "ending-persistence") {
             await verifyEndingPersistence(runtime);
             return;
@@ -287,6 +294,10 @@ async function verify(): Promise<void> {
         await verifyBossEntryLastLife(runtime);
         verificationResult.dataset.stage = "SaveSemanticCutover";
         await verifySaveSemanticCutover(runtime);
+        verificationResult.dataset.stage = "MapCounterPersistence";
+        await verifyMapCounterPersistence(runtime);
+        verificationResult.dataset.stage = "HealthyFinalBoss";
+        await verifyHealthyFinalBossScorePresentation(runtime);
         verificationResult.dataset.stage = "EndingPersistence";
         await verifyEndingPersistence(runtime);
         verificationResult.dataset.stage = "LastLifeMusicResume";
@@ -2252,7 +2263,11 @@ async function verifyLastLifeArbitration(runtime: PreparedRuntime): Promise<void
                                 tick();
                             }
                             assert(original.mode !== w && !(original.mode instanceof ContinueMode), kind + " finite healthy destination after rescue");
-                            if (kind === "final") assert(original.mode?.constructor.name === "SunsetMode", "resolved final reaches Sunset");
+                            if (kind === "final") {
+                                assert(original.mode instanceof SunsetMode, "resolved final reaches Sunset");
+                                const expectedText = "final score: " + String(original.score).padStart(6, "0");
+                                assert(original.mode.credits.at(-1)?.[0] === expectedText, "actual final completion preserves ending text");
+                            }
                         }
                         const key = JSON.stringify([kind, hard, bonus]);
                         const outcome = JSON.stringify([original.mode?.constructor.name, original.extraLives, original.score, original.stageIndex]);
