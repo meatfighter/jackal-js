@@ -2,7 +2,7 @@
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 const game = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).name.replace("-js", "");
 const jackal = game === "jackal";
 const server = await createServer({

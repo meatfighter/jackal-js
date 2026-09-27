@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 import { loadLastLifeModules, makeLastLifeWorld } from "./last-life-test-utils.mjs";
 
 class Part {

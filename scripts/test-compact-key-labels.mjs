@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Input } from "slick2d-ts";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const game = pkg.name === "jackal-js" ? "jackal" : "stickvania";

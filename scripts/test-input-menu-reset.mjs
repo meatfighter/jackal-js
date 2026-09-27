@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 const server = await createServer({ root: "pwa", appType: "custom", logLevel: "silent", server: { middlewareMode: true } });
 try {

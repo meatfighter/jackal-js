@@ -1,6 +1,6 @@
 ﻿import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 import { fileURLToPath } from "node:url";
 test("recorded final-life death wins over stage completion through actual Player.update", async () => {
     const server = await createServer({

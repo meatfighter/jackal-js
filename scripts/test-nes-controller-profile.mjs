@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 const packageName = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).name;
 const game = packageName === "jackal-js" ? "jackal" : packageName === "stickvania-js" ? "stickvania" : null;

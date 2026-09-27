@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import ts from "typescript";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pwaRoot = join(rootDir, "pwa");

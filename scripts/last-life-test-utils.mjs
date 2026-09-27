@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 import { fileURLToPath } from "node:url";
 export async function loadLastLifeModules(transforms = {}) {
     const server = await createServer({

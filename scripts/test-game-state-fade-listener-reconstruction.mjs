@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolve } from "node:path";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 test("real serializer reconstructs GameMode fade ownership and dispatches completion once", async () => {
     const server = await createServer({ root: resolve("pwa"), appType: "custom", logLevel: "silent", server: { middlewareMode: true } });

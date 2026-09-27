@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { createServer } from "vite";
+import { createServer } from "./vite-test-server.mjs";
 
 // Immutable render references captured from 9719c8e before adding pause guards.
 const originals = JSON.parse(readFileSync(new URL("./fixtures/render-pause-original.json", import.meta.url), "utf8"));
