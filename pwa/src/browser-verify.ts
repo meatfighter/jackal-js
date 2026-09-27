@@ -53,6 +53,7 @@ if (result === null || host === null) {
     throw new Error("Browser verification fixture is missing required elements.");
 }
 const gameHost = host;
+const verificationResult = result;
 
 type RuntimeMain = InstanceType<PreparedRuntime["Main"]>;
 
@@ -276,23 +277,23 @@ async function verify(): Promise<void> {
         verifyEditorResume(second.main, second.container);
         destroyMounted(runtime, second);
         second = null;
-        result.dataset.stage = "FadeRestoreMatrix";
+        verificationResult.dataset.stage = "FadeRestoreMatrix";
         await verifyFadeRestoreMatrix(runtime);
-        result.dataset.stage = "GameplayPauseFadePolicy";
+        verificationResult.dataset.stage = "GameplayPauseFadePolicy";
         await verifyGameplayPauseFadePolicy(runtime);
-        result.dataset.stage = "LastLifeArbitration";
+        verificationResult.dataset.stage = "LastLifeArbitration";
         await verifyLastLifeArbitration(runtime);
-        result.dataset.stage = "BossEntryLastLife";
+        verificationResult.dataset.stage = "BossEntryLastLife";
         await verifyBossEntryLastLife(runtime);
-        result.dataset.stage = "SaveSemanticCutover";
+        verificationResult.dataset.stage = "SaveSemanticCutover";
         await verifySaveSemanticCutover(runtime);
-        result.dataset.stage = "EndingPersistence";
+        verificationResult.dataset.stage = "EndingPersistence";
         await verifyEndingPersistence(runtime);
-        result.dataset.stage = "LastLifeMusicResume";
+        verificationResult.dataset.stage = "LastLifeMusicResume";
         await verifyLastLifeMusicResume(runtime);
-        result.dataset.stage = "PausedWorldRendering";
+        verificationResult.dataset.stage = "PausedWorldRendering";
         await verifyPausedWorldRendering(runtime);
-        result.dataset.stage = "NesMapping";
+        verificationResult.dataset.stage = "NesMapping";
         await verifyNesMapping(runtime);
     } finally {
         destroyMounted(runtime, first);
