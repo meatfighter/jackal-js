@@ -168,7 +168,7 @@ public class HardEndingMode implements IMode, IFadeListener {
     this.gc = gc;
     this.input = main.input;
     
-    finalScore = "final score: " + main.scoreStr; 
+    finalScore = "final score: " + String.format("%06d", main.score);
     finalScoreX = (Main.DISPLAY_WIDTH - (this.finalScore.length() << 5)) >> 1;    
   }
   

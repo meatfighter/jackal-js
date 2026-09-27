@@ -1,3 +1,4 @@
+import { formatScore } from "./ScorePresentation.js";
 import { SoundCooldownClock } from "./SoundCooldownClock.js";
 import { BasicGame, Color, GL11, Image, Music, Sound, SoundStore, Sys, XMLPackedSheet, type GameContainer, type Graphics } from "slick2d-ts";
 import {
@@ -566,11 +567,7 @@ export class Main extends BasicGame {
     }
 
     private static formatScore(score: number): string {
-        let digits = score.toString();
-        if (digits.length < 6) {
-            digits = "000000".substring(0, 6 - digits.length) + digits;
-        }
-        return digits;
+        return formatScore(score);
     }
 
     public loseLife(): void {

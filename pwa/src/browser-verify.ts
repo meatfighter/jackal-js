@@ -1,3 +1,4 @@
+import { verifyEndingPersistence } from "./EndingPersistenceVerification.js";
 import { BossStatuesManager } from "./jackal/BossStatuesManager.js";
 import { BossHelicopterManager } from "./jackal/BossHelicopterManager.js";
 import { BossHeadquartersManager } from "./jackal/BossHeadquartersManager.js";
@@ -153,6 +154,10 @@ async function verify(): Promise<void> {
             await verifyBossEntryLastLife(runtime);
             return;
         }
+        if (new URL(location.href).searchParams.get("suite") === "ending-persistence") {
+            await verifyEndingPersistence(runtime);
+            return;
+        }
         first = await mountGame(runtime, false);
         verifyAuthoritativeSave(getDeploymentStorageKey(GAME_STATE_STORAGE_KEY), first.main, (main) => store.save(main, () => true));
         first.main.requestMode(Modes.GAME, first.container);
@@ -183,6 +188,7 @@ async function verify(): Promise<void> {
         assert(expectedMachineGun.voices.length === 1, "Browser fixture did not install machine-gun Sound state.");
         assert(expectedExplode.voices.length === 2 && expectedExplode.activeVoiceIndex === null, "Browser fixture did not install overlapping Sound state.");
 
+        CutsceneSequence.restoreState(["WE_MADE_IT", "HERE"]);
         assert(store.save(first.main, () => true).saved, "Real Jackal browser Main did not save successfully.");
         assert(store.hasValidSave(), "Saved real Jackal browser state did not validate.");
         first.buffered.setScalingMode(runtime.slick.BufferedScalingMode.Linear);
@@ -192,6 +198,7 @@ async function verify(): Promise<void> {
         destroyMounted(runtime, first);
         first = null;
 
+        CutsceneSequence.restoreState([]);
         let restoreObserved = false;
         second = await mountGame(runtime, true, (restoredMain) => {
             restoreObserved = true;
@@ -211,6 +218,10 @@ async function verify(): Promise<void> {
         });
 
         assert(restoreObserved, "Fresh Jackal Main did not execute the saved-state restore hook.");
+        assert(
+            JSON.stringify(CutsceneSequence.captureState()) === JSON.stringify(["WE_MADE_IT", "HERE"]),
+            "Game restore reinstalls nonempty ordered cutscene bag"
+        );
         assert(second.main.mode === runtime.Main.gameMode, "Fresh Jackal Main did not restore GameMode.");
         assert(second.main.score === 123450 && second.main.scoreStr === "123450", "Fresh Jackal Main did not restore score state.");
         assert(second.main.extraLives === 3 && second.main.extraLivesStr === "3", "Fresh Jackal Main did not restore life state.");
@@ -271,6 +282,7 @@ async function verify(): Promise<void> {
         await verifyLastLifeArbitration(runtime);
         await verifyBossEntryLastLife(runtime);
         await verifySaveSemanticCutover(runtime);
+        await verifyEndingPersistence(runtime);
         await verifyLastLifeMusicResume(runtime);
         await verifyPausedWorldRendering(runtime);
         await verifyNesMapping(runtime);
@@ -2971,7 +2983,7 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
 }
 
 async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void> {
-    assert(GAME_STATE_VERSION === 19, "This cutover deliberately establishes schema 19");
+    assert(GAME_STATE_VERSION === 20, "This cutover deliberately establishes schema 20");
     const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
     assert(clock, "cutover clock descriptor");
     let now = runtime.slick.Sys.getTime();
@@ -3085,66 +3097,67 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
         assert(new JackalInputMappingStore().save(main.buttonMapping, () => true).saved, "independent mapping fixture");
         const mappingBytes = nativeGet.call(localStorage, mappingKey);
         let lastLegacy = "";
-        for (const [label, candidate] of variants) {
-            assert(isSupportedGameStateSnapshot(candidate), label + " current positive control");
-            const legacy = JSON.stringify({ ...candidate, version: 18 });
-            lastLegacy = legacy;
-            nativeSet.call(localStorage, key, legacy);
-            const owner: RuntimeMain["mode"] = main.mode;
-            const song: RuntimeMain["currentSong"] = main.currentSong;
-            const requested = main.requestedSong;
-            const death = world.player.respawning;
-            let writes = 0;
-            let removals = 0;
-            Storage.prototype.setItem = function (entryKey, text) {
-                if (entryKey === key) writes++;
-                nativeSet.call(this, entryKey, text);
-            };
-            Storage.prototype.removeItem = function (entryKey) {
-                if (entryKey === key) removals++;
-                nativeRemove.call(this, entryKey);
-            };
-            try {
-                assert(!isSupportedGameStateSnapshot(JSON.parse(legacy)), label + " rejects schema18");
-                assert(!store.hasValidSave() && !store.hasValidSave(), label + " read miss");
-                assert(!store.restore(main, container), label + " restore miss");
-                assert(main.mode === owner && main.currentSong === song && main.requestedSong === requested, label + " no ownership change");
-                assert(world.player.respawning === death, label + " no death advance");
-                const denied = store.save(main, () => false);
-                assert(!denied.saved && denied.reason === "not-authorized", label + " denied writer");
-                assert(writes === 0 && removals === 0 && nativeGet.call(localStorage, key) === legacy, label + " bytes retained");
-            } finally {
-                Storage.prototype.setItem = nativeSet;
-                Storage.prototype.removeItem = nativeRemove;
-            }
-            Storage.prototype.setItem = function (entryKey, text) {
-                if (entryKey === key) throw new DOMException("cutover test quota", "QuotaExceededError");
-                nativeSet.call(this, entryKey, text);
-            };
-            try {
-                const failed = store.save(main, () => true);
-                assert(!failed.saved && failed.reason === "write-failed", label + " quota failure");
-                assert(nativeGet.call(localStorage, key) === legacy, label + " failed write retains bytes");
-            } finally {
-                Storage.prototype.setItem = nativeSet;
-            }
-            let oldReads = 0;
-            Storage.prototype.getItem = function (entryKey) {
-                if (entryKey === key) {
-                    oldReads++;
-                    throw new Error("cutover writer must not inspect the old slot");
+        for (const [label, candidate] of variants)
+            for (const rejectedVersion of [18, 19]) {
+                assert(isSupportedGameStateSnapshot(candidate), label + " current positive control");
+                const legacy = JSON.stringify({ ...candidate, version: rejectedVersion });
+                lastLegacy = legacy;
+                nativeSet.call(localStorage, key, legacy);
+                const owner: RuntimeMain["mode"] = main.mode;
+                const song: RuntimeMain["currentSong"] = main.currentSong;
+                const requested = main.requestedSong;
+                const death = world.player.respawning;
+                let writes = 0;
+                let removals = 0;
+                Storage.prototype.setItem = function (entryKey, text) {
+                    if (entryKey === key) writes++;
+                    nativeSet.call(this, entryKey, text);
+                };
+                Storage.prototype.removeItem = function (entryKey) {
+                    if (entryKey === key) removals++;
+                    nativeRemove.call(this, entryKey);
+                };
+                try {
+                    assert(!isSupportedGameStateSnapshot(JSON.parse(legacy)), label + " rejects schema18");
+                    assert(!store.hasValidSave() && !store.hasValidSave(), label + " read miss");
+                    assert(!store.restore(main, container), label + " restore miss");
+                    assert(main.mode === owner && main.currentSong === song && main.requestedSong === requested, label + " no ownership change");
+                    assert(world.player.respawning === death, label + " no death advance");
+                    const denied = store.save(main, () => false);
+                    assert(!denied.saved && denied.reason === "not-authorized", label + " denied writer");
+                    assert(writes === 0 && removals === 0 && nativeGet.call(localStorage, key) === legacy, label + " bytes retained");
+                } finally {
+                    Storage.prototype.setItem = nativeSet;
+                    Storage.prototype.removeItem = nativeRemove;
                 }
-                return nativeGet.call(this, entryKey);
-            };
-            try {
-                assert(store.save(main, () => true).saved && oldReads === 0, label + " authorized replacement without read");
-            } finally {
-                Storage.prototype.getItem = nativeGet;
+                Storage.prototype.setItem = function (entryKey, text) {
+                    if (entryKey === key) throw new DOMException("cutover test quota", "QuotaExceededError");
+                    nativeSet.call(this, entryKey, text);
+                };
+                try {
+                    const failed = store.save(main, () => true);
+                    assert(!failed.saved && failed.reason === "write-failed", label + " quota failure");
+                    assert(nativeGet.call(localStorage, key) === legacy, label + " failed write retains bytes");
+                } finally {
+                    Storage.prototype.setItem = nativeSet;
+                }
+                let oldReads = 0;
+                Storage.prototype.getItem = function (entryKey) {
+                    if (entryKey === key) {
+                        oldReads++;
+                        throw new Error("cutover writer must not inspect the old slot");
+                    }
+                    return nativeGet.call(this, entryKey);
+                };
+                try {
+                    assert(store.save(main, () => true).saved && oldReads === 0, label + " authorized replacement without read");
+                } finally {
+                    Storage.prototype.getItem = nativeGet;
+                }
+                const replacement = nativeGet.call(localStorage, key);
+                assert(replacement !== null && JSON.parse(replacement).version === 20 && store.hasValidSave(), label + " current replacement");
+                assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, label + " separate controls unaffected");
             }
-            const replacement = nativeGet.call(localStorage, key);
-            assert(replacement !== null && JSON.parse(replacement).version === 19 && store.hasValidSave(), label + " current replacement");
-            assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, label + " separate controls unaffected");
-        }
 
         // A fresh runtime must decline the old record without invoking its
         // restoration callback or deleting the record during normal fallback.
@@ -3180,7 +3193,7 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
             freezeBeforeRestore
         );
         current().container.setLoopSuspended(true);
-        assert(restoredCurrent && store.hasValidSave(), "schema19 restores normally");
+        assert(restoredCurrent && store.hasValidSave(), "schema20 restores normally");
         assert(nativeGet.call(localStorage, key) === heldBytes, "current restore leaves bytes unchanged");
         assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, "fresh restore leaves controls unchanged");
     } finally {

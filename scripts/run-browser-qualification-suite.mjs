@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { componentReleaseDir } from "./build-utils.mjs";
-import { runNpmScript } from "./run-utils.mjs";
+import { runNpmScript, runNodeScript } from "./run-utils.mjs";
 
 const qualificationScripts = [
     "verify:fullscreen",
@@ -29,3 +29,5 @@ for (const script of qualificationScripts) {
         }
     });
 }
+
+runNodeScript("scripts/run-ending-reload-qualification.mjs", [], { env: { PWA_ROOT: pwaRoot } });

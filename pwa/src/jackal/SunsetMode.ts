@@ -1,3 +1,4 @@
+import { finalScoreText } from "./ScorePresentation.js";
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 import { javaArray, javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -66,7 +67,7 @@ export class SunsetMode implements IMode, IFadeListener {
         }
     }
 
-    public readonly credits: string[][] = [
+    public static readonly CREDIT_CARDS: readonly (readonly string[])[] = [
         ["programmed by", "michael birken"],
 
         ["inspired by", '`jackal" for the', "nintendo", "entertainment system and the", "brilliant works of konami"],
@@ -85,6 +86,8 @@ export class SunsetMode implements IMode, IFadeListener {
 
         ["final score: ", "", "  press start for", "  hard mode..."]
     ];
+
+    public readonly credits: string[][] = SunsetMode.CREDIT_CARDS.map((card) => [...card]);
 
     public main: Main = null!;
     public gc: GameContainer = null!;
@@ -107,7 +110,7 @@ export class SunsetMode implements IMode, IFadeListener {
         this.gc = gc;
         this.input = main.input;
 
-        this.credits[this.credits.length - 1][0] += main.scoreStr;
+        this.credits[this.credits.length - 1][0] = finalScoreText(main.score);
 
         main.startFade(false, this);
     }

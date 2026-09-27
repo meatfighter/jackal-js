@@ -13,7 +13,9 @@
         "index": "Browser module export surface.",
         "JackalMath": "Provides a cycle-safe, Java-float-compatible rotation helper shared by Main and Player.",
         "JackalResources": "Provides the browser resource-loading boundary for Jackal packed data files.",
-        "SoundCooldownClock": "Browser-only monotonic cooldown clock freezes during PWA suspension; the durable contract remains relative remaining milliseconds."
+        "SoundCooldownClock": "Browser-only monotonic cooldown clock freezes during PWA suspension; the durable contract remains relative remaining milliseconds.",
+        "CutsceneState": "Browser-only durable ordered cutscene bag IDs and validation; desktop retains its existing runtime bag.",
+        "ScorePresentation": "Shared browser-derived numeric score formatting for restore-safe ending presentation; Java init uses the equivalent canonical numeric format."
     },
     "fieldExceptions": {
         "ButtonMapping.VERSION": {

@@ -9,7 +9,7 @@ import { rootDir } from "./build-utils.mjs";
 
 const port = 5197;
 const focusedSuite = process.env.JACKAL_BROWSER_SUITE;
-if (focusedSuite && !["last-life-music", "last-life-arbitration", "boss-entry-last-life"].includes(focusedSuite))
+if (focusedSuite && !["last-life-music", "last-life-arbitration", "boss-entry-last-life", "ending-persistence"].includes(focusedSuite))
     throw new Error("Unknown browser verification suite");
 const browserVerificationUrl = `http://127.0.0.1:${port}/browser-verify.html${focusedSuite ? "?suite=" + focusedSuite : ""}`;
 const appUrl = `http://127.0.0.1:${port}/`;
@@ -39,7 +39,17 @@ try {
             `(() => {const r=document.querySelector('#result');if(r?.dataset.status==='failed')throw new Error(r.textContent);return window.lastLifeAudioActivation ? {audioActivation:true} : window.compactLabelCapture ? {game:window.compactLabelCapture.game} : r?.dataset.status==='passed' ? {done:true} : false;})()`,
             360000
         );
-        if (status.done) break;
+        if (status.done) {
+            const ending = await browser.page.call("Runtime.evaluate", {
+                expression: "JSON.stringify(window.endingPersistenceEvidence ?? null)",
+                returnByValue: true
+            });
+            if (ending.result?.value && process.env.QUALIFICATION_EVIDENCE_DIR) {
+                mkdirSync(process.env.QUALIFICATION_EVIDENCE_DIR, { recursive: true });
+                writeFileSync(resolve(process.env.QUALIFICATION_EVIDENCE_DIR, "ending-first-render-matrix.json"), ending.result.value);
+            }
+            break;
+        }
         if (status.audioActivation) {
             const activation = await browser.page.call("Runtime.evaluate", {
                 expression: "(() => { const a=window.lastLifeAudioActivation; delete window.lastLifeAudioActivation; return a.activate().then(a.resolve); })()",

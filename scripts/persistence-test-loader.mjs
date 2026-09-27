@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname, extname, relative } from "node:path";
 import ts from "typescript";
 
-export async function loadTypeScript(entry, mocks = {}) {
+export function typeScriptModuleUrl(entry, mocks = {}) {
     const root = resolve(".");
     const cache = new Map();
     const pending = new Set();
@@ -40,7 +40,11 @@ export async function loadTypeScript(entry, mocks = {}) {
         pending.delete(path);
         return url;
     }
-    return import(compile(resolve(entry)));
+    return compile(resolve(entry));
+}
+
+export async function loadTypeScript(entry, mocks = {}) {
+    return import(typeScriptModuleUrl(entry, mocks));
 }
 
 export function sourceMember(path, name, owner = null) {

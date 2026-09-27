@@ -1,3 +1,4 @@
+import { finalScoreText } from "./ScorePresentation.js";
 import { Color, type GameContainer, type Graphics } from "slick2d-ts";
 import { javaFloat } from "../java/JavaRuntime.js";
 import { MainConstants } from "../java/MainConstants.js";
@@ -169,7 +170,7 @@ export class HardEndingMode implements IMode, IFadeListener {
         this.gc = gc;
         this.input = main.input;
 
-        this.finalScore = "final score: " + main.scoreStr;
+        this.finalScore = finalScoreText(main.score);
         this.finalScoreX = javaFloat((MainConstants.DISPLAY_WIDTH - (this.finalScore.length << 5)) >> 1);
     }
 

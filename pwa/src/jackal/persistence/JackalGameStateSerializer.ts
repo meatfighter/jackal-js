@@ -1,3 +1,4 @@
+import { CutsceneSequence } from "../CutsceneSequence.js";
 import type { GameContainer } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
@@ -168,6 +169,7 @@ export class JackalGameStateSerializer {
             mainFields: encodeNamedFields(main, MAIN_FIELD_NAMES, context),
             konamiCodeFields: main.konamiCode === null ? null : encodeNamedFields(main.konamiCode, KONAMI_CODE_FIELD_NAMES, context),
             random: main.random.getState(),
+            remainingCutscenes: CutsceneSequence.captureState(),
             friendlySoldierCount: FriendlySoldier.count,
             requestedSongId: songIdFor(main, main.requestedSong),
             currentSongState: captureSongSnapshot(main, main.currentSong),
@@ -238,6 +240,7 @@ export class JackalGameStateSerializer {
         restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
+        CutsceneSequence.restoreState(snapshot.remainingCutscenes);
     }
 
     private restoreStandaloneModeSnapshot(main: Main, gc: GameContainer, snapshot: JackalStandaloneModeStateSnapshot): void {
@@ -256,6 +259,7 @@ export class JackalGameStateSerializer {
         main.random = Random.fromState(snapshot.random);
         this.restoreKonamiCode(main, snapshot, context);
 
+        main.reconcileStateAfterRestore();
         const mode = this.createStandaloneMode(snapshot.modeId);
         mode.init(main, gc);
         decodeNamedFieldsInto(main, snapshot.mainFields, MAIN_FIELD_NAMES, context, MAIN_JAVA_FLOAT_FIELDS);
@@ -277,6 +281,7 @@ export class JackalGameStateSerializer {
         restoreAudioPlayback(main, snapshot);
         main.resetNextFrameTime();
         main.clearInputPressedRecords();
+        CutsceneSequence.restoreState(snapshot.remainingCutscenes);
     }
 
     private createModeContext(main: Main): GameStateEncodeContext {
@@ -504,6 +509,10 @@ export class JackalGameStateSerializer {
                 JEEP_YEAH_EXPLOSION_JAVA_FLOAT_FIELDS
             )
         );
+        if (mode.explosion !== null) {
+            Reflect.set(mode.explosion, "enemy", null);
+            Reflect.set(mode.explosion, "enemies", null);
+        }
         Reflect.set(
             mode,
             "leftPlane",

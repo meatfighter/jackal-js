@@ -123,7 +123,7 @@ public class SunsetMode implements IMode, IFadeListener {
     this.gc = gc;
     this.input = main.input;
     
-    credits[credits.length - 1][0] += main.scoreStr;
+    credits[credits.length - 1][0] = "final score: " + String.format("%06d", main.score);
     
     main.startFade(false, this);
   }

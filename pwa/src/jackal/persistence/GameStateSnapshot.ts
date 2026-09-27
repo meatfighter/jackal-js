@@ -1,3 +1,4 @@
+import type { CutsceneId } from "../CutsceneState.js";
 import type { MusicPlaybackSnapshot, SoundPlaybackSnapshot } from "slick2d-ts";
 import type { SoundId } from "../AudioRegistry.js";
 import type { GameElementTypeId } from "./GameElementTypeIds.js";
@@ -104,6 +105,7 @@ export type JackalBaseStateSnapshot = {
     mainFields: EncodedRecord;
     konamiCodeFields: EncodedRecord | null;
     random: RandomSnapshot;
+    remainingCutscenes: CutsceneId[];
     friendlySoldierCount: number;
     requestedSongId: SongId | null;
     currentSongState: SongSnapshot | null;

@@ -152,18 +152,7 @@ export const SUNSET_MODE_FIELD_NAMES = fieldsOf<SunsetMode>()(
     "lineLength"
 );
 
-export const HARD_ENDING_MODE_FIELD_NAMES = fieldsOf<HardEndingMode>()(
-    "finalScore",
-    "finalScoreX",
-    "state",
-    "lineIndex",
-    "lineLength",
-    "cardIndex",
-    "delay",
-    "creditsY",
-    "jeepX",
-    "rumble"
-);
+export const HARD_ENDING_MODE_FIELD_NAMES = fieldsOf<HardEndingMode>()("state", "lineIndex", "lineLength", "cardIndex", "delay", "creditsY", "jeepX", "rumble");
 
 /** Runtime-only Java/browser links and loaded assets are reconstructed, never serialized. */
 export const SKIPPED_INSTANCE_FIELDS: ReadonlySet<string> = new Set([

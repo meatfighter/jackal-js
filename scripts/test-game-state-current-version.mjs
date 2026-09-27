@@ -1,3 +1,4 @@
+import { loadTypeScript, typeScriptModuleUrl } from "./persistence-test-loader.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -119,6 +120,8 @@ function source(name) {
 }
 
 async function loadPersistenceValidation(transform = (value) => value) {
+    const cutsceneStateUrl = typeScriptModuleUrl("pwa/src/jackal/CutsceneState.ts");
+    const standalonePolicyUrl = typeScriptModuleUrl("pwa/src/jackal/persistence/StandaloneModeStatePolicy.ts");
     const schemaUrl = compileModule(source("GameStateSchema.ts"));
     const idsUrl = compileModule(source("GameElementTypeIds.ts"));
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
@@ -183,6 +186,8 @@ async function loadPersistenceValidation(transform = (value) => value) {
     `);
     const validatorUrl = compileModule(
         transform(source("GameStateSnapshotValidator.ts"))
+            .replace(`from "../CutsceneState.js"`, `from "${cutsceneStateUrl}"`)
+            .replace(`from "./StandaloneModeStatePolicy.js"`, `from "${standalonePolicyUrl}"`)
             .replace(`from "../NesInputProfile.js"`, `from "${profileUrl}"`)
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
@@ -261,6 +266,7 @@ function baseSnapshot(fields, version) {
         }),
         konamiCodeFields: null,
         random: { seed0: 1, seed1: 2, seed2: 3 },
+        remainingCutscenes: [],
         friendlySoldierCount: 0,
         requestedSongId: null,
         currentSongState: null,
@@ -272,7 +278,7 @@ function modeSnapshot(fields, version) {
     return {
         ...baseSnapshot(fields, version),
         modeId: "INTRO_MAP",
-        modeFields: encodedFields(fields.INTRO_MAP_MODE_FIELD_NAMES),
+        modeFields: encodedFields(fields.INTRO_MAP_MODE_FIELD_NAMES, { state: 1, delay: 250 }),
         modeExtra: null
     };
 }
@@ -320,7 +326,7 @@ function optionsModeSnapshot(fields, version) {
         ...baseSnapshot(fields, version),
         modeId: "OPTIONS",
         modeFields: encodedFields(fields.SIMPLE_MENU_MODE_FIELD_NAMES, {
-            state: 0,
+            state: 1,
             optionSelectedFlag: false,
             selectedIndex: 0
         }),
@@ -386,45 +392,29 @@ function inputModeSnapshot(fields, version) {
     };
 }
 
+const { JeepYeahMode: FixtureJeepYeahMode } = await loadTypeScript("pwa/src/jackal/JeepYeahMode.ts");
 function jeepYeahModeSnapshot(fields, version) {
-    return {
+    const mode = new FixtureJeepYeahMode(true);
+    mode.init({ startFade() {}, requestSong() {} }, {});
+    mode.update({});
+    const pick = (object, names) => Object.fromEntries(names.map((name) => [name, object[name]]));
+    const snapshot = {
         ...baseSnapshot(fields, version),
         modeId: "YEAH",
-        modeFields: encodedFields(fields.JEEP_YEAH_MODE_FIELD_NAMES, {
-            smokeX: 0,
-            smokeY: 0,
-            bulletDelay: 11,
-            yeahVisible: 136,
-            yeah: true,
-            state: 0
-        }),
+        modeFields: pick(mode, fields.JEEP_YEAH_MODE_FIELD_NAMES),
         modeExtra: {
             jeepYeah: {
-                explosion: null,
-                leftPlane: encodedFields(fields.JEEP_YEAH_PLANE_FIELD_NAMES, {
-                    x: -650,
-                    y: -300,
-                    z: -8,
-                    left: true,
-                    angle: 0
-                }),
-                rightPlane: null,
-                fireLeft: null,
-                fireRight: null,
-                bullets: [
-                    encodedFields(fields.JEEP_YEAH_BULLET_FIELD_NAMES, {
-                        x: 308,
-                        y: 408,
-                        vx: -2,
-                        vy: -5,
-                        angle: -50,
-                        remove: false,
-                        scale: 1
-                    })
-                ]
+                explosion: pick(mode.explosion, fields.JEEP_YEAH_EXPLOSION_FIELD_NAMES),
+                leftPlane: pick(mode.leftPlane, fields.JEEP_YEAH_PLANE_FIELD_NAMES),
+                rightPlane: pick(mode.rightPlane, fields.JEEP_YEAH_PLANE_FIELD_NAMES),
+                fireLeft: pick(mode.fireLeft, fields.JEEP_YEAH_FIRE_FIELD_NAMES),
+                fireRight: pick(mode.fireRight, fields.JEEP_YEAH_FIRE_FIELD_NAMES),
+                bullets: [encodedFields(fields.JEEP_YEAH_BULLET_FIELD_NAMES, { x: 308, y: 408, vx: -2, vy: -5, angle: -50, remove: false, scale: 1 })]
             }
         }
     };
+    snapshot.mainFields.fading = true;
+    return snapshot;
 }
 
 function gameSnapshot(fields, version, entity) {
@@ -468,7 +458,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 19);
+    assert.equal(currentVersion, 20);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -592,6 +582,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
 
     const validMenuFadeOut = structuredClone(validMenuMode);
     validMenuFadeOut.modeFields.state = 2;
+    Object.assign(validMenuFadeOut.mainFields, { fading: true, fadeOut: true });
     validMenuFadeOut.modeFields.optionSelectedFlag = true;
     validMenuFadeOut.modeFields.selectedIndex = 1;
     validMenuFadeOut.modeExtra.menu.fields.selectedIndex = 1;
@@ -1086,10 +1077,10 @@ test("removing the zero-reserve Pause validator guard admits the malformed count
     }
 });
 
-test("schema19 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
+test("schema20 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
-    assert.equal(schema.GAME_STATE_VERSION, 19);
-    const game = gameSnapshot(fields, 19, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    assert.equal(schema.GAME_STATE_VERSION, 20);
+    const game = gameSnapshot(fields, 20, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     game.playerFields.respawning = 100;
     game.currentSongState = {
         id: "stageSong0",
@@ -1099,16 +1090,16 @@ test("schema19 is an explicit semantic boundary, not an appVersion or field-shap
         activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
     };
     game.requestedSongId = "bossSong";
-    const controls = [modeSnapshot(fields, 19), game];
+    const controls = [modeSnapshot(fields, 20), game];
     for (const current of controls) {
         assert.equal(validator.isSupportedGameStateSnapshot(current), true, "positive current shape");
-        for (const oldVersion of Array.from({ length: 19 }, (_, index) => index)) {
+        for (const oldVersion of Array.from({ length: 20 }, (_, index) => index)) {
             const old = { ...structuredClone(current), version: oldVersion };
             const bytes = JSON.stringify(old);
             assert.equal(validator.isSupportedGameStateSnapshot(old), false);
             assert.equal(JSON.stringify(old), bytes, "validation never relabels or repairs input");
         }
-        for (const version of [20, "19", null, true, 19.5, NaN, Infinity]) {
+        for (const version of [21, "20", null, true, 20.5, NaN, Infinity]) {
             assert.equal(validator.isSupportedGameStateSnapshot({ ...structuredClone(current), version }), false);
         }
         const oldWithNewBuildLabel = { ...structuredClone(current), version: 18, appVersion: "schema19-test-build" };

@@ -19,12 +19,24 @@ export function runDesktopLastLifeTests({ classesDir, classpath, releaseArgs }) 
         }
     }
     try {
-        run("javac", ["-encoding", "UTF-8", "-Xlint:-options", ...releaseArgs, "-cp", productionClasspath, "-d", testClasses, testSource, musicTestSource]);
+        run("javac", [
+            "-encoding",
+            "UTF-8",
+            "-Xlint:-options",
+            ...releaseArgs,
+            "-cp",
+            productionClasspath,
+            "-d",
+            testClasses,
+            testSource,
+            musicTestSource,
+            fileURLToPath(new URL("../desktop/test/jackal/EndingScoreTest.java", import.meta.url))
+        ]);
 
         const platformDirectory = { win32: "windows", linux: "linux", darwin: "macosx" }[process.platform];
         if (platformDirectory === undefined) throw new Error("Unsupported native last-life-test platform");
         const nativeDirectory = fileURLToPath(new URL(`../desktop/natives/${platformDirectory}/`, import.meta.url));
-        for (const testName of ["jackal.LastLifeResolutionTest", "jackal.LastLifeMusicTest"])
+        for (const testName of ["jackal.LastLifeResolutionTest", "jackal.LastLifeMusicTest", "jackal.EndingScoreTest"])
             run("java", [
                 "-Djava.awt.headless=true",
                 `-Dorg.lwjgl.librarypath=${nativeDirectory}`,

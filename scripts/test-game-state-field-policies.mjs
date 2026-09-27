@@ -286,6 +286,7 @@ function createGameModeSnapshot(version, fields, policy, stage) {
         mainFields,
         konamiCodeFields: null,
         random: { seed0: 1, seed1: 2, seed2: 3 },
+        remainingCutscenes: [],
         friendlySoldierCount: 0,
         requestedSongId: null,
         currentSongState: null,

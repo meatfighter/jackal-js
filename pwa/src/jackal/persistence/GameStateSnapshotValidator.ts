@@ -1,3 +1,5 @@
+import { isCutsceneState } from "../CutsceneState.js";
+import { isStandaloneModeSemanticState } from "./StandaloneModeStatePolicy.js";
 import * as NesInputProfile from "../NesInputProfile.js";
 import { isMusicPlaybackSnapshot, isSoundPlaybackSnapshot } from "slick2d-ts";
 import { MainConstants } from "../../java/MainConstants.js";
@@ -61,6 +63,7 @@ const BASE_SNAPSHOT_FIELDS = [
     "mainFields",
     "konamiCodeFields",
     "random",
+    "remainingCutscenes",
     "friendlySoldierCount",
     "requestedSongId",
     "currentSongState",
@@ -198,6 +201,7 @@ function isBaseSnapshot(snapshot: UnknownRecord): boolean {
         isRestorableMainFields(mainFields) &&
         isKonamiCodeFields(snapshot.konamiCodeFields) &&
         isRandomSnapshot(snapshot.random) &&
+        isCutsceneState(snapshot.remainingCutscenes) &&
         isIntegerInRange(snapshot.friendlySoldierCount, 0, MAX_FRIENDLY_SOLDIER_COUNT) &&
         isNullableSongId(snapshot.requestedSongId) &&
         isSongSnapshot(snapshot.currentSongState) &&
@@ -372,17 +376,16 @@ function isCameraPanListenerReference(value: unknown, entityIds: ReadonlySet<num
 }
 
 function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalStandaloneModeStateSnapshot {
-    if (!isStandaloneModeId(snapshot.modeId) || !isEncodedRecord(snapshot.modeFields, new Set<number>())) {
+    if (!isStandaloneModeId(snapshot.modeId) || !isEncodedRecord(snapshot.modeFields, new Set<number>())) return false;
+    if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId)) || !isStandaloneModeFieldsValid(snapshot.modeId, snapshot.modeFields))
         return false;
-    }
-    if (!hasExactFields(snapshot.modeFields, modeFieldsForModeId(snapshot.modeId)) || !isStandaloneModeFieldsValid(snapshot.modeId, snapshot.modeFields)) {
-        return false;
-    }
     const currentSongState = snapshot.currentSongState;
-    if (!isSongSnapshot(currentSongState) || currentSongState?.lastLifeSuspended === true || currentSongState?.activeMusic?.playback.transport === "paused") {
+    if (!isSongSnapshot(currentSongState) || currentSongState?.lastLifeSuspended === true || currentSongState?.activeMusic?.playback.transport === "paused")
         return false;
-    }
-    return isModeExtraSnapshot(snapshot.modeId, snapshot.modeFields, snapshot.modeExtra);
+    if (!isModeExtraSnapshot(snapshot.modeId, snapshot.modeFields, snapshot.modeExtra)) return false;
+    const mainFields = snapshot.mainFields;
+    if (!isRecord(mainFields)) return false;
+    return isStandaloneModeSemanticState(mainFields, snapshot.modeId, snapshot.modeFields, snapshot.modeExtra);
 }
 
 function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRecord): boolean {
@@ -401,7 +404,7 @@ function isStandaloneModeFieldsValid(modeId: StandaloneModeId, fields: EncodedRe
         case "SUNSET":
             return hasPrimitiveFieldTypes(fields, SUNSET_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 9);
         case "HARD_ENDING":
-            return hasPrimitiveFieldTypes(fields, HARD_ENDING_MODE_FIELD_NAMES, [], ["finalScore"]) && isIntegerInRange(fields.state, 0, 9);
+            return hasPrimitiveFieldTypes(fields, HARD_ENDING_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 8);
         case "MAP":
             return hasPrimitiveFieldTypes(fields, MAP_MODE_FIELD_NAMES) && isIntegerInRange(fields.state, 0, 5);
         case "INTRO_MAP":
@@ -445,16 +448,10 @@ function isSimpleMenuModeFields(fields: EncodedRecord, maximumSelectedIndex: num
     const state = fields.state;
     const optionSelected = fields.optionSelectedFlag;
     const selectedIndex = fields.selectedIndex;
-    if (!isIntegerInRange(state, 0, 3) || typeof optionSelected !== "boolean" || !isIntegerInRange(selectedIndex, 0, maximumSelectedIndex)) {
-        return false;
-    }
-    if (state === 0) {
-        return optionSelected === false && selectedIndex === 0;
-    }
-    if (state === 1) {
-        return optionSelected || selectedIndex === 0;
-    }
-    return optionSelected;
+    if (!isIntegerInRange(state, 0, 2) || typeof optionSelected !== "boolean" || !isIntegerInRange(selectedIndex, 0, maximumSelectedIndex)) return false;
+    if (state === 2) return optionSelected;
+    // Menu.update can commit a selection while the entrance fade still owns presentation.
+    return optionSelected || selectedIndex === 0;
 }
 
 function isRestorableMainFields(fields: EncodedRecord): boolean {

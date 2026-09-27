@@ -1,3 +1,6 @@
+import { SunsetMode } from "./jackal/SunsetMode.js";
+import { HardEndingMode } from "./jackal/HardEndingMode.js";
+import { CutsceneSequence } from "./jackal/CutsceneSequence.js";
 import { Sys, ResourceLoader, type AppGameContainer } from "slick2d-ts";
 import { beginGameAudio, commitGameAudio, releaseGameAudio } from "./app/PlaybackSession.js";
 import { JackalRuntimeLoader } from "./app/JackalRuntimeLoader.js";
@@ -30,7 +33,16 @@ const cases: readonly string[] = [
     "Active gameplay",
     "Paused gameplay",
     "Stage complete/camera pan",
-    "Boss/projectile reference topology"
+    "Boss/projectile reference topology",
+    "Sunset entrance/helicopter boundary",
+    "Sunset ordinary/blank typing and card sentinel",
+    "Sunset final score before/full/7-digit typing",
+    "Sunset waiting/normal-to-hard exit",
+    "Hard Sunset last helicopter/fade",
+    "HardEnding character typing/pause/fades",
+    "HardEnding completed-card/scrolling credits",
+    "HardEnding final score fade/jeep text edge",
+    "HardEnding waiting/final exit"
 ];
 for (const name of cases) casePicker.add(new Option(name, name));
 const records: Array<Record<string, unknown>> = [];
@@ -231,6 +243,15 @@ verifyButton.addEventListener(
                 passed: true,
                 continuationFrames: 12,
                 snapshot: source,
+                remainingCutscenes: CutsceneSequence.captureState(),
+                random: mounted.main.random.getState(),
+                endingText:
+                    mounted.main.mode instanceof SunsetMode
+                        ? mounted.main.mode.credits.at(-1)?.[0]
+                        : mounted.main.mode instanceof HardEndingMode
+                          ? mounted.main.mode.finalScore
+                          : null,
+                finalScoreX: mounted.main.mode instanceof HardEndingMode ? mounted.main.mode.finalScoreX : null,
                 capturedAt: new Date().toISOString(),
                 userAgent: navigator.userAgent
             };
