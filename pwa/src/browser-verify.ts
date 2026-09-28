@@ -3121,7 +3121,7 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
         const mappingBytes = nativeGet.call(localStorage, mappingKey);
         let lastLegacy = "";
         for (const [label, candidate] of variants)
-            for (const rejectedVersion of [18, 19, 20, 22]) {
+            for (const rejectedVersion of [18, 19, 20, 21, 23]) {
                 assert(isSupportedGameStateSnapshot(candidate), label + " current positive control");
                 const legacy = JSON.stringify({ ...candidate, version: rejectedVersion });
                 lastLegacy = legacy;

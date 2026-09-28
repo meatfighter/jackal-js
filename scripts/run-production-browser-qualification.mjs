@@ -141,7 +141,7 @@ try {
                 `jackal.game-state:${encodeURIComponent(new URL("./", url).pathname)}`,
                 `${name}: semantic cutover changed the stable deployment slot`
             );
-            for (const unsupportedVersion of [18, 19, 20, 22]) {
+            for (const unsupportedVersion of [18, 19, 20, 21, 23]) {
                 const unsupportedText = JSON.stringify({ ...currentSnapshot, version: unsupportedVersion });
                 await upgraded.evaluate(([key, value]) => localStorage.setItem(key, value), [current[0], unsupportedText]);
                 for (let probe = 0; probe < 2; probe++) {
