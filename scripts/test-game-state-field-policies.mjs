@@ -26,6 +26,42 @@ try {
     const { JackalGameStateSerializer } = await server.ssrLoadModule("/src/jackal/persistence/JackalGameStateSerializer.ts");
     const { ArrayList } = await server.ssrLoadModule("/src/java/JavaRuntime.ts");
 
+    const graph = await server.ssrLoadModule("/src/jackal/persistence/GameModeGraphPersistence.ts");
+    test("root policy exactly classifies encoded fields and entity-bearing root declarations", () => {
+        assert.deepEqual(Object.keys(graph.GAME_MODE_ROOT_FIELD_POLICY).sort(), [...stateFields.GAME_MODE_FIELD_NAMES].sort());
+        const entities = new Set([...Object.keys(typeRegistry.GAME_ELEMENT_TYPES), "Enemy", "GameElement", "ICameraPanListener"]);
+        const expected = { GameMode: ["cameraPanListener", "elements", "enemies", "mines", "solids"], Main: [], Player: ["mines"] };
+        const config = ts.readConfigFile(join(pwaRoot, "tsconfig.json"), ts.sys.readFile);
+        const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, pwaRoot);
+        const program = ts.createProgram(parsed.fileNames, parsed.options),
+            checker = program.getTypeChecker();
+        const entityBearing = (type, seen = new Set()) => {
+            if (seen.has(type)) return false;
+            seen.add(type);
+            if (entities.has(type.symbol?.name) || entities.has(type.aliasSymbol?.name)) return true;
+            if (type.isUnionOrIntersection() && type.types.some((t) => entityBearing(t, seen))) return true;
+            if ((type.aliasTypeArguments ?? []).some((t) => entityBearing(t, seen))) return true;
+            if (type.flags & ts.TypeFlags.Object) {
+                if (type.objectFlags & ts.ObjectFlags.Reference) if (checker.getTypeArguments(type).some((t) => entityBearing(t, seen))) return true;
+                if (type.objectFlags & ts.ObjectFlags.ClassOrInterface) if (checker.getBaseTypes(type).some((t) => entityBearing(t, seen))) return true;
+            }
+            return false;
+        };
+        for (const name of Object.keys(expected)) {
+            const file = program.getSourceFile(join(jackalRoot, name + ".ts"));
+            assert.ok(file);
+            const found = [];
+            for (const node of file.statements)
+                if (ts.isClassDeclaration(node) && node.name?.text === name)
+                    for (const member of node.members) {
+                        if (ts.isPropertyDeclaration(member) && !hasStaticModifier(member) && entityBearing(checker.getTypeAtLocation(member)))
+                            found.push(propertyName(member));
+                    }
+            assert.deepEqual(found.sort(), expected[name], name + " typed or inferred entity root needs persistence classification");
+        }
+        assert.equal(graph.GAME_MODE_ROOT_FIELD_POLICY.cameraPanListener, "entityReference");
+    });
+
     test("durable entity descriptors exactly cover declared persistent fields", () => {
         const model = buildClassModel();
         for (const type of typeIds.GAME_ELEMENT_TYPE_IDS) {
@@ -87,7 +123,7 @@ try {
 
         const layers = Array.from({ length: 8 }, () => new ArrayList());
         layers[3].add(tank);
-        const gameMode = { elements: layers };
+        const gameMode = { elements: layers, cameraPanListener: null };
         const serializer = new JackalGameStateSerializer();
         const context = serializer.createGameStateEncodeContext({}, gameMode, {});
 
@@ -294,7 +330,8 @@ function createGameModeSnapshot(version, fields, policy, stage) {
         gameMode: {
             fields: gameModeFields,
             elements: [[], [], [], [], [], [], [], []],
-            entities: []
+            entities: [],
+            indexes: { enemies: [], solids: [], mines: [] }
         },
         playerFields: encodedRecordForDescriptor(policy.PLAYER_DURABLE_FIELD_DESCRIPTOR, new Map())
     };

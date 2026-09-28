@@ -31,3 +31,4 @@ for (const script of qualificationScripts) {
 }
 
 runNodeScript("scripts/run-ending-reload-qualification.mjs", [], { env: { PWA_ROOT: pwaRoot } });
+runNodeScript("scripts/run-game-mode-persistence-qualification.mjs", [], { env: { PWA_ROOT: pwaRoot } });

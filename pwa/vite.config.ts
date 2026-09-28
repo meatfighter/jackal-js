@@ -129,6 +129,13 @@ function versionedStaticAssets(): Plugin {
 
     return {
         name: "jackal-versioned-static-assets",
+        generateBundle(_options, bundle) {
+            for (const [name, output] of Object.entries(bundle)) {
+                const content = output.type === "chunk" ? output.code : String(output.source);
+                if (/game-mode-persistence|GameModePersistenceVerification/.test(name + content))
+                    throw new Error("Development persistence harness in release output");
+            }
+        },
         configResolved(config) {
             resolvedConfig = config;
         },

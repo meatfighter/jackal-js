@@ -1,3 +1,4 @@
+import { TILE_DEBRIS_SPRITE_TILE_FIELD } from "./EntityRuntimeFields.js";
 import type { Main } from "../Main.js";
 import type { EncodedValue, JackalGameStateSnapshot } from "./GameStateSnapshot.js";
 
@@ -108,6 +109,26 @@ export function isSupportedSnapshotForLoadedResources(main: Main, snapshot: Jack
         fields.triggerY > stage.mapHeight
     ) {
         return false;
+    }
+
+    for (const entity of snapshot.gameMode.entities) {
+        if (entity.type !== "TileDebris") continue;
+        const tile = entity.runtimeFields?.[TILE_DEBRIS_SPRITE_TILE_FIELD];
+        if (typeof tile !== "number" || !Number.isInteger(tile) || tile < 0 || tile >= stage.tiles.length) return false;
+        const image = stageIndex === 5 && tile < 16 ? main.conveyors[tile] : stage.tiles[tile];
+        if (image === undefined || image === null) return false;
+    }
+    if (stageIndex === 5) {
+        const frame = fields.conveyorLastIndex;
+        if (
+            typeof frame !== "number" ||
+            !Number.isInteger(frame) ||
+            frame < 0 ||
+            frame >= 16 ||
+            main.conveyors[frame] === null ||
+            main.conveyors[frame] === undefined
+        )
+            return false;
     }
 
     if (stageIndex !== 5) {

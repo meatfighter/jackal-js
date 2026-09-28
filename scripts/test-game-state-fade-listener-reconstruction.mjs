@@ -14,6 +14,7 @@ test("real serializer reconstructs GameMode fade ownership and dispatches comple
         const { JackalGameStateSerializer } = await server.ssrLoadModule("/src/jackal/persistence/JackalGameStateSerializer.ts");
         function main() {
             const m = new Main();
+            m.conveyors = Array.from({ length: 16 }, () => ({}));
             m.input = { clearKeyPressedRecord() {} };
             for (const id of SOUND_FIELD_NAMES) m[id] = { capturePlaybackState: () => ({ voices: [], activeVoiceIndex: null }), restorePlaybackState() {} };
             // Audio decoding and geometry are controlled dependencies; serializer,
@@ -26,7 +27,7 @@ test("real serializer reconstructs GameMode fade ownership and dispatches comple
                 s.mapHeight = 32;
                 s.tileMap = Array.from({ length: 32 }, () => Array(32).fill(0));
                 s.typesMap = s.tileMap.map((row) => [...row]);
-                s.tiles = [];
+                s.tiles = i === 5 ? [...m.conveyors] : [{}];
                 s.groups = [];
                 s.groupsMap = s.tileMap;
                 s.triggerMap = [[], []];

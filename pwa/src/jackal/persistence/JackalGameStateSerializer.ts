@@ -1,8 +1,8 @@
+import { captureGameModeIndexes, getGameModeDurableEntityReferences, restoreGameModeIndexes } from "./GameModeGraphPersistence.js";
 import { CutsceneSequence } from "../CutsceneSequence.js";
 import type { GameContainer } from "slick2d-ts";
 import { ArrayList, Random } from "../../java/JavaRuntime.js";
 import { FriendlySoldier } from "../FriendlySoldier.js";
-import { Enemy } from "../Enemy.js";
 import type { GameElement } from "../GameElement.js";
 import { GameMode } from "../GameMode.js";
 import { HardEndingMode } from "../HardEndingMode.js";
@@ -43,7 +43,7 @@ import {
     type MenuSnapshot
 } from "./GameStateSnapshot.js";
 import { GAME_ELEMENT_TYPES, getGameElementTypeId } from "./GameElementTypeRegistry.js";
-import { captureEntityRuntimeFields, restoreEntityRuntimeState } from "./EntityRuntimePersistence.js";
+import { captureEntityRuntimeFields, restoreEntityRuntimeState, restoreGameModeRuntimePresentation } from "./EntityRuntimePersistence.js";
 import {
     BUTTON_MAPPING_FIELD_NAMES,
     GAME_MODE_FIELD_NAMES,
@@ -57,7 +57,7 @@ import {
     modeFieldsForModeId,
     type StandaloneModeId
 } from "./GameStateFields.js";
-import { GAME_STATE_VERSION } from "./GameStateSchema.js";
+import { GAME_STATE_VERSION, MAX_GAME_STATE_ENTITIES } from "./GameStateSchema.js";
 import { isSupportedSnapshotForLoadedResources } from "./GameStateResourcePreflight.js";
 import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
 import { captureAudioStateSnapshot, captureSongSnapshot, restoreAudioPlayback, songIdFor } from "./GameStateAudio.js";
@@ -143,7 +143,8 @@ export class JackalGameStateSerializer {
             gameMode: {
                 fields: encodeNamedFields(gameMode, GAME_MODE_FIELD_NAMES, context),
                 elements: this.snapshotElementLayers(gameMode, context),
-                entities
+                entities,
+                indexes: captureGameModeIndexes(gameMode, context)
             },
             playerFields: encodeNamedFields(player, getPlayerDurableFieldNames(), context)
         };
@@ -224,8 +225,9 @@ export class JackalGameStateSerializer {
         }
 
         this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);
-        this.rebuildGameModeIndexes(gameMode);
+        restoreGameModeIndexes(gameMode, snapshot.gameMode.indexes, entitiesById);
         player.restoreRuntimeReferences(main, gameMode);
+        restoreGameModeRuntimePresentation(main, gameMode);
         for (const entitySnapshot of snapshot.gameMode.entities) {
             const entity = entitiesById.get(entitySnapshot.id);
             if (entity === undefined) {
@@ -598,37 +600,33 @@ export class JackalGameStateSerializer {
         const ids = new Map<object, number>();
         const entities: GameElement[] = [];
         const register = (entity: GameElement): void => {
-            if (!ids.has(entity)) {
-                ids.set(entity, entities.length);
-                entities.push(entity);
+            if (ids.has(entity)) return;
+            getGameElementTypeId(entity);
+            if (entities.length >= MAX_GAME_STATE_ENTITIES) {
+                throw new Error("Jackal durable entity graph exceeds the save budget.");
             }
+            ids.set(entity, entities.length);
+            entities.push(entity);
         };
 
+        // Keep active IDs stable in layer/local order. Do not pre-clean removeFlag nodes.
         for (let layer = 0; layer < gameMode.elements.length; layer++) {
             const list = gameMode.elements[layer];
             for (let i = 0; i < list.size(); i++) {
                 const entity = list.get(i);
-                if (entity !== null) {
-                    register(entity);
-                }
+                if (entity !== null) register(entity);
             }
         }
 
-        // Layer membership is the active simulation graph, but durable references can
-        // legitimately keep detached objects alive. Preserve the transitive reference
-        // closure so save/restore never silently converts those links to null.
+        // Roots declared durable by GameMode participate even when detached from simulation.
+        for (const root of getGameModeDurableEntityReferences(gameMode)) register(root);
+
+        // Walk the combined root closure once; aliases/cycles retain object identity.
         for (let i = 0; i < entities.length; i++) {
             const entity = entities[i];
-            if (entity === undefined) {
-                throw new Error(`Missing registered Jackal entity at index ${i}.`);
-            }
-            const type = getGameElementTypeId(entity);
-            for (const referenced of getDurableEntityReferences(type, entity)) {
-                getGameElementTypeId(referenced); // fail closed on unsupported object types
-                register(referenced);
-            }
+            if (entity === undefined) throw new Error(`Missing registered Jackal entity at index ${i}.`);
+            for (const referenced of getDurableEntityReferences(getGameElementTypeId(entity), entity)) register(referenced);
         }
-
         return { main, gameMode, player, ids, entities };
     }
 
@@ -680,28 +678,6 @@ export class JackalGameStateSerializer {
             }
             gameMode.elements[layer] = list;
         }
-    }
-
-    private rebuildGameModeIndexes(gameMode: GameMode): void {
-        gameMode.enemies = new ArrayList<Enemy>(256);
-        gameMode.solids = new ArrayList<Enemy>(256);
-        gameMode.mines = new ArrayList<Enemy>(256);
-        for (let layer = 0; layer < gameMode.elements.length; layer++) {
-            const list = gameMode.elements[layer];
-            for (let i = 0; i < list.size(); i++) {
-                const entity = list.get(i);
-                if (entity instanceof Enemy) {
-                    gameMode.enemies.add(entity);
-                    if (entity.solid) {
-                        gameMode.solids.add(entity);
-                    }
-                    if (entity.mine) {
-                        gameMode.mines.add(entity);
-                    }
-                }
-            }
-        }
-        gameMode.player.mines = gameMode.mines;
     }
 
     private restoreBackPointers(main: Main, gameMode: GameMode, player: Player, gc: GameContainer): void {

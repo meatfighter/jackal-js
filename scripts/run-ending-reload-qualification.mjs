@@ -82,7 +82,7 @@ try {
                             ({ remaining, partial }) => window.endingReload.prepareReload(remaining, partial ? 1000000 : 123450, partial),
                             { remaining, partial }
                         );
-                        assert.equal(before.snapshot.version, 20);
+                        assert.equal(before.snapshot.version, 21);
                         assert.equal(before.bag.length, remaining);
                         packagedBytes = before.bytes;
                         await page.close(); // Entire document/module graph is gone; only bytes survive.
@@ -137,7 +137,7 @@ try {
                 });
                 await resume.waitFor({ state: "visible" });
                 const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jackal.game-state:" + encodeURIComponent("/pwa/"))));
-                assert.equal(saved.version, 20);
+                assert.equal(saved.version, 21);
                 assert.equal(saved.mainFields.score, 1000000);
                 assert.ok(Array.isArray(saved.remainingCutscenes));
                 // Retire the retained accepted runtime before injecting rejected bytes.
@@ -163,7 +163,7 @@ try {
                 await context.close();
             }
             writeFileSync(join(evidence, `${name}-ending-reload.json`), JSON.stringify(records, null, 2));
-            console.log(`${name}: actual new-document bag/RNG/refill and ending text, packaged schema20 Continue passed`);
+            console.log(`${name}: actual new-document bag/RNG/refill and ending text, packaged schema21 Continue passed`);
         } finally {
             await browser.close();
         }

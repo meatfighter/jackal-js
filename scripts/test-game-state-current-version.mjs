@@ -1,7 +1,21 @@
 import { loadTypeScript, typeScriptModuleUrl } from "./persistence-test-loader.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { test } from "node:test";
+import { test, after } from "node:test";
+import { createServer } from "./vite-test-server.mjs";
+const graphServer = await createServer({
+    root: new URL("../pwa/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
+    configFile: false,
+    appType: "custom",
+    logLevel: "silent",
+    server: { middlewareMode: true, watch: null }
+});
+const graphSymbol = Symbol.for("jackal-current-version-real-graph");
+globalThis[graphSymbol] = await graphServer.ssrLoadModule("/src/jackal/persistence/GameModeGraphPersistence.ts");
+after(async () => {
+    delete globalThis[graphSymbol];
+    await graphServer.close();
+});
 import ts from "typescript";
 
 const slickModuleUrl = import.meta.resolve("slick2d-ts");
@@ -184,8 +198,12 @@ async function loadPersistenceValidation(transform = (value) => value) {
             });
         }
     `);
+    const graphUrl = compileModule(
+        `export const { isGameModeIndexGraph, isGameModeCameraPanState } = globalThis[Symbol.for("jackal-current-version-real-graph")];`
+    );
     const validatorUrl = compileModule(
         transform(source("GameStateSnapshotValidator.ts"))
+            .replace(`from "./GameModeGraphPersistence.js"`, `from "${graphUrl}"`)
             .replace(`from "../CutsceneState.js"`, `from "${cutsceneStateUrl}"`)
             .replace(`from "./StandaloneModeStatePolicy.js"`, `from "${standalonePolicyUrl}"`)
             .replace(`from "../NesInputProfile.js"`, `from "${profileUrl}"`)
@@ -449,7 +467,8 @@ function gameSnapshot(fields, version, entity) {
                 stageCompletedDelay: 228
             }),
             elements: [[normalizedEntity.id], [], [], [], [], [], [], []],
-            entities: [normalizedEntity]
+            entities: [normalizedEntity],
+            indexes: { enemies: normalizedEntity.fields.enemy ? [normalizedEntity.id] : [], solids: [], mines: [] }
         },
         playerFields: validPlayerFields()
     };
@@ -458,7 +477,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 20);
+    assert.equal(currentVersion, 21);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -775,6 +794,7 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
 
     const activePanWithListener = gameSnapshot(fields, currentVersion, { id: 0, type: "BossSuperTank", fields: {}, runtimeFields: null });
     activePanWithListener.gameMode.fields.endingCameraPan = true;
+    activePanWithListener.gameMode.fields.playing = false;
     activePanWithListener.gameMode.fields.cameraPanListener = { kind: "entityRef", id: 0 };
     assert.equal(validator.isSupportedGameStateSnapshot(activePanWithListener), true);
 
@@ -1077,10 +1097,10 @@ test("removing the zero-reserve Pause validator guard admits the malformed count
     }
 });
 
-test("schema20 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
+test("schema21 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
-    assert.equal(schema.GAME_STATE_VERSION, 20);
-    const game = gameSnapshot(fields, 20, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    assert.equal(schema.GAME_STATE_VERSION, 21);
+    const game = gameSnapshot(fields, 21, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     game.playerFields.respawning = 100;
     game.currentSongState = {
         id: "stageSong0",
@@ -1090,16 +1110,16 @@ test("schema20 is an explicit semantic boundary, not an appVersion or field-shap
         activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
     };
     game.requestedSongId = "bossSong";
-    const controls = [modeSnapshot(fields, 20), game];
+    const controls = [modeSnapshot(fields, 21), game];
     for (const current of controls) {
         assert.equal(validator.isSupportedGameStateSnapshot(current), true, "positive current shape");
-        for (const oldVersion of Array.from({ length: 20 }, (_, index) => index)) {
+        for (const oldVersion of Array.from({ length: 21 }, (_, index) => index)) {
             const old = { ...structuredClone(current), version: oldVersion };
             const bytes = JSON.stringify(old);
             assert.equal(validator.isSupportedGameStateSnapshot(old), false);
             assert.equal(JSON.stringify(old), bytes, "validation never relabels or repairs input");
         }
-        for (const version of [21, "20", null, true, 20.5, NaN, Infinity]) {
+        for (const version of [22, "21", null, true, 21.5, NaN, Infinity]) {
             assert.equal(validator.isSupportedGameStateSnapshot({ ...structuredClone(current), version }), false);
         }
         const oldWithNewBuildLabel = { ...structuredClone(current), version: 18, appVersion: "schema19-test-build" };

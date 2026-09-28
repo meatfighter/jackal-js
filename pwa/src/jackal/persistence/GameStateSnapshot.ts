@@ -65,10 +65,18 @@ export type EntitySnapshot = {
     runtimeFields: EncodedRecord | null;
 };
 
+export type GameModeIndexesSnapshot = {
+    enemies: number[];
+    solids: number[];
+    mines: number[];
+};
+
 export type GameModeSnapshot = {
     fields: EncodedRecord;
     elements: number[][];
     entities: EntitySnapshot[];
+    /** Independent ordered references to active entities. */
+    indexes: GameModeIndexesSnapshot;
 };
 
 export type MenuSnapshot = {

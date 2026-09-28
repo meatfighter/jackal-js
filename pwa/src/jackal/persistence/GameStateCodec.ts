@@ -44,7 +44,11 @@ export function readEncodedBooleanField(fields: EncodedRecord, name: string): bo
 export function encodeNamedFields(source: object, names: readonly string[], context: GameStateEncodeContext): EncodedRecord {
     const record: EncodedRecord = {};
     for (const name of names) {
-        record[name] = encodeValue(Reflect.get(source, name), context);
+        try {
+            record[name] = encodeValue(Reflect.get(source, name), context);
+        } catch (error) {
+            throw new Error(`Unable to encode durable Jackal field ${name}.`, { cause: error });
+        }
     }
     return record;
 }

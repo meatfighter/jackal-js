@@ -1,3 +1,4 @@
+import { isGameModeIndexGraph, isGameModeCameraPanState } from "./GameModeGraphPersistence.js";
 import { isCutsceneState } from "../CutsceneState.js";
 import { isStandaloneModeSemanticState } from "./StandaloneModeStatePolicy.js";
 import * as NesInputProfile from "../NesInputProfile.js";
@@ -22,7 +23,7 @@ import {
     type RandomSnapshot,
     type SongSnapshot
 } from "./GameStateSnapshot.js";
-import { isSupportedGameStateVersion } from "./GameStateSchema.js";
+import { isSupportedGameStateVersion, MAX_GAME_STATE_ENTITIES } from "./GameStateSchema.js";
 import { isGameElementTypeId, type GameElementTypeId } from "./GameElementTypeIds.js";
 import { isEntityDurableFields, isPlayerDurableFields } from "./GameStateFieldPolicies.js";
 import { isEntityRuntimeFields } from "./EntityRuntimeFields.js";
@@ -71,7 +72,7 @@ const BASE_SNAPSHOT_FIELDS = [
 ] as const;
 const GAME_SNAPSHOT_FIELDS = [...BASE_SNAPSHOT_FIELDS, "gameMode", "playerFields"] as const;
 const MODE_SNAPSHOT_FIELDS = [...BASE_SNAPSHOT_FIELDS, "modeId", "modeFields", "modeExtra"] as const;
-const GAME_MODE_SNAPSHOT_FIELDS = ["fields", "elements", "entities"] as const;
+const GAME_MODE_SNAPSHOT_FIELDS = ["fields", "elements", "entities", "indexes"] as const;
 const ENTITY_SNAPSHOT_FIELDS = ["id", "type", "fields", "runtimeFields"] as const;
 const MENU_SNAPSHOT_FIELDS = ["fields"] as const;
 const INPUT_MODE_EXTRA_FIELDS = ["menu", "draftButtonMapping", "assignedKeys", "assignedControllerBindings"] as const;
@@ -85,7 +86,7 @@ const MUSIC_FIELDS = ["id", "playback"] as const;
 
 const MAX_APP_VERSION_LENGTH = 128;
 const MAX_SAVED_AT_LENGTH = 64;
-const MAX_ENTITY_COUNT = 4096;
+const MAX_ENTITY_COUNT = MAX_GAME_STATE_ENTITIES;
 const MAX_ENCODED_DEPTH = 64;
 const MAX_ENCODED_ARRAY_LENGTH = 8192;
 const MAX_ENCODED_RECORD_FIELDS = 512;
@@ -107,15 +108,6 @@ const MAX_FADE_INDEX = 23;
 const MAX_TOTAL_SOUND_VOICES = 62;
 const JAVA_INT_MAX = 2_147_483_647;
 const FORBIDDEN_STATE_FIELD_NAMES = new Set(["__proto__", "constructor", "prototype"]);
-const CAMERA_PAN_LISTENER_TYPES = new Set([
-    "BossBlueTanksManager",
-    "BossGarageManager",
-    "BossHeadquartersManager",
-    "BossHelicopterManager",
-    "BossShipManager",
-    "BossStatuesManager",
-    "BossSuperTank"
-]);
 
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
     if (!isWithinGameStateValidationBudget(snapshot)) {
@@ -264,7 +256,7 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     if (!isPlayerDurableFields(snapshot.playerFields) || !isEncodedRecord(gameMode.fields, entityIds) || !isEncodedRecord(mainFields)) {
         return false;
     }
-    if (gameMode.fields.stageIndex !== mainFields.stageIndex || !isGameModeFieldsValid(gameMode.fields, entityIds, entityTypes)) {
+    if (gameMode.fields.stageIndex !== mainFields.stageIndex || !isGameModeFieldsValid(gameMode.fields, entityTypes)) {
         return false;
     }
     if (!isGameModeFadeStateConsistent(mainFields, gameMode.fields)) {
@@ -285,10 +277,10 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
             return false;
         }
     }
-    return isElementLayers(gameMode.elements, entityIds);
+    return isElementLayers(gameMode.elements, entityIds) && isGameModeIndexGraph(gameMode);
 }
 
-function isGameModeFieldsValid(fields: EncodedRecord, entityIds: ReadonlySet<number>, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
+function isGameModeFieldsValid(fields: EncodedRecord, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
     if (
         !isEncodedIntegerMatrix(fields.tileMap, 0, 32_767) ||
         !isEncodedIntegerMatrix(fields.typesMap, 0, TILE_TYPE_CONVEYOR) ||
@@ -314,11 +306,7 @@ function isGameModeFieldsValid(fields: EncodedRecord, entityIds: ReadonlySet<num
         return false;
     }
 
-    const cameraPanListener = fields.cameraPanListener;
-    if (cameraPanListener !== null && !isCameraPanListenerReference(cameraPanListener, entityIds, entityTypes)) {
-        return false;
-    }
-    return !(fields.bossCameraPan || fields.endingCameraPan) || cameraPanListener !== null;
+    return isGameModeCameraPanState(fields, entityTypes);
 }
 
 function isEncodedIntegerMatrix(value: unknown, min: number, max: number): boolean {
@@ -359,20 +347,6 @@ function encodedArrayItems(value: unknown): readonly unknown[] | null {
 
 function isFiniteNumberInRange(value: unknown, min: number, max: number, inclusiveMax: boolean = true): value is number {
     return typeof value === "number" && Number.isFinite(value) && value >= min && (inclusiveMax ? value <= max : value < max);
-}
-
-function isCameraPanListenerReference(value: unknown, entityIds: ReadonlySet<number>, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {
-    if (
-        !isRecord(value) ||
-        Object.keys(value).length !== 2 ||
-        value.kind !== "entityRef" ||
-        !isIntegerInRange(value.id, 0, MAX_ENTITY_COUNT - 1) ||
-        !entityIds.has(value.id)
-    ) {
-        return false;
-    }
-    const type = entityTypes.get(value.id);
-    return type !== undefined && CAMERA_PAN_LISTENER_TYPES.has(type);
 }
 
 function isStandaloneStateSnapshot(snapshot: UnknownRecord): snapshot is JackalStandaloneModeStateSnapshot {

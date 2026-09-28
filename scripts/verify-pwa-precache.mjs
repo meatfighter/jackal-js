@@ -319,6 +319,10 @@ const serviceWorkerSource = readFileSync(serviceWorkerPath, "utf8");
 const listedResources = parseStaticResources(serviceWorkerSource);
 const resourceVersions = parseResourceVersions(serviceWorkerSource);
 const generatedFiles = collectFiles(pwaDistDir);
+for (const file of generatedFiles) {
+    assert.doesNotMatch(file.ref, /game-mode-persistence|GameModePersistenceVerification/);
+    if (/\.(js|html)$/.test(file.ref)) assert.doesNotMatch(readFileSync(file.path, "utf8"), /gameModePersistence|GameModePersistenceVerification/);
+}
 const expectedResources = ["./", ...collectPrecacheResources(pwaDistDir)];
 const duplicateResources = findDuplicates(listedResources);
 const listedSet = new Set(listedResources);

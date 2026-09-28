@@ -67,7 +67,7 @@ export function captureEntityRuntimeFields(entity: GameElement, main: Main, game
     } else if (entity instanceof FloorGun) {
         fields[FLOOR_GUN_PLAIN_FIELD] = floorGunUsesPlainSprites(entity, main);
     } else if (entity instanceof TileDebris) {
-        fields[TILE_DEBRIS_SPRITE_TILE_FIELD] = indexOfReference(gameMode.tiles, entity.sprite, "TileDebris sprite");
+        fields[TILE_DEBRIS_SPRITE_TILE_FIELD] = tileDebrisSpriteId(entity.sprite, main, gameMode);
     }
 
     return Object.keys(fields).length === 0 ? null : fields;
@@ -134,12 +134,7 @@ function restoreEntityRuntimeImages(entity: GameElement, main: Main, gameMode: G
     } else if (entity instanceof StatueSeekerMissile) {
         entity.sprite = main.statueMissiles[0];
     } else if (entity instanceof TileDebris) {
-        const tile = requireRuntimeField(runtimeFields, TILE_DEBRIS_SPRITE_TILE_FIELD);
-        if (typeof tile === "number" && Number.isInteger(tile) && tile >= 0 && tile < gameMode.tiles.length) {
-            entity.sprite = gameMode.tiles[tile];
-        } else {
-            entity.sprite = gameMode.tiles[gameMode.tileMap[entity.Y][entity.X]];
-        }
+        entity.sprite = tileDebrisSpriteById(main, gameMode, requireRuntimeField(runtimeFields, TILE_DEBRIS_SPRITE_TILE_FIELD));
     } else if (entity instanceof BossGarage) {
         entity.vehicle = entity.state === BossGarage.STATE_CLOSED ? null : entity.isBrownTank ? main.brownTanks : main.grayTanks;
     }
@@ -198,3 +193,33 @@ function indexOfReference(values: readonly unknown[], value: unknown, label: str
 }
 
 export const ENTITY_RUNTIME_POINTER_FIELDS = ENTITY_RUNTIME_POINTERS;
+
+/** Reconstruct the image selected by saved phase without advancing the game. */
+export function restoreGameModeRuntimePresentation(main: Main, gameMode: GameMode): void {
+    if (gameMode.stageIndex !== 5) return;
+    const index = gameMode.conveyorLastIndex;
+    const image = main.conveyors[index];
+    if (!Number.isInteger(index) || index < 0 || index >= 16 || image === undefined || image === null) {
+        throw new Error("Unavailable saved Jackal conveyor frame.");
+    }
+    gameMode.tiles[0] = image;
+}
+
+/** Stage-6 IDs 0..15 refer to original conveyor images, never the mutable slot zero. */
+function tileDebrisSpriteId(sprite: Image | null, main: Main, gameMode: GameMode): number {
+    if (sprite === null) throw new Error("Missing Jackal TileDebris sprite.");
+    if (gameMode.stageIndex === 5) {
+        const conveyor = main.conveyors.indexOf(sprite);
+        if (conveyor >= 0 && conveyor < 16) return conveyor;
+    }
+    return indexOfReference(gameMode.tiles, sprite, "TileDebris sprite");
+}
+
+function tileDebrisSpriteById(main: Main, gameMode: GameMode, value: unknown): Image {
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value >= gameMode.tiles.length) {
+        throw new Error("Invalid saved Jackal TileDebris sprite ID.");
+    }
+    const image = gameMode.stageIndex === 5 && value < 16 ? main.conveyors[value] : gameMode.tiles[value];
+    if (image === undefined || image === null) throw new Error("Unavailable saved Jackal TileDebris sprite.");
+    return image;
+}

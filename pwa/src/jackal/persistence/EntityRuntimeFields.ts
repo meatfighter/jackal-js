@@ -2,6 +2,7 @@ import type { GameElementTypeId } from "./GameElementTypeIds.js";
 
 export const ENEMY_BULLET_SPRITE_FIELD = "enemyBulletSprite";
 export const FLOOR_GUN_PLAIN_FIELD = "floorGunPlain";
+// Schema 21: stage-6 IDs 0..15 select immutable main.conveyors; other IDs select stage tiles.
 export const TILE_DEBRIS_SPRITE_TILE_FIELD = "tileDebrisSpriteTile";
 
 export const ENEMY_BULLET_SPRITE_IDS = ["cannonball", "white", "yellow"] as const;
