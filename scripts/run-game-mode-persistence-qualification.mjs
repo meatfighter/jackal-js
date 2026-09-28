@@ -88,7 +88,7 @@ try {
             await page.goto(fixtureUrl);
             await page.waitForFunction(() => window.gameModePersistence);
             await page.mouse.click(1, 1);
-            await page.exposeFunction("recordGameModeCheckpoint", (label) => page.screenshot({ path: join(evidence, `${name}-${label}.png`) }));
+            await page.exposeFunction("recordGameModeCheckpoint", (label) => page.screenshot({ fullPage: true, path: join(evidence, `${name}-${label}.png`) }));
             const matrix = await bounded(page, name + " matrix", () => page.evaluate(() => window.gameModePersistence.matrix()));
             const reloads = [];
             let hqBytes;
@@ -117,11 +117,12 @@ try {
                         page.evaluate((checkpoint) => window.gameModePersistence.restoreReload(checkpoint), checkpoint)
                     )
                 );
-                await page.screenshot({ path: join(evidence, `${name}-game-mode-${label}.png`) });
+                await page.screenshot({ fullPage: true, path: join(evidence, `${name}-game-mode-${label}.png`) });
             }
             assert.deepEqual(errors, []);
             await context.close();
             const shell = await browser.newContext();
+            shell.on("page", (p) => p.on("pageerror", (e) => errors.push(e.message)));
             shell.setDefaultTimeout(60000);
             try {
                 const key = "jackal.game-state:" + encodeURIComponent("/pwa/");
@@ -134,6 +135,9 @@ try {
                 await p.waitForFunction(() => window.__gameResourcesPrepared === true);
                 const resume = () => p.locator("#continue-button, #continueButton");
                 const menu = async () => {
+                    await p.waitForFunction(() =>
+                        [...document.querySelectorAll("button")].some((b) => /menu/i.test(b.getAttribute("aria-label") ?? "") && !b.hidden)
+                    );
                     await p.evaluate(() => {
                         const b = [...document.querySelectorAll("button")].find((b) => /menu/i.test(b.getAttribute("aria-label") ?? "") && !b.hidden);
                         if (!b) throw Error("Menu absent");
@@ -146,13 +150,14 @@ try {
                 await p.locator("canvas").waitFor();
                 await p.keyboard.press("KeyZ");
                 await p.waitForTimeout(8000);
+                await p.screenshot({ fullPage: true, path: join(evidence, `${name}-packaged-live-tank.png`) });
                 await menu();
                 const saved = await read();
                 assert.equal(saved.version, 21);
                 assert.notEqual(JSON.stringify(saved), hqBytes);
                 assert.ok(saved.gameMode.entities.some((e) => e.type === "BossSuperTank"));
                 assert.ok(!saved.gameMode.entities.some((e) => e.type === "BossHeadquarters"));
-                await p.screenshot({ path: join(evidence, `${name}-packaged-tank-menu.png`) });
+                await p.screenshot({ fullPage: true, path: join(evidence, `${name}-packaged-tank-menu.png`) });
                 await resume().click();
                 await p.locator("canvas").waitFor();
                 await menu(); // Retained Continue.
@@ -212,9 +217,22 @@ try {
             } finally {
                 await shell.close();
             }
+            assert.deepEqual(errors, []);
             writeFileSync(
                 join(evidence, `${name}-game-mode-persistence.json`),
-                JSON.stringify({ buildIdentity, browser: browser.version(), executable: type.executablePath(), matrix, reloads }, null, 2)
+                JSON.stringify(
+                    {
+                        name,
+                        headless: name === "firefox" && process.env.PWA_FIREFOX_HEADLESS === "1",
+                        buildIdentity,
+                        browser: browser.version(),
+                        executable: type.executablePath(),
+                        matrix,
+                        reloads
+                    },
+                    null,
+                    2
+                )
             );
         } finally {
             await browser.close();

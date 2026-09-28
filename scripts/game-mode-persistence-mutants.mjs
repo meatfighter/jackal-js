@@ -1,5 +1,14 @@
 // Deliberate, isolated regressions for behavioral test qualification. Never writes production files.
 export const mutants = {
+    "sort-restored-enemies": [
+        "GameModeGraphPersistence.ts",
+        'restore(snapshot.enemies, "enemies")',
+        'restore([...snapshot.enemies].sort((a,b)=>a-b), "enemies")'
+    ],
+    "sort-restored-solids": ["GameModeGraphPersistence.ts", 'restore(snapshot.solids, "solids")', 'restore([...snapshot.solids].sort((a,b)=>a-b), "solids")'],
+    "sort-restored-mines": ["GameModeGraphPersistence.ts", 'restore(snapshot.mines, "mines")', 'restore([...snapshot.mines].sort((a,b)=>a-b), "mines")'],
+    "omit-entity-rebinding": ["EntityRuntimePersistence.ts", "Reflect.set(entity, pointer, runtimePointerValue(pointer, gameMode));", "void pointer;"],
+
     "activate-detached": [
         "JackalGameStateSerializer.ts",
         "this.restoreElementLayers(gameMode, snapshot.gameMode.elements, entitiesById);",

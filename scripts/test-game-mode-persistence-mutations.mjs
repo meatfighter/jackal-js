@@ -6,7 +6,17 @@ for (const name of Object.keys(mutants))
     test("behavioral persistence mutant is killed: " + name, () => {
         const env = { ...process.env, JACKAL_PERSISTENCE_MUTANT: name };
         delete env.NODE_TEST_CONTEXT;
-        const result = spawnSync(process.execPath, ["--test", "scripts/test-game-mode-root-graph.mjs"], { encoding: "utf8", timeout: 60000, env });
+        const result = spawnSync(
+            process.execPath,
+            [
+                "--test",
+                "scripts/test-game-mode-root-graph.mjs",
+                "scripts/test-game-mode-ordered-index-persistence.mjs",
+                "scripts/test-game-mode-graph-validation.mjs",
+                "scripts/test-game-mode-runtime-presentation.mjs"
+            ],
+            { encoding: "utf8", timeout: 60000, env }
+        );
         const output = result.stdout + result.stderr;
         assert.equal(result.error, undefined, output);
         assert.notEqual(result.status, 0, "Mutant survived: " + name);

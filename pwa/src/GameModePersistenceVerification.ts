@@ -1,3 +1,7 @@
+import { BossHeadquartersManager } from "./jackal/BossHeadquartersManager.js";
+import { BrownTank } from "./jackal/BrownTank.js";
+import { EnemyHelicopter } from "./jackal/EnemyHelicopter.js";
+import { ElephantGun } from "./jackal/ElephantGun.js";
 import { BossSuperTankGun } from "./jackal/BossSuperTankGun.js";
 import { EnemySoldier } from "./jackal/EnemySoldier.js";
 import { EnemySoldierType } from "./jackal/EnemySoldierType.js";
@@ -56,6 +60,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         buffered: InstanceType<PreparedRuntime["slick"]["BufferedScalableGame"]>;
     };
     let mounted: Mounted | null = null;
+    let earlierValidBytes: string | null = null;
     const textCalls: Array<{ text: string; length: number; x: number; y: number }> = [];
     function current(): Mounted {
         check(mounted, "Mounted ending runtime");
@@ -125,19 +130,25 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             Storage.prototype.setItem = original;
         }
     }
-    function readSaved(main: Main, container: Mounted["container"] | Parameters<typeof store.restore>[1]): boolean {
-        const original = Storage.prototype.setItem;
+    function readSaved(main: Main, container: Parameters<typeof store.restore>[1]): boolean {
+        const originalSet = Storage.prototype.setItem,
+            originalRemove = Storage.prototype.removeItem;
         let writes = 0;
         Storage.prototype.setItem = function (entryKey, bytes) {
-            if (entryKey === key) writes++;
-            original.call(this, entryKey, bytes);
+            writes++;
+            originalSet.call(this, entryKey, bytes);
+        };
+        Storage.prototype.removeItem = function (entryKey) {
+            writes++;
+            originalRemove.call(this, entryKey);
         };
         try {
             const result = store.restore(main, container);
-            check(writes === 0, "Actual reader performs zero writes");
+            check(writes === 0, "Reader never writes or removes game, mapping, or preference data");
             return result;
         } finally {
-            Storage.prototype.setItem = original;
+            Storage.prototype.setItem = originalSet;
+            Storage.prototype.removeItem = originalRemove;
         }
     }
     function capture(): JackalGameStateSnapshot {
@@ -156,9 +167,10 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         if (main.mode instanceof GameMode) main.mode.player.makeInvincible();
         Music.poll(10);
         main.update(container, 10);
-        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        // Both trajectories use a controlled clock; settle queued work without advancing wall time.
+        await Promise.resolve();
     }
-    function render(): void {
+    function assertPresentation(): void {
         if (current().main.mode instanceof GameMode) {
             const w = world(),
                 main = current().main;
@@ -170,6 +182,9 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     check(e.sprite === (w.stageIndex === 5 && id < 16 ? main.conveyors[id] : w.tiles[id]), "Exact immutable debris image");
                 }
         }
+    }
+    function render(): void {
+        assertPresentation();
         textCalls.length = 0;
         const m = current();
         m.buffered.render(m.container, m.container.getGraphics());
@@ -184,10 +199,14 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         console.info("Checkpoint: " + label);
         const saved = capture();
         check(isSupportedGameStateSnapshot(saved), label + " positive");
+        check(earlierValidBytes !== null, label + " earlier valid seed");
+        check(normalized(JSON.parse(earlierValidBytes) as JackalGameStateSnapshot) !== normalized(saved), label + " distinct earlier phase");
+        localStorage.setItem(key, earlierValidBytes);
 
         check(save(current().main, () => true).saved, label + " store save");
         const bytes = localStorage.getItem(key);
         check(bytes, label + " bytes");
+        check(bytes !== earlierValidBytes, label + " replaces deliberately older valid bytes");
         const expected = JSON.parse(bytes) as JackalGameStateSnapshot;
         check(normalized(expected) === normalized(saved), label + " stored bytes represent the current phase");
         const savedNow = now;
@@ -226,10 +245,16 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             );
         }
         now = savedNow;
+        // A retained loaded stage may still show another conveyor phase. It is not durable authority.
+        if (current().main.mode instanceof GameMode && world().stageIndex === 5)
+            world().tiles[0] = current().main.conveyors[(world().conveyorLastIndex + 1) % 16];
         check(readSaved(current().main, current().container), label + " restore checkpoint after continuation control");
+        assertPresentation();
         check(localStorage.getItem(key) === bytes, label + " control leaves save untouched");
         return {
             label,
+            stageIndex: expected.mainFields.stageIndex,
+            hardMode: expected.mainFields.hardMode,
             mode: expected.kind === "mode" ? expected.modeId : "GAME",
             fields: expected.kind === "mode" ? expected.modeFields : null,
             score: current().main.score,
@@ -261,12 +286,15 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         check(value instanceof BossSuperTank, "Live super tank");
         return value;
     }
-    async function prepareBoss(stage = 5, hard = false): Promise<void> {
+    async function prepareBoss(stage = 5, hard = false, beforeTrigger?: () => Promise<void>): Promise<void> {
         await mount(false);
         const { main, container } = current();
         main.stageIndex = stage;
         main.hardMode = hard;
         main.requestMode(Modes.GAME, container);
+        check(save(main, () => true).saved, "Initial gameplay seed is valid");
+        earlierValidBytes = localStorage.getItem(key);
+        check(earlierValidBytes, "Initial gameplay seed bytes");
         const triggers = [
             Triggers.BOSS_BLUE_TANKS,
             Triggers.BOSS_STATUES,
@@ -283,6 +311,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         w.player.x = 1024;
         w.player.y = w.cameraY + GameMode.CAMERA_MARGIN_NORTH;
         w.player.respawning = 0;
+        if (beforeTrigger) await beforeTrigger();
         await reach("Trigger-created manager", () => world().cameraPanListener !== null);
     }
     async function prepareHeadquarters(hard = false): Promise<unknown> {
@@ -420,7 +449,9 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         for (const hard of includeBossStages ? [false, true] : [])
             for (let stage = 0; stage < 6; stage++) {
                 const label = `stage-${stage + 1}-${hard ? "hard" : "normal"}`;
-                await prepareBoss(stage, hard);
+                await prepareBoss(stage, hard, async () => {
+                    results.push(await roundtrip(label + "-pre-trigger"));
+                });
                 results.push(await roundtrip(label + "-entry-start"));
                 for (let i = 0; i < 20; i++) await tick();
                 results.push(await roundtrip(label + "-entry-middle"));
@@ -431,15 +462,25 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                 for (let i = 0; i < 100; i++) await tick();
                 results.push(await roundtrip(label + "-fight"));
                 if (stage === 5) {
+                    const manager = () => {
+                        const m = world().cameraPanListener;
+                        check(m instanceof BossHeadquartersManager, "HQ manager");
+                        return m;
+                    };
+                    // Controlled placement through the production factory guarantees overlap with the short helicopter visit.
+                    BrownTank.withTracker(1024, 800, manager());
+                    check(
+                        [BossHeadquarters, ElephantGun, EnemyHelicopter, BrownTank].every((type) => active().some((e) => e instanceof type)),
+                        "Mixed live HQ actors"
+                    );
+                    results.push(await roundtrip(label + "-HQ-mixed-controlled-ground-placement"));
+                    await reach(label + "-natural-HQ-ground-spawn", () => manager().tankSpawnDelay === BossHeadquartersManager.TANK_SPAWN_DELAY);
+                    results.push(await roundtrip(label + "-HQ-natural-ground-spawn"));
                     const headquarters = () => {
                         const h = active().find((e) => e instanceof BossHeadquarters);
                         check(h instanceof BossHeadquarters, "Live HQ");
                         return h;
                     };
-                    const oldFire = tank().superFire;
-                    check(oldFire, "Fire replacement predecessor");
-                    await reach("Actual replacement fire", () => tank().superFire !== oldFire);
-                    results.push(await roundtrip("fire-replacement"));
                     for (let hit = 1; hit <= 12; hit++) {
                         const h = headquarters();
                         check(h.attack(h.x, h.y, h.x + 256, h.y + 256, AttackSource.PLAYER_WEAPON), "HQ milestone hit");
@@ -498,7 +539,8 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         const seen = new Set<number>();
         const fireSeen = new Set<string>();
         const gunSeen = new Set<number>();
-        for (let i = 0; i < 3000 && (seen.size < 5 || fireSeen.size < 6 || gunSeen.size < 3); i++) {
+        const recoilSeen = new Set<string>();
+        for (let i = 0; i < 3000 && (seen.size < 5 || fireSeen.size < 6 || gunSeen.size < 3 || recoilSeen.size < 9); i++) {
             const t = tank();
             if (!seen.has(t.state)) {
                 seen.add(t.state);
@@ -510,6 +552,13 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                 gunSeen.add(gun.state);
                 results.push(await roundtrip("gun-state-" + gun.state));
             }
+            if (gun.state === 0 && [16, 8, 0].includes(gun.recoilIndex)) {
+                const boundary = gun.group + "-" + gun.recoilIndex;
+                if (!recoilSeen.has(boundary)) {
+                    recoilSeen.add(boundary);
+                    results.push(await roundtrip("gun-recoil-" + boundary));
+                }
+            }
             const f = tank().superFire;
             const phase = f === null ? "absent" : f.removeFlag ? "detached" : String(f.state);
             if (!fireSeen.has(phase)) {
@@ -519,20 +568,31 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             await tick();
         }
         check(gunSeen.size === 3, "All gun states");
+        check(recoilSeen.size === 9, "Every burst group start, mid-recoil, and recoil-end boundary");
         check(seen.size === 5, "All live tank motion phases");
         check(fireSeen.has("detached"), "Naturally detached fire remains reachable");
         const oldFire = tank().superFire;
         check(oldFire, "Fire replacement predecessor");
         await reach("Actual replacement fire", () => tank().superFire !== oldFire);
         results.push(await roundtrip("fire-replacement"));
+        world().player.x = 1536;
+        await tick();
         for (let hit = 1; hit <= BossSuperTank.HITS_EXPLODE; hit++) {
             const t = tank();
             check(t.attack(t.x, t.y + 32, t.x + 456, t.y + 198, AttackSource.PLAYER_WEAPON), "Actual tank hit");
-            if ([1, 5, 10, 14, 15].includes(hit)) results.push(await roundtrip("tank-hit-" + hit));
+            if ([1, 4, 5, 9, 10, 14, 15].includes(hit)) results.push(await roundtrip("tank-hit-" + hit));
         }
+        await tick();
+        results.push(await roundtrip("tank-first-explosion-tick"));
+        for (let i = 0; i < 200; i++) await tick();
+        results.push(await roundtrip("tank-middle-explosions"));
         for (const state of [6, 7]) {
             await reach("tank-terminal-" + state, () => tank().state === state);
             results.push(await roundtrip("tank-terminal-" + state));
+            if (state === 6) {
+                for (let i = 0; i < 50; i++) await tick();
+                results.push(await roundtrip("tank-middle-finishing"));
+            }
         }
         await reach("Tank waits before ending pan", () => tank().state === 7 && tank().delay === 2);
         world().player.explode();
@@ -542,7 +602,14 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         for (const state of [8, 9]) {
             await reach("ending phase " + state, () => tank().state === state);
             results.push(await roundtrip("tank-terminal-" + state));
+            if (state === 8) {
+                for (let i = 0; i < 20; i++) await tick();
+                check(world().endingCameraPan, "Positive-distance middle ending pan");
+                results.push(await roundtrip("ending-pan-middle"));
+            }
         }
+        await reach("skull-fading", () => active().some((e) => e instanceof FlashingSkull && e.state === FlashingSkull.STATE_FADING));
+        results.push(await roundtrip("skull-fading"));
         await reach("skull pauses for physical song completion", () =>
             active().some((e) => e instanceof FlashingSkull && e.state === FlashingSkull.STATE_PAUSED)
         );
@@ -560,6 +627,10 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         results.push(await roundtrip("mission-text-start"));
         for (let i = 0; i < 40; i++) await tick();
         results.push(await roundtrip("mission-partial-text"));
+        await reach("mission-text-paused", () => active().some((e) => e instanceof MissionAccomplished && e.state === MissionAccomplished.STATE_PAUSED));
+        results.push(await roundtrip("mission-text-paused"));
+        await reach("mission-complete", () => world().stageCompletedFlag);
+        results.push(await roundtrip("mission-done-completion-delay"));
         await reach("final-fade", () => current().main.fading, 4000);
         results.push(await roundtrip("final-fade"));
         await reach("Sunset", () => !(current().main.mode instanceof GameMode), 4000);
@@ -592,6 +663,9 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                 if (label === "ending-pan") await reach(label, () => world().endingCameraPan);
             }
         }
+        check(earlierValidBytes !== null, "Reload earlier valid seed");
+        check(normalized(JSON.parse(earlierValidBytes) as JackalGameStateSnapshot) !== normalized(capture()), "Reload distinct phase");
+        localStorage.setItem(key, earlierValidBytes);
         check(save(current().main, () => true).saved, label + " save");
         const bytes = localStorage.getItem(key);
         check(bytes, "Reload bytes");
