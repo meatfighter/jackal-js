@@ -29,7 +29,7 @@ async function exercise(transforms = {}) {
         assert.equal(api.writeStoredGameState(current, () => true).saved, true, "Current positive control");
         const key = s.calls.set[0];
         assert.match(key, /jackal\.game-state(?::|$)/);
-        for (const rejected of [18, 19, 20, 22]) {
+        for (const rejected of [...Array.from({ length: 22 }, (_, i) => i), 23]) {
             const bytes = JSON.stringify({ ...current, version: rejected });
             s.values.set(key, bytes);
             s.clearCalls();
