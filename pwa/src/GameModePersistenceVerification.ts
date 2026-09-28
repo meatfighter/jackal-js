@@ -343,7 +343,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             count++;
         };
         try {
-            for (const version of [...Array.from({ length: 21 }, (_, i) => i), 22, "21", 21.5]) reject({ ...positive, version }, "schema-" + version);
+            for (const version of [...Array.from({ length: 22 }, (_, i) => i), 23, "22", 22.5]) reject({ ...positive, version }, "schema-" + version);
             const mutations: Array<(s: Extract<JackalGameStateSnapshot, { kind: "game" }>) => void> = [
                 (s) => Reflect.deleteProperty(s.gameMode, "indexes"),
                 (s) => Reflect.deleteProperty(s.gameMode.indexes, "mines"),
@@ -638,7 +638,55 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         return results;
     }
     async function prepareReload(label: string) {
-        if (label === "headquarters") {
+        let collisionActors: EnemySoldier[] = [];
+        if (label === "ordered-collision") {
+            await mount(false);
+            const { main, container } = current();
+            main.stageIndex = 0;
+            main.requestMode(Modes.GAME, container);
+            check(save(main, () => true).saved, "Collision earlier valid seed");
+            earlierValidBytes = localStorage.getItem(key);
+            const w = world(),
+                x = 1024,
+                y = w.cameraY + 400;
+            const first = new EnemySoldier(x, y, EnemySoldierType.STATIONARY);
+            const second = new EnemySoldier(x, y, EnemySoldierType.STATIONARY);
+            collisionActors = [first, second];
+            first.changeLayer(6);
+            await tick();
+            new PlayerBullet(x, y + PlayerBullet.VELOCITY);
+            const positive = capture();
+            check(positive.kind === "game", "Loaded collision graph");
+            for (const role of ["solids", "mines"] as const) {
+                check(positive.gameMode.indexes[role].length >= 2, "Real collision-role registrations");
+                const bad = structuredClone(positive);
+                bad.gameMode.indexes[role].pop();
+                check(!isSupportedGameStateSnapshot(bad), "Loaded missing " + role);
+                const validBytes = localStorage.getItem(key);
+                const badBytes = JSON.stringify(bad);
+                localStorage.setItem(key, badBytes);
+                let writes = 0;
+                const set = Storage.prototype.setItem,
+                    remove = Storage.prototype.removeItem;
+                Storage.prototype.setItem = () => {
+                    writes++;
+                };
+                Storage.prototype.removeItem = () => {
+                    writes++;
+                };
+                try {
+                    check(!store.hasValidSave(), "Missing role store inspection rejects");
+                    check(!readSaved(main, container), "Missing role restore rejects");
+                    check(writes === 0, "Missing role readers never write");
+                    check(localStorage.getItem(key) === badBytes, "Rejected bytes retained");
+                    check(normalized(capture()) === normalized(positive), "Missing role leaves live graph unchanged");
+                } finally {
+                    Storage.prototype.setItem = set;
+                    Storage.prototype.removeItem = remove;
+                    if (validBytes !== null) localStorage.setItem(key, validBytes);
+                }
+            }
+        } else if (label === "headquarters") {
             await prepareBoss();
             await reach(label, () => !world().bossCameraPan);
             const h = active().find((e) => e instanceof BossHeadquarters);
@@ -673,9 +721,18 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         render();
         const firstRender = JSON.stringify(textCalls);
         const nextTicks: string[] = [];
+        const beforeCollisionScore = current().main.score;
         for (let i = 0; i < 5; i++) {
             await tick();
             nextTicks.push(normalized(capture()));
+        }
+        if (label === "ordered-collision") {
+            check(current().main.score === beforeCollisionScore + 100, "New-document control has an actual first-hit score outcome");
+            check(active().filter((e) => collisionActors.includes(e as EnemySoldier)).length === 1, "Exactly one overlapping enemy survives cleanup");
+            check(
+                !collisionActors[0].removeFlag && collisionActors[1].removeFlag,
+                "Reverse insertion-order first hit survives different layer traversal order"
+            );
         }
         retire();
         return { label, bytes, state, firstRender, nextTicks };

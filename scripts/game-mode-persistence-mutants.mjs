@@ -1,5 +1,15 @@
 // Deliberate, isolated regressions for behavioral test qualification. Never writes production files.
 export const mutants = {
+    "subset-solids": [
+        "GameModeGraphPersistence.ts",
+        "checkExactIndex(indexes.solids, expectedSolids)",
+        "Array.isArray(indexes.solids) && indexes.solids.every(id => expectedEnemies.has(id))"
+    ],
+    "subset-mines": [
+        "GameModeGraphPersistence.ts",
+        "checkExactIndex(indexes.mines, expectedMines)",
+        "Array.isArray(indexes.mines) && indexes.mines.every(id => expectedEnemies.has(id))"
+    ],
     "sort-restored-enemies": [
         "GameModeGraphPersistence.ts",
         'restore(snapshot.enemies, "enemies")',

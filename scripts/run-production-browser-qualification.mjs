@@ -135,7 +135,7 @@ try {
             const current = await saveEntry(upgraded);
             assert(current !== null);
             const currentSnapshot = JSON.parse(current[1]);
-            assert.equal(currentSnapshot.version, 21, `${name}: packaged candidate did not write schema21`);
+            assert.equal(currentSnapshot.version, 22, `${name}: packaged candidate did not write schema22`);
             assert.equal(
                 current[0],
                 `jackal.game-state:${encodeURIComponent(new URL("./", url).pathname)}`,

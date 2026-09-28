@@ -477,7 +477,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 21);
+    assert.equal(currentVersion, 22);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -1097,10 +1097,10 @@ test("removing the zero-reserve Pause validator guard admits the malformed count
     }
 });
 
-test("schema21 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
+test("schema22 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
-    assert.equal(schema.GAME_STATE_VERSION, 21);
-    const game = gameSnapshot(fields, 21, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    assert.equal(schema.GAME_STATE_VERSION, 22);
+    const game = gameSnapshot(fields, 22, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     game.playerFields.respawning = 100;
     game.currentSongState = {
         id: "stageSong0",
@@ -1110,16 +1110,16 @@ test("schema21 is an explicit semantic boundary, not an appVersion or field-shap
         activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
     };
     game.requestedSongId = "bossSong";
-    const controls = [modeSnapshot(fields, 21), game];
+    const controls = [modeSnapshot(fields, 22), game];
     for (const current of controls) {
         assert.equal(validator.isSupportedGameStateSnapshot(current), true, "positive current shape");
-        for (const oldVersion of Array.from({ length: 21 }, (_, index) => index)) {
+        for (const oldVersion of Array.from({ length: 22 }, (_, index) => index)) {
             const old = { ...structuredClone(current), version: oldVersion };
             const bytes = JSON.stringify(old);
             assert.equal(validator.isSupportedGameStateSnapshot(old), false);
             assert.equal(JSON.stringify(old), bytes, "validation never relabels or repairs input");
         }
-        for (const version of [22, "21", null, true, 21.5, NaN, Infinity]) {
+        for (const version of [23, "22", null, true, 22.5, NaN, Infinity]) {
             assert.equal(validator.isSupportedGameStateSnapshot({ ...structuredClone(current), version }), false);
         }
         const oldWithNewBuildLabel = { ...structuredClone(current), version: 18, appVersion: "schema19-test-build" };

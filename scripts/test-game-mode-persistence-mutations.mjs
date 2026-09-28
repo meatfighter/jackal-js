@@ -11,6 +11,7 @@ for (const name of Object.keys(mutants))
             [
                 "--test",
                 "scripts/test-game-mode-root-graph.mjs",
+                "scripts/test-game-mode-index-membership.mjs",
                 "scripts/test-game-mode-ordered-index-persistence.mjs",
                 "scripts/test-game-mode-graph-validation.mjs",
                 "scripts/test-game-mode-runtime-presentation.mjs"

@@ -125,26 +125,30 @@ export function isGameModeIndexGraph(value: unknown): boolean {
         }
     }
     const expectedEnemies = new Set<number>();
+    const expectedSolids = new Set<number>();
+    const expectedMines = new Set<number>();
     for (const id of active) {
         const entity = entities.get(id);
         if (entity === undefined) return false;
         if (entity.fields.enemy === true) {
             if (!(GAME_ELEMENT_TYPES[entity.type].prototype instanceof Enemy)) return false;
             expectedEnemies.add(id);
+            if (entity.fields.solid === true) expectedSolids.add(id);
+            if (entity.fields.mine === true) expectedMines.add(id);
         }
     }
-    const checkIndex = (items: unknown, permitted: ReadonlySet<number>): items is number[] => {
-        if (!Array.isArray(items) || items.length > MAX_GAME_STATE_ENTITIES) return false;
+    const checkExactIndex = (items: unknown, expected: ReadonlySet<number>): boolean => {
+        if (!Array.isArray(items) || items.length > MAX_GAME_STATE_ENTITIES || items.length !== expected.size) return false;
         const seen = new Set<number>();
         for (const id of items) {
-            if (!isEntityId(id) || !permitted.has(id) || seen.has(id)) return false;
+            if (!isEntityId(id) || !expected.has(id) || seen.has(id)) return false;
             seen.add(id);
         }
         return true;
     };
-    if (!checkIndex(indexes.enemies, expectedEnemies) || indexes.enemies.length !== expectedEnemies.size) return false;
-    const enemies = new Set(indexes.enemies);
-    return checkIndex(indexes.solids, enemies) && checkIndex(indexes.mines, enemies);
+    return (
+        checkExactIndex(indexes.enemies, expectedEnemies) && checkExactIndex(indexes.solids, expectedSolids) && checkExactIndex(indexes.mines, expectedMines)
+    );
 }
 
 export function isGameModeCameraPanState(fields: EncodedRecord, entityTypes: ReadonlyMap<number, GameElementTypeId>): boolean {

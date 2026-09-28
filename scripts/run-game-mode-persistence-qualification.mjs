@@ -93,6 +93,7 @@ try {
             const reloads = [];
             let hqBytes;
             for (const label of [
+                "ordered-collision",
                 "first-tank",
                 "moving",
                 "active-fire",
@@ -105,7 +106,7 @@ try {
             ]) {
                 console.log(name + ": document " + label);
                 const checkpoint = await bounded(page, label, () => page.evaluate((label) => window.gameModePersistence.prepareReload(label), label));
-                assert.equal(JSON.parse(checkpoint.bytes).version, 21);
+                assert.equal(JSON.parse(checkpoint.bytes).version, 22);
                 if (label === "headquarters") hqBytes = checkpoint.bytes;
                 await page.close();
                 page = await context.newPage();
@@ -153,7 +154,7 @@ try {
                 await p.screenshot({ fullPage: true, path: join(evidence, `${name}-packaged-live-tank.png`) });
                 await menu();
                 const saved = await read();
-                assert.equal(saved.version, 21);
+                assert.equal(saved.version, 22);
                 assert.notEqual(JSON.stringify(saved), hqBytes);
                 assert.ok(saved.gameMode.entities.some((e) => e.type === "BossSuperTank"));
                 assert.ok(!saved.gameMode.entities.some((e) => e.type === "BossHeadquarters"));
@@ -194,16 +195,16 @@ try {
                 assert.equal(await resume().isEnabled(), true);
                 await previousOwner.getByText("Your game moved to another tab.", { exact: true }).waitFor();
                 const takeover = await read();
-                assert.equal(takeover.version, 21);
+                assert.equal(takeover.version, 22);
                 assert.ok(takeover.gameMode.entities.some((e) => e.type === "BossSuperTank"));
                 await previousOwner.close();
                 // Retire the accepted runtime before planting corrupt data.
                 await p.reload();
                 await p.waitForFunction(() => window.__gameResourcesPrepared === true);
-                for (const version of [21, 20, 22]) {
+                for (const version of [22, 21, 23]) {
                     const bad = structuredClone(saved);
                     bad.version = version;
-                    if (version === 21) delete bad.gameMode.indexes;
+                    if (version === 22) delete bad.gameMode.indexes;
                     const bytes = JSON.stringify(bad);
                     await p.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key, bytes });
                     await p.reload();

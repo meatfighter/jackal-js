@@ -3,11 +3,11 @@ import { test } from "node:test";
 import { createGraphFixture, createSavedGraph } from "./game-mode-persistence-test-utils.mjs";
 const { graph, JackalGameStateSerializer, list, layers, make } = await createGraphFixture();
 
-test("ordered graph validates exact active membership and independent subsets", () => {
+test("ordered graph validates exact active membership and independent role orders", () => {
     const valid = {
         entities: [
-            { id: 0, type: "Rock", fields: { enemy: true } },
-            { id: 1, type: "BrownTank", fields: { enemy: true } },
+            { id: 0, type: "Rock", fields: { enemy: true, solid: true, mine: false } },
+            { id: 1, type: "BrownTank", fields: { enemy: true, solid: true, mine: true } },
             { id: 2, type: "BossHeadquartersManager", fields: { enemy: false } }
         ],
         elements: [[0], [1], [], [], [], [], [], []],

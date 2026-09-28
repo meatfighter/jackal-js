@@ -17,7 +17,7 @@ async function exercise(transforms = {}) {
     };
     for (const [path, transform] of Object.entries(transforms)) mocks[path] = transform(readFileSync(path, "utf8"));
     const version = await loadTypeScript(schema, mocks);
-    assert.equal(version.GAME_STATE_VERSION, 21, "Current writer deliberately emits21");
+    assert.equal(version.GAME_STATE_VERSION, 22, "Current writer deliberately emits22");
     const api = await loadTypeScript(storage, mocks),
         s = memoryStorage(),
         old = Object.getOwnPropertyDescriptor(globalThis, "localStorage"),
@@ -25,7 +25,7 @@ async function exercise(transforms = {}) {
     Object.defineProperty(globalThis, "localStorage", { configurable: true, value: s });
     console.warn = () => {};
     try {
-        const current = { version: 21, supported: true, appVersion: "any-current-build" };
+        const current = { version: 22, supported: true, appVersion: "any-current-build" };
         assert.equal(api.writeStoredGameState(current, () => true).saved, true, "Current positive control");
         const key = s.calls.set[0];
         assert.match(key, /jackal\.game-state(?::|$)/);
@@ -64,7 +64,7 @@ async function exercise(transforms = {}) {
             assert.deepEqual(s.calls.get, []);
             assert.deepEqual(s.calls.remove, [], "No pre-delete before replacement");
             assert.deepEqual(s.calls.set, [key]);
-            assert.equal(JSON.parse(s.values.get(key)).version, 21);
+            assert.equal(JSON.parse(s.values.get(key)).version, 22);
             s.faults.get = false;
         }
     } finally {
@@ -76,8 +76,8 @@ async function exercise(transforms = {}) {
 test("current-schema storage counterexamples fail intended assertions without altering candidate files", async (t) => {
     await exercise();
     const mutants = [
-        ["revert current version to18", schema, (s) => change(s, "GAME_STATE_VERSION = 21", "GAME_STATE_VERSION = 18")],
-        ["revert current version to19", schema, (s) => change(s, "GAME_STATE_VERSION = 21", "GAME_STATE_VERSION = 19")],
+        ["revert current version to18", schema, (s) => change(s, "GAME_STATE_VERSION = 22", "GAME_STATE_VERSION = 18")],
+        ["revert current version to19", schema, (s) => change(s, "GAME_STATE_VERSION = 22", "GAME_STATE_VERSION = 19")],
         ["accept19 in exact predicate", schema, (s) => change(s, "value === GAME_STATE_VERSION", "value === GAME_STATE_VERSION || value === 19")],
         [
             "relabel19",
@@ -86,7 +86,7 @@ test("current-schema storage counterexamples fail intended assertions without al
                 change(
                     s,
                     "const snapshot: unknown = JSON.parse(stored.value);",
-                    "const snapshot = JSON.parse(stored.value); if(snapshot.version===19)snapshot.version=21;"
+                    "const snapshot = JSON.parse(stored.value); if(snapshot.version===19)snapshot.version=22;"
                 )
         ],
         ["accept18 in exact predicate", schema, (s) => change(s, "value === GAME_STATE_VERSION", "value === GAME_STATE_VERSION || value === 18")],
@@ -97,7 +97,7 @@ test("current-schema storage counterexamples fail intended assertions without al
                 change(
                     s,
                     "const snapshot: unknown = JSON.parse(stored.value);",
-                    "const snapshot = JSON.parse(stored.value); if(snapshot.version===18)snapshot.version=21;"
+                    "const snapshot = JSON.parse(stored.value); if(snapshot.version===18)snapshot.version=22;"
                 )
         ],
         [

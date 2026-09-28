@@ -256,7 +256,7 @@ test("durable entity and Player persistence is descriptor-driven and excludes ru
 test("current save snapshots preserve translated hidden fields without legacy aliases", () => {
     const schema = readFileSync(join(jackalRoot, "persistence", "GameStateSchema.ts"), "utf8");
 
-    assert.match(schema, /GAME_STATE_VERSION\s*=\s*21/);
+    assert.match(schema, /GAME_STATE_VERSION\s*=\s*22/);
     assert.doesNotMatch(schema, /MIN_SUPPORTED_GAME_STATE_VERSION|SUPPORTED_GAME_STATE_VERSIONS/);
     assert.match(serializerSource, /const fields = encodeNamedFields\(entity, getEntityDurableFieldNames\(type\), context\)/);
     assert.match(serializerSource, /decodeNamedFieldsInto\([\s\S]*getEntityDurableFieldNames\(entitySnapshot\.type\)/);
