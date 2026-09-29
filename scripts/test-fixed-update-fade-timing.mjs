@@ -429,6 +429,8 @@ export class GameMode {
     };
     main.currentSong = main.requestedSong = song;
     main.isSongPlaying = () => song.playing;
+    main.stopAllSoundEffects = () => {};
+    main.playSoundAlways = () => counts.sound++;
     main.playSound = () => {
         counts.sound++;
     };

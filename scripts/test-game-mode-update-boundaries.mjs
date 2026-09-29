@@ -62,6 +62,10 @@ function tsFixture() {
         isSongPlaying() {
             return flags.song;
         },
+        stopAllSoundEffects() {},
+        playSoundAlways() {
+            calls.sound++;
+        },
         playSound() {
             calls.sound++;
         },
@@ -224,6 +228,8 @@ class Main {
   Object mode, pauseSound = new Object(); Object[] conveyors = new Object[16];
   boolean song = true; int resets, sounds, fades, extraLives;
   boolean isSongPlaying() { return song; }
+  void stopAllSoundEffects() {}
+  void playSoundAlways(Object sound) { sounds++; }
   void playSound(Object sound) { sounds++; }
   void resetNextFrameTime() { resets++; }
   void startFade(boolean out, GameMode mode) { fades++; }

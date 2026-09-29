@@ -842,7 +842,9 @@ public class GameMode implements IMode, IFadeListener {
     } else if (input.isPause() && !stageCompleted && playing 
         && (player.respawning == 0 || main.extraLives > 0) && main.isSongPlaying()) {
       paused = true;
-      main.playSound(main.pauseSound);
+      // Retire old SFX before starting the cue for this accepted pause.
+      main.stopAllSoundEffects();
+      main.playSoundAlways(main.pauseSound);
       gc.setMusicOn(false);
       // Accepting Pause terminates this simulation tick, just like unpausing.
       main.resetNextFrameTime();

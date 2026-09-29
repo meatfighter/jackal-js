@@ -931,7 +931,10 @@ export class GameMode implements IMode, IFadeListener {
             this.main.isSongPlaying()
         ) {
             this.paused = true;
-            this.main.playSound(this.main.pauseSound);
+            // Retire pre-pause voices; the fresh pause cue belongs to this transition.
+            this.main.stopAllSoundEffects();
+            // Each accepted Pause gets a cue, including a rapid unpause/re-pause.
+            this.main.playSoundAlways(this.main.pauseSound);
             this.main.currentSong?.pause();
             // Accepting Pause terminates this simulation tick, just like unpausing.
             this.main.resetNextFrameTime();

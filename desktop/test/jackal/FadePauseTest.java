@@ -24,6 +24,12 @@ public final class FadePauseTest {
   }
   static final class QuietMain extends Main {
     int callbacks;Modes destination;
+    int effectPurges, pauseCues;
+    public void stopAllSoundEffects() { effectPurges++; }
+    public void playSoundAlways(Sound sound) {
+      check(effectPurges == pauseCues + 1, "Purge must precede each new pause cue");
+      pauseCues++;
+    }
     public boolean isSongPlaying(){return true;}
     public void playSound(Sound sound){}
     public void requestMode(Modes mode,GameContainer gc){callbacks++;destination=mode;}
@@ -56,12 +62,19 @@ public final class FadePauseTest {
     QuietPlayer player=new QuietPlayer();w.player=player;w.stageIndex=1;
     keys.down();m.input.snap();m.nextFrameTime=Long.MAX_VALUE;w.update(gc);
     check(w.paused&&!gc.music&&gc.musicChanges==1,"Real Pause entry");check(m.nextFrameTime!=Long.MAX_VALUE&&w.waterAlphaIndex==0&&player.updates==0,"Pause tick/deadline");
+    check(m.effectPurges==1 && m.pauseCues==1,"Pause audio once");
     m.startFade(false,null);m.fadeIndex=12;
     for(int i=11;i>=-1;i--){m.nextFrameTime=Long.MAX_VALUE;m.update(gc,0);check(m.fadeIndex==i,"Native outer fade cadence at "+i);check(w.paused&&w.waterAlphaIndex==0&&player.updates==0,"Paused world changed");}
     check(!m.fading&&m.fadeListener==null&&m.callbacks==0,"Entrance completion");
     for(int i=0;i<20;i++){m.input.snap();w.update(gc);check(w.paused,"Held Start repeated");}
     keys.release();m.input.snap();w.update(gc);check(w.paused,"Release unpaused");keys.down();m.input.snap();m.nextFrameTime=Long.MAX_VALUE;w.update(gc);
     check(!w.paused&&gc.music&&gc.musicChanges==2&&player.updates==0&&w.waterAlphaIndex==0,"Unpause tick terminated");check(m.nextFrameTime!=Long.MAX_VALUE,"Unpause deadline reset");
+    keys.release();m.input.snap();
+    check(m.effectPurges==1 && m.pauseCues==1,"Held/idle/unpause must preserve cue");
+    keys.down();m.input.snap();w.update(gc);
+    check(w.paused && m.effectPurges==2 && m.pauseCues==2,"Rapid re-pause cues after purge");
+    keys.release();m.input.snap();keys.down();m.input.snap();w.update(gc);
+    check(!w.paused && m.effectPurges==2 && m.pauseCues==2 && player.updates==0,"Rapid unpause preserves cue and world");
     keys.release();m.input.snap();
     // Production completion countdown; no stage graphics are loaded at this boundary.
     w.stageCompleted();for(int i=0;i<GameMode.STAGE_COMPLETED_DELAY;i++)w.update(gc);

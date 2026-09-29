@@ -24,6 +24,7 @@ package jackal;
 import java.awt.geom.*;
 import org.newdawn.slick.util.*;
 import org.newdawn.slick.*;
+import org.newdawn.slick.openal.SoundStore;
 import org.newdawn.slick.opengl.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.input.*;
@@ -1193,6 +1194,22 @@ public class Main extends BasicGame {
     currentSong = null;
   }
   
+  /** Stop every allocated SFX source, leaving Slick's reserved music slot alone. */
+  public void stopAllSoundEffects() {
+    SoundStore store = SoundStore.get();
+    if (!store.soundWorks()) {
+      return;
+    }
+    final int sourceCount = store.getSourceCount();
+    // Slot 0 belongs to music. Source IDs are NOT source-pool indices.
+    for (int index = 1; index < sourceCount; index++) {
+      final int sourceId = store.getSource(index);
+      if (sourceId > 0) {
+        store.stopSoundEffect(sourceId);
+      }
+    }
+  }
+
   public void stopAllSound() {
     stopSong(bossSong);
     stopSong(continueSong);
@@ -1205,31 +1222,7 @@ public class Main extends BasicGame {
     stopSong(superTankSong);
     stopSong(titleSong);
 
-    stopSound(bulletHitSound);
-    stopSound(enemyHitSound);
-    stopSound(explodeSound);
-    stopSound(explodeSound2);
-    stopSound(explodeSound3);
-    stopSound(extraLifeSound);
-    stopSound(fireSound);
-    stopSound(helicopterSound);
-    stopSound(helicopterSound2);
-    stopSound(helicopterPickupSound);
-    stopSound(headquartersExplodesSound);
-    stopSound(hutSound);
-    stopSound(introChingSound);
-    stopSound(introTypeSound);
-    stopSound(laserSound);
-    stopSound(machineGunSound);
-    stopSound(missileSound);
-    stopSound(pauseSound);
-    stopSound(pickupSound);
-    stopSound(playerExplodeSound);
-    stopSound(planeSound);
-    stopSound(soldierKilledSound);
-    stopSound(throwSound);
-    stopSound(weaponUpgradeSound);
-    stopSound(wellDoneSound);
+    stopAllSoundEffects();
   }
 
   /** Gameplay cue that does not cancel an unresolved last-life hold. */

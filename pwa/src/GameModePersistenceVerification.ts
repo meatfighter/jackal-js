@@ -1,3 +1,4 @@
+import { registeredSounds } from "./jackal/AudioRegistry.js";
 import { BossHeadquartersManager } from "./jackal/BossHeadquartersManager.js";
 import { BrownTank } from "./jackal/BrownTank.js";
 import { EnemyHelicopter } from "./jackal/EnemyHelicopter.js";
@@ -98,6 +99,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         await ResourceLoader.waitForAll();
         check(main.isStateSaveReady(), "Ending resources ready");
         const audio = SoundStore.get();
+        if (audio.isUsingExplicitPlaybackGenerations()) check(await audio.beginPlaybackGenerationFromUserGesture(), "Mounted explicit audio generation");
         audio.init();
         await audio.getAudioContext()?.resume();
         audio.init();
@@ -444,8 +446,208 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             input.isPause = original;
         }
     }
+    function startEdge(): void {
+        const canvas = host.querySelector("canvas");
+        check(canvas, "Real input canvas");
+        canvas.dispatchEvent(new KeyboardEvent("keyup", { code: "Enter", key: "Enter", bubbles: true }));
+        canvas.dispatchEvent(new KeyboardEvent("keydown", { code: "Enter", key: "Enter", bubbles: true }));
+    }
+    async function preparePauseAudio(): Promise<void> {
+        await prepareBoss(0);
+        await reach("pause-audio-song", () => current().main.isSongPlaying() && world().playing);
+        const m = current().main;
+        m.stopAllSoundEffects();
+        m.explodeSound.play();
+        m.explodeSound.play();
+        m.helicopterSound.loop();
+        m.pauseSound.play();
+        check(m.explodeSound.capturePlaybackState().voices.length === 2, "Real overlapping explosion voices");
+    }
+    async function pauseAudioMatrix(): Promise<unknown> {
+        console.info("Checkpoint: real-pause-audio");
+        await preparePauseAudio();
+        const m = current().main,
+            w = world(),
+            audio = SoundStore.get();
+        m.explodeSound.stop();
+        check(
+            !m.explodeSound.playing() && m.explodeSound.capturePlaybackState().voices.length === 1,
+            "Positive control: latest stopped while older explosion survives"
+        );
+        const policy = () => JSON.stringify([audio.soundsOn(), audio.musicOn(), audio.getSoundVolume(), audio.getMusicVolume()]);
+        const originalPolicy = policy();
+        const song = m.currentSong,
+            requested = m.requestedSong;
+        check(song, "Real current Song");
+        const part = [song.intro, song.intro2, song.loop].find((p) => p?.getTransportState() === "playing");
+        check(part, "Real current music part");
+        const position = part.getPosition();
+        const fields = () => JSON.stringify([w.cameraX, w.cameraY, w.waterAlphaIndex, w.player.x, w.player.y]);
+        const before = fields();
+        m.lastPlayTime.set(m.pauseSound, now);
+        const cooldowns = [...m.lastPlayTime];
+        const cueOnly = () => {
+            for (const { id, sound } of registeredSounds(m))
+                check(sound.capturePlaybackState().voices.length === (sound === m.pauseSound ? 1 : 0), "Pause voice inventory: " + id);
+        };
+        startEdge();
+        await tick();
+        check(
+            w.paused && fields() === before,
+            "Accepted real Start is non-simulating: " +
+                JSON.stringify({
+                    paused: w.paused,
+                    playing: w.playing,
+                    before,
+                    after: fields(),
+                    focus: document.hasFocus(),
+                    down: current().container.getInput().isKeyDown(28)
+                })
+        );
+        cueOnly();
+        check(
+            m.currentSong === song && m.requestedSong === requested && part.getTransportState() === "paused" && part.getPosition() === position,
+            "Exact music transport retained"
+        );
+        check(policy() === originalPolicy, "Pause preserves application audio policy");
+        check(cooldowns.length === m.lastPlayTime.size && cooldowns.every(([s, t]) => m.lastPlayTime.get(s) === t), "Pause preserves cooldown history");
+        await tick();
+        cueOnly();
+        check(w.paused, "Held Start does not repeat");
+        startEdge();
+        await tick();
+        cueOnly();
+        check(!w.paused && fields() === before && part.getPosition() === position, "Unpause only resumes music");
+        startEdge();
+        await tick();
+        cueOnly();
+        check(w.paused, "Rapid re-pause under cooldown gets a cue");
+        audio.endPlaybackGeneration();
+        check(await audio.beginPlaybackGenerationFromUserGesture(), "Replacement audio generation");
+        cueOnly();
+        startEdge();
+        await tick();
+        m.explodeSound.play();
+        check(m.explodeSound.capturePlaybackState().voices.length === 1, "Later legitimate effects still work");
+        audio.setSoundsOn(false);
+        startEdge();
+        await tick();
+        check(
+            w.paused && !audio.soundsOn() && registeredSounds(m).every(({ sound }) => sound.capturePlaybackState().voices.length === 0),
+            "Sounds OFF remains OFF"
+        );
+        startEdge();
+        await tick();
+        audio.setSoundsOn(true);
+        audio.setSoundVolume(0);
+        startEdge();
+        await tick();
+        cueOnly();
+        check(audio.soundsOn() && audio.getSoundVolume() === 0, "Volume zero is not OFF");
+        audio.setSoundVolume(JSON.parse(originalPolicy)[2] as number);
+        // Delay only the resource boundary; the voice, purge and completion fence are real engine objects.
+        const ref = "soundeffects/explode.ogg";
+        const decoded = audio.getDecodedAudioBuffer(ref);
+        check(decoded, "Loaded explosion buffer");
+        const getBuffer = audio.getDecodedAudioBuffer.bind(audio),
+            loadBuffer = audio.loadAudioBuffer.bind(audio);
+        let completeDecode: (buffer: AudioBuffer) => void = () => {
+            throw new Error("Decode was not requested");
+        };
+        const delayed = new Promise<AudioBuffer>((resolve) => {
+            completeDecode = resolve;
+        });
+        audio.getDecodedAudioBuffer = (name) => (name === ref ? null : getBuffer(name));
+        audio.loadAudioBuffer = (name, options) => (name === ref ? delayed : loadBuffer(name, options));
+        try {
+            m.explodeSound.play();
+            check(m.explodeSound.capturePlaybackState().voices.length === 1, "Pending decode owns a real logical voice");
+            m.stopAllSoundEffects();
+            completeDecode(decoded);
+            await delayed;
+            await Promise.resolve();
+            check(m.explodeSound.capturePlaybackState().voices.length === 0, "Delayed decode cannot resurrect retired effect");
+        } finally {
+            audio.getDecodedAudioBuffer = getBuffer;
+            audio.loadAudioBuffer = loadBuffer;
+        }
+        m.explodeSound.play();
+        check(m.explodeSound.capturePlaybackState().voices.length === 1, "Legitimate post-decode play works");
+        m.stopAllSoundEffects();
+        // Let an actual native Web Audio source finish, instead of synthesizing an empty saved voice list.
+        AudioBufferSourceNode.prototype.start = audioStart;
+        try {
+            m.playSoundAlways(m.pauseSound);
+            check(m.pauseSound.capturePlaybackState().voices.length === 1, "Natural completion starts with a cue");
+            const deadline = performance.now() + 10000;
+            while (m.pauseSound.capturePlaybackState().voices.length) {
+                check(performance.now() < deadline, "Native pause cue completes within its bounded duration");
+                await new Promise((resolve) => setTimeout(resolve, 25));
+            }
+            check(
+                w.paused && registeredSounds(m).every(({ sound }) => sound.capturePlaybackState().voices.length === 0),
+                "Completed paused cue leaves no SFX to restore"
+            );
+        } finally {
+            AudioBufferSourceNode.prototype.start = () => {};
+        }
+
+        const realCooldown = () => prepared.Main.prototype.getSoundCooldownTime.call(m);
+        const clockBefore = realCooldown();
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        check(realCooldown() > clockBefore, "Gameplay Pause ages the actual cooldown clock");
+        m.setBrowserSuspended(true);
+        const suspendedClock = realCooldown();
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        check(realCooldown() === suspendedClock, "PWA suspension freezes the actual cooldown clock");
+        m.setBrowserSuspended(false);
+        // Advance the real Song across its intro boundary, then pause/resume that exact loop.
+        startEdge();
+        await tick();
+        check(song.loop, "Boss Song has a real loop");
+        song.intro?.stop();
+        song.intro2?.stop();
+        song.update();
+        check(song.loop.getTransportState() === "playing", "Real Song intro-to-loop boundary");
+        const loopPosition = song.loop.getPosition();
+        w.player.respawning = 5;
+        m.extraLives = 1;
+        startEdge();
+        await tick();
+        check(
+            w.paused && song.loop.getTransportState() === "paused" && song.loop.getPosition() === loopPosition,
+            "Reserve-backed respawn accepts Pause and retains exact loop position"
+        );
+        startEdge();
+        await tick();
+        check(!w.paused && song.loop.getTransportState() === "playing" && song.loop.getPosition() === loopPosition, "Loop unpause resumes without restart");
+        w.player.respawning = 0;
+        for (const refusal of ["completed", "last-life", "no-song"] as const) {
+            m.stopAllSoundEffects();
+            m.explodeSound.play();
+            if (refusal === "completed") w.stageCompletedFlag = true;
+            if (refusal === "last-life") {
+                w.player.respawning = 5;
+                m.extraLives = 0;
+            }
+            if (refusal === "no-song") {
+                m.stopAllSongs();
+                m.requestedSong = null;
+            }
+            startEdge();
+            await tick();
+            check(
+                !w.paused && m.explodeSound.capturePlaybackState().voices.length === 1 && m.pauseSound.capturePlaybackState().voices.length === 0,
+                "Refused real Start preserves effects without a cue: " + refusal
+            );
+            w.stageCompletedFlag = false;
+            w.player.respawning = 0;
+            m.extraLives = 1;
+        }
+        return { label: "real-pause-audio", overlap: true, latestStopped: true, rapidToggle: true, generation: true };
+    }
     async function matrix(includeBossStages = true): Promise<unknown[]> {
-        const results: unknown[] = [];
+        const results: unknown[] = [await pauseAudioMatrix()];
         for (const hard of includeBossStages ? [false, true] : [])
             for (let stage = 0; stage < 6; stage++) {
                 const label = `stage-${stage + 1}-${hard ? "hard" : "normal"}`;
@@ -686,6 +888,25 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     if (validBytes !== null) localStorage.setItem(key, validBytes);
                 }
             }
+        } else if (label === "pause-audio" || label === "pause-completed" || label === "unpaused-audio") {
+            await preparePauseAudio();
+            if (label !== "unpaused-audio") {
+                if (label === "pause-completed") AudioBufferSourceNode.prototype.start = audioStart;
+                try {
+                    startEdge();
+                    await tick();
+                    check(world().paused, "Paused audio reload seed");
+                    if (label === "pause-completed") {
+                        const deadline = performance.now() + 10000;
+                        while (current().main.pauseSound.capturePlaybackState().voices.length) {
+                            check(performance.now() < deadline, "Reload cue naturally completes");
+                            await new Promise((resolve) => setTimeout(resolve, 25));
+                        }
+                    }
+                } finally {
+                    AudioBufferSourceNode.prototype.start = () => {};
+                }
+            }
         } else if (label === "headquarters") {
             await prepareBoss();
             await reach(label, () => !world().bossCameraPan);
@@ -755,9 +976,17 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     JSON.stringify(diff(JSON.parse(checkpoint.nextTicks[i]), JSON.parse(normalized(capture()))))
             );
         }
+        if (checkpoint.label === "pause-audio" || checkpoint.label === "pause-completed") {
+            const sounds = JSON.stringify(capture().audioState.sounds);
+            check(world().paused, "Fresh document remains gameplay-paused");
+            startEdge();
+            await tick();
+            check(!world().paused && JSON.stringify(capture().audioState.sounds) === sounds, "Fresh-document unpause neither purges nor manufactures effects");
+        }
         return { label: checkpoint.label, restored: true };
     }
     return {
+        pauseAudioMatrix,
         matrix,
         prepareReload,
         restoreReload,

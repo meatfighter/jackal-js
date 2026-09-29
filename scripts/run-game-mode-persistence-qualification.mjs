@@ -92,6 +92,7 @@ try {
             const matrix = await bounded(page, name + " matrix", () => page.evaluate(() => window.gameModePersistence.matrix()));
             const reloads = [];
             let hqBytes;
+            const audioSeeds = {};
             for (const label of [
                 "ordered-collision",
                 "first-tank",
@@ -102,12 +103,16 @@ try {
                 "ending-pan",
                 "earlier-boss",
                 "paused-conveyor",
+                "pause-audio",
+                "pause-completed",
+                "unpaused-audio",
                 "headquarters"
             ]) {
                 console.log(name + ": document " + label);
                 const checkpoint = await bounded(page, label, () => page.evaluate((label) => window.gameModePersistence.prepareReload(label), label));
                 assert.equal(JSON.parse(checkpoint.bytes).version, 22);
                 if (label === "headquarters") hqBytes = checkpoint.bytes;
+                if (label === "pause-audio" || label === "pause-completed" || label === "unpaused-audio") audioSeeds[label] = checkpoint.bytes;
                 await page.close();
                 page = await context.newPage();
                 await page.goto(fixtureUrl);
@@ -122,6 +127,67 @@ try {
             }
             assert.deepEqual(errors, []);
             await context.close();
+            for (const [label, bytes] of Object.entries(audioSeeds)) {
+                console.log(name + ": packaged " + label);
+                const audioShell = await browser.newContext();
+                try {
+                    // Keep native sample progress fixed while exercising the actual release shell lifecycle.
+                    await audioShell.addInitScript(() => {
+                        Object.defineProperty(BaseAudioContext.prototype, "currentTime", { configurable: true, get: () => 0 });
+                        AudioBufferSourceNode.prototype.start = () => {};
+                        AudioBufferSourceNode.prototype.stop = () => {};
+                    });
+                    let p = await audioShell.newPage();
+                    const key = "jackal.game-state:" + encodeURIComponent("/pwa/");
+                    await p.goto(packageUrl);
+                    await p.waitForFunction(() => window.__gameResourcesPrepared === true);
+                    await disableFullscreenPreference(p);
+                    await p.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key, bytes });
+                    await p.reload();
+                    const continueAndMenu = async () => {
+                        await p.waitForFunction(() => window.__gameResourcesPrepared === true);
+                        await p.locator("#continue-button, #continueButton").click();
+                        await p.locator("canvas").waitFor();
+                        await p.waitForFunction(() =>
+                            [...document.querySelectorAll("button")].some((b) => /menu/i.test(b.getAttribute("aria-label") ?? "") && !b.hidden)
+                        );
+                        await p.evaluate(() => {
+                            const b = [...document.querySelectorAll("button")].find((b) => /menu/i.test(b.getAttribute("aria-label") ?? "") && !b.hidden);
+                            if (!b) throw Error("Audio menu absent");
+                            b.click();
+                        });
+                        await p.locator("#continue-button, #continueButton").waitFor({ state: "visible" });
+                        const saved = await p.evaluate((key) => JSON.parse(localStorage.getItem(key)), key);
+                        assert.equal(saved.gameMode.fields.paused, label !== "unpaused-audio");
+                        if (label === "pause-audio") {
+                            assert.equal(saved.audioState.sounds.length, 1);
+                            assert.equal(saved.audioState.sounds[0].id, "pauseSound");
+                            assert.equal(saved.audioState.sounds[0].playback.voices.length, 1, "Continue restores remainder without a second cue");
+                        } else if (label === "pause-completed") {
+                            assert.deepEqual(saved.audioState.sounds, [], "Completed cue is not recreated by Continue");
+                        } else {
+                            assert.equal(
+                                saved.audioState.sounds.find((s) => s.id === "explodeSound")?.playback.voices.length,
+                                2,
+                                "Menu preserves overlapping effects"
+                            );
+                            assert.ok(
+                                saved.audioState.sounds.some((s) => s.id === "helicopterSound"),
+                                "Menu preserves long effect"
+                            );
+                        }
+                    };
+                    await continueAndMenu();
+                    await continueAndMenu(); // Retained Continue keeps logical voices.
+                    await p.close();
+                    p = await audioShell.newPage();
+                    await p.goto(packageUrl);
+                    await continueAndMenu(); // New document exercises the production reader and audio commit.
+                    reloads.push({ label: "packaged-" + label, retained: true, freshDocument: true });
+                } finally {
+                    await audioShell.close();
+                }
+            }
             const shell = await browser.newContext();
             shell.on("page", (p) => p.on("pageerror", (e) => errors.push(e.message)));
             shell.setDefaultTimeout(60000);
