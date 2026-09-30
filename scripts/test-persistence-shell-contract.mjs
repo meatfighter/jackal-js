@@ -2,12 +2,31 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { loadTypeScript, shellSubject, sourceMember } from "./persistence-test-loader.mjs";
 const { PersistenceSession, RestoreAttempt } = await loadTypeScript("pwa/src/app/PersistenceSession.ts");
+const { SessionCleanup } = await loadTypeScript("pwa/src/app/SessionCleanup.ts");
+const { saveFrozenGame } = await loadTypeScript("pwa/src/app/FrozenGameSave.ts");
 const path = "pwa/src/app/JackalWebApp.ts",
     owner = "JackalWebApp";
 function fixture() {
     const events = [];
-    const game = { isStateSaveReady: () => true, isLoadingScreenActive: () => false };
-    const container = { isLoopSuspended: () => true, isDestroyed: () => false };
+    const game = {
+        isStateSaveReady: () => true,
+        isLoadingScreenActive: () => false,
+        setBrowserSuspended() {
+            events.push("game-suspend");
+        }
+    };
+    const container = {
+        isLoopSuspended: () => true,
+        isDestroyed: () => false,
+        setLoopSuspended() {
+            events.push("freeze");
+        },
+        getInput: () => ({
+            pause() {
+                events.push("input");
+            }
+        })
+    };
     const ownership = { owned: true, epoch: 1, isCurrent: () => true };
     const persistence = new PersistenceSession();
     persistence.beginOwnership(1);
@@ -15,7 +34,7 @@ function fixture() {
     const store = {
         save(main, authorized) {
             events.push("save");
-            return authorized() ? { saved: true } : { saved: false, reason: "not-authorized" };
+            return authorized() && !env.failSave ? { saved: true } : { saved: false, reason: "write-failed" };
         }
     };
     const prepared = {
@@ -29,6 +48,15 @@ function fixture() {
     };
     const env = {
         events,
+        saveFrozenGame,
+        rumbleManager: {
+            setSuspended() {
+                events.push("rumble");
+            }
+        },
+        releaseGameAudio() {
+            events.push("audio-release");
+        },
         game,
         container,
         ownership,
@@ -85,19 +113,7 @@ function fixture() {
         isStartingGameSession() {
             return true;
         },
-        sessionCleanup: {
-            safe: true,
-            run(...steps) {
-                for (const step of steps) step();
-                return this.safe;
-            },
-            trySave(fn) {
-                return fn();
-            },
-            assertSafe() {
-                assert.equal(this.safe, true);
-            }
-        },
+        sessionCleanup: new SessionCleanup(),
         viewport: {
             focusMenuPanel() {},
             gameShell: {},
@@ -191,7 +207,13 @@ function fixture() {
     return env;
 }
 function subject(method, env) {
-    const methods = shellSubject(path, method === "showLiveMenuOverlay" ? [method, "finishLiveMenuPresentation"] : [method], env, owner);
+    const names =
+        method === "showLiveMenuOverlay"
+            ? [method, "finishLiveMenuPresentation", "suspendGameForMenu", "saveCurrentGameState"]
+            : method === "requestPwaMenu"
+              ? [method, "suspendGameForMenu", "saveCurrentGameState"]
+              : [method];
+    const methods = shellSubject(path, names, env, owner);
     return { methods, state: owner ? methods : env };
 }
 
@@ -206,7 +228,7 @@ test("actual shell save gate accepts only a frozen, accepted runtime, independen
     assert.equal(methods.saveCurrentGameState(), false);
     assert.deepEqual(env.events, []);
     env.persistence.accept(env.game);
-    state.container = { isLoopSuspended: () => false };
+    state.container = { isLoopSuspended: () => false, isDestroyed: () => false };
     assert.equal(methods.saveCurrentGameState(), false);
     assert.deepEqual(env.events, []);
 });
@@ -215,6 +237,7 @@ test("actual live-menu transition has no persistence UI and never destroys a hea
     const env = fixture();
     env.pwaSessionState = "running";
     env.menuOverlay = null;
+    env.failSave = true;
     const { methods, state } = subject("showLiveMenuOverlay", env);
     await methods.showLiveMenuOverlay();
     assert.equal(state.game, env.game);
@@ -237,12 +260,11 @@ test("actual retained-resume cancellation does not perform a redundant save", ()
     assert.equal(env.events.includes("retained"), true);
 });
 
-test("actual failed suspension never captures moving or partially retired state", async () => {
+test("actual freeze failure never captures moving or partially retired state", async () => {
     const env = fixture();
     env.pwaSessionState = "running";
-    env.suspendGameForMenu = function () {
-        this.sessionCleanup.safe = false;
-        return false;
+    env.container.setLoopSuspended = () => {
+        throw Error("freeze failure");
     };
     const { methods } = subject("showLiveMenuOverlay", env);
     await methods.showLiveMenuOverlay();

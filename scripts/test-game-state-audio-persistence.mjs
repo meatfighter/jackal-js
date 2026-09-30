@@ -476,10 +476,10 @@ test("application audio policy is established before playback activation and on 
 });
 
 test("live-menu lifecycle freezes before save and commits audio before resume", () => {
-    const liveMenu = functionBody(webAppSource, "private async showLiveMenuOverlay()");
-    assert.ok(liveMenu.indexOf("this.suspendGameForMenu()") < liveMenu.indexOf("this.saveCurrentGameState()"));
+    const liveMenu = functionBody(webAppSource, "private async showLiveMenuOverlay(");
+    assert.match(liveMenu, /suspendGameForMenu\(reason\)/);
 
-    const suspend = functionBody(webAppSource, "private suspendGameForMenu()");
+    const suspend = functionBody(webAppSource, "private suspendGameForMenu(");
     assert.match(suspend, /setLoopSuspended\(true\)/);
     assert.match(suspend, /setBrowserSuspended\(true\)/);
     assert.match(suspend, /releaseGameAudio\(\)/);

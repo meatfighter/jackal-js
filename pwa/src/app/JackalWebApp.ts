@@ -1,3 +1,4 @@
+import { saveFrozenGame } from "./FrozenGameSave.js";
 import { focusOwnedPanel } from "./FocusOwnership.js";
 import { initializeWithDeadline, ReloadRequiredError } from "./PreparationDeadline.js";
 import { PersistenceSession, RestoreAttempt } from "./PersistenceSession.js";
@@ -338,14 +339,13 @@ export class JackalWebApp {
         return this.pwaSessionState === "menu" && this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
     }
 
-    private async showLiveMenuOverlay(): Promise<void> {
+    private async showLiveMenuOverlay(reason = "hamburger"): Promise<void> {
         const shell = this.viewport.gameShell;
         if (this.pwaSessionState !== "running" || this.game === null || this.container === null || shell === null) return;
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
         this.liveMenuOpen = true;
-        this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        if (this.suspendGameForMenu()) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        this.suspendGameForMenu(reason);
         this.sessionCleanup.run(
             () => this.viewport.stopHamburgerVisibilityMonitor(),
             () => this.viewport.hideHamburger(),
@@ -675,7 +675,7 @@ export class JackalWebApp {
         this.requestPwaMenu("hamburger");
     }
 
-    private requestPwaMenu(_reason: string): void {
+    private requestPwaMenu(reason: string): void {
         if (this.pwaSessionState === "booting" || this.pwaSessionState === "menu" || this.pwaSessionState === "stopping" || this.pwaSessionState === "error") {
             return;
         }
@@ -686,15 +686,13 @@ export class JackalWebApp {
             !this.container.isDestroyed() &&
             !this.game.isLoadingScreenActive()
         ) {
-            void this.showLiveMenuOverlay();
+            void this.showLiveMenuOverlay(reason);
             return;
         }
         const retainExistingOverlay = this.liveMenuOpen && this.menuOverlay !== null && this.game !== null && this.container !== null;
         const session = this.gameSessionGeneration;
         this.pwaSessionState = "stopping";
-        this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        const suspended = this.suspendGameForMenu();
-        if (suspended && !retainExistingOverlay) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        this.suspendGameForMenu(retainExistingOverlay ? null : reason);
         if (!this.sessionCleanup.safe) {
             this.destroyGameSession();
             return;
@@ -810,25 +808,26 @@ export class JackalWebApp {
         }
     };
 
-    private saveCurrentGameState(): boolean {
-        const mainGame = this.game;
-        const runtime = this.runtimeLoader.preparedRuntime;
-        if (
-            !this.sessionCleanup.safe ||
-            !this.getOwnership().owned ||
-            mainGame === null ||
-            runtime === null ||
-            !this.persistence.canSave(mainGame) ||
-            this.container?.isLoopSuspended() !== true ||
-            !mainGame.isStateSaveReady()
-        )
-            return false;
-        const result = this.getGameStateStore(runtime).save(
-            mainGame,
-            () => this.getOwnership().owned && this.game === mainGame && this.persistence.canSave(mainGame)
-        );
-        if (result.saved) this.persistence.didSave();
-        return result.saved;
+    private saveCurrentGameState(
+        reason = "departure",
+        expectedGame: Main | null = this.game,
+        expectedContainer: AppGameContainer | null = this.container
+    ): boolean {
+        return saveFrozenGame({
+            label: "Jackal game state",
+            reason,
+            game: expectedGame,
+            container: expectedContainer,
+            sameTarget: () => this.game === expectedGame && this.container === expectedContainer,
+            accepted: () => expectedGame !== null && this.persistence.canSave(expectedGame) && this.sessionCleanup.saveAllowed,
+            owned: () => this.getOwnership().owned,
+            cleanupSafe: () => this.sessionCleanup.safe,
+            write: (authorized) => {
+                const runtime = this.runtimeLoader.preparedRuntime;
+                return expectedGame === null || runtime === null ? null : this.getGameStateStore(runtime).save(expectedGame, authorized);
+            },
+            didSave: () => this.persistence.didSave()
+        });
     }
 
     private clearStoredGameState(): void {
@@ -926,8 +925,7 @@ export class JackalWebApp {
         this.pwaSessionState = "stopping";
         this.gameSessionGeneration++;
         this.menuRequestSerial++;
-        this.sessionCleanup.run(() => this.syncScreenWakeLock());
-        if (this.suspendGameForMenu()) this.sessionCleanup.trySave(() => this.saveCurrentGameState());
+        this.suspendGameForMenu("ownership-release");
         this.destroyGame();
 
         if (this.sessionCleanup.safe) {
@@ -1023,12 +1021,16 @@ export class JackalWebApp {
         this.container?.setMusicVolume(clampedValue);
     }
 
-    private suspendGameForMenu(): boolean {
-        return this.sessionCleanup.run(
-            () => this.container?.setLoopSuspended(true),
-            () => this.game?.setBrowserSuspended(true),
-            () => this.container?.getInput().pause(),
-            () => releaseGameAudio()
+    private suspendGameForMenu(saveReason: string | null = null): boolean {
+        const mainGame = this.game;
+        const appContainer = this.container;
+        return this.sessionCleanup.freezeSaveAndRun(
+            () => appContainer?.setLoopSuspended(true),
+            saveReason === null ? null : () => this.saveCurrentGameState(saveReason, mainGame, appContainer),
+            () => mainGame?.setBrowserSuspended(true),
+            () => appContainer?.getInput().pause(),
+            () => releaseGameAudio(),
+            () => this.syncScreenWakeLock()
         );
     }
 

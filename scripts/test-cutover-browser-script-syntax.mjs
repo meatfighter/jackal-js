@@ -35,6 +35,7 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     assert.equal(packageJson.scripts?.["qualify:browsers"], "node scripts/run-browser-qualification-suite.mjs");
 
     const expected = [
+        "verify:departure-save",
         "verify:fullscreen",
         "verify:fullscreen-timeout",
         "verify:fullscreen-reentry",
@@ -60,5 +61,21 @@ test("unrelated browser qualifiers explicitly disable the default-on Fullscreen 
         );
         const calls = source.match(/disableFullscreenPreference\s*\(/g) ?? [];
         assert.ok(calls.length >= 1, `${path} imports the helper but never calls it before exercising its original non-fullscreen contract`);
+    }
+});
+
+test("departure qualification is executable and required by both built-PWA gates", () => {
+    assert.equal(packageJson.scripts["verify:departure-save"], "node scripts/run-departure-save-qualification.mjs");
+    assert.match(packageJson.scripts.qualify, /npm run verify:departure-save && node scripts\/assert-clean-git\.mjs$/);
+    assert.match(readFileSync("scripts/run-browser-qualification-suite.mjs", "utf8"), /"verify:departure-save"/);
+    for (const name of [
+        "run-departure-save-qualification",
+        "qualify-departure-shell",
+        "qualify-departure-audio",
+        "departure-shell-plugin",
+        "departure-seeds"
+    ]) {
+        const result = spawnSync(process.execPath, ["--check", `scripts/${name}.mjs`], { encoding: "utf8" });
+        assert.equal(result.status, 0, result.stderr || result.stdout);
     }
 });

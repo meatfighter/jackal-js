@@ -1,6 +1,6 @@
 {
     "name": "jackal-js",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "private": true,
     "description": "A TypeScript/WebGL browser port of Jackal with a maintained Java/Slick2D reference implementation.",
     "homepage": "https://meatfighter.com/jackal/",
@@ -32,7 +32,7 @@
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
         "release": "npm run verify:dependencies && npm run build",
-        "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && npm run verify:game-mode-persistence && node scripts/assert-clean-git.mjs",
+        "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && npm run verify:game-mode-persistence && npm run verify:departure-save && node scripts/assert-clean-git.mjs",
         "qualify:browsers": "node scripts/run-browser-qualification-suite.mjs",
         "release:web": "npm run verify:dependencies && npm run build:web",
         "release:desktop": "node scripts/release-desktop.mjs",
@@ -72,8 +72,10 @@
         "verify:persistence-failure": "node scripts/run-persistence-failure-qualification.mjs",
         "verify:lifecycle-stress": "node scripts/run-lifecycle-stress-qualification.mjs",
         "release:archive": "node scripts/archive-release.mjs",
-        "test:persistence-contract": "node --test scripts/test-persistence-contract.mjs scripts/test-persistence-shell-contract.mjs scripts/test-persistence-settings-contract.mjs scripts/test-game-state-save-preservation.mjs scripts/test-mapping-persistence-contract.mjs",
-        "verify:game-mode-persistence": "node scripts/run-game-mode-persistence-qualification.mjs"
+        "test:persistence-contract": "node --test scripts/test-persistence-contract.mjs scripts/test-persistence-shell-contract.mjs scripts/test-persistence-settings-contract.mjs scripts/test-game-state-save-preservation.mjs scripts/test-mapping-persistence-contract.mjs && npm run test:durable-suspension",
+        "verify:game-mode-persistence": "node scripts/run-game-mode-persistence-qualification.mjs",
+        "test:durable-suspension": "node --test scripts/test-durable-suspension.mjs",
+        "verify:departure-save": "node scripts/run-departure-save-qualification.mjs"
     },
     "dependencies": {
         "slick2d-ts": "https://codeload.github.com/meatfighter/slick2d-ts/tar.gz/9ddb56642258ca1672098d7b0cedd51e5c14f194"

@@ -1059,6 +1059,13 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     AudioBufferSourceNode.prototype.start = () => {};
                 }
             }
+        } else if (label === "player-death" || label === "player-respawn") {
+            await preparePauseAudio();
+            const player = world().player;
+            current().main.extraLives = 2;
+            player.explode();
+            check(player.respawning > 0, "Actual player death producer");
+            if (label === "player-respawn") await reach(label, () => player.respawning === 0);
         } else if (label === "headquarters") {
             await prepareBoss();
             await reach(label, () => !world().bossCameraPan);
