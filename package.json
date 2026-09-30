@@ -1,6 +1,6 @@
 {
     "name": "jackal-js",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "private": true,
     "description": "A TypeScript/WebGL browser port of Jackal with a maintained Java/Slick2D reference implementation.",
     "homepage": "https://meatfighter.com/jackal/",

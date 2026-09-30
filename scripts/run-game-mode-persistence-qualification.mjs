@@ -104,15 +104,17 @@ try {
                 "earlier-boss",
                 "paused-conveyor",
                 "pause-audio",
+                "pause-middle",
                 "pause-completed",
                 "unpaused-audio",
                 "headquarters"
             ]) {
                 console.log(name + ": document " + label);
                 const checkpoint = await bounded(page, label, () => page.evaluate((label) => window.gameModePersistence.prepareReload(label), label));
-                assert.equal(JSON.parse(checkpoint.bytes).version, 22);
+                assert.equal(JSON.parse(checkpoint.bytes).version, 23);
                 if (label === "headquarters") hqBytes = checkpoint.bytes;
-                if (label === "pause-audio" || label === "pause-completed" || label === "unpaused-audio") audioSeeds[label] = checkpoint.bytes;
+                if (label === "pause-audio" || label === "pause-middle" || label === "pause-completed" || label === "unpaused-audio")
+                    audioSeeds[label] = checkpoint.bytes;
                 await page.close();
                 page = await context.newPage();
                 await page.goto(fixtureUrl);
@@ -159,10 +161,15 @@ try {
                         await p.locator("#continue-button, #continueButton").waitFor({ state: "visible" });
                         const saved = await p.evaluate((key) => JSON.parse(localStorage.getItem(key)), key);
                         assert.equal(saved.gameMode.fields.paused, label !== "unpaused-audio");
-                        if (label === "pause-audio") {
+                        if (label === "pause-audio" || label === "pause-middle") {
                             assert.equal(saved.audioState.sounds.length, 1);
                             assert.equal(saved.audioState.sounds[0].id, "pauseSound");
                             assert.equal(saved.audioState.sounds[0].playback.voices.length, 1, "Continue restores remainder without a second cue");
+                            assert.equal(
+                                saved.audioState.sounds[0].playback.voices[0].positionSeconds,
+                                JSON.parse(bytes).audioState.sounds[0].playback.voices[0].positionSeconds,
+                                "Exact remaining cue position"
+                            );
                         } else if (label === "pause-completed") {
                             assert.deepEqual(saved.audioState.sounds, [], "Completed cue is not recreated by Continue");
                         } else {
@@ -220,7 +227,7 @@ try {
                 await p.screenshot({ fullPage: true, path: join(evidence, `${name}-packaged-live-tank.png`) });
                 await menu();
                 const saved = await read();
-                assert.equal(saved.version, 22);
+                assert.equal(saved.version, 23);
                 assert.notEqual(JSON.stringify(saved), hqBytes);
                 assert.ok(saved.gameMode.entities.some((e) => e.type === "BossSuperTank"));
                 assert.ok(!saved.gameMode.entities.some((e) => e.type === "BossHeadquarters"));
@@ -261,16 +268,16 @@ try {
                 assert.equal(await resume().isEnabled(), true);
                 await previousOwner.getByText("Your game moved to another tab.", { exact: true }).waitFor();
                 const takeover = await read();
-                assert.equal(takeover.version, 22);
+                assert.equal(takeover.version, 23);
                 assert.ok(takeover.gameMode.entities.some((e) => e.type === "BossSuperTank"));
                 await previousOwner.close();
                 // Retire the accepted runtime before planting corrupt data.
                 await p.reload();
                 await p.waitForFunction(() => window.__gameResourcesPrepared === true);
-                for (const version of [22, 21, 23]) {
+                for (const version of [23, 22, 24]) {
                     const bad = structuredClone(saved);
                     bad.version = version;
-                    if (version === 22) delete bad.gameMode.indexes;
+                    if (version === 23) delete bad.gameMode.indexes;
                     const bytes = JSON.stringify(bad);
                     await p.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key, bytes });
                     await p.reload();

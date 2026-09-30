@@ -3006,7 +3006,7 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
 }
 
 async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void> {
-    assert(GAME_STATE_VERSION === 22, "This cutover deliberately establishes schema 22");
+    assert(GAME_STATE_VERSION === 23, "This cutover deliberately establishes schema 22");
     const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
     assert(clock, "cutover clock descriptor");
     let now = runtime.slick.Sys.getTime();
@@ -3178,7 +3178,7 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
                     Storage.prototype.getItem = nativeGet;
                 }
                 const replacement = nativeGet.call(localStorage, key);
-                assert(replacement !== null && JSON.parse(replacement).version === 22 && store.hasValidSave(), label + " current replacement");
+                assert(replacement !== null && JSON.parse(replacement).version === 23 && store.hasValidSave(), label + " current replacement");
                 assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, label + " separate controls unaffected");
             }
 

@@ -51,8 +51,9 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
     const audioStop = AudioBufferSourceNode.prototype.stop;
     AudioBufferSourceNode.prototype.start = () => {};
     AudioBufferSourceNode.prototype.stop = () => {};
+    let audioTime = 0;
     const audioClock = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, "currentTime");
-    Object.defineProperty(BaseAudioContext.prototype, "currentTime", { configurable: true, get: () => 0 });
+    Object.defineProperty(BaseAudioContext.prototype, "currentTime", { configurable: true, get: () => audioTime });
     Sys.getTime = () => now;
     Date.now = () => wallOrigin + now;
     type Mounted = {
@@ -345,7 +346,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             count++;
         };
         try {
-            for (const version of [...Array.from({ length: 22 }, (_, i) => i), 23, "22", 22.5]) reject({ ...positive, version }, "schema-" + version);
+            for (const version of [...Array.from({ length: 23 }, (_, i) => i), 24, "23", 23.5]) reject({ ...positive, version }, "schema-" + version);
             const mutations: Array<(s: Extract<JackalGameStateSnapshot, { kind: "game" }>) => void> = [
                 (s) => Reflect.deleteProperty(s.gameMode, "indexes"),
                 (s) => Reflect.deleteProperty(s.gameMode.indexes, "mines"),
@@ -463,8 +464,148 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         m.pauseSound.play();
         check(m.explodeSound.capturePlaybackState().voices.length === 2, "Real overlapping explosion voices");
     }
+    function pausedContract(label: string, negatives = false): void {
+        const good = capture();
+        check(good.kind === "game" && good.gameMode.fields.paused === true, "Actual paused producer " + label);
+        check(isSupportedGameStateSnapshot(good), "Paused contract positive " + label);
+        const before = normalized(good),
+            get = Storage.prototype.getItem;
+        Storage.prototype.getItem = function (k) {
+            if (k === key) throw Error("No-read authorized paused overwrite");
+            return get.call(this, k);
+        };
+        try {
+            check(save(current().main, () => true).saved, "Paused no-read save " + label);
+        } finally {
+            Storage.prototype.getItem = get;
+        }
+        const bytes = localStorage.getItem(key);
+        check(bytes, "Paused saved bytes");
+        if (!negatives) return;
+        const cue = good.audioState.sounds[0];
+        check(cue && cue.playback.voices.length === 1, "Actual pause cue fixture");
+        const mutations: Array<[string, (s: Extract<JackalGameStateSnapshot, { kind: "game" }>) => void]> = [
+            [
+                "pending-song",
+                (s) => {
+                    s.requestedSongId = s.currentSongState!.id === "stageSong0" ? "bossSong" : "stageSong0";
+                }
+            ],
+            [
+                "pending-null",
+                (s) => {
+                    s.requestedSongId = null;
+                }
+            ],
+            [
+                "extra-effect",
+                (s) => {
+                    s.audioState.sounds.push({ ...structuredClone(cue), id: "explodeSound" });
+                }
+            ],
+            [
+                "extra-cue",
+                (s) => {
+                    Reflect.set(s.audioState.sounds[0].playback, "voices", [...cue.playback.voices, structuredClone(cue.playback.voices[0])]);
+                }
+            ],
+            [
+                "looped-cue",
+                (s) => {
+                    Reflect.set(s.audioState.sounds[0].playback.voices[0], "looped", true);
+                }
+            ],
+            [
+                "rate",
+                (s) => {
+                    Reflect.set(s.audioState.sounds[0].playback.voices[0], "playbackRate", 0.5);
+                }
+            ],
+            [
+                "position",
+                (s) => {
+                    Reflect.set(s.audioState.sounds[0].playback.voices[0], "spatialPosition", { x: 0, y: 0, z: 0 });
+                }
+            ],
+            [
+                "not-playing",
+                (s) => {
+                    s.gameMode.fields.playing = false;
+                }
+            ],
+            [
+                "completed",
+                (s) => {
+                    s.gameMode.fields.stageCompletedFlag = true;
+                }
+            ]
+        ];
+        const policy = JSON.stringify([SoundStore.get().musicOn(), SoundStore.get().soundsOn()]);
+        for (const [name, mutate] of mutations) {
+            const bad = structuredClone(good);
+            mutate(bad);
+            const badBytes = JSON.stringify(bad);
+            localStorage.setItem(key, badBytes);
+            check(!isSupportedGameStateSnapshot(bad), "Paused full reader rejects " + name);
+            check(!store.hasValidSave() && !readSaved(current().main, current().container), "Paused store rejects " + name);
+            check(localStorage.getItem(key) === badBytes && normalized(capture()) === before, "Paused failed read preserves bytes/live state " + name);
+            check(JSON.stringify([SoundStore.get().musicOn(), SoundStore.get().soundsOn()]) === policy, "Paused failed restore policy " + name);
+        }
+        // Same resource and app identity, old schema: a nonwriting miss at the stable slot.
+        localStorage.setItem(key, JSON.stringify({ ...good, version: 22 }));
+        const oldBytes = localStorage.getItem(key);
+        check(!readSaved(current().main, current().container), "Old paused schema rejected");
+        check(localStorage.getItem(key) === oldBytes, "Old paused bytes preserved");
+        const main = current().main,
+            requested = main.requestedSong;
+        for (const song of [main.currentSong === main.bossSong ? main.stageSong0 : main.bossSong, null]) {
+            localStorage.setItem(key, bytes);
+            main.requestedSong = song;
+            try {
+                check(!save(main, () => true).saved, "Paused outgoing rejects pending Song");
+            } finally {
+                main.requestedSong = requested;
+            }
+            check(localStorage.getItem(key) === bytes, "Paused outgoing preserves bytes");
+        }
+        for (const kind of ["extra-effect", "extra-cue", "looped-cue"]) {
+            localStorage.setItem(key, bytes);
+            if (kind === "extra-effect") main.explodeSound.play();
+            else if (kind === "extra-cue") main.pauseSound.play();
+            else main.pauseSound.restorePlaybackState({ activeVoiceIndex: 0, voices: [{ ...cue.playback.voices[0], looped: true }] });
+            try {
+                check(!save(main, () => true).saved, "Paused outgoing rejects " + kind);
+            } finally {
+                main.stopAllSoundEffects();
+                main.pauseSound.restorePlaybackState(cue.playback);
+            }
+            check(localStorage.getItem(key) === bytes, "Paused outgoing preserves cue bytes");
+        }
+        check(normalized(capture()) === before, "Paused controls restore their fixture");
+        check(save(main, () => true).saved, "Later valid paused overwrite");
+    }
+    async function pausedSongWitness(): Promise<void> {
+        await preparePauseAudio();
+        startEdge();
+        await tick();
+        const main = current().main,
+            w = world(),
+            old = main.currentSong;
+        const pending = old === main.bossSong ? main.stageSong0 : main.bossSong;
+        main.requestedSong = pending;
+        const bad = capture();
+        check(!isSupportedGameStateSnapshot(bad), "Paused pending witness rejected before restore");
+        await tick();
+        check(w.paused && main.currentSong === pending && pending.playing, "Actual Main reconciles pending Song before paused world returns");
+        // This is a control-flow witness, not an accepted restore. Recreate a real unpaused producer.
+        await preparePauseAudio();
+        const unpaused = current().main;
+        unpaused.requestedSong = unpaused.currentSong === unpaused.bossSong ? unpaused.stageSong0 : unpaused.bossSong;
+        check(isSupportedGameStateSnapshot(capture()), "Unpaused pending Song remains valid");
+    }
     async function pauseAudioMatrix(): Promise<unknown> {
         console.info("Checkpoint: real-pause-audio");
+        await pausedSongWitness();
         await preparePauseAudio();
         const m = current().main,
             w = world(),
@@ -509,6 +650,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             m.currentSong === song && m.requestedSong === requested && part.getTransportState() === "paused" && part.getPosition() === position,
             "Exact music transport retained"
         );
+        pausedContract("cue-start", true);
         check(policy() === originalPolicy, "Pause preserves application audio policy");
         check(cooldowns.length === m.lastPlayTime.size && cooldowns.every(([s, t]) => m.lastPlayTime.get(s) === t), "Pause preserves cooldown history");
         await tick();
@@ -536,6 +678,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             w.paused && !audio.soundsOn() && registeredSounds(m).every(({ sound }) => sound.capturePlaybackState().voices.length === 0),
             "Sounds OFF remains OFF"
         );
+        pausedContract("sounds-off");
         startEdge();
         await tick();
         audio.setSoundsOn(true);
@@ -544,6 +687,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         await tick();
         cueOnly();
         check(audio.soundsOn() && audio.getSoundVolume() === 0, "Volume zero is not OFF");
+        pausedContract("zero-volume");
         audio.setSoundVolume(JSON.parse(originalPolicy)[2] as number);
         // Delay only the resource boundary; the voice, purge and completion fence are real engine objects.
         const ref = "soundeffects/explode.ogg";
@@ -592,6 +736,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             AudioBufferSourceNode.prototype.start = () => {};
         }
 
+        pausedContract("naturally-completed-cue");
         const realCooldown = () => prepared.Main.prototype.getSoundCooldownTime.call(m);
         const clockBefore = realCooldown();
         await new Promise((resolve) => setTimeout(resolve, 30));
@@ -618,6 +763,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
             w.paused && song.loop.getTransportState() === "paused" && song.loop.getPosition() === loopPosition,
             "Reserve-backed respawn accepts Pause and retains exact loop position"
         );
+        pausedContract("reserve-life-loop");
         startEdge();
         await tick();
         check(!w.paused && song.loop.getTransportState() === "playing" && song.loop.getPosition() === loopPosition, "Loop unpause resumes without restart");
@@ -888,7 +1034,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     if (validBytes !== null) localStorage.setItem(key, validBytes);
                 }
             }
-        } else if (label === "pause-audio" || label === "pause-completed" || label === "unpaused-audio") {
+        } else if (label === "pause-audio" || label === "pause-middle" || label === "pause-completed" || label === "unpaused-audio") {
             await preparePauseAudio();
             if (label !== "unpaused-audio") {
                 if (label === "pause-completed") AudioBufferSourceNode.prototype.start = audioStart;
@@ -896,6 +1042,12 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     startEdge();
                     await tick();
                     check(world().paused, "Paused audio reload seed");
+                    if (label === "pause-middle") {
+                        const duration = SoundStore.get().getDecodedAudioBuffer("soundeffects/pause.ogg")!.duration;
+                        audioTime += duration / 2;
+                        const cue = current().main.pauseSound.capturePlaybackState();
+                        check(cue.voices.length === 1 && cue.voices[0].positionSeconds > 0, "Actual cue advances to its middle");
+                    }
                     if (label === "pause-completed") {
                         const deadline = performance.now() + 10000;
                         while (current().main.pauseSound.capturePlaybackState().voices.length) {
@@ -976,7 +1128,7 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
                     JSON.stringify(diff(JSON.parse(checkpoint.nextTicks[i]), JSON.parse(normalized(capture()))))
             );
         }
-        if (checkpoint.label === "pause-audio" || checkpoint.label === "pause-completed") {
+        if (checkpoint.label === "pause-audio" || checkpoint.label === "pause-middle" || checkpoint.label === "pause-completed") {
             const sounds = JSON.stringify(capture().audioState.sounds);
             check(world().paused, "Fresh document remains gameplay-paused");
             startEdge();
@@ -986,6 +1138,16 @@ export async function createGameModePersistenceVerification(runtime?: PreparedRu
         return { label: checkpoint.label, restored: true };
     }
     return {
+        async verifyLegacyPaused(bytes: string) {
+            await mount(false);
+            const before = normalized(capture()),
+                legacy = JSON.parse(bytes) as { version: number; gameMode: { fields: { paused: boolean } } };
+            check(legacy.version === 22 && legacy.gameMode.fields.paused, "Genuine old paused fixture identity");
+            localStorage.setItem(key, bytes);
+            check(!store.hasValidSave() && !readSaved(current().main, current().container), "Genuine old paused save rejected at unchanged slot");
+            check(localStorage.getItem(key) === bytes && normalized(capture()) === before, "Legacy miss preserves bytes and live runtime");
+            return { version: legacy.version, nonwriting: true, liveUnchanged: true };
+        },
         pauseAudioMatrix,
         matrix,
         prepareReload,

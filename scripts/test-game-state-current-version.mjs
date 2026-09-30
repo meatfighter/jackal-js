@@ -136,6 +136,7 @@ function source(name) {
 async function loadPersistenceValidation(transform = (value) => value) {
     const cutsceneStateUrl = typeScriptModuleUrl("pwa/src/jackal/CutsceneState.ts");
     const standalonePolicyUrl = typeScriptModuleUrl("pwa/src/jackal/persistence/StandaloneModeStatePolicy.ts");
+    const pausedPolicyUrl = typeScriptModuleUrl("pwa/src/jackal/persistence/PausedGameStatePolicy.ts");
     const schemaUrl = compileModule(source("GameStateSchema.ts"));
     const idsUrl = compileModule(source("GameElementTypeIds.ts"));
     const fieldsUrl = compileModule(source("GameStateFields.ts"));
@@ -206,6 +207,7 @@ async function loadPersistenceValidation(transform = (value) => value) {
             .replace(`from "./GameModeGraphPersistence.js"`, `from "${graphUrl}"`)
             .replace(`from "../CutsceneState.js"`, `from "${cutsceneStateUrl}"`)
             .replace(`from "./StandaloneModeStatePolicy.js"`, `from "${standalonePolicyUrl}"`)
+            .replace(`from "./PausedGameStatePolicy.js"`, `from "${pausedPolicyUrl}"`)
             .replace(`from "../NesInputProfile.js"`, `from "${profileUrl}"`)
             .replace(`from "slick2d-ts"`, `from "${slickModuleUrl}"`)
             .replace(`from "../../java/MainConstants.js"`, `from "${mainConstantsUrl}"`)
@@ -477,7 +479,7 @@ function gameSnapshot(fields, version, entity) {
 test("save-state validator accepts only the current schema", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
     const currentVersion = schema.GAME_STATE_VERSION;
-    assert.equal(currentVersion, 22);
+    assert.equal(currentVersion, 23);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion)), true);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, 12)), false);
     assert.equal(validator.isSupportedGameStateSnapshot(modeSnapshot(fields, currentVersion + 1)), false);
@@ -1097,10 +1099,10 @@ test("removing the zero-reserve Pause validator guard admits the malformed count
     }
 });
 
-test("schema22 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
+test("schema23 is an explicit semantic boundary, not an appVersion or field-shape migration", async () => {
     const { schema, fields, validator } = await loadPersistenceValidation();
-    assert.equal(schema.GAME_STATE_VERSION, 22);
-    const game = gameSnapshot(fields, 22, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
+    assert.equal(schema.GAME_STATE_VERSION, 23);
+    const game = gameSnapshot(fields, 23, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     game.playerFields.respawning = 100;
     game.currentSongState = {
         id: "stageSong0",
@@ -1110,16 +1112,16 @@ test("schema22 is an explicit semantic boundary, not an appVersion or field-shap
         activeMusic: { id: "stageSong0.intro", playback: playback({ transport: "paused", positionSeconds: 1.25 }) }
     };
     game.requestedSongId = "bossSong";
-    const controls = [modeSnapshot(fields, 22), game];
+    const controls = [modeSnapshot(fields, 23), game];
     for (const current of controls) {
         assert.equal(validator.isSupportedGameStateSnapshot(current), true, "positive current shape");
-        for (const oldVersion of Array.from({ length: 22 }, (_, index) => index)) {
+        for (const oldVersion of Array.from({ length: 23 }, (_, index) => index)) {
             const old = { ...structuredClone(current), version: oldVersion };
             const bytes = JSON.stringify(old);
             assert.equal(validator.isSupportedGameStateSnapshot(old), false);
             assert.equal(JSON.stringify(old), bytes, "validation never relabels or repairs input");
         }
-        for (const version of [23, "22", null, true, 22.5, NaN, Infinity]) {
+        for (const version of [24, "23", null, true, 23.5, NaN, Infinity]) {
             assert.equal(validator.isSupportedGameStateSnapshot({ ...structuredClone(current), version }), false);
         }
         const oldWithNewBuildLabel = { ...structuredClone(current), version: 18, appVersion: "schema19-test-build" };

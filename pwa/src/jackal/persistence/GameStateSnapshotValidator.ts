@@ -1,3 +1,4 @@
+import { isPausedGameStateValid } from "./PausedGameStatePolicy.js";
 import { isGameModeIndexGraph, isGameModeCameraPanState } from "./GameModeGraphPersistence.js";
 import { isCutsceneState } from "../CutsceneState.js";
 import { isStandaloneModeSemanticState } from "./StandaloneModeStatePolicy.js";
@@ -264,7 +265,8 @@ function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameMod
     }
     if (
         !isSongSnapshot(snapshot.currentSongState) ||
-        !isGameModeLastLifeStateConsistent(mainFields, gameMode.fields, snapshot.playerFields, snapshot.currentSongState)
+        !isGameModeLastLifeStateConsistent(mainFields, gameMode.fields, snapshot.playerFields, snapshot.currentSongState) ||
+        !isPausedGameStateValid(snapshot)
     )
         return false;
     for (const entitySnapshot of gameMode.entities) {
