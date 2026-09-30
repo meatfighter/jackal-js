@@ -167,6 +167,14 @@ try {
                 // Ordinary gameplay controls advance the actual producer. No save
                 // payload or game field is edited to manufacture newer progress.
                 if (GAME === "jackal" && JSON.parse(baseline).gameMode?.fields.paused) await page.keyboard.press("Enter");
+                const continuedAfterLastLife = GAME === "jackal" && JSON.parse(baseline).modeId === "CONTINUE";
+                if (continuedAfterLastLife) {
+                    // A long reload run can exhaust the real player's lives.
+                    // Let resume baselining observe released controls, then use
+                    // the normal action button to accept the in-game Continue.
+                    await page.waitForTimeout(80);
+                    await page.keyboard.press("KeyZ", { delay: 80 });
+                }
                 await page.keyboard.down(cycle % 2 ? "ArrowLeft" : "ArrowRight");
                 await page.waitForTimeout(450 + (cycle % 3) * 80);
                 await page.keyboard.up(cycle % 2 ? "ArrowLeft" : "ArrowRight");
@@ -218,6 +226,7 @@ try {
                     requestedFullscreen,
                     actualFullscreen,
                     interruptedContinue,
+                    continuedAfterLastLife,
                     offlineNavigation: kind === 4 && name === "chromium",
                     baselineSha256: sha(baseline),
                     currentSha256: sha(current),
