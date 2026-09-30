@@ -3006,7 +3006,7 @@ async function verifyBossEntryLastLife(runtime: PreparedRuntime): Promise<void> 
 }
 
 async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void> {
-    assert(GAME_STATE_VERSION === 23, "This cutover deliberately establishes schema 22");
+    assert(GAME_STATE_VERSION === 23, "This cutover deliberately establishes schema 23");
     const clock = Object.getOwnPropertyDescriptor(runtime.slick.Sys, "getTime");
     assert(clock, "cutover clock descriptor");
     let now = runtime.slick.Sys.getTime();
@@ -3121,7 +3121,7 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
         const mappingBytes = nativeGet.call(localStorage, mappingKey);
         let lastLegacy = "";
         for (const [label, candidate] of variants)
-            for (const rejectedVersion of [18, 19, 20, 21, 23]) {
+            for (const rejectedVersion of [18, 19, 20, 21, 22, 24]) {
                 assert(isSupportedGameStateSnapshot(candidate), label + " current positive control");
                 const legacy = JSON.stringify({ ...candidate, version: rejectedVersion });
                 lastLegacy = legacy;
@@ -3216,7 +3216,7 @@ async function verifySaveSemanticCutover(runtime: PreparedRuntime): Promise<void
             freezeBeforeRestore
         );
         current().container.setLoopSuspended(true);
-        assert(restoredCurrent && store.hasValidSave(), "schema22 restores normally");
+        assert(restoredCurrent && store.hasValidSave(), "schema23 restores normally");
         assert(nativeGet.call(localStorage, key) === heldBytes, "current restore leaves bytes unchanged");
         assert(nativeGet.call(localStorage, mappingKey) === mappingBytes, "fresh restore leaves controls unchanged");
     } finally {

@@ -135,13 +135,13 @@ try {
             const current = await saveEntry(upgraded);
             assert(current !== null);
             const currentSnapshot = JSON.parse(current[1]);
-            assert.equal(currentSnapshot.version, 23, `${name}: packaged candidate did not write schema22`);
+            assert.equal(currentSnapshot.version, 23, `${name}: packaged candidate did not write schema23`);
             assert.equal(
                 current[0],
                 `jackal.game-state:${encodeURIComponent(new URL("./", url).pathname)}`,
                 `${name}: semantic cutover changed the stable deployment slot`
             );
-            for (const unsupportedVersion of [18, 19, 20, 21, 23]) {
+            for (const unsupportedVersion of [18, 19, 20, 21, 22, 24]) {
                 const unsupportedText = JSON.stringify({ ...currentSnapshot, version: unsupportedVersion });
                 await upgraded.evaluate(([key, value]) => localStorage.setItem(key, value), [current[0], unsupportedText]);
                 for (let probe = 0; probe < 2; probe++) {
