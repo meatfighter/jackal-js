@@ -1,5 +1,6 @@
 /* global window, performance */
 import assert from "node:assert/strict";
+import { assertCooldownSamples } from "./departure-audio-cooldowns.mjs";
 import { createServer } from "vite";
 import { resolve } from "node:path";
 import { departureShellPlugin } from "./departure-shell-plugin.mjs";
@@ -82,6 +83,10 @@ export async function qualifyDepartureAudio(browser, game, seeds) {
                 assert(intervalSeconds >= 0 && intervalSeconds < 10, "Bounded measured capture interval");
                 let positions = 0;
                 function compare(before, stored, after, path = "audio") {
+                    if (path.endsWith(".cooldowns")) {
+                        assertCooldownSamples(before, stored, after, intervalSeconds * 1000, seed.label + "/" + path);
+                        return;
+                    }
                     if (typeof stored === "number" && /remainingMs$/.test(path)) {
                         assert(stored <= before + 1 && stored >= after - 1, `${seed.label}/${path}: cooldown lies between active-clock samples`);
                         assert(before - after <= intervalSeconds * 1000 + 1, `${seed.label}/${path}: cooldown ages only by measured capture interval`);
