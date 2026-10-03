@@ -1,84 +1,61 @@
 # Jackal
 
-**[Project page: meatfighter.com/jackal/](https://meatfighter.com/jackal/)** â€” background, gameplay, controls, and downloads.
+**[Project page: meatfighter.com/jackal/](https://meatfighter.com/jackal/)** — background, gameplay, controls, and downloads.
 
-This README covers development and maintenance of the Java and TypeScript implementations.
+This repository contains the maintained Java desktop implementation and TypeScript browser port.
 
-## Repository layout
+## Development
 
-| Path                                | Purpose                                                            |
-| ----------------------------------- | ------------------------------------------------------------------ |
-| `about/content.md`                  | Project-page article prose                                         |
-| `about/footer.md`                   | Project-page copyright and licensing footer prose                  |
-| `about/index.html`, `about/assets/` | Page template, SEO metadata placeholders, and artwork              |
-| `desktop/src/`                      | Maintained Java gameplay reference and resources                   |
-| `desktop/`                          | Desktop build, runtime libraries, and platform-specific packaging  |
-| `pwa/src/jackal/`                   | TypeScript gameplay port                                           |
-| `pwa/src/jackal/persistence/`       | Save schema, validation, serialization, and restoration            |
-| `pwa/src/app/`                      | Browser shell, preferences, session ownership, and lifecycle       |
-| `pwa/public/`                       | Static game resources and service worker                           |
-| `scripts/`                          | Build tools, local checks, generated metadata, and release tooling |
-| `version.json`                      | Version and build-stamp source                                     |
-
-Generated output belongs in `dist/`, `.release-components/`, and desktop build directories. Do not edit generated bundles or release metadata by hand.
-
-## Getting started
-
-Use Node.js 24 or newer and Git; see [package.json](package.json) for the supported baseline. Desktop builds and checks that compile Java require JDK 21, with `javac` and `jar` on `PATH`.
-
-Run commands from the repository root:
+Use the Node.js version supported by [package.json](package.json), Git, and JDK 21 with `java`, `javac`, and `jar` on `PATH`.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-The commands also work in Windows PowerShell; use `npm.cmd` if PowerShell blocks `npm.ps1`.
+Run commands from the repository root. On Windows PowerShell, use `npm.cmd` if execution policy blocks `npm.ps1`.
 
-## Common tasks
+## Repository layout
 
-| Task                                   | Command                                         | Output / notes                                                            |
-| -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
-| Run browser development server         | `npm run dev`                                   | Local URL printed by Vite                                                 |
-| Build PWA                              | `npm run build:pwa`                             | `.release-components/pwa/`                                                |
-| Build about page                       | `npm run build:about`                           | `.release-components/web/`                                                |
-| Preview about page                     | `npm run preview:about`                         | Run after `build:about`                                                   |
-| Build web distribution                 | `npm run build:web`                             | `.release-components/web/`; verifies source and includes desktop download |
-| Build / run desktop client             | `npm run build:desktop` / `npm run run:desktop` | See [desktop/README.md](desktop/README.md)                                |
-| Verify source                          | `npm run verify`                                | Tests, formatting, lint, TypeScript, and parity checks                    |
-| Check browser and offline behavior     | `npm run verify:browser`                        | See browser prerequisites below                                           |
-| Audit dependencies                     | `npm run verify:dependencies`                   | Queries current npm advisories                                            |
-| Verify and build complete distribution | `npm run build`                                 | `dist/`; clean-source release build                                       |
-| Audit, verify, and build release       | `npm run release`                               | `dist/`                                                                   |
-| Qualify local commit                   | `npm run qualify`                               | Full local pre-push qualification                                         |
-| Preview complete distribution          | `npm run preview:dist`                          | Run after building `dist/`                                                |
+| Path                                  | Purpose                                                 |
+| ------------------------------------- | ------------------------------------------------------- |
+| `about/content.md`, `about/footer.md` | Project-page article and attribution                    |
+| `about/index.html`, `about/assets/`   | Page template and artwork                               |
+| `desktop/src/`, `desktop/`            | Java gameplay, resources, and desktop packaging         |
+| `pwa/src/jackal/`                     | Browser gameplay and persistence                        |
+| `pwa/src/app/`, `pwa/public/`         | Browser shell, lifecycle, resources, and service worker |
+| `scripts/`, `version.json`            | Build, test, metadata, and version tooling              |
 
-Component builds use isolated output directories; building a component does not refresh the complete `dist/` distribution. Use the public scripts above rather than invoking internal `_build:*` steps directly.
+## Build and check
 
-Browser fixtures use a locally installed Chrome, Chromium, or Edge. Set `CHROMIUM_PATH` to the executable if automatic discovery fails. Offline verification also needs a built PWA; consult [scripts/run-offline-verification.mjs](scripts/run-offline-verification.mjs) for its output-directory selection.
+| Task                                            | Command                                         |
+| ----------------------------------------------- | ----------------------------------------------- |
+| Format / lint                                   | `npm run format` / `npm run lint`               |
+| Build browser component                         | `npm run build:pwa`                             |
+| Build project-page component                    | `npm run build:about`                           |
+| Build / run Java                                | `npm run build:desktop` / `npm run run:desktop` |
+| Qualify a clean commit and assemble the release | `npm run qualify`                               |
+| Run the extended browser matrix                 | `npm run qualify:browsers`                      |
+| Preview the assembled release                   | `npm run preview:dist`                          |
 
-For the separate Chromium/Firefox/WebKit qualification, install the browser engines locally with `npx playwright install chromium firefox webkit`, then run `npm run qualify:browsers`, which builds its own PWA before testing. For checks against a final packaged PWA without rebuilding, set `PWA_ROOT` to its absolute path and invoke the leaf checks listed in `scripts/run-browser-qualification-suite.mjs`; see [RELEASING.md](RELEASING.md). Linux also needs the Playwright system dependencies and a graphical display or Xvfb. Run `npm run qualify` before pushing release-affecting changes; use the extended browser matrix and appropriate real-device acceptance for material browser-facing changes. GitHub Actions is an optional manual Linux check.
+The complete release is assembled in `dist/`. Component builds use `.release-components/` and do not refresh the complete distribution. Edit source files, not generated HTML, bundles, archives, or release metadata.
 
-## Maintenance principles
+Standard browser checks use a local Chrome, Chromium, or Edge; set `CHROMIUM_PATH` if discovery fails. Install the extended matrix with `npx playwright install chromium firefox webkit`. Linux may also require browser system dependencies and a display or Xvfb.
 
-- Compare gameplay changes with the corresponding Java source. Preserve useful structural correspondence, fixed-step timing, Java numeric behavior, and random-state behavior.
-- Keep browser storage, networking, presentation, and lifecycle concerns in the browser-support layer where practical.
-- Avoid unnecessary temporary objects and repeated computation in update and render loops. Use the focused tests and available benchmarks in [package.json](package.json).
-- The `v1.0.0` release establishes the public save-state compatibility baseline. Future schema changes require an explicit compatibility decision; unfamiliar public saves must not be silently discarded, and schema validation/restoration must be updated together.
-- Regenerate affected resource or parity metadata through the repository scripts and check it before committing.
-- The [slick2d-ts](https://github.com/meatfighter/slick2d-ts) dependency is pinned to an immutable HTTPS commit archive. Update `package.json` and `package-lock.json` together, then verify gameplay and browser behavior against that engine revision.
+See [RELEASING.md](RELEASING.md) for the clean-commit workflow and the distinction between assembled-release and component browser checks. Do not run `verify` or `release` separately as prerequisites to `qualify`; qualification already invokes them.
 
-## Project page and deployment
+## Maintenance
 
-Edit the article in [about/content.md](about/content.md) and the copyright/licensing footer in [about/footer.md](about/footer.md); layout and SEO wiring live in [about/index.html](about/index.html) and [scripts/build-about.mjs](scripts/build-about.mjs).
+Keep Java and TypeScript gameplay changes aligned, including fixed-step timing, numeric semantics, and random-call ordering. Keep browser lifecycle and storage concerns separate from gameplay, and avoid allocations or unnecessary work in update/render paths.
 
-The canonical URL and Open Graph page URL identify `https://meatfighter.com/jackal/`. Play, download, and page-asset links are relative so the assembled site can be tested beneath a staging directory. Keep production canonical URLs during staging and configure a staging-only `X-Robots-Tag: noindex` response header at the host. That header is a hosting requirement, not something the current build adds.
+Saved games support the current schema. Unsupported or corrupt saves are ignored without rewriting the slot during load; a later authorized save overwrites the slot. No migration layer for older schemas is maintained.
 
-## Further documentation
+Regenerate affected resource and parity metadata through the repository scripts. The `slick2d-ts` dependency is pinned to an immutable commit archive; update the dependency and lockfile together only when intentionally adopting a new engine revision.
 
-- [RELEASING.md](RELEASING.md): exact-commit qualification, archive/checksum, and tagging procedure.
-- [desktop/README.md](desktop/README.md): Java build and runtime details.
-- [releases/README.md](releases/README.md): release tooling and local release state.
-- [LICENSE](LICENSE): GPL-3.0-or-later license text for original project source code.
-- [COPYRIGHT.md](COPYRIGHT.md): copyright, licensing, trademark, and third-party-content scope.
-- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): third-party software licenses and redistributed components.
+Edit the project-page prose in `about/content.md` and `about/footer.md`; layout and metadata are maintained in `about/index.html` and `scripts/build-about.mjs`.
+
+## Documentation and licensing
+
+- [desktop/README.md](desktop/README.md): Java build and runtime requirements.
+- [releases/README.md](releases/README.md): local release artifacts.
+- [LICENSE](LICENSE), [COPYRIGHT.md](COPYRIGHT.md), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): source licensing, attribution, and third-party scope.

@@ -1,11 +1,7 @@
-# Releases
+# Local release artifacts
 
-This directory is a staging area for intentionally published desktop artifacts.
+This directory holds desktop release archives produced by the repository's release tooling. Generated archives are ignored by Git.
 
-Generated build folders such as `dist/` and `desktop/target/` remain ignored. Use this command when the Java desktop download should be refreshed:
+Use `npm run release:desktop` when a local desktop archive is needed. For a complete browser/project-page/desktop release, follow the root [RELEASING.md](../RELEASING.md) procedure and use the assembled `dist/` output.
 
-```text
-npm.cmd run release:desktop
-```
-
-The generated desktop zip is ignored by default so binary artifacts do not enter source control accidentally. Upload the zip to the release host, or force-add a specific version only when a committed binary is intentional.
+Publish a qualified archive through the chosen release host. Do not commit generated binaries as part of routine maintenance.

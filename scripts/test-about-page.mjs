@@ -245,3 +245,9 @@ test("about responsive title images are generated with expected dimensions", asy
         assert.equal(metadata.height, expected.height);
     }
 });
+
+test("About omits the obsolete Xbox-style gamepad label paragraph", () => {
+    const removed = "Gamepad button names use Xbox-style labels; equivalent buttons may have different labels on other controllers.";
+    assert.ok(!contentMarkdown.includes(removed));
+    assert.ok(!renderedAboutFixture().articleHtml.includes(removed));
+});
