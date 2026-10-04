@@ -1,3 +1,7 @@
+import { retainRejectedSave, type RejectedSaveStage } from "./RejectedSaveDebug.js";
+import { isSupportedGameStateSnapshot } from "./GameStateSnapshotValidator.js";
+import { isSupportedSnapshotForLoadedResources } from "./GameStateResourcePreflight.js";
+import type { JackalGameStateSnapshot } from "./GameStateSnapshot.js";
 import { snapshotWriteFailure } from "../../app/BrowserPersistence.js";
 import type { GameContainer } from "slick2d-ts";
 import type { Main } from "../Main.js";
@@ -17,7 +21,28 @@ export class JackalGameStateStore {
         } catch (error) {
             return snapshotWriteFailure("Jackal game state", "capture-failed", error);
         }
-        return writeStoredGameState(snapshot, isAuthorized);
+        return writeStoredGameState(snapshot, isAuthorized, (value) => this.validateOutgoingSnapshot(main, value, isAuthorized));
+    }
+
+    private validateOutgoingSnapshot(main: Main, snapshot: JackalGameStateSnapshot, isAuthorized: () => boolean): boolean {
+        const checks: ReadonlyArray<readonly [RejectedSaveStage, () => boolean]> = [
+            ["structure-and-graph", () => isSupportedGameStateSnapshot(snapshot)],
+            ["loaded-resources", () => isSupportedSnapshotForLoadedResources(main, snapshot)]
+        ];
+        for (const [stage, check] of checks) {
+            let valid: boolean;
+            try {
+                valid = check();
+            } catch (error) {
+                retainRejectedSave(snapshot, this.appVersion, { stage, kind: "threw", error }, isAuthorized);
+                throw error;
+            }
+            if (!valid) {
+                retainRejectedSave(snapshot, this.appVersion, { stage, kind: "returned-false" }, isAuthorized);
+                return false;
+            }
+        }
+        return true;
     }
 
     public restore(main: Main, gc: GameContainer): boolean {

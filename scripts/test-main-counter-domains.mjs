@@ -23,12 +23,12 @@ test("Java counter semantics survive derived reconstruction and current validati
         }
         const base = f.validate();
         for (const field of ["extraLives", "friendlySoldiersPickedUp"]) {
-            for (const value of [0, 99, 100, 1000001, 2147483647]) {
+            for (const value of [0, 99, 100, 1000001, 2147483647, 2147483648, Number.MAX_SAFE_INTEGER]) {
                 const s = structuredClone(base);
                 s.mainFields[field] = value;
                 assert.equal(mod.validator.isSupportedGameStateSnapshot(s), true, `${field}=${value}`);
             }
-            for (const value of [-1, 0.5, 2147483648, NaN, Infinity]) {
+            for (const value of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, NaN, Infinity]) {
                 const s = structuredClone(base);
                 s.mainFields[field] = value;
                 assert.equal(mod.validator.isSupportedGameStateSnapshot(s), false);

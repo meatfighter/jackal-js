@@ -37,7 +37,7 @@ test("semantically invalid standalone saves are repeatable non-destructive load 
             const changes = [];
             if (id === "INTRO_MAP") {
                 for (const name of ["extraLives", "friendlySoldiersPickedUp"])
-                    for (const value of [-1, 0.5, 2147483648])
+                    for (const value of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1])
                         changes.push((s) => {
                             s.mainFields[name] = value;
                         });

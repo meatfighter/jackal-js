@@ -1,6 +1,6 @@
 {
     "name": "jackal-js",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "private": true,
     "description": "A TypeScript/WebGL browser port of Jackal with a maintained Java/Slick2D reference implementation.",
     "homepage": "https://meatfighter.com/jackal/",
@@ -27,12 +27,12 @@
         "build:about": "node scripts/build-about.mjs .release-components/web",
         "build:desktop": "node scripts/build-desktop.mjs",
         "_assemble": "node scripts/assemble.mjs .release-components/web",
-        "verify": "npm run test:session-ownership && npm test && npm run format:check && npm run lint && npm run typecheck && npm run check:ts-nocheck && npm run check:explicit-any && npm run check:java-float-parity",
+        "verify": "npm run test:validator-repairs && npm run test:session-ownership && npm test && npm run format:check && npm run lint && npm run typecheck && npm run check:ts-nocheck && npm run check:explicit-any && npm run check:java-float-parity",
         "verify:dependencies": "npm audit --audit-level=high",
         "build:web": "npm run verify && node scripts/build-web-release.mjs",
         "build": "npm run verify && node scripts/build-release.mjs",
         "release": "npm run verify:dependencies && npm run build",
-        "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && npm run verify:game-mode-persistence && npm run verify:departure-save && node scripts/assert-clean-git.mjs",
+        "qualify": "node scripts/assert-clean-git.mjs && npm run release && npm run verify:browser && npm run verify:game-mode-persistence && npm run verify:departure-save && npm run verify:persistence-fuzz:controls && npm run verify:persistence-fuzz && node scripts/assert-clean-git.mjs",
         "qualify:browsers": "node scripts/run-browser-qualification-suite.mjs",
         "release:web": "npm run verify:dependencies && npm run build:web",
         "release:desktop": "node scripts/release-desktop.mjs",
@@ -75,7 +75,16 @@
         "test:persistence-contract": "node --test scripts/test-persistence-contract.mjs scripts/test-persistence-shell-contract.mjs scripts/test-persistence-settings-contract.mjs scripts/test-game-state-save-preservation.mjs scripts/test-mapping-persistence-contract.mjs && npm run test:durable-suspension",
         "verify:game-mode-persistence": "node scripts/run-game-mode-persistence-qualification.mjs",
         "test:durable-suspension": "node --test scripts/test-durable-suspension.mjs",
-        "verify:departure-save": "node scripts/run-departure-save-qualification.mjs"
+        "verify:departure-save": "node scripts/run-departure-save-qualification.mjs",
+        "verify:persistence-fuzz": "node scripts/run-persistence-fuzz.mjs --profile=qualification",
+        "verify:persistence-fuzz:browsers": "node scripts/run-persistence-fuzz.mjs --profile=browser-qualification",
+        "fuzz:persistence:soak": "node scripts/run-persistence-fuzz.mjs --profile=soak",
+        "fuzz:persistence:replay": "node scripts/run-persistence-fuzz.mjs",
+        "test:persistence-fuzz": "node --test scripts/test-persistence-fuzz.mjs && npm run test:validator-repairs",
+        "test:validator-repairs": "npm run check:persistence-policy-inventory && node --loader ./scripts/persistence-fuzz/typescript-loader.mjs --test scripts/persistence-fuzz/validator-repairs.test.mjs",
+        "generate:persistence-policy-inventory": "node --loader ./scripts/persistence-fuzz/typescript-loader.mjs scripts/persistence-fuzz/inventory.mjs",
+        "check:persistence-policy-inventory": "node --loader ./scripts/persistence-fuzz/typescript-loader.mjs scripts/persistence-fuzz/inventory.mjs --check",
+        "verify:persistence-fuzz:controls": "node scripts/verify-persistence-fuzz-controls.mjs"
     },
     "dependencies": {
         "slick2d-ts": "https://codeload.github.com/meatfighter/slick2d-ts/tar.gz/03b6878aab0106702651f41259c250288c3eb345"

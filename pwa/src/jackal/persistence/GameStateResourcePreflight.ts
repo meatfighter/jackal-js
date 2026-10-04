@@ -131,9 +131,8 @@ export function isSupportedSnapshotForLoadedResources(main: Main, snapshot: Jack
             return false;
     }
 
-    if (stageIndex !== 5) {
-        return fields.conveyorOffset === 0 && fields.conveyorLastIndex === 0 && fields.conveyorDelta === 0;
-    }
+    // Conveyor animation fields are dormant outside stage 6. Their scalar
+    // contracts have already been checked; historical zero is not required.
     return true;
 }
 

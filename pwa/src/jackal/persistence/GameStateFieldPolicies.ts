@@ -1,3 +1,4 @@
+import { ENTITY_ENUM_DOMAINS } from "./ExplicitFieldDomains.js";
 import { ArrayList } from "../../java/JavaRuntime.js";
 import { Enemy } from "../Enemy.js";
 import type { GameElement } from "../GameElement.js";
@@ -23,12 +24,6 @@ export type DurableFieldPolicy =
     | { readonly kind: "booleanArray"; readonly length: number };
 
 export type DurableFieldDescriptor = Readonly<Record<string, DurableFieldPolicy>>;
-
-const JAVA_INT_MIN = -2_147_483_648;
-const JAVA_INT_MAX = 2_147_483_647;
-const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
-const MAX_POSITION_MAGNITUDE = 1_000_000;
-const MAX_VELOCITY_MAGNITUDE = 10_000;
 
 const GAME_ELEMENT_BASE_DEFAULTS = {
     removeFlag: false,
@@ -343,7 +338,7 @@ function playerNumberPolicy(name: (typeof PLAYER_NUMBER_FIELDS)[number]): Durabl
             return Object.freeze({ kind: "number", integer: true, min: 0, max: 2 * 91 });
         case "pows":
         case "releaseablePows":
-            return Object.freeze({ kind: "number", integer: true, min: 0, max: 4096 });
+            return Object.freeze({ kind: "number", integer: true, min: 0, max: Number.MAX_SAFE_INTEGER });
         default:
             return Object.freeze({ kind: "number", integer: !PLAYER_FLOAT_FIELDS.has(name) });
     }
@@ -359,9 +354,9 @@ function numberPolicy(type: GameElementTypeId, name: string, integer: boolean): 
         return Object.freeze({ kind: "number", integer: true, min: explicit[0], max: explicit[1] });
     }
     if (integer) {
-        const inferred = inferStaticEnumValues(type, name);
-        if (inferred !== null) {
-            return Object.freeze({ kind: "number", integer: true, allowedValues: Object.freeze(inferred) });
+        const domain = ENTITY_ENUM_DOMAINS[type]?.[name] ?? null;
+        if (domain !== null) {
+            return Object.freeze({ kind: "number", integer: true, allowedValues: Object.freeze([...domain]) });
         }
     }
     return Object.freeze({ kind: "number", integer });
@@ -378,22 +373,9 @@ function explicitIntegerRange(type: GameElementTypeId, name: string): readonly [
     return null;
 }
 
-function inferStaticEnumValues(type: GameElementTypeId, name: string): number[] | null {
-    const prefix =
-        name === "state" ? "STATE_" : name === "type" ? "TYPE_" : name === "spriteIndex" ? "SPRITE_" : name === "orientation" ? "ORIENTATION_" : null;
-    if (prefix === null) {
-        return null;
-    }
-    const constructor = GAME_ELEMENT_TYPES[type];
-    const values = Object.entries(constructor)
-        .filter(([key, value]) => key.startsWith(prefix) && typeof value === "number" && Number.isInteger(value))
-        .map(([, value]) => value as number);
-    return values.length === 0 ? null : [...new Set(values)];
-}
-
 function isReasonableNumber(
     value: unknown,
-    fieldName: string,
+    _fieldName: string,
     integer: boolean,
     min?: number,
     max?: number,
@@ -402,7 +384,7 @@ function isReasonableNumber(
     if (typeof value !== "number" || !Number.isFinite(value) || (integer && !Number.isInteger(value))) {
         return false;
     }
-    if (integer && (value < JAVA_INT_MIN || value > JAVA_INT_MAX)) {
+    if (integer && !Number.isSafeInteger(value)) {
         return false;
     }
     if (min !== undefined && value < min) {
@@ -414,13 +396,7 @@ function isReasonableNumber(
     if (allowedValues !== undefined && !allowedValues.includes(value)) {
         return false;
     }
-    if (fieldName === "vx" || fieldName === "vy") {
-        return Math.abs(value) <= MAX_VELOCITY_MAGNITUDE;
-    }
-    if (fieldName === "x" || fieldName === "y" || fieldName.endsWith("X") || fieldName.endsWith("Y")) {
-        return Math.abs(value) <= MAX_POSITION_MAGNITUDE;
-    }
-    return Math.abs(value) <= MAX_GENERAL_NUMBER_MAGNITUDE;
+    return true;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,3 +1,4 @@
+import { isSnapshotJsonWithinBudget } from "../../app/SnapshotJsonBudget.js";
 import { isPausedGameStateValid } from "./PausedGameStatePolicy.js";
 import { isGameModeIndexGraph, isGameModeCameraPanState } from "./GameModeGraphPersistence.js";
 import { isCutsceneState } from "../CutsceneState.js";
@@ -93,21 +94,12 @@ const MAX_ENCODED_ARRAY_LENGTH = 8192;
 const MAX_ENCODED_RECORD_FIELDS = 512;
 const MAX_ENCODED_STRING_LENGTH = 4096;
 const MAX_BIGINT_DIGITS = 128;
-const MAX_TOTAL_SNAPSHOT_CONTAINERS = 65_536;
-const MAX_TOTAL_SNAPSHOT_CHILDREN = 524_288;
-const MAX_TOTAL_SNAPSHOT_STRING_CHARS = 1_500_000;
 const MAX_INPUT_ASSIGNMENTS = InputMode.ACTIONS.length;
 const MAX_JEEP_YEAH_BULLETS = 4096;
-const MAX_FRIENDLY_SOLDIER_COUNT = 4096;
-const MAX_GENERAL_NUMBER_MAGNITUDE = 1_000_000_000_000;
-const MAX_POSITION_MAGNITUDE = 1_000_000;
-const MAX_VELOCITY_MAGNITUDE = 10_000;
-const MAX_MUSIC_POSITION_SECONDS = 86_400;
-const MAX_SOUND_POSITION_SECONDS = 86_400;
+const MAX_FRIENDLY_SOLDIER_COUNT = Number.MAX_SAFE_INTEGER;
 const MIN_FADE_INDEX = -1;
 const MAX_FADE_INDEX = 23;
 const MAX_TOTAL_SOUND_VOICES = 62;
-const JAVA_INT_MAX = 2_147_483_647;
 const FORBIDDEN_STATE_FIELD_NAMES = new Set(["__proto__", "constructor", "prototype"]);
 
 export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is JackalGameStateSnapshot {
@@ -124,58 +116,7 @@ export function isSupportedGameStateSnapshot(snapshot: unknown): snapshot is Jac
 }
 
 export function isWithinGameStateValidationBudget(value: unknown): boolean {
-    const stack: unknown[] = [value];
-    const seen = new WeakSet<object>();
-    let containers = 0;
-    let children = 0;
-    let stringChars = 0;
-
-    while (stack.length > 0) {
-        const current = stack.pop();
-        if (typeof current === "string") {
-            stringChars += current.length;
-            if (stringChars > MAX_TOTAL_SNAPSHOT_STRING_CHARS) {
-                return false;
-            }
-            continue;
-        }
-        if (current === null || typeof current !== "object") {
-            continue;
-        }
-        if (seen.has(current)) {
-            return false;
-        }
-        seen.add(current);
-        if (++containers > MAX_TOTAL_SNAPSHOT_CONTAINERS) {
-            return false;
-        }
-
-        if (Array.isArray(current)) {
-            children += current.length;
-            if (children > MAX_TOTAL_SNAPSHOT_CHILDREN) {
-                return false;
-            }
-            for (const child of current) {
-                stack.push(child);
-            }
-            continue;
-        }
-
-        const entries = Object.entries(current);
-        children += entries.length;
-        if (children > MAX_TOTAL_SNAPSHOT_CHILDREN) {
-            return false;
-        }
-        for (const [key, child] of entries) {
-            stringChars += key.length;
-            if (stringChars > MAX_TOTAL_SNAPSHOT_STRING_CHARS) {
-                return false;
-            }
-            stack.push(child);
-        }
-    }
-
-    return true;
+    return isSnapshotJsonWithinBudget(value);
 }
 
 function isBaseSnapshot(snapshot: UnknownRecord): boolean {
@@ -214,7 +155,8 @@ function isKonamiCodeFields(value: unknown): value is EncodedRecord | null {
     if (typeof enabled !== "boolean" || !isIntegerInRange(sequenceIndex, 0, 10)) {
         return false;
     }
-    return enabled ? sequenceIndex === 10 : sequenceIndex < 10;
+    // Final-life death disables the code but retains its completed cursor.
+    return !enabled || sequenceIndex === 10;
 }
 
 function isGameStateSnapshot(snapshot: UnknownRecord): snapshot is JackalGameModeStateSnapshot {
@@ -291,10 +233,10 @@ function isGameModeFieldsValid(fields: EncodedRecord, entityTypes: ReadonlyMap<n
         !isFiniteNumberInRange(fields.conveyorOffset, 0, 16, false) ||
         !isIntegerInRange(fields.conveyorLastIndex, 0, 15) ||
         !isFiniteNumberInRange(fields.conveyorDelta, 0, 16, false) ||
-        !isFiniteNumberInRange(fields.cameraX, 0, MAX_POSITION_MAGNITUDE) ||
-        !isFiniteNumberInRange(fields.cameraY, 0, MAX_POSITION_MAGNITUDE) ||
-        !isFiniteNumberInRange(fields.maxCameraX, 0, MAX_POSITION_MAGNITUDE) ||
-        !isFiniteNumberInRange(fields.maxCameraY, 0, MAX_POSITION_MAGNITUDE) ||
+        !isFiniteNumberInRange(fields.cameraX, 0, Number.MAX_VALUE) ||
+        !isFiniteNumberInRange(fields.cameraY, 0, Number.MAX_VALUE) ||
+        !isFiniteNumberInRange(fields.maxCameraX, 0, Number.MAX_VALUE) ||
+        !isFiniteNumberInRange(fields.maxCameraY, 0, Number.MAX_VALUE) ||
         typeof fields.paused !== "boolean" ||
         !isIntegerInRange(fields.triggerY, 0, 32_767) ||
         typeof fields.bossCameraPan !== "boolean" ||
@@ -436,12 +378,12 @@ function isRestorableMainFields(fields: EncodedRecord): boolean {
         isIntegerInRange(fields.fadeIndex, MIN_FADE_INDEX, MAX_FADE_INDEX) &&
         typeof fields.fadeOut === "boolean" &&
         isIntegerInRange(fields.stageIndex, 0, STAGE_COUNT - 1) &&
-        isIntegerInRange(fields.score, 0, JAVA_INT_MAX) &&
-        isIntegerInRange(fields.extraLives, 0, JAVA_INT_MAX) &&
+        isIntegerInRange(fields.score, 0, Number.MAX_SAFE_INTEGER) &&
+        isIntegerInRange(fields.extraLives, 0, Number.MAX_SAFE_INTEGER) &&
         typeof fields.hasMissiles === "boolean" &&
         isIntegerInRange(fields.missilePower, 0, 2) &&
         (fields.hasMissiles === true || fields.missilePower === 0) &&
-        isIntegerInRange(fields.friendlySoldiersPickedUp, 0, JAVA_INT_MAX) &&
+        isIntegerInRange(fields.friendlySoldiersPickedUp, 0, Number.MAX_SAFE_INTEGER) &&
         typeof fields.hardMode === "boolean" &&
         typeof fields.continued === "boolean" &&
         (!fields.fading || isIntegerInRange(fields.fadeIndex, 0, MAX_FADE_INDEX - 1))
@@ -775,20 +717,10 @@ function isEncodedValue(value: unknown, entityIds: Set<number> | undefined, dept
     }
 }
 
-function isReasonableFiniteNumber(value: number, fieldName: string): boolean {
-    if (!Number.isFinite(value)) {
-        return false;
-    }
-    if (fieldName === "score") {
-        return Number.isInteger(value) && value >= 0 && value <= JAVA_INT_MAX;
-    }
-    if (fieldName === "vx" || fieldName === "vy") {
-        return Math.abs(value) <= MAX_VELOCITY_MAGNITUDE;
-    }
-    if (fieldName === "x" || fieldName === "y" || fieldName.endsWith("X") || fieldName.endsWith("Y")) {
-        return Math.abs(value) <= MAX_POSITION_MAGNITUDE;
-    }
-    return Math.abs(value) <= MAX_GENERAL_NUMBER_MAGNITUDE;
+function isReasonableFiniteNumber(value: number, _fieldName: string): boolean {
+    // Field owners enforce their own explicit contracts. The codec must not
+    // impose a second, name-derived gameplay domain.
+    return Number.isFinite(value);
 }
 
 function isRandomSnapshot(value: unknown): value is RandomSnapshot {
@@ -832,7 +764,7 @@ function isAudioStateSnapshot(value: unknown): value is AudioStateSnapshot {
         }
         soundIds.add(snapshot.id);
         totalVoices += snapshot.playback.voices.length;
-        if (totalVoices > MAX_TOTAL_SOUND_VOICES || snapshot.playback.voices.some((voice) => voice.positionSeconds > MAX_SOUND_POSITION_SECONDS)) {
+        if (totalVoices > MAX_TOTAL_SOUND_VOICES) {
             return false;
         }
     }
@@ -887,8 +819,7 @@ function isMusicSnapshot(value: unknown): value is MusicSnapshot | null {
             hasExactFields(value, MUSIC_FIELDS) &&
             isMusicId(value.id) &&
             isMusicPlaybackSnapshot(value.playback) &&
-            value.playback.transport !== "stopped" &&
-            value.playback.positionSeconds <= MAX_MUSIC_POSITION_SECONDS)
+            value.playback.transport !== "stopped")
     );
 }
 

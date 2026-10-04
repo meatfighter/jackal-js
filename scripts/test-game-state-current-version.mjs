@@ -179,7 +179,6 @@ async function loadPersistenceValidation(transform = (value) => value) {
         const scalar = (name, value) => {
             if (BOOLEAN_FIELDS.has(name)) return typeof value === "boolean";
             if (typeof value !== "number" || !Number.isFinite(value)) return false;
-            if (name === "vx" || name === "vy") return Math.abs(value) <= 10_000;
             return true;
         };
         export function isPlayerDurableFields(value) {
@@ -204,6 +203,7 @@ async function loadPersistenceValidation(transform = (value) => value) {
     );
     const validatorUrl = compileModule(
         transform(source("GameStateSnapshotValidator.ts"))
+            .replace(`from "../../app/SnapshotJsonBudget.js"`, `from "${typeScriptModuleUrl("pwa/src/app/SnapshotJsonBudget.ts")}"`)
             .replace(`from "./GameModeGraphPersistence.js"`, `from "${graphUrl}"`)
             .replace(`from "../CutsceneState.js"`, `from "${cutsceneStateUrl}"`)
             .replace(`from "./StandaloneModeStatePolicy.js"`, `from "${standalonePolicyUrl}"`)
@@ -770,8 +770,8 @@ test("save-state validator rejects corrupt but superficially shaped state", asyn
     mismatchedCompletedMenu.modeExtra.input.assignedKeys = [200, 208, 203, 205, 45, 44, 28];
     assert.equal(validator.isSupportedGameStateSnapshot(mismatchedCompletedMenu), false);
 
-    const unsafeVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
-    assert.equal(validator.isSupportedGameStateSnapshot(unsafeVelocity), false);
+    const finiteVelocity = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: { vx: 10001 }, runtimeFields: null });
+    assert.equal(validator.isSupportedGameStateSnapshot(finiteVelocity), true);
 
     const unsafePlayerFieldName = gameSnapshot(fields, currentVersion, { id: 0, type: "Bomb", fields: {}, runtimeFields: null });
     unsafePlayerFieldName.playerFields = JSON.parse('{"__proto__":{"kind":"nullRef"}}');
@@ -884,7 +884,7 @@ test("current audio state is exact, sparse and bounded", async () => {
 
     const hugePosition = modeSnapshot(fields, currentVersion);
     hugePosition.audioState.sounds = [{ id: "explodeSound", playback: soundPlayback({ voices: [soundVoice({ positionSeconds: 86_401 })] }) }];
-    assert.equal(validator.isSupportedGameStateSnapshot(hugePosition), false);
+    assert.equal(validator.isSupportedGameStateSnapshot(hugePosition), true);
 
     const duplicateCooldown = modeSnapshot(fields, currentVersion);
     duplicateCooldown.audioState.cooldowns = [

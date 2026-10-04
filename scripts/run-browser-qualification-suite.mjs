@@ -3,6 +3,7 @@ import { componentReleaseDir } from "./build-utils.mjs";
 import { runNpmScript, runNodeScript } from "./run-utils.mjs";
 
 const qualificationScripts = [
+    "verify:persistence-fuzz:browsers",
     "verify:departure-save",
     "verify:fullscreen",
     "verify:fullscreen-timeout",

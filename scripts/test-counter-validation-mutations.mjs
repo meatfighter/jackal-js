@@ -32,8 +32,8 @@ async function probe(transform = {}) {
 test("counter-domain mutants fail their intended value assertions with green controls", async () => {
     await probe();
     for (const [from, to] of [
-        ["isIntegerInRange(fields.extraLives, 0, JAVA_INT_MAX)", "isIntegerInRange(fields.extraLives, 0, 1_000_000)"],
-        ["isIntegerInRange(fields.friendlySoldiersPickedUp, 0, JAVA_INT_MAX)", "isIntegerInRange(fields.friendlySoldiersPickedUp, 0, 1_000_000)"],
+        ["isIntegerInRange(fields.extraLives, 0, Number.MAX_SAFE_INTEGER)", "isIntegerInRange(fields.extraLives, 0, 1_000_000)"],
+        ["isIntegerInRange(fields.friendlySoldiersPickedUp, 0, Number.MAX_SAFE_INTEGER)", "isIntegerInRange(fields.friendlySoldiersPickedUp, 0, 1_000_000)"],
         ["isIntegerInRange(fields.missilePower, 0, 2)", "isIntegerInRange(fields.missilePower, 0, 3)"],
         ["(fields.hasMissiles === true || fields.missilePower === 0)", "true"]
     ])
