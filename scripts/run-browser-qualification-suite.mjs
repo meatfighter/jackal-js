@@ -3,7 +3,6 @@ import { componentReleaseDir } from "./build-utils.mjs";
 import { runNpmScript, runNodeScript } from "./run-utils.mjs";
 
 const qualificationScripts = [
-    "verify:persistence-fuzz:browsers",
     "verify:departure-save",
     "verify:fullscreen",
     "verify:fullscreen-timeout",
@@ -33,4 +32,5 @@ for (const script of qualificationScripts) {
 }
 
 runNodeScript("scripts/run-ending-reload-qualification.mjs", [], { env: { PWA_ROOT: pwaRoot } });
-runNodeScript("scripts/run-game-mode-persistence-qualification.mjs", [], { env: { PWA_ROOT: pwaRoot } });
+runNodeScript("scripts/persistence-fuzz/semantic-run.mjs", ["boundaries"], { env: { PWA_ROOT: pwaRoot } });
+runNpmScript("verify:persistence-fuzz:browsers", { env: { PWA_ROOT: pwaRoot } });

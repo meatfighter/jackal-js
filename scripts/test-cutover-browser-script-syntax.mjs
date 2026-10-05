@@ -1,3 +1,4 @@
+import { semanticCommands } from "./persistence-fuzz/semantic-floor.mjs";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -35,7 +36,6 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     assert.equal(packageJson.scripts?.["qualify:browsers"], "node scripts/run-browser-qualification-suite.mjs");
 
     const expected = [
-        "verify:persistence-fuzz:browsers",
         "verify:departure-save",
         "verify:fullscreen",
         "verify:fullscreen-timeout",
@@ -48,6 +48,11 @@ test("qualify:browsers rebuilds and wires the complete cutover acceptance chain"
     assert.ok(listMatch, "browser qualification suite must declare its script chain");
     assert.deepEqual(JSON.parse(listMatch[1]), expected);
     assert.ok(suiteSource.indexOf('runNpmScript("build:pwa")') < suiteSource.indexOf("for (const script of qualificationScripts)"));
+    assert.ok(
+        suiteSource.indexOf('runNpmScript("verify:persistence-fuzz:browsers"') >
+            suiteSource.indexOf('runNodeScript("scripts/persistence-fuzz/semantic-run.mjs", ["boundaries"]')
+    );
+    assert.deepEqual(semanticCommands[packageJson.name].boundaries, ["scripts/run-game-mode-persistence-qualification.mjs"]);
     assert.match(suiteSource, /PWA_ROOT:\s*pwaRoot/);
     assert.match(suiteSource, /join\(componentReleaseDir, "pwa"\)/);
 });
@@ -66,7 +71,8 @@ test("unrelated browser qualifiers explicitly disable the default-on Fullscreen 
 });
 
 test("departure qualification is executable and required by both built-PWA gates", () => {
-    assert.equal(packageJson.scripts["verify:departure-save"], "node scripts/run-departure-save-qualification.mjs");
+    assert.equal(packageJson.scripts["verify:departure-save"], "node scripts/persistence-fuzz/semantic-run.mjs departure");
+    assert.deepEqual(semanticCommands[packageJson.name].departure, ["scripts/run-departure-save-qualification.mjs"]);
     assert.match(
         packageJson.scripts.qualify,
         /npm run verify:departure-save && npm run verify:persistence-fuzz:controls && npm run verify:persistence-fuzz && node scripts\/assert-clean-git\.mjs$/

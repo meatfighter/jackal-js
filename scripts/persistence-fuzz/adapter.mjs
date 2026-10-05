@@ -45,11 +45,13 @@ export function seed(mounted, spec, step) {
     main.requestMode(Modes.GAME, container);
     const world = main.mode;
     if (!(world instanceof GameMode)) throw new Error("SETUP: GameMode not established");
-    if (spec.lane === "natural") return { strategy: "normal-stage-entry", stage: world.stageIndex, x: world.player.x, y: world.player.y };
+
     // Do not bypass Chinook/PLAYER creation or reassign camera/trigger counters.
     let callbacks = 0;
     while (!world.playing && callbacks++ < 2000) step({ mask: 0, deltaMs: 10, renderCount: 1 }, "setup-producer");
     if (!world.playing || main.mode !== world) throw new Error("SETUP: normal player introduction did not complete");
+    if (spec.lane === "natural")
+        return { strategy: "natural-entry", introductionCallbacks: callbacks, stage: world.stageIndex, x: world.player.x, y: world.player.y };
     const rng = random(spec.setupSeed);
     let requested = null;
     const fits = (x, y) => {
@@ -66,6 +68,26 @@ export function seed(mounted, spec, step) {
         }
     }
     if (!requested) throw new Error("SETUP: no driveable jeep footprint found");
+    // Walk the camera prefix through production tracking/trigger methods before
+    // a near-top destination can produce the negative-row early return.
+    const prefix = [];
+    for (let y = world.player.y; y > requested.y; y -= 32) {
+        let x = world.player.x;
+        if (!fits(x, y)) {
+            x = null;
+            for (let candidate = 32; candidate <= world.mapWidth * 32 - 32; candidate += 16)
+                if (fits(candidate, y)) {
+                    x = candidate;
+                    break;
+                }
+        }
+        if (x === null) continue;
+        world.player.x = Math.fround(x);
+        world.player.y = Math.fround(y);
+        world.cameraTrackPlayer();
+        world.processTriggers();
+        prefix.push({ cameraY: world.cameraY, triggerY: world.triggerY });
+    }
     world.player.x = Math.fround(requested.x);
     world.player.y = Math.fround(requested.y);
     // Production methods own camera progress and all skipped trigger creation.
@@ -74,6 +96,7 @@ export function seed(mounted, spec, step) {
     return {
         strategy: "forward-trigger-catch-up",
         requested,
+        prefix,
         x: world.player.x,
         y: world.player.y,
         cameraX: world.cameraX,
@@ -128,7 +151,7 @@ export function diagnose(_main, snapshot, stage) {
     return { ownerType: String(snapshot.modeId ?? snapshot.kind), ruleCode: stage };
 }
 
-// Benchmark the former outgoing preflight boundary with the current serializer.
+// Benchmark substitution of only the extra resource preflight in the CURRENT stack.
 export function validateBaseline(main, snapshot) {
     if (!isSupportedGameStateSnapshot(snapshot)) return "structure-and-graph";
     return null;
@@ -136,4 +159,48 @@ export function validateBaseline(main, snapshot) {
 
 export function observedStratum({ main }) {
     return { stage: main.stageIndex, world: 0, hard: main.hardMode };
+}
+
+import { snapshotTransitionKey } from "./compare.mjs";
+export function captureContext(snapshot) {
+    return { stage: snapshot.mainFields.stageIndex, world: 0, hard: snapshot.mainFields.hardMode, mode: snapshot.kind === "game" ? "game" : snapshot.modeId };
+}
+export function transitionProjection(snapshot) {
+    return { context: captureContext(snapshot), phases: snapshotTransitionKey(snapshot) };
+}
+export function instrument({ main }, observer) {
+    const world = main.mode;
+    if (!(world instanceof GameMode)) return;
+    observer.actor(world.player, true);
+    observer.input(main.input);
+    for (const list of world.elements ?? [])
+        for (let i = 0; i < list.size(); i++) {
+            const actor = list.get(i);
+            if (!actor.removeFlag) observer.actor(actor);
+        }
+}
+
+export function prepareTransitionControls({ main }) {
+    main.requestSong(main.stageSong0);
+    main.updateMusic();
+}
+export function transitionControls({ main, container }) {
+    const pause = () => {
+        const input = main.mode.input,
+            original = input.isPause;
+        input.isPause = () => true;
+        try {
+            main.mode.update(container);
+        } finally {
+            input.isPause = original;
+        }
+    };
+    return [
+        ["music-pause", pause],
+        ["music-resume", pause],
+        ["voice-start", () => main.fireSound.play()],
+        ["voice-stop", () => main.fireSound.stop()],
+        ["stage-completion", () => main.mode.stageCompleted()],
+        ["mode-handoff", () => main.mode.fadeCompleted()]
+    ];
 }
