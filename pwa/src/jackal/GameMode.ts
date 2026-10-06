@@ -1051,11 +1051,11 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    private drawBackground(): void {
-        let xOffset = this.cameraX % 32;
-        let yOffset = this.cameraY % 32;
-        let xTile = javaInt(this.cameraX / 32);
-        let yTile = javaInt(this.cameraY / 32);
+    private drawBackground(renderCameraX: number, renderCameraY: number): void {
+        let xOffset = renderCameraX % 32;
+        let yOffset = renderCameraY % 32;
+        let xTile = javaInt(renderCameraX / 32);
+        let yTile = javaInt(renderCameraY / 32);
         let xStart = 32 + xTile === this.mapWidth ? 31 : 32;
         let main = this.main;
         let tiles = this.tiles;
@@ -1115,9 +1115,9 @@ export class GameMode implements IMode, IFadeListener {
         }
     }
 
-    private drawSprites(): void {
+    private drawSprites(renderCameraX: number, renderCameraY: number): void {
         GL11.glPushMatrix();
-        GL11.glTranslatef(-this.cameraX, -this.cameraY, 0);
+        GL11.glTranslatef(-renderCameraX, -renderCameraY, 0);
 
         for (let i = 0; i < 4; i++) {
             let list = this.elements[i];
@@ -1154,8 +1154,12 @@ export class GameMode implements IMode, IFadeListener {
     public render(gc: GameContainer, g: Graphics): void {
         this.g = g;
 
-        this.drawBackground();
-        this.drawSprites();
+        // Share a native-pixel camera without changing the logical camera.
+        const renderCameraX = Math.floor(this.cameraX);
+        const renderCameraY = Math.floor(this.cameraY);
+
+        this.drawBackground(renderCameraX, renderCameraY);
+        this.drawSprites(renderCameraX, renderCameraY);
 
         if (this.playing) {
             this.drawScore();

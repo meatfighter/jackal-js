@@ -57,6 +57,8 @@ export class PlayerBullet extends GameElement {
     }
 
     public render(): void {
-        this.main.drawCenteredAt(this.main.yellowBullet, this.x, this.y);
+        const renderX = Math.floor(this.x);
+        const renderY = Math.floor(this.y);
+        this.main.drawCenteredAt(this.main.yellowBullet, renderX, renderY);
     }
 }

@@ -88,6 +88,8 @@ export class Grenade extends GameElement {
     }
 
     public render(): void {
-        this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale);
+        const renderX = Math.floor(this.x);
+        const renderY = Math.floor(this.y);
+        this.main.drawImageRotatedScaled(this.main.grenade, renderX, renderY, this.angle, this.scale);
     }
 }

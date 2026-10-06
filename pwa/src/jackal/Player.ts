@@ -539,6 +539,10 @@ export class Player {
             return;
         }
 
+        // Snap the shared base, not the suspension bounce or local geometry.
+        const renderX = Math.floor(this.x);
+        const renderY = Math.floor(this.y);
+
         if (this.invincible > 0) {
             if (!this.gameMode.paused && ++this.invincibleColor === 4) {
                 this.invincibleColor = 0;
@@ -551,32 +555,32 @@ export class Player {
             switch (this.nextAngle) {
                 case 0:
                 case 360:
-                    this.main.drawImageAlpha(this.main.playerWakes[0], this.x - 37, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[0], renderX - 37, renderY - 43, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 45:
-                    this.main.drawRotatedAlpha(this.main.playerWakes[4], this.x - 8, this.y - 2, 90, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawRotatedAlpha(this.main.playerWakes[4], renderX - 8, renderY - 2, 90, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 90:
-                    this.main.drawImageAlpha(this.main.playerWakes[3], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[3], renderX - 52, renderY - 31, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 135:
-                    this.main.drawRotatedAlpha(this.main.playerWakes[5], this.x + 8, this.y + 2, -90, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawRotatedAlpha(this.main.playerWakes[5], renderX + 8, renderY + 2, -90, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 180:
-                    this.main.drawImageAlpha(this.main.playerWakes[1], this.x - 27, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[1], renderX - 27, renderY - 43, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 225:
-                    this.main.drawImageAlpha(this.main.playerWakes[5], this.x - 42, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[5], renderX - 42, renderY - 36, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 270:
-                    this.main.drawImageAlpha(this.main.playerWakes[2], this.x - 52, this.y - 31, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[2], renderX - 52, renderY - 31, Player.WAKE_ALPHAS[this.rumble]);
                     break;
                 case 315:
-                    this.main.drawImageAlpha(this.main.playerWakes[4], this.x - 49, this.y - 36, Player.WAKE_ALPHAS[this.rumble]);
+                    this.main.drawImageAlpha(this.main.playerWakes[4], renderX - 49, renderY - 36, Player.WAKE_ALPHAS[this.rumble]);
                     break;
             }
         }
 
-        this.main.drawVehicle(this.main.players[this.invincibleColor], this.x, this.y + Player.RUMBLE[this.rumble], this.displayAngle);
+        this.main.drawVehicle(this.main.players[this.invincibleColor], renderX, renderY + Player.RUMBLE[this.rumble], this.displayAngle);
     }
 }

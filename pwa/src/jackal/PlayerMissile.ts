@@ -95,6 +95,8 @@ export class PlayerMissile extends GameElement {
     }
 
     public render(): void {
-        this.main.drawRotated(this.main.playerMissile, this.x, this.y, this.angle);
+        const renderX = Math.floor(this.x);
+        const renderY = Math.floor(this.y);
+        this.main.drawRotated(this.main.playerMissile, renderX, renderY, this.angle);
     }
 }
