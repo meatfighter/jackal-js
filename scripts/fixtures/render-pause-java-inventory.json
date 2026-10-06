@@ -226,8 +226,8 @@
     },
     {
         "class": "GameMode",
-        "calls": ["drawBackground", "drawScore", "drawSprites", "if", "render"],
-        "renderHash": "daadf02e52461fa21d2bb952f85719e7c9b7595da252bbcf000713ae975ce5a9"
+        "calls": ["Math.floor", "drawBackground", "drawScore", "drawSprites", "if", "render"],
+        "renderHash": "cdc7f6334273bebfbc3630eff1836a76d020267230640a2155adeba2f6fba7ad"
     },
     {
         "class": "Gate",
@@ -256,8 +256,8 @@
     },
     {
         "class": "Grenade",
-        "calls": ["main.draw", "render"],
-        "renderHash": "b6beeca9b2a0b15c5239cc1ecfda13bb877258d324e6c29939e6b1d05b1403ff"
+        "calls": ["Math.floor", "main.draw", "render"],
+        "renderHash": "39c2e08b47566138a700734001118ffb882bcfc553ed1f75a54a712bc4fe8ab0"
     },
     {
         "class": "HardEndingMode",
@@ -436,18 +436,18 @@
     },
     {
         "class": "Player",
-        "calls": ["if", "main.draw", "main.drawRotatedAlpha", "main.drawVehicle", "render", "switch"],
-        "renderHash": "9882a35ed4f7a2c4afa9cf698b5538da85518192d48a485f93b8bf49eac896a1"
+        "calls": ["Math.floor", "if", "main.draw", "main.drawRotatedAlpha", "main.drawVehicle", "render", "switch"],
+        "renderHash": "3c51030b11ddf14ecd3391cf6ebcaf9ecbd4f158f0f648eee32d3383f9e2f9e7"
     },
     {
         "class": "PlayerBullet",
-        "calls": ["main.drawCentered", "render"],
-        "renderHash": "5b3308021b66030414def53122ffcde6beaa9c4f30cdb6ee4e535819384adc59"
+        "calls": ["Math.floor", "main.drawCentered", "render"],
+        "renderHash": "466fd741079c2cbbcfa7831942715baaa0f6756d39db94529cc5f9ccfde811b9"
     },
     {
         "class": "PlayerMissile",
-        "calls": ["main.drawRotated", "render"],
-        "renderHash": "8d20cd1188781a888aa10acaa738cd1e1c077c00c9eaaa554b523eed0f19fcd1"
+        "calls": ["Math.floor", "main.drawRotated", "render"],
+        "renderHash": "7a16a897a33756690905e907d4ed26ea3d0c1edb8daa968a1fd94b1b37805ae6"
     },
     {
         "class": "Rock",

@@ -559,20 +559,20 @@
             {
                 "name": "render",
                 "writes": ["this.g"],
-                "calls": ["this.drawBackground", "this.drawScore", "this.drawSprites"],
-                "hash": "c679806f9156953f4e6cdd5b06d8211bab7e901bca4086b11f820c3ff3407af6"
+                "calls": ["Math.floor", "this.drawBackground", "this.drawScore", "this.drawSprites"],
+                "hash": "cffc928803b53eed51bcda19342e5fd9a17a3ea1ceeba67ce77567819f55aaa9"
             },
             {
                 "name": "drawBackground",
                 "writes": [],
                 "calls": ["javaInt", "main.drawImage", "tiles[i].setAlpha"],
-                "hash": "2448528887ec39436abb52cbaa2b7cc91a5860f346c6cb2659e5fea7611d1eb1"
+                "hash": "e6ee65f027d4910fafc315618aac9484d4a50d15c5dee5a26fdbe4dd9d63d4f5"
             },
             {
                 "name": "drawSprites",
                 "writes": [],
                 "calls": ["GL11.glPopMatrix", "GL11.glPushMatrix", "GL11.glTranslatef", "element.render", "list.get", "list.size", "this.player.render"],
-                "hash": "aa90f6f958cfe22ee29140ec797c697c4cbed93207bf549591417096051bfbe0"
+                "hash": "94d052a1ffd41095a06fa8beaed859cdddc98aa724cb4710d661fd4c7d8179de"
             },
             {
                 "name": "drawScore",
@@ -649,8 +649,8 @@
             {
                 "name": "render",
                 "writes": [],
-                "calls": ["this.main.drawImageRotatedScaled"],
-                "hash": "a80a1f907fc420216119fb30167c0017d90a0a477973ed28f98e4a8598659257"
+                "calls": ["Math.floor", "this.main.drawImageRotatedScaled"],
+                "hash": "1e36a9234a965f2c2fffbdba4a84a40366001374e5a6c8b7eb8ca7ba88ec24f7"
             }
         ]
     },
@@ -1112,8 +1112,8 @@
             {
                 "name": "render",
                 "writes": ["this.invincibleColor"],
-                "calls": ["this.main.drawImageAlpha", "this.main.drawRotatedAlpha", "this.main.drawVehicle"],
-                "hash": "d4b44cc6ffcbae36b677796d202010e95546055e0845511e5b95514c6c3a7cee"
+                "calls": ["Math.floor", "this.main.drawImageAlpha", "this.main.drawRotatedAlpha", "this.main.drawVehicle"],
+                "hash": "89de809683333174fcea56fa0cd8a861581eac22a8e4875f4d94e614a75b6c36"
             }
         ]
     },
@@ -1124,8 +1124,8 @@
             {
                 "name": "render",
                 "writes": [],
-                "calls": ["this.main.drawCenteredAt"],
-                "hash": "89e570c27e69f73833288815d17d9af0a7b898d5e59a87a37d0d5d241db574a3"
+                "calls": ["Math.floor", "this.main.drawCenteredAt"],
+                "hash": "b6d22157b0550fb31203db97b3063416d0a84724cd4b98e392dfa6ca838ff186"
             }
         ]
     },
@@ -1136,8 +1136,8 @@
             {
                 "name": "render",
                 "writes": [],
-                "calls": ["this.main.drawRotated"],
-                "hash": "dae57b464d7cd571d08100c7a510a9863a573f2f513638e93537ceef755592a7"
+                "calls": ["Math.floor", "this.main.drawRotated"],
+                "hash": "df152ed03cc44cec1096f5ca058dacfa65598892d8e27e4c50bbbdb46b7e84da"
             }
         ]
     },

@@ -196,7 +196,7 @@ function javaUpdate() {
     const starts = [...source.matchAll(/public\s+void\s+update\(GameContainer gc\)\s+throws\s+SlickException\s*\{/g)];
     assert.equal(starts.length, 1, "Expected one Java GameMode.update anchor");
     const start = starts[0].index;
-    const end = source.indexOf("  private void drawBackground()", start);
+    const end = source.indexOf("  private void drawBackground(", start);
     assert.ok(end > start, "Java update end anchor moved; review extraction rather than skipping it");
     return source.slice(start, end).trim();
 }

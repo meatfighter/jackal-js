@@ -8,6 +8,8 @@ let nextServer = 0;
 export function createServer(options) {
     return createViteServer({
         ...options,
+        // In-memory SSR tests do not own a shared browser HMR socket.
+        server: { ...options.server, hmr: false, ws: false },
         cacheDir: fileURLToPath(new URL(`../node_modules/.vite-tests/${process.pid}-${nextServer++}/`, import.meta.url))
     });
 }
