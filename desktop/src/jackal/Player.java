@@ -467,11 +467,13 @@ public class Player {
   }
   
   public void render() {
-    
     if (respawning != 0) {
       return;
     }
-    
+
+    float renderX = (float)Math.floor(x);
+    float renderY = (float)Math.floor(y);
+
     if (invincible > 0) {
       if (!gameMode.paused && ++invincibleColor == 4) {
         invincibleColor = 0;
@@ -479,40 +481,37 @@ public class Player {
     } else {
       invincibleColor = 0;
     }
-    
+
     if (inSwamp && targetAngle != -1 && angleSteps == 0) {
       switch(nextAngle) {
         case 0:
         case 360:
-          main.draw(main.playerWakes[0], x - 37, y - 43, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[0], renderX - 37, renderY - 43, WAKE_ALPHAS[rumble]);
           break;
         case 45:
-          main.drawRotatedAlpha(main.playerWakes[4], 
-              x - 8, y - 2, 90, WAKE_ALPHAS[rumble]);
+          main.drawRotatedAlpha(main.playerWakes[4], renderX - 8, renderY - 2, 90, WAKE_ALPHAS[rumble]);
           break;
         case 90:
-          main.draw(main.playerWakes[3], x - 52, y - 31, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[3], renderX - 52, renderY - 31, WAKE_ALPHAS[rumble]);
           break;
         case 135:
-          main.drawRotatedAlpha(main.playerWakes[5], 
-              x + 8, y + 2, -90, WAKE_ALPHAS[rumble]);
+          main.drawRotatedAlpha(main.playerWakes[5], renderX + 8, renderY + 2, -90, WAKE_ALPHAS[rumble]);
           break;
         case 180:
-          main.draw(main.playerWakes[1], x - 27, y - 43, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[1], renderX - 27, renderY - 43, WAKE_ALPHAS[rumble]);
           break;
         case 225:
-          main.draw(main.playerWakes[5], x - 42, y - 36, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[5], renderX - 42, renderY - 36, WAKE_ALPHAS[rumble]);
           break;
         case 270:
-          main.draw(main.playerWakes[2], x - 52, y - 31, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[2], renderX - 52, renderY - 31, WAKE_ALPHAS[rumble]);
           break;
         case 315:
-          main.draw(main.playerWakes[4], x - 49, y - 36, WAKE_ALPHAS[rumble]);
+          main.draw(main.playerWakes[4], renderX - 49, renderY - 36, WAKE_ALPHAS[rumble]);
           break;
       }
     }
-    
-    main.drawVehicle(main.players[invincibleColor], 
-        x, y + RUMBLE[rumble], displayAngle);
+
+    main.drawVehicle(main.players[invincibleColor], renderX, renderY + RUMBLE[rumble], displayAngle);
   }
 }

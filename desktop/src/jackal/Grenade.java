@@ -83,7 +83,9 @@ public class Grenade extends GameElement {
 
   @Override
   public void render() {
-    main.draw(main.grenade, x, y, angle, scale);
+    float renderX = (float)Math.floor(x);
+    float renderY = (float)Math.floor(y);
+    main.draw(main.grenade, renderX, renderY, angle, scale);
   }
   
 }

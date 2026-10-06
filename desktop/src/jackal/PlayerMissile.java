@@ -87,6 +87,8 @@ public class PlayerMissile extends GameElement {
 
   @Override
   public void render() {
-    main.drawRotated(main.playerMissile, x, y, angle);
-  }  
+    float renderX = (float)Math.floor(x);
+    float renderY = (float)Math.floor(y);
+    main.drawRotated(main.playerMissile, renderX, renderY, angle);
+  }
 }

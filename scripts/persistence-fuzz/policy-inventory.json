@@ -77666,23 +77666,9 @@
                 {
                     "field": "cameraX",
                     "role": "consumer-or-read",
-                    "expression": "this.cameraX % 32",
+                    "expression": "Math.floor(this.cameraX)",
                     "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1055
-                },
-                {
-                    "field": "cameraX",
-                    "role": "consumer-or-read",
-                    "expression": "this.cameraX / 32",
-                    "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1057
-                },
-                {
-                    "field": "cameraX",
-                    "role": "consumer-or-read",
-                    "expression": "-this.cameraX",
-                    "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1120
+                    "line": 1158
                 },
                 {
                     "field": "cameraX",
@@ -78002,23 +77988,9 @@
                 {
                     "field": "cameraY",
                     "role": "consumer-or-read",
-                    "expression": "this.cameraY % 32",
+                    "expression": "Math.floor(this.cameraY)",
                     "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1056
-                },
-                {
-                    "field": "cameraY",
-                    "role": "consumer-or-read",
-                    "expression": "this.cameraY / 32",
-                    "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1058
-                },
-                {
-                    "field": "cameraY",
-                    "role": "consumer-or-read",
-                    "expression": "-this.cameraY",
-                    "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1120
+                    "line": 1159
                 },
                 {
                     "field": "cameraY",
@@ -78775,7 +78747,7 @@
                     "role": "consumer-or-read",
                     "expression": "!this.gameMode.paused",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 543
+                    "line": 547
                 },
                 {
                     "field": "paused",
@@ -78867,7 +78839,7 @@
                     "role": "consumer-or-read",
                     "expression": "if (this.playing) {\n            this.drawScore();\n        }",
                     "file": "pwa/src/jackal/GameMode.ts",
-                    "line": 1160
+                    "line": 1164
                 },
                 {
                     "field": "playing",
@@ -92736,9 +92708,9 @@
                 {
                     "field": "angle",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale)",
+                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, renderX, renderY, this.angle, this.scale)",
                     "file": "pwa/src/jackal/Grenade.ts",
-                    "line": 91
+                    "line": 93
                 }
             ]
         },
@@ -92922,9 +92894,9 @@
                 {
                     "field": "scale",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale)",
+                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, renderX, renderY, this.angle, this.scale)",
                     "file": "pwa/src/jackal/Grenade.ts",
-                    "line": 91
+                    "line": 93
                 }
             ]
         },
@@ -93196,7 +93168,7 @@
                 {
                     "field": "x",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale)",
+                    "expression": "Math.floor(this.x)",
                     "file": "pwa/src/jackal/Grenade.ts",
                     "line": 91
                 }
@@ -93270,9 +93242,9 @@
                 {
                     "field": "y",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawImageRotatedScaled(this.main.grenade, this.x, this.y, this.angle, this.scale)",
+                    "expression": "Math.floor(this.y)",
                     "file": "pwa/src/jackal/Grenade.ts",
-                    "line": 91
+                    "line": 92
                 }
             ]
         },
@@ -117080,7 +117052,7 @@
                     "role": "consumer-or-read",
                     "expression": "this.angleSteps === 0",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 550
+                    "line": 554
                 }
             ]
         },
@@ -117376,9 +117348,9 @@
                 {
                     "field": "displayAngle",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawVehicle(this.main.players[this.invincibleColor], this.x, this.y + Player.RUMBLE[this.rumble], this.displayAngle)",
+                    "expression": "this.main.drawVehicle(this.main.players[this.invincibleColor], renderX, renderY + Player.RUMBLE[this.rumble], this.displayAngle)",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 580
+                    "line": 584
                 }
             ]
         },
@@ -117610,7 +117582,7 @@
                     "role": "consumer-or-read",
                     "expression": "this.inSwamp && this.targetAngle !== -1",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 550
+                    "line": 554
                 }
             ]
         },
@@ -117693,7 +117665,7 @@
                     "role": "consumer-or-read",
                     "expression": "this.invincible > 0",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 542
+                    "line": 546
                 }
             ]
         },
@@ -117725,21 +117697,21 @@
                     "role": "producer-write",
                     "expression": "++this.invincibleColor",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 543
-                },
-                {
-                    "field": "invincibleColor",
-                    "role": "producer-write",
-                    "expression": "this.invincibleColor = 0",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 544
-                },
-                {
-                    "field": "invincibleColor",
-                    "role": "producer-write",
-                    "expression": "this.invincibleColor = 0",
-                    "file": "pwa/src/jackal/Player.ts",
                     "line": 547
+                },
+                {
+                    "field": "invincibleColor",
+                    "role": "producer-write",
+                    "expression": "this.invincibleColor = 0",
+                    "file": "pwa/src/jackal/Player.ts",
+                    "line": 548
+                },
+                {
+                    "field": "invincibleColor",
+                    "role": "producer-write",
+                    "expression": "this.invincibleColor = 0",
+                    "file": "pwa/src/jackal/Player.ts",
+                    "line": 551
                 }
             ],
             "consumers": [
@@ -117748,7 +117720,7 @@
                     "role": "consumer-or-read",
                     "expression": "this.main.players[this.invincibleColor]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 580
+                    "line": 584
                 }
             ]
         },
@@ -118083,9 +118055,9 @@
                 {
                     "field": "nextAngle",
                     "role": "consumer-or-read",
-                    "expression": "switch (this.nextAngle) {\n                case 0:\n                case 360:\n                    this.main.drawImageAlpha(this.main.playerWakes[0], this.x - 37, this.y - 43, Player.WAKE_ALPHAS[this.rumble]);\n                    break;\n      ",
+                    "expression": "switch (this.nextAngle) {\n                case 0:\n                case 360:\n                    this.main.drawImageAlpha(this.main.playerWakes[0], renderX - 37, renderY - 43, Player.WAKE_ALPHAS[this.rumble]);\n                    break;\n    ",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 551
+                    "line": 555
                 }
             ]
         },
@@ -118417,63 +118389,63 @@
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 554
+                    "line": 558
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 557
+                    "line": 561
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 560
+                    "line": 564
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 563
+                    "line": 567
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 566
+                    "line": 570
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 569
+                    "line": 573
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 572
+                    "line": 576
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.WAKE_ALPHAS[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 575
+                    "line": 579
                 },
                 {
                     "field": "rumble",
                     "role": "consumer-or-read",
                     "expression": "Player.RUMBLE[this.rumble]",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 580
+                    "line": 584
                 }
             ]
         },
@@ -118703,7 +118675,7 @@
                     "role": "consumer-or-read",
                     "expression": "this.targetAngle !== -1",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 550
+                    "line": 554
                 },
                 {
                     "field": "targetAngle",
@@ -119177,65 +119149,9 @@
                 {
                     "field": "x",
                     "role": "consumer-or-read",
-                    "expression": "this.x - 37",
+                    "expression": "Math.floor(this.x)",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 554
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 8",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 557
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 52",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 560
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x + 8",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 563
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 27",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 566
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 42",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 569
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 52",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 572
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.x - 49",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 575
-                },
-                {
-                    "field": "x",
-                    "role": "consumer-or-read",
-                    "expression": "this.main.drawVehicle(this.main.players[this.invincibleColor], this.x, this.y + Player.RUMBLE[this.rumble], this.displayAngle)",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 580
+                    "line": 543
                 },
                 {
                     "field": "x",
@@ -120077,65 +119993,9 @@
                 {
                     "field": "y",
                     "role": "consumer-or-read",
-                    "expression": "this.y - 43",
+                    "expression": "Math.floor(this.y)",
                     "file": "pwa/src/jackal/Player.ts",
-                    "line": 554
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 2",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 557
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 31",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 560
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y + 2",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 563
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 43",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 566
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 36",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 569
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 31",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 572
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y - 36",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 575
-                },
-                {
-                    "field": "y",
-                    "role": "consumer-or-read",
-                    "expression": "this.y + Player.RUMBLE[this.rumble]",
-                    "file": "pwa/src/jackal/Player.ts",
-                    "line": 580
+                    "line": 544
                 },
                 {
                     "field": "y",
@@ -120804,7 +120664,7 @@
                 {
                     "field": "x",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawCenteredAt(this.main.yellowBullet, this.x, this.y)",
+                    "expression": "Math.floor(this.x)",
                     "file": "pwa/src/jackal/PlayerBullet.ts",
                     "line": 60
                 }
@@ -120885,9 +120745,9 @@
                 {
                     "field": "y",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawCenteredAt(this.main.yellowBullet, this.x, this.y)",
+                    "expression": "Math.floor(this.y)",
                     "file": "pwa/src/jackal/PlayerBullet.ts",
-                    "line": 60
+                    "line": 61
                 }
             ]
         },
@@ -120931,9 +120791,9 @@
                 {
                     "field": "angle",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawRotated(this.main.playerMissile, this.x, this.y, this.angle)",
+                    "expression": "this.main.drawRotated(this.main.playerMissile, renderX, renderY, this.angle)",
                     "file": "pwa/src/jackal/PlayerMissile.ts",
-                    "line": 98
+                    "line": 100
                 }
             ]
         },
@@ -121425,7 +121285,7 @@
                 {
                     "field": "x",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawRotated(this.main.playerMissile, this.x, this.y, this.angle)",
+                    "expression": "Math.floor(this.x)",
                     "file": "pwa/src/jackal/PlayerMissile.ts",
                     "line": 98
                 }
@@ -121534,9 +121394,9 @@
                 {
                     "field": "y",
                     "role": "consumer-or-read",
-                    "expression": "this.main.drawRotated(this.main.playerMissile, this.x, this.y, this.angle)",
+                    "expression": "Math.floor(this.y)",
                     "file": "pwa/src/jackal/PlayerMissile.ts",
-                    "line": 98
+                    "line": 99
                 }
             ]
         },

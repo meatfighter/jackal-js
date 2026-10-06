@@ -50,7 +50,9 @@ public class PlayerBullet extends GameElement {
   }
 
   @Override
-  public void render() { 
-    main.drawCentered(main.yellowBullet, x, y);
-  }  
+  public void render() {
+    float renderX = (float)Math.floor(x);
+    float renderY = (float)Math.floor(y);
+    main.drawCentered(main.yellowBullet, renderX, renderY);
+  }
 }

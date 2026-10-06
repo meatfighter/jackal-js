@@ -1,6 +1,6 @@
 {
     "name": "jackal-js",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "private": true,
     "description": "A TypeScript/WebGL browser port of Jackal with a maintained Java/Slick2D reference implementation.",
     "homepage": "https://meatfighter.com/jackal/",
@@ -42,7 +42,7 @@
         "preview:about": "vite preview --host 127.0.0.1 --outDir .release-components/web",
         "preview:dist": "vite preview --host 127.0.0.1 --outDir dist",
         "test": "node --test scripts/test-*.mjs",
-        "test:parity": "node --test scripts/test-java-*.mjs scripts/test-direction-cache-parity.mjs scripts/test-persistence-parity-coverage.mjs scripts/test-fixed-update-fade-timing.mjs",
+        "test:parity": "node --test scripts/test-java-*.mjs scripts/test-direction-cache-parity.mjs scripts/test-persistence-parity-coverage.mjs scripts/test-fixed-update-fade-timing.mjs scripts/test-presentation-root-parity.mjs",
         "benchmark:directions": "node scripts/benchmark-direction-cache.mjs",
         "verify:desktop": "node scripts/verify-desktop-zip.mjs",
         "verify:pwa-precache": "node scripts/verify-pwa-precache.mjs",
@@ -80,11 +80,11 @@
         "verify:persistence-fuzz:browsers": "node scripts/run-persistence-fuzz.mjs --profile=browser-qualification",
         "fuzz:persistence:soak": "node scripts/run-persistence-fuzz.mjs --profile=soak",
         "fuzz:persistence:replay": "node scripts/run-persistence-fuzz.mjs --profile=replay",
-        "test:persistence-fuzz": "node --test scripts/test-persistence-fuzz.mjs && npm run test:validator-repairs",
+        "test:persistence-fuzz": "node --test scripts/test-persistence-fuzz.mjs scripts/test-fuzz-*.mjs && npm run test:validator-repairs",
         "test:validator-repairs": "npm run check:persistence-policy-inventory && node scripts/persistence-fuzz/semantic-run.mjs producers",
         "generate:persistence-policy-inventory": "node --loader ./scripts/persistence-fuzz/typescript-loader.mjs scripts/persistence-fuzz/inventory.mjs",
         "check:persistence-policy-inventory": "node --loader ./scripts/persistence-fuzz/typescript-loader.mjs scripts/persistence-fuzz/inventory.mjs --check",
-        "verify:persistence-fuzz:controls": "node scripts/verify-persistence-fuzz-controls.mjs"
+        "verify:persistence-fuzz:controls": "node scripts/verify-persistence-fuzz-controls.mjs && node scripts/verify-fuzz-bootstrap-controls.mjs && node scripts/verify-presentation-root-browser.mjs"
     },
     "dependencies": {
         "slick2d-ts": "https://codeload.github.com/meatfighter/slick2d-ts/tar.gz/03b6878aab0106702651f41259c250288c3eb345"

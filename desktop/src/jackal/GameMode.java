@@ -956,11 +956,11 @@ public class GameMode implements IMode, IFadeListener {
     }    
   }
   
-  private void drawBackground() {
-    float xOffset = cameraX % 32;
-    float yOffset = cameraY % 32;
-    int xTile = (int)(cameraX / 32);
-    int yTile = (int)(cameraY / 32);  
+  private void drawBackground(float renderCameraX, float renderCameraY) {
+    float xOffset = renderCameraX % 32;
+    float yOffset = renderCameraY % 32;
+    int xTile = (int)(renderCameraX / 32);
+    int yTile = (int)(renderCameraY / 32);
     int xStart = 32 + xTile == mapWidth ? 31 : 32;
     
     if (stageIndex > 0) {
@@ -1020,9 +1020,9 @@ public class GameMode implements IMode, IFadeListener {
     }
   }
   
-  private void drawSprites() {
+  private void drawSprites(float renderCameraX, float renderCameraY) {
     GL11.glPushMatrix();    
-    GL11.glTranslatef(-cameraX, -cameraY, 0); 
+    GL11.glTranslatef(-renderCameraX, -renderCameraY, 0);
 
     for(int i = 0; i < 4; i++) {
       ArrayList<GameElement> list = elements[i];
@@ -1058,14 +1058,15 @@ public class GameMode implements IMode, IFadeListener {
   
   @Override
   public void render(GameContainer gc, Graphics g) throws SlickException {
-    
     this.g = g;
-    
-    drawBackground();  
-    drawSprites();
-    
+
+    float renderCameraX = (float)Math.floor(cameraX);
+    float renderCameraY = (float)Math.floor(cameraY);
+    drawBackground(renderCameraX, renderCameraY);
+    drawSprites(renderCameraX, renderCameraY);
+
     if (playing) {
-      drawScore();    
+      drawScore();
     }
   }
 }

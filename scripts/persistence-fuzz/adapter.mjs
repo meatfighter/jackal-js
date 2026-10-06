@@ -1,3 +1,4 @@
+import { invokeObservedRestore } from "./failure-protocol.mjs";
 /* global document, location */
 import { JackalRuntimeLoader } from "/src/app/JackalRuntimeLoader.ts";
 import { beginGameAudio, commitGameAudio, releaseGameAudio } from "/src/app/PlaybackSession.ts";
@@ -13,8 +14,11 @@ export const key = getDeploymentStorageKey(GAME_STATE_STORAGE_KEY);
 export const debugKey = getDeploymentStorageKey("jackal.debug-invalid-save");
 export const serializer = new JackalGameStateSerializer();
 export { beginGameAudio, commitGameAudio, releaseGameAudio };
-export async function mount(restore, version) {
+export async function mount(restore, version, probe) {
+    probe.stage = "runtime-prepare";
     const runtime = await new JackalRuntimeLoader(() => {}).ensurePrepared();
+    probe.restoreWitness.resourcesPrepared = true;
+    probe.stage = "runtime-mount";
     const store = new runtime.JackalGameStateStore(version);
     const host = document.querySelector("#game-host");
     runtime.slick.Display.setParent(host);
@@ -29,7 +33,10 @@ export async function mount(restore, version) {
     container.setLoopSuspended(true);
     if (restore)
         main.loadingCompleteHandler = (gc) => {
-            if (!store.restore(main, gc)) throw new Error("RESTORE_REJECTED");
+            probe.stage = "restore";
+            probe.restoreWitness.expectedBytesVerified = typeof probe.expectedText === "string" && localStorage.getItem(key) === probe.expectedText;
+            if (!probe.restoreWitness.expectedBytesVerified) throw new Error("Restore input bytes do not match this document's expected slot");
+            if (!invokeObservedRestore(store, main, gc, probe.restoreWitness)) throw new Error("RESTORE_REJECTED");
             return true;
         };
     await container.start();

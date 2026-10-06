@@ -1997,13 +1997,7 @@ export class Main extends BasicGame {
                 }
                 this.notifyLoadingFinished();
                 if (!loadingHandled) {
-                    if (import.meta.env.DEV) {
-                        this.startPlayer();
-                        this.stageIndex = 2;
-                        this.requestMode(Modes.GAME, this.gc);
-                    } else {
-                        this.requestMode(Modes.INTRO, this.gc);
-                    }
+                    this.requestMode(Modes.INTRO, this.gc);
                 }
                 break;
         }
